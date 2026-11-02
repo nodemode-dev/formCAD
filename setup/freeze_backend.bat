@@ -12,7 +12,8 @@ if exist "%ROOT%\setup\pyi_hooks" set EXTRA=%EXTRA% --additional-hooks-dir "%ROO
 if exist "%ROOT%\backend\app\data" set EXTRA=%EXTRA% --add-data "%ROOT%\backend\app\data;app\data"
 if exist build\pyinstaller rmdir /s /q build\pyinstaller
 if exist dist-engine rmdir /s /q dist-engine
-pyinstaller --noconfirm --clean --onedir --name formcad-engine --distpath dist-engine --workpath build\pyinstaller --specpath build\pyinstaller --add-data "%ROOT%\frontend\dist;frontend_dist" --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring --hidden-import numpy --hidden-import ezdxf --collect-submodules fontTools %EXTRA% "%ROOT%\backend\formcad_engine.py" || exit /b 1
+set "PYTHONPATH=%ROOT%\backend;%PYTHONPATH%"
+pyinstaller --noconfirm --clean --onedir --name formcad-engine --distpath dist-engine --workpath build\pyinstaller --specpath build\pyinstaller --add-data "%ROOT%\frontend\dist;frontend_dist" --paths "%ROOT%\backend" --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring --hidden-import numpy --hidden-import ezdxf --collect-submodules fontTools %EXTRA% "%ROOT%\backend\formcad_engine.py" || exit /b 1
 if exist "%ROOT%\src-tauri\engine" rmdir /s /q "%ROOT%\src-tauri\engine"
 xcopy /e /i /y /q dist-engine\formcad-engine "%ROOT%\src-tauri\engine" >nul || exit /b 1
 "%ROOT%\src-tauri\engine\formcad-engine.exe" --selfcheck || exit /b 1
