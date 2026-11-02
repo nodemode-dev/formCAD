@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.4.0 · 2026-11-02
+
+- Every Modify command: erase and restore, move, copy, rotate, scale, mirror, stretch, offset, trim and extend (quick and standard), break, join, lengthen, align, reverse, fillet, chamfer, blend, explode, polyline and spline editing, nested copy, move-copy-rotate, change space and flatten.
+- Selection by window, crossing, fence and polygons now follows the real shape of each object.
+- Rectangular, polar and path arrays stay editable as one object; groups; match properties and the property commands; rename; linetype, colour and lineweight commands.
+- The Properties palette, Quick Properties, QuickCalc, Find and Replace and Quick Select.
+- Hatches and gradients with 23 patterns, island detection, gap tolerance and boundaries that the hatch follows when they move; boundary and region creation and region union, subtract and intersect; a hatch dialog with pattern swatches.
+- Single-line and multiline text with an in-place editor, text styles, right-to-left text, Arabic joining, Thai and kerning.
+- Every dimension type with styles, all dimension settings, 20 arrowheads, editing tools and dimensions that follow their objects; the Dimension Style Manager with a live preview.
+- Leaders, multileaders, annotative scales, and tables with cell formulas such as SUM, merged cells and table styles.
+
 ## 0.3.0 · 2026-11-02
 
 - The drawing area now draws: lines, arcs, circles, ellipses, polylines with widths, splines, points, text, fills and linetypes, in colour and lineweight, with a grid, axes, a crosshair, a view cube and a coordinate icon.
