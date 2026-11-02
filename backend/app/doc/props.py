@@ -1,7 +1,7 @@
 import math
 import re
 
-from app.doc import curvepath, geom
+from app.doc import curvepath, geom, measure
 from app.doc import tables as T
 
 
@@ -255,12 +255,36 @@ def _length(e):
 
 
 def _poly_area(e):
-    s = 0.0
-    n = len(e.vertices)
-    for i in range(n):
-        a, b = e.vertices[i], e.vertices[(i + 1) % n]
-        s += a["p"][0] * b["p"][1] - b["p"][0] * a["p"][1]
-    return abs(s) / 2.0
+    return measure.polygon_measure(e.vertices, True)[0] if e.closed else None
+
+
+def _line_length_set(e, d, v):
+    new = finite("length", v)
+    if new < 0:
+        raise PropError("length must not be negative")
+    cur = geom.dist(e.start, e.end)
+    if cur > 0:
+        k = new / cur
+        e.end = [e.start[0] + (e.end[0] - e.start[0]) * k, e.start[1] + (e.end[1] - e.start[1]) * k, e.end[2]]
+    else:
+        e.end = [e.start[0] + new, e.start[1], e.end[2]]
+
+
+def _line_angle_set(e, d, v):
+    a = math.radians(finite("angle", v))
+    n = geom.dist(e.start, e.end)
+    e.end = [e.start[0] + n * math.cos(a), e.start[1] + n * math.sin(a), e.end[2]]
+
+
+def _circumference_set(e, d, v):
+    e.radius = positive("circumference", v) / (2 * math.pi)
+
+
+def _area_set(e, d, v):
+    f = finite("area", v)
+    if f <= 0:
+        raise PropError("The area must be greater than zero.")
+    e.radius = math.sqrt(f / math.pi)
 
 
 def _diameter_get(e, d):
@@ -363,11 +387,11 @@ def _array_fields():
 
 
 FIELDS = {
-    "line": [_pt("start"), _pt("end"), _ro("length", lambda e: geom.dist(e.start, e.end)), _ro("angle", lambda e: round(math.degrees(geom.angle_of(e.start, e.end)) % 360.0, 10), "angle")],
-    "circle": [_pt("center"), _plain("radius", pos=True), Field("diameter", "number", _diameter_get, _diameter_set), _ro("circumference", lambda e: 2 * math.pi * e.radius), _ro("area", lambda e: math.pi * e.radius * e.radius)],
+    "line": [_pt("start"), _pt("end"), Field("length", "number", lambda e, d: geom.dist(e.start, e.end), _line_length_set), Field("angle", "angle", lambda e, d: round(math.degrees(geom.angle_of(e.start, e.end)) % 360.0, 10), _line_angle_set)],
+    "circle": [_pt("center"), _plain("radius", pos=True), Field("diameter", "number", _diameter_get, _diameter_set), Field("circumference", "number", lambda e, d: 2 * math.pi * e.radius, _circumference_set), Field("area", "number", lambda e, d: math.pi * e.radius * e.radius, _area_set)],
     "arc": [_pt("center"), _plain("radius", pos=True), _plain("start_angle", deg=True), _plain("end_angle", deg=True), _ro("length", _length)],
     "ellipse": [_pt("center"), _plain("ratio", pos=True), _ro("length", _length)],
-    "lwpolyline": [_plain("closed", "bool"), _plain("const_width", nonneg=True), _plain("elevation"), _ro("vertices", lambda e: len(e.vertices), "integer"), _ro("length", _length)],
+    "lwpolyline": [_plain("closed", "bool"), _plain("const_width", nonneg=True), _plain("elevation"), _ro("vertices", lambda e: len(e.vertices), "integer"), _ro("length", _length), _ro("area", _poly_area)],
     "polyline3d": [_plain("closed", "bool"), _ro("vertices", lambda e: len(e.points), "integer"), _ro("length", _length)],
     "spline": [_ro("degree", lambda e: e.degree, "integer"), _plain("closed", "bool"), _ro("length", _length)],
     "point": [_pt("position")],
@@ -387,6 +411,7 @@ FIELDS = {
     "leader": [_plain("arrowhead", "bool"), _plain("spline", "bool"), _plain("arrow_size", nonneg=True), _ro("style", lambda e: e.style, "string"), _ro("vertices", lambda e: len(e.points), "integer"), _ro("length", lambda e: sum(geom.dist(e.points[i], e.points[i + 1]) for i in range(len(e.points) - 1)))],
     "mleader": [_plain("text", "string"), _ro("content_type", lambda e: e.content_type, "string"), _ro("leader_type", lambda e: e.leader_type, "string"), _ro("style", lambda e: e.style, "string"), _ro("leader_lines", lambda e: len(e.leaders), "integer"), _plain("size_scale", pos=True), _pt("content_pos")],
     "table": [_pt("position"), _plain("rotation", deg=True), _ro("style", lambda e: e.style, "string"), _ro("table_rows", lambda e: e.rows(), "integer"), _ro("table_columns", lambda e: e.cols(), "integer"), _ro("table_width", lambda e: e.width())],
+    "viewport": [_pt("center"), _plain("width", pos=True), _plain("height", pos=True), _plain("scale", pos=True), _plain("on", "bool"), _plain("locked", "bool"), _plain("anno_scale", "string"), _ro("viewport_id", lambda e: e.vp_id, "integer"), _ro("view_height", lambda e: e.view_height)],
 }
 
 

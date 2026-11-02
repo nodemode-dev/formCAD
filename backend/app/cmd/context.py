@@ -105,7 +105,11 @@ class Context:
             raise CommandError(str(err))
 
     def locked(self, ent: Entity) -> bool:
-        return self.d.layer_locked(ent.layer)
+        if self.d.layer_locked(ent.layer):
+            return True
+        from app.doc import editstate
+
+        return editstate.locked_entity(self.doc, ent)
 
     def editable(self, handles) -> list:
         out = []

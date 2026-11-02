@@ -4,9 +4,10 @@ import numpy as np
 
 
 class Glyph:
-    __slots__ = ("adv", "trail", "strokes", "contours", "tris", "box", "build_tris")
+    __slots__ = ("adv", "trail", "strokes", "contours", "tris", "box", "build_tris", "src")
 
     def __init__(self, adv, trail=0.0, strokes=None, contours=None, tris=None, box=None, build_tris=None):
+        self.src = None
         self.adv = adv
         self.trail = trail
         self.strokes = strokes

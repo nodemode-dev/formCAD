@@ -140,12 +140,19 @@ def expand(rec, m, ctx, pp, depth, state):
             return
         if not ctx.visible(child, pp):
             continue
+        if child.kind == "attdef":
+            continue
         cp = ctx.props(child, pp)
         if child.kind == "insert":
             sub = ctx.d.table_get("blocks", child.block)
-            for cm in copies(child, sub, ctx):
+            cms = copies(child, sub, ctx)
+            for cm in cms:
                 state["count"] += 1
                 expand(sub, compose(m, cm), ctx, cp, depth + 1, state)
+            if sub is not None and cms and depth < MAX_DEPTH:
+                from app.display import attribs as attribs_d
+
+                attribs_d.add_attributes(ctx, child, compose(m, cms[0]), cp, state)
             continue
         res = ctx.shape_cache.get(child.handle)
         if res is None:
@@ -211,7 +218,12 @@ def run(ent, ctx, block_name, ms, pp):
 def insert(e, ctx):
     pp = ctx.props(e)
     rec = ctx.d.table_get("blocks", e.block)
-    state = run(e, ctx, e.block, copies(e, rec, ctx), pp)
+    ms = copies(e, rec, ctx)
+    state = run(e, ctx, e.block, ms, pp)
+    if rec is not None and ms:
+        from app.display import attribs as attribs_d
+
+        attribs_d.add_attributes(ctx, e, ms[0], pp, state)
     p = [float(e.position[0]), float(e.position[1])]
     bb = _box(state["bounds"]) if state["bounds"] else [p[0], p[1], p[0], p[1]]
     return {"type": "compound", "parts": state["parts"]}, state["prims"], [{"id": 0, "p": p, "kind": "ins"}], bb

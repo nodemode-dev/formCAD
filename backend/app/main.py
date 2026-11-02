@@ -30,6 +30,12 @@ ROUTERS = [
     ("app.routers.tables", "/api/docs"),
     ("app.routers.mtext", "/api/docs"),
     ("app.routers.properties", "/api/docs"),
+    ("app.routers.layers", "/api/docs"),
+    ("app.routers.layouts", "/api/docs"),
+    ("app.routers.xrefs", "/api/docs"),
+    ("app.routers.blocks", "/api/docs"),
+    ("app.routers.interchange", "/api"),
+    ("app.routers.plot", "/api"),
     ("app.routers.calc", "/api"),
     ("app.routers.uistyle", "/api"),
 ]

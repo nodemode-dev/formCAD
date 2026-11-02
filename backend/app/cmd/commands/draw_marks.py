@@ -604,7 +604,7 @@ def _break_ent(verts) -> LwPolyline:
     return ent
 
 
-@command("breakline", group="express", label="Break-line Symbol", description="Polyline with a break symbol inserted along it.", menu="Tools > Express Tools > Break-line Symbol")
+@command("breakline", group="extra", label="Break-line Symbol", description="Polyline with a break symbol inserted along it.", menu="Tools > Extra Tools > Break-line Symbol")
 def breakline(ctx):
     while True:
         block = str(ctx.var("BRKBLOCK") or "")

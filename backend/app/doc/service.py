@@ -11,6 +11,7 @@ from app.doc.model import Drawing
 from app.sysvars import registry as sv
 
 EXT = ".fcad"
+FOREIGN_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz")
 MAX_RECENT = 30
 
 
@@ -109,6 +110,8 @@ class Service:
         if not path:
             raise DocumentFault("A path is required.")
         full = os.path.realpath(os.path.expanduser(path))
+        if os.path.splitext(full)[1].lower() in FOREIGN_EXT:
+            return self.open_foreign(full)
         with self.lock:
             for d in self.docs.values():
                 if d.path and os.path.realpath(d.path) == full:
@@ -121,14 +124,67 @@ class Service:
             name = os.path.splitext(os.path.basename(full))[0]
             doc = Document(drawing, name, full, _kind(manifest), drawing.metric)
             doc.created = str(manifest.get("created") or doc.created)
+            from app.doc import xref
+
+            doc.xref_notes = xref.resolve_all(drawing, full)
             self._register(doc)
         self.add_recent(full)
+        return doc
+
+    def open_foreign(self, full: str, recover: bool = False) -> Document:
+        from app.interchange import files
+        from app.interchange.errors import InterchangeError
+
+        with self.lock:
+            for d in self.docs.values():
+                if d.path and os.path.realpath(d.path) == full:
+                    self.active_id = d.id
+                    return d
+            try:
+                drawing, report, kind = files.read_any(full, recover)
+            except InterchangeError as err:
+                raise DocumentFault(str(err))
+            name = os.path.splitext(os.path.basename(full))[0]
+            keep = full if kind in (".dxf", ".dwg") else ""
+            doc = Document(drawing, name, keep, "drawing", drawing.metric)
+            doc.import_notes = report.to_dict()
+            from app.doc import xref
+
+            doc.xref_notes = xref.resolve_all(drawing, full)
+            self._register(doc)
+        if keep:
+            self.add_recent(full)
+        return doc
+
+    def save_foreign(self, doc: Document, target: str, version: str = "", binary: bool = False) -> Document:
+        from app.interchange import files
+        from app.interchange.errors import InterchangeError
+
+        with doc.lock:
+            if doc.in_tx():
+                raise DocumentFault("A command is still recording; finish it before saving.", 409)
+            doc.undo.end_group()
+            try:
+                report = files.save_document(doc, target, version, binary)
+            except InterchangeError as err:
+                raise DocumentFault(str(err))
+            dest = os.path.realpath(os.path.expanduser(target))
+            if os.path.splitext(dest)[1].lower() != ".dwt":
+                doc.mark_saved(dest)
+                doc.name = os.path.splitext(os.path.basename(dest))[0]
+            doc.import_notes = report.to_dict()
+            self.saver.discard(doc)
+        self.add_recent(dest)
+        events.publish({"type": "docs", "reason": "save", "id": doc.id})
+        doc.announce("save")
         return doc
 
     def save(self, doc: Document, path: str = "") -> Document:
         target = (path or doc.path or "").strip()
         if not target:
             raise DocumentFault("The drawing has no file name yet; give a path.")
+        if os.path.splitext(target)[1].lower() in (".dxf", ".dwg", ".dwt"):
+            return self.save_foreign(doc, target)
         if os.path.splitext(target)[1] == "":
             target += EXT
         with doc.lock:

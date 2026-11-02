@@ -15,6 +15,9 @@ def _flag(v):
 def build(doc, since=None, space="model"):
     key = space_key(doc, space)
     if key is None:
+        key = space_key(doc, doc.tab)
+        since = None
+    if key is None:
         raise NoSuchSpace(str(space))
     state = state_for(doc, key)
     state.update(doc)
@@ -25,8 +28,12 @@ def build(doc, since=None, space="model"):
     shown = key.split(":", 1)[1] if ":" in key else "model"
     trd = session_values_flag("TRANSPARENCYDISPLAY")
     head = '{"rev":%d,"full":%s,"space":%s,"removed":%s,"items":[' % (doc.rev, _flag(full), json.dumps(shown), json.dumps(removed))
-    tail = '],"layers":%s,"extents":%s,"lwdisplay":%s,"trdisplay":%s}' % (layers, ext, _flag(ctx.lwdisplay), _flag(trd))
-    return (head + ",".join(items) + tail).encode("utf-8")
+    tail = '],"layers":%s,"extents":%s,"lwdisplay":%s,"trdisplay":%s' % (layers, ext, _flag(ctx.lwdisplay), _flag(trd))
+    if key.startswith("layout:"):
+        from app.display import layout_view
+
+        tail += ',"layout":' + layout_view.build_json(doc, key)
+    return (head + ",".join(items) + tail + "}").encode("utf-8")
 
 
 def session_values_flag(name):

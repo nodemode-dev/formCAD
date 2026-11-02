@@ -50,11 +50,13 @@ def build_manifest(drawing: Drawing, title: str, created: str, modified: str | N
     }
 
 
-def encode(drawing: Drawing, title: str, created: str, kind: str = "drawing") -> bytes:
+def encode(drawing: Drawing, title: str, created: str, kind: str = "drawing", keep_edits: bool = False) -> bytes:
     import io
 
+    from app.doc import editstate
+
     try:
-        doc_bytes = json.dumps(drawing.to_dict(), separators=(",", ":"), allow_nan=False).encode("utf-8")
+        doc_bytes = json.dumps(editstate.persistent_dict(drawing, keep_edits), separators=(",", ":"), allow_nan=False).encode("utf-8")
         man_bytes = json.dumps(build_manifest(drawing, title, created, None, kind), indent=2, allow_nan=False).encode("utf-8")
     except ValueError as err:
         raise ContainerError("The drawing holds numbers that cannot be stored: " + str(err), "nonfinite")

@@ -369,7 +369,7 @@ class MText(Entity):
 @dataclass
 class AttDef(Entity):
     kind: ClassVar[str] = "attdef"
-    POINTS: ClassVar[tuple] = ("position",)
+    POINTS: ClassVar[tuple] = ("position", "align_point")
     position: list = field(default_factory=_z)
     tag: str = ""
     prompt: str = ""
@@ -378,6 +378,21 @@ class AttDef(Entity):
     rotation: float = 0.0
     style: str = "Standard"
     modes: dict = field(default_factory=lambda: {"invisible": False, "constant": False, "verify": False, "preset": False, "lock_position": False})
+    align_point: Any = None
+    halign: int = 0
+    valign: int = 0
+    width_factor: float = 1.0
+    oblique: float = 0.0
+
+    def bounds(self):
+        w = self.height * 0.6 * self.width_factor * max(len(self.tag), 1)
+        x, y = self.position[0], self.position[1]
+        c, s = math.cos(self.rotation), math.sin(self.rotation)
+        pts = [[x, y], [x + w * c, y + w * s], [x - self.height * s, y + self.height * c], [x + w * c - self.height * s, y + w * s + self.height * c]]
+        return geom.bounds_of_points(pts)
+
+    def snap_points(self):
+        return [self.align_point or self.position]
 
 
 @entity_kind
@@ -393,7 +408,16 @@ class Insert(Entity):
     array: dict = field(default_factory=dict)
 
     def bounds(self):
+        box = self.extra.get("box")
+        if box:
+            return (box[0], box[1], box[2], box[3])
         return geom.bounds_of_points([self.position])
+
+    def move_by(self, d) -> None:
+        Entity.move_by(self, d)
+        box = self.extra.get("box")
+        if box:
+            self.extra = {**self.extra, "box": [box[0] + d[0], box[1] + d[1], box[2] + d[0], box[3] + d[1]]}
 
     def snap_points(self):
         return [self.position]

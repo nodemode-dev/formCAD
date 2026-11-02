@@ -122,6 +122,8 @@ D("LIMMIN", [0.0, 0.0], ("point", "any"), "Lower drawing limit", "point")
 D("LIMMAX", _pair([12.0, 9.0], [420.0, 297.0]), ("point", "any"), "Upper drawing limit", "point")
 R("TILEMODE", "int", 1, "1 in the Model tab, 0 in a layout")
 R("CTAB", "string", "Model", "Name of the current tab")
+R("CVPORT", "int", 2, "Identifier of the current viewport (1 is the sheet)")
+R("MAXACTVP", "int", 64, "Most layout viewports shown at once")
 
 S("CMDECHO", 1, TOGGLE, "Command echo for routines")
 S("FILEDIA", 1, TOGGLE, "File dialogs for routines")

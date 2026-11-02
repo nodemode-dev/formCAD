@@ -409,7 +409,7 @@ def _scale_value(inp, base):
     return None
 
 
-@command("mocoro", group="modify", label="Move/Copy/Rotate", description="Move, copy, rotate, scale in one command with a shared base point.", menu="Tools > Express Tools > Move/Copy/Rotate")
+@command("mocoro", group="modify", label="Move/Copy/Rotate", description="Move, copy, rotate, scale in one command with a shared base point.", menu="Tools > Extra Tools > Move/Copy/Rotate")
 def mocoro(ctx):
     s = yield ctx.select("Select objects")
     if s.kind != "selection" or not s.value:

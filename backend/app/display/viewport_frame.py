@@ -3,9 +3,7 @@ from app.display.shapes import builder, grip_list, xy
 
 @builder("viewport")
 def viewport(e, ctx):
-    pts = [xy(p) for p in e.corners()]
-    verts = [[p[0], p[1], 0.0, 0.0, 0.0] for p in pts]
+    verts = [[v["p"][0], v["p"][1], v["bulge"], 0.0, 0.0] for v in e.outline()]
     g = {"type": "poly", "verts": verts, "closed": True, "elev": 0.0}
-    xs = [p[0] for p in pts]
-    ys = [p[1] for p in pts]
-    return g, [], grip_list([(xy(e.center), "cen")]), [min(xs), min(ys), max(xs), max(ys)]
+    box = e.bounds()
+    return g, [], grip_list([(xy(e.center), "cen")]), [box[0], box[1], box[2], box[3]]

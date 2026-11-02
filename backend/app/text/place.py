@@ -9,6 +9,10 @@ def emit(sink, fs, glyph, x, y, h, wf, shear, sx, sy, ckey, fill):
     from app.text.model import affine
 
     m = affine(h * wf * sx, 0.0, h * shear * sx, h * sy, x * sx, y * sy)
+    runs = getattr(sink, "runs", None)
+    if runs is not None and glyph.src is not None:
+        runs.append((glyph.src, m, ckey))
+        return
     if glyph.strokes is not None and fs_is_stroke(glyph):
         for arr in glyph.strokes:
             if len(arr) >= 2:

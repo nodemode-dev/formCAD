@@ -289,7 +289,12 @@ class CommandRunner:
             raise InputError("Invalid point.")
         if len(vals) not in (2, 3) or not all(math.isfinite(v) for v in vals):
             raise InputError("Invalid point.")
-        return [vals[0], vals[1], 0.0]
+        pt = [vals[0], vals[1], 0.0]
+        if self.doc.active_vp:
+            from app.doc import viewports
+
+            return viewports.input_point(self.doc, pt)
+        return pt
 
     def _ent(self, handle):
         try:
@@ -439,6 +444,14 @@ class CommandRunner:
         for h in handles:
             if h in vis and h not in found:
                 found.append(h)
+        box = payload.get("box")
+        if mode != "remove" and isinstance(box, (list, tuple)) and len(box) == 4:
+            try:
+                x0, y0, x1, y1 = (float(v) for v in box)
+            except (TypeError, ValueError):
+                x0 = y0 = x1 = y1 = None
+            if x0 is not None:
+                sel.areas.append({"kind": "window" if x1 >= x0 else "crossing", "pts": [[x0, y0], [x1, y1]], "handles": list(found)})
         if mode == "set":
             found = self._grouped(found, sel.prompt)
             sel.steps.append(list(sel.selected))
@@ -626,6 +639,12 @@ class CommandRunner:
 
     def _launch(self, name: str, args: list, transparent: bool) -> None:
         spec = registry.COMMANDS[name]
+        from app.doc import editstate
+
+        why = editstate.command_refusal(self.doc, spec.name)
+        if why:
+            self._fail(why)
+            return
         if self.run is not None and not transparent:
             self.cancel_run(quiet=True)
         if transparent:
@@ -834,6 +853,12 @@ class CommandRunner:
             self._launch(spec.name, [], False)
             return
         doc = self.doc
+        from app.doc import editstate
+
+        why = editstate.command_refusal(doc, spec.name)
+        if why:
+            self._fail(why)
+            return
         ctx = Context(self, doc)
         self.log("Command: %s" % spec.name.upper())
         try:

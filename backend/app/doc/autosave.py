@@ -107,7 +107,7 @@ class AutoSaver:
                 return False
             target = doc.autosave_file or self.file_for(doc)
             try:
-                data = container.encode(doc.drawing, doc.name, doc.created, doc.kind)
+                data = container.encode(doc.drawing, doc.name, doc.created, doc.kind, True)
                 container.atomic_write(target, data, 0o600)
             except (container.ContainerError, OSError):
                 doc.dirty_since = time.time()

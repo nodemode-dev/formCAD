@@ -75,7 +75,9 @@ def grips_of(e) -> list:
         out = [_g(e.base, "base", "base"), _g([e.base[0] + e.direction[0] / n, e.base[1] + e.direction[1] / n], "dir", "dir")]
     elif isinstance(e, Text):
         out = [_g(e.align_point or e.position, "insert", "ins")]
-    elif isinstance(e, (MText, AttDef, Insert)):
+    elif isinstance(e, Insert):
+        out = [_g(e.position, "insert", "ins")] + [_g(a["at"], "attribute", "att:" + str(a["tag"])) for a in e.attributes if isinstance(a, dict) and a.get("at") and a.get("vis", True) and not a.get("lock_position")]
+    elif isinstance(e, (MText, AttDef)):
         out = [_g(e.position, "insert", "ins")]
     elif isinstance(e, Dimension):
         from app.dim import dimgrips
@@ -93,7 +95,7 @@ def grips_of(e) -> list:
         out = [_g(v["p"], "vertex", "v%d" % i) for i, v in enumerate(e.vertices)]
     elif e.kind == "helix":
         out = [_g(e.center, "center", "center")]
-    elif e.kind == "assoc_array":
+    elif e.kind in ("assoc_array", "viewport"):
         out = [_g(p, kind, gid) for gid, p, kind in e.grip_points()]
     elif e.kind in ("mleader", "leader", "table"):
         out = [_g(p, kind, gid) for gid, p, kind in annot_grips.points_of(e)]
@@ -263,10 +265,17 @@ def stretch(e, gid, to) -> None:
         e.points[_idx(gid)] = list(t)
     elif e.kind == "mline":
         e.vertices[_idx(gid)]["p"] = [t[0], t[1]]
-    elif e.kind == "assoc_array":
+    elif e.kind in ("assoc_array", "viewport"):
         e.stretch_grip(gid, t)
     elif e.kind in ("mleader", "leader", "table"):
         annot_grips.stretch(e, gid, t)
+    elif isinstance(e, Insert) and str(gid).startswith("att:"):
+        from app.doc import attribs
+
+        try:
+            attribs.move_attribute(e, str(gid)[4:], t)
+        except attribs.AttribError as err:
+            raise GripError(str(err))
     else:
         _shift(e, pos, t)
 
@@ -430,6 +439,8 @@ def transform(e, xf) -> None:
             e.rotation += xf.angle
     elif isinstance(e, (MText, AttDef)):
         e.position = P(e.position)
+        if isinstance(e, AttDef) and e.align_point is not None:
+            e.align_point = P(e.align_point)
         e.height *= xf.k
         if isinstance(e, MText):
             e.width *= xf.k

@@ -270,9 +270,16 @@ def readonly_value(doc, name: str):
             return [0.0, 0.0, 0.0]
         return [box[0], box[1], 0.0] if name == "EXTMIN" else [box[2], box[3], 0.0]
     if name == "TILEMODE":
-        return 1 if doc.current_space == "model" else 0
+        doc.current_space
+        return 1 if doc.tab == "model" else 0
     if name == "CTAB":
-        return "Model" if doc.current_space == "model" else doc.current_space.split(":", 1)[-1]
+        doc.current_space
+        return "Model" if doc.tab == "model" else doc.tab.split(":", 1)[-1]
+    if name == "CVPORT":
+        doc.current_space
+        return d.ents[doc.active_vp].vp_id if doc.active_vp else (1 if doc.tab != "model" else 2)
+    if name == "MAXACTVP":
+        return 64
     if name == "CMDNAMES":
         return doc.get_runner().command_name().upper()
     if name == "CMDACTIVE":

@@ -54,10 +54,26 @@ class Document:
         self.view = {"center": [210.0, 148.5] if self.drawing.metric else [6.0, 4.5], "height": 297.0 if self.drawing.metric else 9.0}
         self.view_history: list = []
         self.view_requests: list = []
-        self.current_space = "model"
+        self.tab = "model"
+        self.active_vp = 0
+        self.vp_max = 0
+        self.tab_hint = 0
+        self.space_views: dict = {}
         self.runner = None
         self.number = 0
         self.aspect = 1.6
+
+    @property
+    def current_space(self) -> str:
+        from app.doc import layouts
+
+        return layouts.effective_space(self)
+
+    @current_space.setter
+    def current_space(self, value: str) -> None:
+        self.tab = value
+        self.active_vp = 0
+        self.vp_max = 0
 
     @property
     def dirty(self) -> bool:
@@ -195,6 +211,9 @@ class Document:
         self.state_id = step.state_before
         step.state_before, step.state_after = step.state_after, step.state_before
         self.selection = []
+        from app.doc import editstate
+
+        editstate.reconcile(self)
         self.modified = now_iso()
         if self.dirty and not self.dirty_since:
             self.dirty_since = time.time()
@@ -289,4 +308,7 @@ class Document:
             "entities": len(self.drawing.ents),
             "metric": self.drawing.metric,
             "space": self.current_space,
+            "tab": self.tab,
+            "viewport": self.active_vp,
+            "maximized": self.vp_max,
         }

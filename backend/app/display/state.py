@@ -3,15 +3,15 @@ import weakref
 from bisect import bisect_right
 
 from app.cmd.grips import grips_of
-from app.display import annot, arrays, dimensions, extra_d2, hatch_d, insert, palette, shapes, viewport_frame
+from app.display import annot, arrays, attribs, dimensions, extra_d2, hatch_d, insert, palette, shapes, viewport_frame, xref_clip
 from app.display.resolve import Context
 from app.doc import annotation
 
-BUILDER_MODULES = (insert, shapes, extra_d2, arrays, annot, hatch_d, dimensions, viewport_frame)
+BUILDER_MODULES = (insert, shapes, extra_d2, arrays, annot, hatch_d, dimensions, viewport_frame, attribs, xref_clip)
 STEP = 1024
 _encode = json.JSONEncoder(separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode
 _states = weakref.WeakKeyDictionary()
-TEXT_KINDS = ("text", "mtext", "insert", "dimension")
+TEXT_KINDS = ("text", "mtext", "insert", "dimension", "attdef")
 
 
 class Entry:
@@ -138,7 +138,7 @@ class DisplayState:
 
     def global_sig(self, doc, ctx):
         s = ctx.session
-        return (ctx.ltscale, ctx.lw_default, ctx.pdmode, ctx.pdsize, ctx.fillmode, ctx.textfill, doc.table_rev.get("linetypes", 0), doc.table_rev.get("textstyles", 0), str(s.get("FONTALT", "")), str(s.get("FONTFALLBACK", "")), frozenset(doc.drawing.session_hidden), doc.drawing.metric, str(doc.drawing.header.get("CANNOSCALE", "1:1")), int(doc.drawing.header.get("ANNOALLVISIBLE", 1)), doc.table_rev.get("scales", 0), doc.table_rev.get("mleaderstyles", 0), doc.table_rev.get("tablestyles", 0), doc.table_rev.get("dimstyles", 0))
+        return (ctx.ltscale, ctx.lw_default, ctx.pdmode, ctx.pdsize, ctx.fillmode, ctx.textfill, doc.table_rev.get("linetypes", 0), doc.table_rev.get("textstyles", 0), str(s.get("FONTALT", "")), str(s.get("FONTFALLBACK", "")), frozenset(doc.drawing.session_hidden), doc.drawing.metric, str(doc.drawing.header.get("CANNOSCALE", "1:1")), int(doc.drawing.header.get("ANNOALLVISIBLE", 1)), int(doc.drawing.header.get("ATTMODE", 1)), doc.table_rev.get("scales", 0), doc.table_rev.get("mleaderstyles", 0), doc.table_rev.get("tablestyles", 0), doc.table_rev.get("dimstyles", 0))
 
     def layer_signature(self, ctx):
         out = {}

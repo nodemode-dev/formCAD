@@ -70,6 +70,9 @@ def rename(d, kind: str, old: str, new: str) -> dict:
         updated += _retarget_entities(d, lambda e: _eq(e.layer, old), lambda e: setattr(e, "layer", new))
         if _eq(d.header.get("CLAYER", ""), old):
             d.set_header("CLAYER", new)
+        from app.doc import layerops
+
+        updated += layerops.after_rename(d, old, new)
     elif table == "linetypes":
         updated += _retarget_entities(d, lambda e: _eq(e.linetype, old), lambda e: setattr(e, "linetype", new))
         for lay in list(d.tables["layers"].values()):

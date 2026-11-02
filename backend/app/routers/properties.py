@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.doc import find as F
 from app.doc import props as P
+from app.doc import qselect as Q
 from app.doc.document import CommandFailed
 from app.doc.service import DocumentFault, service
 
@@ -24,6 +25,16 @@ class FindBody(BaseModel):
     match_case: Optional[bool] = Field(False, alias="matchCase")
     whole_word: Optional[bool] = Field(False, alias="wholeWord")
     select: Optional[bool] = True
+
+
+class QSelectBody(BaseModel):
+    scope: str = "all"
+    kind: Optional[str] = None
+    property: Optional[str] = None
+    operator: str = "="
+    value: str = ""
+    how: str = "include"
+    append: bool = False
 
 
 def _doc(doc_id: str):
@@ -73,6 +84,26 @@ def put_properties(doc_id: str, body: PropertiesBody) -> dict:
             raise HTTPException(409, str(err))
         out = P.inspect(d, [e.handle for e in ents])
         return {"changed": changed, "locked": locked, "rev": doc.rev, "properties": out}
+
+
+@router.get("/{doc_id}/qselect")
+def qselect_info(doc_id: str, scope: str = "all", kind: str = "") -> dict:
+    doc = _doc(doc_id)
+    with doc.lock:
+        d = doc.drawing
+        ents = [e for e in d.entities(doc.current_space) if d.visible(e)]
+        return Q.info(ents, scope, list(doc.selection), kind or None)
+
+
+@router.post("/{doc_id}/qselect")
+def qselect_run(doc_id: str, body: QSelectBody) -> dict:
+    doc = _doc(doc_id)
+    state = doc.get_runner().run_command("qselect", body.model_dump())
+    if state.get("error"):
+        raise HTTPException(400, state["error"])
+    out = state.get("result") or {"handles": [], "count": 0}
+    out["rev"] = doc.rev
+    return out
 
 
 @router.post("/{doc_id}/find")

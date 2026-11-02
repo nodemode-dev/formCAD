@@ -2,10 +2,11 @@ import fnmatch
 import math
 import re
 
-from app.cmd import units
+from app.cmd import layer_flow, units
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
 from app.doc import geom
+from app.doc import layerops as LO
 from app.doc.tables import LINEWEIGHTS, new_layer
 from app.sysvars import registry as sv
 
@@ -130,6 +131,7 @@ def _apply(ctx, names, fn):
 @command("layer", aliases=("la", "layers"), group="format", label="Layer", description="Layer manager; typed option loop to make, set, create, rename and change layers.", menu="Format > Layer...")
 def layer(ctx):
     d = ctx.d
+    LO.push_prev(ctx.doc)
     while True:
         r = yield ctx.keyword("Enter an option", LAYER_OPTS)
         if r.kind != "keyword":
@@ -194,16 +196,10 @@ def layer(ctx):
             if d.layer(new) is not None and new.casefold() != rec["name"].casefold():
                 ctx.say('Layer "%s" already exists.' % new)
                 continue
-            old = rec["name"]
-            moved = dict(rec)
-            moved["name"] = new
-            d.table_remove("layers", old)
-            d.table_set("layers", moved)
-            for h, e in list(d.ents.items()):
-                if e.layer.casefold() == old.casefold():
-                    d.modify(h).layer = new
-            if str(d.header.get("CLAYER", "0")).casefold() == old.casefold():
-                d.set_header("CLAYER", new)
+            try:
+                LO.rename_layer(d, rec["name"], new)
+            except LO.LayerError as err:
+                ctx.say(str(err))
         elif k in ("ON", "OFF", "Freeze", "Thaw", "LOck", "Unlock"):
             verbs = {"ON": "turn on", "OFF": "turn off", "Freeze": "freeze", "Thaw": "thaw", "LOck": "lock", "Unlock": "unlock"}
             n = yield ctx.text("Enter layer name(s) to %s" % verbs[k], cur)
@@ -290,6 +286,8 @@ def layer(ctx):
             if n.kind in ("text", "enter"):
                 desc = t.value
                 _apply(ctx, _pick_layers(ctx, n.value if n.kind == "text" else cur), lambda x: x.__setitem__("description", desc))
+        elif k == "stAte":
+            yield from layer_flow.state_loop(ctx)
         else:
             ctx.say("%s is not available yet." % k)
 
@@ -299,6 +297,8 @@ def layer_exec(ctx, args):
     d = ctx.d
     name = str(args.get("name", "")).strip()
     if not name:
+        if args.get("list") or not args:
+            return LO.describe(ctx.doc)
         raise CommandError("A layer name is required.")
     rec = d.layer(name)
     if rec is None:
@@ -315,9 +315,11 @@ def layer_exec(ctx, args):
         if color in (0, 256):
             raise CommandError("Invalid color.")
         rec["color"] = color
-    for key in ("on", "frozen", "locked", "plot"):
+    for key in ("on", "frozen", "locked", "plot", "new_vp_freeze"):
         if key in args:
             rec[key] = bool(args[key])
+    if "plot_style" in args:
+        rec["plot_style"] = str(args["plot_style"])
     if "linetype" in args:
         lt = d.tables["linetypes"].get(str(args["linetype"]))
         if lt is None:

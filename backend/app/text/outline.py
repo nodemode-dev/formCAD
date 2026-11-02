@@ -142,6 +142,7 @@ class OutlineFont:
         rings = pen.rings if total <= MAX_POINTS else []
         contours = [np.array(r, dtype=float) * k for r in rings]
         g = Glyph(adv * k, 0.0, contours=contours, box=box_of(contours), build_tris=_build)
+        g.src = (self, self.ttf.getGlyphID(name))
         self.cache[ch] = g
         return g
 
@@ -176,6 +177,7 @@ class OutlineFont:
         rings = pen.rings if total <= MAX_POINTS else []
         contours = [np.array(r, dtype=float) * k for r in rings]
         g = Glyph(0.0, 0.0, contours=contours, box=box_of(contours), build_tris=_build)
+        g.src = (self, int(gid))
         self.id_cache[gid] = g
         return g
 
