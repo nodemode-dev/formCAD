@@ -44,6 +44,10 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | tauri 2, tauri-plugin-shell, tauri-plugin-dialog, tauri-plugin-single-instance, regex, serde, serde_json | MIT OR Apache-2.0 | `src-tauri/Cargo.toml`, exact versions in `src-tauri/Cargo.lock` |
 | objc2, objc2-app-kit, objc2-foundation (macOS) | MIT OR Apache-2.0 OR Zlib | `src-tauri/Cargo.toml` |
 
+### DWG converters (optional, installed by the user, never shipped)
+
+FormCAD bundles no DWG library or converter. DWG open and save are off until the user points FormCAD at a converter program they installed themselves (for example the ODA File Converter, under ODA's own terms, or LibreDWG's `dwg2dxf` and `dxf2dwg`, GPL-3.0-or-later). The engine runs that program as a separate process with an argument list and a timeout, and exchanges files through a temporary folder; nothing from either program is linked, imported or distributed. Code: `backend/app/interchange/dwg.py`.
+
 ### Kernel worker (separate program, never bundled in the app)
 
 The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-binaries` releases, with its own notices and sources. It carries OpenCascade Technology 8.0.1 (LGPL-2.1 with the Open CASCADE exception 1.0) through cadquery-ocp-novtk 8.0.1.1.0 (Apache-2.0), and build123d 0.13.0 (Apache-2.0) with cadquery-ocp-proxy (Apache-2.0), ocp_gordon (Apache-2.0) and ocpsvg (license to be confirmed before the first kernel release). FormCAD runs it as a separate program and does not link to it.
