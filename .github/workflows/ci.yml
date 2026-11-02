@@ -1,0 +1,157 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'compile_v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit -p .
+      - run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app formcad_engine.py
+      - run: python formcad_engine.py --selfcheck
+      - name: Boot the engine and probe it
+        run: |
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8290 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8290/api/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:8290/api/health
+
+  scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax and executable bits
+        run: |
+          status=0
+          for f in $(git ls-files); do
+            case "$f" in *.bat|*.py|*.md|*.yml|*.json|*.ts|*.css|*.html|*.rs|*.toml|*.txt|*.png|*.ico|*.icns|*.svg|*.plist|*.lock) continue ;; esac
+            [ -f "$f" ] || continue
+            head -n 1 "$f" | grep -q '^#!.*sh' || continue
+            bash -n "$f" || status=1
+            if [ "$(git ls-files -s "$f" | cut -c1-6)" != "100755" ]; then echo "not executable: $f"; status=1; fi
+          done
+          exit $status
+      - name: No em dash in tracked markdown, no emoji in tracked text
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys
+          bad = []
+          for path in subprocess.check_output(['git', 'ls-files'], text=True).split():
+              try:
+                  text = open(path, encoding='utf-8').read()
+              except (UnicodeDecodeError, IsADirectoryError, FileNotFoundError):
+                  continue
+              markdown = path.endswith('.md')
+              for ch in text:
+                  cp = ord(ch)
+                  if (markdown and cp == 0x2014) or 0x1F000 <= cp <= 0x1FAFF or 0x2600 <= cp <= 0x27BF:
+                      bad.append(f'{path}: U+{cp:04X}')
+                      break
+          print('\n'.join(bad) or 'clean')
+          sys.exit(1 if bad else 0)
+          PY
+
+  engine-freeze:
+    needs: [frontend, backend]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the engine and PyInstaller
+        run: |
+          setup/install_backend
+          source setup/lib.sh
+          fc_venv
+          pip install pyinstaller==6.22.3
+      - name: Install the frontend
+        run: setup/install_frontend
+      - name: Freeze the engine and run its selfcheck
+        run: setup/freeze_backend
+      - name: License scan of the frozen engine
+        run: |
+          source setup/lib.sh
+          fc_venv
+          pip install pip-licenses
+          python - <<'PY'
+          import fnmatch, json, os, re, subprocess, sys
+          banned_names = ['libx264*', 'libx265*', 'librubberband*', 'libvidstab*', 'libpostproc*', 'libfdk*', 'libTK*', 'libocct*', 'OCP*', 'libgpl*', 'libavcodec*', 'libavformat*', 'libswscale*']
+          banned_text = ['GNU AFFERO GENERAL PUBLIC LICENSE', 'GNU GENERAL PUBLIC LICENSE']
+          skip = ['pyinstaller', 'pyinstaller-hooks-contrib']
+          rows = json.loads(subprocess.check_output([sys.executable, '-m', 'piplicenses', '--format=json', '--from=mixed', '--ignore-packages', *skip], text=True))
+          pattern = re.compile(r'(^|[^A-Za-z])A?GPL|GNU (Affero )?General Public', re.I)
+          bad = []
+          for row in rows:
+              lic = row.get('License', '') or ''
+              if pattern.search(lic):
+                  bad.append(f"package {row['Name']} {row['Version']}: {lic}")
+              elif 'LGPL' in lic.upper() or 'LESSER' in lic.upper():
+                  print(f"note: LGPL package {row['Name']} {row['Version']}: {lic}")
+          root = 'src-tauri/engine'
+          for folder, dirs, files in os.walk(root):
+              for name in files:
+                  path = os.path.join(folder, name)
+                  if any(fnmatch.fnmatch(name.lower(), p.lower()) for p in banned_names):
+                      bad.append(f'file {path}')
+                  elif re.match(r'(licen[sc]e|copying)', name, re.I) and 'pyinstaller' not in path.lower():
+                      try:
+                          head = open(path, encoding='utf-8', errors='ignore').read(4000).upper()
+                      except OSError:
+                          continue
+                      if any(t in head for t in banned_text) and 'LESSER' not in head and 'LIBRARY' not in head:
+                          bad.append(f'license text {path}')
+          print('\n'.join(bad) or 'license scan clean')
+          sys.exit(1 if bad else 0)
+          PY

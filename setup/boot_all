@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+cd "$FORMCAD_ROOT"
+pids=()
+setup/boot_backend &
+pids+=($!)
+setup/boot_frontend &
+pids+=($!)
+trap 'kill "${pids[@]}" 2>/dev/null' EXIT INT TERM
+fc_say "frontend http://localhost:5290 · engine http://127.0.0.1:${FORMCAD_PORT:-8290}"
+wait

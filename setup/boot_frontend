@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+cd "$FORMCAD_ROOT/frontend"
+[ -d node_modules ] || fc_die "frontend deps missing, run ./formCAD install"
+exec npm run dev

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+py="$(fc_python)" || fc_die "Python 3.12 or newer is required"
+cd "$FORMCAD_ROOT/backend"
+[ -f venv/bin/activate ] || [ -f venv/Scripts/activate ] || "$py" -m venv venv
+fc_venv
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+fc_say "engine installed in backend/venv"

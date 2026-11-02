@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+fc_kernel_venv
+python -c "import PyInstaller" 2>/dev/null || pip install pyinstaller==6.22.3
+cd "$FORMCAD_ROOT/kernel"
+sep=":"
+[ "$(fc_os)" = windows ] && sep=";"
+ext="$(fc_exe)"
+src="$(fc_native_path "$FORMCAD_ROOT")"
+rm -rf build dist
+pyinstaller --noconfirm --clean --onedir --name formcad-kernel \
+  --distpath dist --workpath build --specpath build \
+  --collect-all OCP --collect-all build123d \
+  "$src/kernel/formcad_kernel.py"
+bin="dist/formcad-kernel/formcad-kernel${ext}"
+reply="$(printf '{"id":1,"method":"hello","params":{}}\n{"id":2,"method":"shutdown","params":{}}\n' | "$bin" | head -n 1)"
+printf '%s\n' "$reply" | grep -q '"result"' || fc_die "the frozen kernel did not answer hello: $reply"
+fc_say "kernel folder ready: $FORMCAD_ROOT/kernel/dist/formcad-kernel (ship it from formCAD-binaries, never inside the app)"

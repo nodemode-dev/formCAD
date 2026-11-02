@@ -1,6 +1,10 @@
 node_modules/
 frontend/dist/
 backend/venv/
+kernel/venv/
+kernel/build/
+kernel/dist/
+kernel/dist-kernel/
 backend/build/
 backend/dist-engine/
 __pycache__/

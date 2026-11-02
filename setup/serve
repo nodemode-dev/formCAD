@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+[ -f "$FORMCAD_ROOT/frontend/dist/index.html" ] || "$FORMCAD_ROOT/setup/build_frontend"
+fc_venv
+cd "$FORMCAD_ROOT/backend"
+export FORMCAD_DIST="$FORMCAD_ROOT/frontend/dist"
+fc_say "serving http://127.0.0.1:${FORMCAD_PORT:-8290}"
+exec python -m uvicorn app.main:app --host "${FORMCAD_HOST:-127.0.0.1}" --port "${FORMCAD_PORT:-8290}"

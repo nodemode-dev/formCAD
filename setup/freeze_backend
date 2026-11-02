@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+
+sign_engine() {
+  local ent="$FORMCAD_ROOT/src-tauri/entitlements.plist" identity="${APPLE_SIGNING_IDENTITY:--}" f signed=0
+  local files=() flags=(--force --options runtime)
+  if [ "$identity" = "-" ]; then flags+=(--timestamp=none); else flags+=(--timestamp); fi
+  [ -f "$ent" ] && flags+=(--entitlements "$ent")
+  while IFS= read -r f; do
+    if file -b "$f" | grep -Eq 'Mach-O.*(executable|shared library|bundle)'; then files+=("$f"); fi
+  done < <(find "$1" -type f | awk -F/ '{print NF "\t" $0}' | sort -rn | cut -f2-)
+  for f in "${files[@]}"; do
+    codesign "${flags[@]}" --sign "$identity" "$f"
+    signed=$((signed + 1))
+  done
+  for f in "${files[@]}"; do codesign --verify "$f" || fc_die "engine file failed its signature check: $f"; done
+  if [ "$identity" = "-" ]; then fc_say "engine signed ad hoc: $signed Mach-O files"; else fc_say "engine signed: $signed Mach-O files"; fi
+}
+
+fc_venv
+python -c "import PyInstaller" 2>/dev/null || fc_die "PyInstaller missing, run ./formCAD install-desktop"
+[ -f "$FORMCAD_ROOT/frontend/dist/index.html" ] || "$FORMCAD_ROOT/setup/build_frontend"
+cd "$FORMCAD_ROOT/backend"
+sep=":"
+[ "$(fc_os)" = windows ] && sep=";"
+ext="$(fc_exe)"
+src="$(fc_native_path "$FORMCAD_ROOT")"
+extra=()
+[ -z "${FORMCAD_PYI_ARCH:-}" ] || extra+=(--target-arch "$FORMCAD_PYI_ARCH")
+[ ! -d "$FORMCAD_ROOT/setup/pyi_hooks" ] || extra+=(--additional-hooks-dir "$src/setup/pyi_hooks")
+[ ! -d "$FORMCAD_ROOT/backend/app/data" ] || extra+=(--add-data "$src/backend/app/data${sep}data")
+rm -rf build/pyinstaller dist-engine
+pyinstaller --noconfirm --clean --onedir --name formcad-engine \
+  --distpath dist-engine --workpath build/pyinstaller --specpath build/pyinstaller \
+  --add-data "$src/frontend/dist${sep}frontend_dist" \
+  --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring \
+  "${extra[@]}" \
+  "$src/backend/formcad_engine.py"
+out="$FORMCAD_ROOT/src-tauri/engine"
+rm -rf "$out"
+cp -R dist-engine/formcad-engine "$out"
+[ "$(fc_os)" != macos ] || sign_engine "$out"
+"$out/formcad-engine${ext}" --selfcheck
+fc_say "engine folder ready: $out"

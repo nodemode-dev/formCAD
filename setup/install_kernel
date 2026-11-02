@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+py="$(fc_python)" || fc_die "Python 3.12 or newer is required"
+[ -f "$FORMCAD_ROOT/kernel/requirements_kernel.txt" ] || fc_die "kernel/requirements_kernel.txt is missing"
+cd "$FORMCAD_ROOT/kernel"
+[ -f venv/bin/activate ] || [ -f venv/Scripts/activate ] || "$py" -m venv venv
+fc_kernel_venv
+python -m pip install --upgrade pip
+pip install -r requirements_kernel.txt
+fc_say "kernel installed in kernel/venv (development only; the app downloads the frozen kernel on first run)"

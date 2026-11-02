@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/lib.sh"
+fail=0
+ok() { printf '  ok     %s\n' "$1"; }
+bad() { printf '  FAIL   %s · %s\n' "$1" "$2"; fail=1; }
+warn() { printf '  warn   %s · %s\n' "$1" "$2"; }
+fc_say "doctor · $(fc_os)"
+if fc_node_ok; then ok "node $(node -v)"; else bad "node" "Node 22 or newer is required"; fi
+if command -v npm >/dev/null 2>&1; then ok "npm"; else bad "npm" "install npm"; fi
+if py="$(fc_python)"; then ok "python $("$py" -V 2>&1 | awk '{print $2}')"; else bad "python" "Python 3.12 or newer is required"; fi
+if [ -f "$FORMCAD_ROOT/backend/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/backend/venv/Scripts/activate" ]; then ok "engine venv"; else warn "engine venv" "run ./formCAD install"; fi
+if [ -d "$FORMCAD_ROOT/frontend/node_modules" ]; then ok "frontend node_modules"; else warn "frontend deps" "run ./formCAD install"; fi
+if [ -f "$FORMCAD_ROOT/kernel/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/kernel/venv/Scripts/activate" ]; then ok "kernel dev venv"; else warn "kernel dev venv" "run ./formCAD install-kernel (the app runs its 2D features without it)"; fi
+fc_rust_env
+if command -v cargo >/dev/null 2>&1; then ok "rust $(rustc --version | awk '{print $2}') for desktop builds"; else warn "rust" "desktop builds need https://rustup.rs"; fi
+if [ "$(fc_os)" = linux ]; then
+  if pkg-config --exists webkit2gtk-4.1 2>/dev/null; then ok "webkit2gtk-4.1"; else warn "webkit2gtk-4.1" "desktop builds need libwebkit2gtk-4.1-dev"; fi
+fi
+for port in 5290 "${FORMCAD_PORT:-8290}"; do
+  if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then warn "port $port" "already in use"; else ok "port $port free"; fi
+done
+if [ "$fail" = 0 ]; then fc_say "ready"; else fc_say "fix the FAIL lines above"; fi
+exit "$fail"
