@@ -2,6 +2,18 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.3.0 · 2026-11-02
+
+- The drawing area now draws: lines, arcs, circles, ellipses, polylines with widths, splines, points, text, fills and linetypes, in colour and lineweight, with a grid, axes, a crosshair, a view cube and a coordinate icon.
+- Pan with the middle button or trackpad, zoom at the cursor with the wheel, double-click the middle button to see everything.
+- Every Draw command works with all its options: line, construction line, ray, polyline, polygon, rectangle, arc (all eleven ways), circle (including tangent to two or three objects), donut, ellipse and elliptical arc, 2D solid, point, divide, measure, spline, helix, revision cloud, wipeout, 3D polyline, centre mark, centre line, multiline with styles and editing, and break line.
+- Commands show a live preview while you pick points.
+- Object snaps (endpoint, midpoint, centre, node, quadrant, intersection, apparent intersection, insertion, perpendicular, tangent, nearest, parallel, extension, geometric centre) with markers and tooltips; polar and object snap tracking, ortho, snap and grid, isometric drafting, typed distances along the cursor direction.
+- Select by clicking, by window or by crossing; grips stretch, move, rotate, scale and mirror, with copies.
+- Dynamic input shows coordinates, distances and angles next to the cursor.
+- Text renders with an original single-stroke font or any installed TrueType or OpenType font, with every multiline text formatting code.
+- A constraint solver for drafting and sketching reports under, fully and over defined geometry and names conflicting constraints.
+
 ## 0.2.0 · 2026-11-02
 
 - FormCAD opens as a desktop app: a rounded splash, then the window appears whole with the FormCAD Home screen, title bar, menus and status bar.

@@ -8,7 +8,7 @@ Part of the NodeMode form family: built for macOS, Windows and Linux by formcomp
 
 ## Status
 
-Early build. The desktop shell, the engine, the document core and the command line run; drawing on a canvas arrives in the next version. The plan lives in the planning sidecar that ships beside each repo version.
+Early build. The desktop shell, the engine, the document core, the command line and 2D drafting with every Draw command, object snaps, tracking, selection and grips run; editing commands arrive in the next version. The plan lives in the planning sidecar that ships beside each repo version.
 
 ## Quick start
 
