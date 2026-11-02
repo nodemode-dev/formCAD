@@ -1,0 +1,20 @@
+; FormCAD macro bracket-sketch
+; 18 recorded steps
+RECTANG
+0,0
+120,60
+CIRCLE
+30,30
+10
+CIRCLE
+90,30
+10
+LINE
+0,30
+120,30
+
+MOVE
+@box 110,10 70,50
+
+0,0
+0,20

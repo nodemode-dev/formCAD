@@ -1,0 +1,14 @@
+; FormCAD command aliases, one per line: ALIAS, *COMMAND
+; a later line for the same alias wins; command names always stay commands
+[Command aliases]
+RC, *RECTANG
+CC, *CIRCLE
+LN, *LINE
+MV, *MOVE
+SC, *SCRIPT
+RS, *RSCRIPT
+CNT, *COUNT
+ZZ, *NOSUCHCOMMAND
+LINE, *CIRCLE
+; programs are never run from an alias file
+NOTE, notepad.exe, 1,,

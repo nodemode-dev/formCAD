@@ -1,0 +1,22 @@
+import formcad
+
+doc = formcad.active_document()
+
+doc.send('RECTANG')
+doc.send('0,0')
+doc.send('120,60')
+doc.send('CIRCLE')
+doc.send('30,30')
+doc.send('10')
+doc.send('CIRCLE')
+doc.send('90,30')
+doc.send('10')
+doc.send('LINE')
+doc.send('0,30')
+doc.send('120,30')
+doc.send('')
+doc.send('MOVE')
+doc.script('@box 110,10 70,50')
+doc.send('')
+doc.send('0,0')
+doc.send('0,20')

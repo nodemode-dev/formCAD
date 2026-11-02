@@ -1,0 +1,25 @@
+; FormCAD script: draw a mounting plate, then edit it
+; one line is one run of typed input; a trailing space is Enter; ^C cancels
+RECTANG 0,0 200,120
+CIRCLE 40,60 15
+CIRCLE 160,60 15
+LINE 0,60 200,60 
+DELAY 50
+COPY L  0,0 0,30
+
+MOVE
+@pick 40,75
+ 
+0,0 10,0
+ERASE
+@box 170,90 150,30
+
+OFFSET 10
+@pick 100,0
+100,-5
+
+TEXT 100,140 8 0
+PLATE A-1
+
+(prin1 "lisp lines are routed to the LISP evaluator")
+CIRCLE 100,60 5
