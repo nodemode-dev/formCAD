@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.7.0 · 2026-11-02
+
+- A new app icon on the desktop app, the browser tab and the splash, and a README in the form family layout.
+- Parametric parts: a feature tree with a rollback bar, suppress, reorder, rename and errors that never lose the tree; sketches on planes and faces; extrude and revolve with every end condition; fillet, chamfer, shell, draft, linear and circular patterns and mirror; references that survive edits upstream.
+- Sweep, loft, boundary solids, ribs and a hole builder (simple, counterbored, countersunk and tapped holes). Its size table ships with 24 coarse thread pitch rows from one public standard copy, each marked with its source and status; clearance, counterbore, countersink and tap drill sizes are left for you to fill in, because no free primary source for them could be read.
+- Multibody parts, reference planes, axes, points and coordinate systems, configurations, design tables, a materials library with sources, and mass properties about any coordinate system.
+- NURBS curves: by control points or through points, rebuild, fit, degree and knot editing, offset, extend, match, and blend curves up to G3, with a continuity report.
+- Surfaces: loft, one and two rail sweeps, network, patch, edge, planar, blend and match surfaces to G2, extend, offset, trim, split and join; fillet, chamfer and blend edges; booleans that explain why they failed and show naked edges; a seam continuity check with G0, G1 and G2 badges in the 3D view.
+- A model tolerance setting used by every 3D operation.
+- Fixes: construction planes and the 3D grid are computed by the engine; installed-package plugins are checked by hash; VPORTS 4 always makes four tiles; layout tab menus update in place.
+
 ## 0.6.0 · 2026-11-02
 
 - A built-in LISP language: type expressions at the command line, load routines with APPLOAD, run commands from routines, with file access limited to the support folders you choose and runaway routines stopped.

@@ -17,7 +17,7 @@
 
 FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of its siblings formvis (image) & formmorpheus (animation). One `.fcad` project holds a full 2D drafting database w/ layouts & plotting, parametric part features on an OpenCascade kernel, NURBS curves & surfaces, & sketches w/ constraints & equations, all driven by one engine that you can also run headless, script in LISP or Python, or hand to an agent over MCP. Instead of SolidWorks, Fusion, Rhino, Grasshopper and CADcraft. The OpenCascade kernel runs as a separate program the app downloads & verifies, so the app itself stays Apache-2.0.
 
-**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.6.0, phases 0 to 15 of 43 landed, 16 to 18 in progress (about 500 engine commands; drafting floor taken from a clean-room functional study, never from another product's code)
+**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.7.0, phases 0 to 18 of 43 landed (about 500 engine commands; drafting floor taken from a clean-room functional study, never from another product's code)
 
 ## Highlights
 
@@ -28,6 +28,8 @@ FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of i
 - **Interchange** DXF R12 to R2018 checked entity by entity, SVG import, STEP & IGES through the kernel, DWG through a converter you install
 - **Parametric sketches** geometric & dimensional constraints, status colours, a conflict explainer that refuses over-defining dimensions, parameters w/ units & equations
 - **3D on OpenCascade** solids, booleans w/ diagnostics, per-face meshes, seven display modes, a view cube, named views & construction planes
+- **Parametric parts** a feature tree w/ rollback, 20 feature types, references that survive edits, configurations, design tables & mass properties
+- **NURBS curves & surfaces** blend curves to G3, blend & match surfaces to G2, seam continuity badges in the 3D view
 - **Automation** a LISP dialect w/ 188 builtins, scripts, a macro recorder, Python macros in an isolated process, hashed plugins, a headless CLI & an MCP server for agents
 - **The form family shell** the same splash & reveal, title bar, menus, Home screen, Preferences & status bar as formvis, w/ 28 shared themes & zero flash on load
 
@@ -77,6 +79,8 @@ build_app.bat
 | `FORMCAD_LIBRARY_DIR` | a different folder for the drawing library |
 | `FORMCAD_PORTABLE` | `1` keeps all data beside the app |
 | `FORMCAD_PORT` | the engine port (desktop app: 0, a free port) |
+| `FORMCAD_HOST` | the address the engine binds (default `127.0.0.1`); anything but loopback exposes the engine to the network & is not supported |
+| `FORMCAD_DIST` | a built interface folder for `./formCAD serve` to serve instead of `frontend/dist` |
 | `FORMCAD_CONTROL_PORT` | turns on the local control protocol on this loopback port |
 | `FORMCAD_CORS_ORIGINS` | extra interface origins the engine accepts (development only) |
 | `FORMCAD_KERNEL` | path to a kernel worker to use instead of the downloaded one |
@@ -94,7 +98,8 @@ Set them in the shell. No `.env` is read or committed.
 formCAD/
 ├── frontend/              the interface (vanilla TS + Vite)
 │   ├── src/canvas/        the WebGL2 drafting canvas, input, snaps, grips, constraint glyphs
-│   ├── src/view3d/        the three.js 3D view, display modes, view cube, picking
+│   ├── src/view3d/        the three.js 3D view, display modes, view cube, picking, curve & seam layers
+│   ├── src/part/          the feature tree, feature panels, configurations & materials
 │   ├── src/ui/            the form family shell, panels, dialogs, output, parameters, automation
 │   ├── src/io/            the engine client & event stream
 │   └── src/styles/        tokens & stylesheets (tokens only, z-index from the scale)
@@ -108,7 +113,9 @@ formCAD/
 │   ├── app/automation/    CLI, MCP, control protocol, macros, plugins
 │   ├── app/param/         constraints, sketches & parameters on the in-house solver
 │   ├── app/solid/         solids, persistent ids & the binary scene for the 3D view
-│   └── app/part/          the part feature tree & rebuild
+│   ├── app/part/          the part feature tree & rebuild
+│   ├── app/bodies/        multibody, reference geometry, configurations, materials & mass properties
+│   └── app/nurbs3d/       NURBS curve construction, blends & continuity
 ├── kernel/                the separate OpenCascade worker program (JSON lines on stdio)
 ├── src-tauri/             the desktop shell (Tauri 2): splash, reveal, title bar, engine sidecar
 ├── setup/                 install, boot, freeze, desktop & doctor scripts behind ./formCAD
@@ -120,7 +127,7 @@ formCAD/
 
 ## Status
 
-Phases 0 to 15 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. Phases 16 to 18 (part features, NURBS curves & surfaces) are being built for v0.7.0. The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
+Phases 0 to 18 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics; next come analysis, the gumball & 3DM (Phase 19), assemblies & drawings. The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
 
 ## Development
 
