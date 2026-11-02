@@ -61,7 +61,7 @@ def dwg_status() -> dict:
 
 @router.put("/interchange/dwg")
 def dwg_settings(body: DwgBody) -> dict:
-    dwg.save_settings(body.enabled, body.converter)
+    _wrap(lambda: dwg.save_settings(body.enabled, body.converter))
     return dwg.status()
 
 

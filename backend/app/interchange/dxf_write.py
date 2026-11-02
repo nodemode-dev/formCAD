@@ -970,8 +970,8 @@ class Writer:
             names = [n for n in e.frozen]
             if names:
                 ent.frozen_layers = names
-        except Exception:
-            pass
+        except Exception as err:
+            self.r.warn("Viewport %d: frozen layers were not written: %s" % (vid, err))
         if e.clip:
             try:
                 poly = lay.new_entity("LWPOLYLINE", {"layer": e.layer or "0", "flags": 1})
@@ -979,8 +979,8 @@ class Writer:
                 self.appid(C.APPID)
                 poly.set_xdata(C.APPID, [(1000, "FCVPCLIP")])
                 ent.dxf.clipping_boundary_handle = poly.dxf.handle
-            except Exception:
-                pass
+            except Exception as err:
+                self.r.warn("Viewport %d: the clip boundary was not written: %s" % (vid, err))
         return ent
 
     def next_vp_id(self, lay) -> int:

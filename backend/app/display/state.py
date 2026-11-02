@@ -2,12 +2,14 @@ import json
 import weakref
 from bisect import bisect_right
 
+LINE_HOOKS = []
+
 from app.cmd.grips import grips_of
-from app.display import annot, arrays, attribs, dimensions, extra_d2, hatch_d, insert, palette, shapes, viewport_frame, xref_clip
+from app.display import annot, arrays, attribs, constraint_marks, dimensions, extra_d2, hatch_d, insert, palette, shapes, viewport_frame, xref_clip
 from app.display.resolve import Context
 from app.doc import annotation
 
-BUILDER_MODULES = (insert, shapes, extra_d2, arrays, annot, hatch_d, dimensions, viewport_frame, attribs, xref_clip)
+BUILDER_MODULES = (insert, shapes, extra_d2, arrays, annot, hatch_d, dimensions, viewport_frame, attribs, xref_clip, constraint_marks)
 STEP = 1024
 _encode = json.JSONEncoder(separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode
 _states = weakref.WeakKeyDictionary()
@@ -52,7 +54,10 @@ def line_entry(e, ctx, order, rev):
     else:
         by0, by1 = y0, y1
     js = LINE_FMT % (e.handle, head_of(pp), order, x0, y0, x1, y1, x0, y0, mx, my, x1, y1, bx0, by0, bx1, by1)
-    return Entry(e.handle, order, (bx0, by0, bx1, by1), js, rev, pp.layer.casefold(), None)
+    entry = Entry(e.handle, order, (bx0, by0, bx1, by1), js, rev, pp.layer.casefold(), None)
+    for hook in LINE_HOOKS:
+        entry = hook(e, ctx, entry)
+    return entry
 
 
 def session_values():

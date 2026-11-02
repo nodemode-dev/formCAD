@@ -67,6 +67,7 @@ class AssocArray(Entity):
     row_elevation: float = 0.0
     axis_angle: float = 0.0
     center: list = field(default_factory=_z)
+    axis: list = field(default_factory=list)
     items: int = 6
     fill_angle: float = geom.TAU
     rotate_items: bool = True
@@ -81,6 +82,7 @@ class AssocArray(Entity):
     def move_by(self, d) -> None:
         super().move_by(d)
         v = [d[0], d[1], d[2] if len(d) > 2 else 0.0]
+        self.axis = [_shift(p, v) for p in self.axis]
         for data in self.source:
             _shift_dict(data, v)
         for rep in self.replacements:
@@ -93,6 +95,7 @@ class AssocArray(Entity):
     def apply_xf(self, xf) -> None:
         self.base = xf.pt(self.base)
         self.center = xf.pt(self.center)
+        self.axis = [xf.pt(p) for p in self.axis]
         self.source = _xf_dicts(self.source, xf)
         for rep in self.replacements:
             rep["base"] = xf.pt(rep["base"])

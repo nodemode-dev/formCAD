@@ -87,10 +87,13 @@ def write_file(path: str, head, body) -> str:
     raw = os.path.expanduser(str(path).strip())
     if not raw:
         raise ExtractError("A file name is required.")
+    from app.core import outputs
+
+    try:
+        raw = outputs.checked(raw, (".csv", ".txt"), ".csv")
+    except outputs.OutputRefused as err:
+        raise ExtractError(str(err))
     ext = os.path.splitext(raw)[1].lower()
-    if ext not in (".csv", ".txt"):
-        raw += ".csv"
-        ext = ".csv"
     tmp = raw + ".part"
     try:
         with open(tmp, "w", encoding="utf-8", newline="") as fh:

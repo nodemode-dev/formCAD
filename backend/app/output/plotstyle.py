@@ -342,7 +342,17 @@ def remove_style(table, name):
 
 def save_to_folder(table, path=None):
     target = path or os.path.join(folder(), "".join(c if c.isalnum() or c in "-_ ()" else "_" for c in table["name"]) + EXT[table["kind"]])
-    os.makedirs(os.path.dirname(os.path.abspath(target)), exist_ok=True)
+    target = os.path.abspath(os.path.expanduser(str(target)))
+    root, ext = os.path.splitext(target)
+    if ext.lower() != EXT[table["kind"]]:
+        target = root + EXT[table["kind"]]
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    from app.core import outputs
+
+    try:
+        target = outputs.checked(target, (EXT[table["kind"]],))
+    except outputs.OutputRefused as err:
+        raise StyleError(str(err))
     with open(target, "w", encoding="utf-8") as fh:
         json.dump(to_file(table), fh, indent=1, ensure_ascii=False)
     return target

@@ -415,7 +415,10 @@ def _polar_flow(ctx, ents, assoc):
         if r.kind == "keyword" and r.value == "Axis of rotation":
             a = yield ctx.point("Specify first point on axis of rotation")
             if a.kind == "point":
-                yield ctx.point("Specify second point on axis of rotation", base=a.value)
+                b = yield ctx.point("Specify second point on axis of rotation", base=a.value)
+                if b.kind == "point":
+                    arr.axis = [[a.value[0], a.value[1], 0.0], [b.value[0], b.value[1], 0.0]]
+                    ctx.say("Axis of rotation stored; a flat drawing rotates about the center point.")
             continue
         if r.kind != "point":
             return None

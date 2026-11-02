@@ -62,9 +62,32 @@ def watch_parent() -> None:
     threading.Thread(target=run, name="formcad-parent-watch", daemon=True).start()
 
 
-def run_mcp(argv: list[str]) -> int:
-    print("formcad-engine mcp: the MCP server is not part of this build yet.", file=sys.stderr)
-    return 2
+def run_cli(argv: list[str]) -> int:
+    from app.automation import cli
+
+    return cli.main(argv)
+
+
+def start_control(data, server) -> None:
+    raw = os.environ.get("FORMCAD_CONTROL_PORT", "").strip()
+    if not raw:
+        return
+    from app.automation import control
+
+    def stop() -> None:
+        server.should_exit = True
+
+    control.m_quit.callback = stop
+
+    try:
+        listener = control.start(int(raw), data)
+    except (ValueError, OSError) as err:
+        print(f"control port not started: {err}", file=sys.stderr)
+        return
+    if listener.error:
+        print(f"control port not started: {listener.error}", file=sys.stderr)
+    else:
+        print(f"control protocol on 127.0.0.1:{listener.port}, token file {listener.token_path}", file=sys.stderr)
 
 
 def announce_port(server, data) -> None:
@@ -88,8 +111,10 @@ def announce_port(server, data) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) > 1 and sys.argv[1] == "mcp":
-        return run_mcp(sys.argv[2:])
+    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
+        return run_cli(sys.argv[1:])
+    if len(sys.argv) > 1 and sys.argv[1] in ("--help", "-h"):
+        return run_cli(["help"])
     if "--selfcheck" in sys.argv:
         return selfcheck()
     from app.core import runtime
@@ -116,9 +141,15 @@ def main() -> int:
     host = os.environ.get("FORMCAD_HOST", "127.0.0.1")
     server = uvicorn.Server(uvicorn.Config(fastapi_app, host=host, port=port, log_level="info"))
     announce_port(server, data)
+    start_control(data, server)
     try:
         server.run()
     finally:
+        if os.environ.get("FORMCAD_CONTROL_PORT"):
+            from app.automation import control
+
+            if control.CURRENT is not None:
+                control.CURRENT.stop()
         try:
             if json.loads((data / PORT_NAME).read_text(encoding="utf-8")).get("pid") == os.getpid():
                 (data / PORT_NAME).unlink()

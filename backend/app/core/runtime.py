@@ -22,7 +22,7 @@ class AlreadyRunning(RuntimeError):
 def apply_switches(argv: list[str]) -> list[str]:
     rest: list[str] = []
     items = list(argv)
-    valued = {"--user-data-dir": "FORMCAD_DATA_DIR", "--port": "FORMCAD_PORT", "--log-level": "FORMCAD_LOG_LEVEL"}
+    valued = {"--user-data-dir": "FORMCAD_DATA_DIR", "--port": "FORMCAD_PORT", "--log-level": "FORMCAD_LOG_LEVEL", "--control-port": "FORMCAD_CONTROL_PORT"}
     flags = {"--portable": ("FORMCAD_PORTABLE", "1")}
     i = 0
     while i < len(items):

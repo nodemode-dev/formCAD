@@ -1,5 +1,6 @@
 from app.cmd import jig
 from app.cmd import hatch_support as HS
+from app.cmd.commands import solids
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
 from app.doc import loops as L
@@ -257,6 +258,9 @@ def union_cmd(ctx):
     r = yield ctx.select("Select regions")
     if r.kind != "selection":
         return
+    if solids.any_solid(ctx, r.value):
+        solids.boolean_pick(ctx, "fuse", r.value)
+        return
     regs = region_ents(ctx, r.value)
     if len(regs) < 2:
         ctx.say("Select at least two regions.")
@@ -268,6 +272,9 @@ def union_cmd(ctx):
 def intersect_cmd(ctx):
     r = yield ctx.select("Select regions")
     if r.kind != "selection":
+        return
+    if solids.any_solid(ctx, r.value):
+        solids.boolean_pick(ctx, "common", r.value)
         return
     regs = region_ents(ctx, r.value)
     if len(regs) < 2:
@@ -282,6 +289,12 @@ def subtract_cmd(ctx):
     a = yield ctx.select("Select regions to subtract from")
     if a.kind != "selection":
         return
+    if solids.any_solid(ctx, a.value):
+        ctx.say("Select solids to subtract ..")
+        b = yield ctx.select("Select solids to subtract")
+        if b.kind == "selection":
+            solids.boolean_run(ctx, "cut", a.value, b.value)
+        return
     base = region_ents(ctx, a.value)
     if not base:
         ctx.say("Select at least one region.")
@@ -290,7 +303,7 @@ def subtract_cmd(ctx):
     b = yield ctx.select("Select regions to subtract")
     if b.kind != "selection":
         return
-    cut = [r for r in region_ents(ctx, b.value) if r.handle != base[0].handle]
+    cut =[r for r in region_ents(ctx, b.value) if r.handle != base[0].handle]
     if not cut:
         ctx.say("Select at least one region to subtract.")
         return
@@ -304,6 +317,8 @@ def two_handles(args):
 
 @executes("union")
 def union_exec(ctx, args):
+    if solids.any_solid(ctx, two_handles(args)):
+        return solids.boolean_exec(ctx, "fuse", two_handles(args)[:1], two_handles(args)[1:])
     regs = region_ents(ctx, two_handles(args))
     if len(regs) < 2:
         raise CommandError("Give at least two region handles.")
@@ -312,6 +327,8 @@ def union_exec(ctx, args):
 
 @executes("intersect")
 def intersect_exec(ctx, args):
+    if solids.any_solid(ctx, two_handles(args)):
+        return solids.boolean_exec(ctx, "common", two_handles(args)[:1], two_handles(args)[1:])
     regs = region_ents(ctx, two_handles(args))
     if len(regs) < 2:
         raise CommandError("Give at least two region handles.")
@@ -320,6 +337,8 @@ def intersect_exec(ctx, args):
 
 @executes("subtract")
 def subtract_exec(ctx, args):
+    if solids.any_solid(ctx, [int(h) for h in args.get("from") or []]):
+        return solids.boolean_exec(ctx, "cut", [int(h) for h in args.get("from") or []], [int(h) for h in args.get("subtract") or []])
     base = region_ents(ctx, [int(h) for h in args.get("from") or []])
     cut = region_ents(ctx, [int(h) for h in args.get("subtract") or []])
     if not base or not cut:

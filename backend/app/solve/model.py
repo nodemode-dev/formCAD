@@ -1,3 +1,4 @@
+import math
 import time
 
 import numpy as np
@@ -48,6 +49,7 @@ class Sketch:
         self._cid = 1
         self._count = {}
         self.weights = {}
+        self.pweights = {}
 
     def xarray(self):
         return np.array(self._x, dtype=float)
@@ -90,11 +92,16 @@ class Sketch:
     def set_weight(self, eid, w):
         self.weights[eid] = float(w)
 
+    def set_param_weight(self, eid, index, w):
+        self.pweights[self.ents[eid].off + index] = float(w)
+
     def _weights(self):
         w = np.ones(len(self._x))
         for eid, v in self.weights.items():
             e = self.ents[eid]
             w[e.off:e.off + e.n] = v
+        for i, v in self.pweights.items():
+            w[i] = v
         return w
 
     def _make(self, kind, refs, value, name, ctx, cid):
@@ -115,10 +122,27 @@ class Sketch:
     def _label(self, c):
         return {"id": c.id, "kind": c.kind, "name": c.name}
 
-    def add(self, kind, refs, value=None, name=None, force=False):
-        cid = self._cid
-        c = self._make(kind, refs, value, name, {}, cid)
-        self._cid += 1
+    def restore(self, cid, kind, refs, value=None, name=None, ctx=None):
+        c = self._make(kind, refs, value, name, dict(ctx or {}), cid)
+        self.cons[cid] = c
+        self._cid = max(self._cid, cid + 1)
+        return c
+
+    def measure(self, kind, refs, ctx=None):
+        probe = 1.0
+        c = self._make(kind, refs, probe, "probe", dict(ctx or {}), 0)
+        x = self.xarray()
+        r = float(c.fn(x)[0])
+        if kind == "angle":
+            return math.degrees(K._wrap(r + math.radians(probe)))
+        if kind in ("hdistance", "vdistance"):
+            return abs(r + c.ctx.get("s", 1.0) * probe)
+        return r + probe
+
+    def add(self, kind, refs, value=None, name=None, force=False, cid=None, ctx=None):
+        cid = self._cid if cid is None else cid
+        c = self._make(kind, refs, value, name, dict(ctx or {}), cid)
+        self._cid = max(self._cid, cid) + 1
         self.cons[cid] = c
         before = list(self._x)
         rep = self.solve()

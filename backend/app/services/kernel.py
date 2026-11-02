@@ -118,6 +118,7 @@ class Worker:
             try:
                 line = self.lines.get(timeout=max(0.0, deadline - time.monotonic()))
             except queue.Empty as err:
+                self.process.kill()
                 raise KernelError(f"The kernel worker did not answer {method} in time.") from err
             if line is None:
                 raise KernelError("The kernel worker exited.")
@@ -155,6 +156,13 @@ _found: tuple[list[str], str, str] | None = None
 _message = "No kernel is installed."
 _failed_at = 0.0
 _install = {"installing": False, "progress": 0.0, "message": ""}
+_serial = 0
+
+
+def serial() -> int:
+    with _lock:
+        probe()
+        return _serial if _worker is not None else 0
 
 
 def _publish() -> None:
@@ -169,7 +177,7 @@ def _drop() -> None:
 
 
 def probe(force: bool = False) -> dict | None:
-    global _worker, _info, _found, _message, _failed_at
+    global _worker, _info, _found, _message, _failed_at, _serial
     with _lock:
         if _worker is not None and _info is not None and _worker.alive() and not force:
             return _info
@@ -192,6 +200,7 @@ def probe(force: bool = False) -> dict | None:
             _failed_at = time.monotonic()
             return None
         _worker, _info, _failed_at = worker, info, 0.0
+        _serial += 1
         _message = f"Kernel ready, OpenCascade {info.get('occt', 'unknown')}."
         return _info
 

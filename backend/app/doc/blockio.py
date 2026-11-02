@@ -36,7 +36,12 @@ def output_path(text: str) -> str:
     ext = os.path.splitext(raw)[1].lower()
     if ext not in (NATIVE_EXT,) + FOREIGN_EXT:
         raw += NATIVE_EXT
-    return raw
+    from app.core import outputs
+
+    try:
+        return outputs.checked(raw, (NATIVE_EXT,) + FOREIGN_EXT)
+    except outputs.OutputRefused as err:
+        raise BlockIOError(str(err))
 
 
 def resolve_input(text: str):

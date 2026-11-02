@@ -8,6 +8,15 @@ from app.output.sheet import Sheet
 MIMES = {"pdf": "application/pdf", "png": "image/png", "svg": "image/svg+xml"}
 
 
+def _target(path, ext: str) -> str:
+    from app.core import outputs
+
+    try:
+        return outputs.checked(str(path), (ext,), ext)
+    except outputs.OutputRefused as err:
+        raise R.PlotError(str(err))
+
+
 def requests_of(raw):
     if not isinstance(raw, dict):
         raise R.PlotError("A plot request must be an object.")
@@ -106,9 +115,7 @@ def run(doc, raw, output=None):
     result = {"output": out, "mime": MIMES[out], "pages": info_of(sheets), "size": len(data), "device": dev["name"] if dev else "", "data": data}
     path = reqs[0].get("path")
     if path:
-        full = os.path.abspath(os.path.expanduser(path))
-        if not full.lower().endswith("." + out):
-            full += "." + out
+        full = _target(path, "." + out)
         os.makedirs(os.path.dirname(full), exist_ok=True)
         with open(full, "wb") as fh:
             fh.write(data)
@@ -176,9 +183,7 @@ def export_svg(doc, raw):
     result = {"output": out, "mime": MIMES[out], "size": len(data), "data": data, "pages": info_of([sb.sheet])}
     path = r.get("path")
     if path:
-        full = os.path.abspath(os.path.expanduser(path))
-        if not full.lower().endswith(".svg"):
-            full += ".svg"
+        full = _target(path, ".svg")
         os.makedirs(os.path.dirname(full), exist_ok=True)
         with open(full, "wb") as fh:
             fh.write(data)

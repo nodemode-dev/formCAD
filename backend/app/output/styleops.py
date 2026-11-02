@@ -64,10 +64,15 @@ def apply(doc, action, args):
         path = args.get("path")
         if path:
             full = os.path.abspath(os.path.expanduser(str(path)))
-            if os.path.getsize(full) > P.MAX_FILE:
-                raise P.StyleError("The plot style file is larger than 4 MiB.")
-            with open(full, "r", encoding="utf-8") as fh:
-                text = fh.read()
+            try:
+                if os.path.getsize(full) > P.MAX_FILE:
+                    raise P.StyleError("The plot style file is larger than 4 MiB.")
+                with open(full, "r", encoding="utf-8") as fh:
+                    text = fh.read()
+            except OSError:
+                raise P.StyleError('The plot style file "%s" could not be read.' % path)
+            except UnicodeDecodeError:
+                raise P.StyleError('The plot style file "%s" is not text.' % path)
         else:
             text = str(args.get("text", ""))
         t = P.parse_file(text)

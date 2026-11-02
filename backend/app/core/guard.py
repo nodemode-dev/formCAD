@@ -1,3 +1,4 @@
+import contextvars
 import hmac
 import json
 import os
@@ -54,6 +55,52 @@ def _same(given: str | None) -> bool:
     return bool(given) and hmac.compare_digest(given.encode("utf-8"), TOKEN.encode("utf-8"))
 
 
+RUN_TOKENS: dict[str, tuple[str, ...]] = {}
+
+
+RUN_FILES: dict[str, tuple] = {}
+
+
+def issue_run_token(prefixes: tuple[str, ...], files=()) -> str:
+    token = secrets.token_urlsafe(24)
+    RUN_TOKENS[token] = prefixes
+    RUN_FILES[token] = tuple(str(f) for f in files)
+    return token
+
+
+def revoke_run_token(token: str) -> None:
+    RUN_TOKENS.pop(token, None)
+    RUN_FILES.pop(token, None)
+
+
+def run_files(given) -> tuple:
+    return RUN_FILES.get(given or "", ())
+
+
+CALLER = contextvars.ContextVar("formcad_caller", default="")
+FILES = contextvars.ContextVar("formcad_files", default=())
+MACRO_DENIED_FIRST = {"open", "recovery", "autosave"}
+MACRO_DENIED_LATER = {"save", "plot", "macro", "export", "xrefs", "import"}
+
+
+def _macro_route_ok(path: str) -> bool:
+    parts = [p for p in path.split("/") if p]
+    if len(parts) >= 3 and parts[:2] == ["api", "docs"]:
+        if parts[2] in MACRO_DENIED_FIRST:
+            return False
+        return not any(p in MACRO_DENIED_LATER for p in parts[3:])
+    return True
+
+
+def _scoped(given: str | None, path: str) -> bool:
+    if not given:
+        return False
+    for token, prefixes in list(RUN_TOKENS.items()):
+        if hmac.compare_digest(given.encode("utf-8"), token.encode("utf-8")):
+            return any(path == p or path.startswith(p + "/") for p in prefixes) and _macro_route_ok(path)
+    return False
+
+
 class Guard:
     def __init__(self, app, origins: list[str]) -> None:
         self.app = app
@@ -79,6 +126,10 @@ class Guard:
             return True
         if _same(headers.get(HEADER)):
             return True
+        if scope["type"] == "http" and _scoped(headers.get(HEADER), scope.get("path", "")):
+            scope["formcad_caller"] = "macro"
+            scope["formcad_files"] = run_files(headers.get(HEADER))
+            return True
         if scope["type"] == "websocket":
             query = parse_qs(scope.get("query_string", b"").decode("latin-1"))
             return _same((query.get("token") or [None])[0])
@@ -103,4 +154,10 @@ class Guard:
         if needs_token(scope.get("path", "")) and not self.token_ok(scope, headers):
             await self.deny(scope, send, 401, 4401, "A valid X-FormCAD-Token is required")
             return
-        await self.app(scope, receive, send)
+        mark = CALLER.set(scope.get("formcad_caller", ""))
+        held = FILES.set(scope.get("formcad_files", ()))
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            FILES.reset(held)
+            CALLER.reset(mark)

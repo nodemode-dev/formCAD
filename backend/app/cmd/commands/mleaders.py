@@ -45,8 +45,10 @@ def options_from_style(style) -> dict:
 
 def get_options(ctx, style) -> dict:
     mem = ctx.mem.get("mleader")
-    if mem is None:
+    name = str(ctx.var("CMLEADERSTYLE"))
+    if mem is None or mem.get("style") != name:
         mem = options_from_style(style)
+        mem["style"] = name
         ctx.mem["mleader"] = mem
     return mem
 
@@ -172,7 +174,7 @@ def ask_mleader_options(ctx, opts):
             key = "angle1" if r.value == "First angle" else "angle2"
             n = yield ctx.number("Enter %s segment angle constraint (degrees, 0 for none)" % ("first" if key == "angle1" else "second"), default=opts[key])
             if n.kind == "number":
-                if n.value < 0 or n.value >= 180:
+                if n.value < 0 or n.value > 180:
                     ctx.say("Requires a number from 0 to 180.")
                 else:
                     opts[key] = float(n.value)

@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from importlib import metadata
 
@@ -18,20 +19,63 @@ def versions() -> dict:
 
 def hello(_params: dict) -> dict:
     try:
-        return versions()
+        out = versions()
     except Exception as err:
         raise RuntimeError(f"The OpenCascade bindings could not be loaded ({err}).") from err
+    out["units"] = "mm"
+    out["methods"] = sorted(METHODS)
+    out["protocol"] = 2
+    return out
 
 
 METHODS = {"hello": hello}
 
+OUT = sys.stdout
+
+
+def isolate_stdout() -> None:
+    global OUT
+    try:
+        saved = os.dup(1)
+        OUT = os.fdopen(saved, "w", encoding="utf-8", buffering=1)
+        os.dup2(2, 1)
+    except OSError:
+        OUT = sys.stdout
+
+
+def load_operations() -> None:
+    try:
+        from OCP.Message import Message
+
+        printers = Message.DefaultMessenger_s().Printers()
+        for printer in list(printers):
+            Message.DefaultMessenger_s().RemovePrinter(printer)
+    except Exception:
+        pass
+    try:
+        import kernel_io
+        import kernel_ops
+        import kernel_props
+    except Exception as err:
+        failure = str(err)
+
+        def unavailable(_params):
+            raise RuntimeError("The modelling operations could not be loaded (%s)." % failure)
+
+        METHODS["primitive"] = unavailable
+        return
+    for module in (kernel_ops, kernel_io, kernel_props):
+        METHODS.update(module.METHODS)
+
 
 def reply(payload: dict) -> None:
-    sys.stdout.write(json.dumps(payload) + "\n")
-    sys.stdout.flush()
+    OUT.write(json.dumps(payload) + "\n")
+    OUT.flush()
 
 
 def serve() -> int:
+    isolate_stdout()
+    load_operations()
     for line in sys.stdin:
         line = line.strip()
         if not line:

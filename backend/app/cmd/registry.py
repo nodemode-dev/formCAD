@@ -63,12 +63,15 @@ def load_modules() -> None:
         for info in pkgutil.iter_modules(commands.__path__):
             importlib.import_module("app.cmd.commands." + info.name)
         _loaded = True
+        from app.cmd import aliasfile
+
+        aliasfile.startup()
 
 
 def resolve(word: str):
     load_modules()
     w = word.strip().lower()
-    if w.startswith("_") or w.startswith("."):
+    while w.startswith("_") or w.startswith("."):
         w = w[1:]
     if w in COMMANDS:
         return COMMANDS[w]

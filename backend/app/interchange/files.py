@@ -4,7 +4,8 @@ import os
 from app.interchange import dwg, dxfcommon
 from app.interchange.errors import InterchangeError, Report
 
-READ_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz")
+MODEL_EXT = (".step", ".stp", ".iges", ".igs")
+READ_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz") + MODEL_EXT
 WRITE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf")
 PLOT_EXT = (".svg", ".png", ".pdf")
 NATIVE = ".fcad"
@@ -46,8 +47,8 @@ def detect(path: str) -> str:
 
 def formats() -> dict:
     return {
-        "read": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".svgz", "SVGZ"))],
-        "write": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".png", "PNG"), (".pdf", "PDF"))],
+        "read": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".svgz", "SVGZ"), (".step", "STEP (needs the kernel)"), (".stp", "STEP (needs the kernel)"), (".iges", "IGES (needs the kernel)"), (".igs", "IGES (needs the kernel)"))],
+        "write": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".png", "PNG"), (".pdf", "PDF"), (".step", "STEP (needs the kernel)"))],
         "versions": list(dxfcommon.VERSION_ORDER),
     }
 
@@ -63,6 +64,21 @@ def svg_drawing(path: str, report: Report):
         d.table_set("layers", T.new_layer(name))
     for e in ents:
         d.add_entity(e, "model")
+    return d
+
+
+def model_drawing(path: str, kind: str, report: Report):
+    from app.doc.model import Drawing
+    from app.solid import work
+
+    d = Drawing(True)
+    d.header["INSUNITS"] = 4
+    try:
+        items = work.read_model(path, kind)
+        count = work.add_model_bodies(d, items, os.path.splitext(os.path.basename(path))[0])
+    except work.SolidError as err:
+        raise InterchangeError(str(err), "kernel")
+    report.note("%d 3D bod%s read; the file's units were converted to millimetres." % (count, "y" if count == 1 else "ies"))
     return d
 
 
@@ -86,6 +102,8 @@ def read_any(path: str, recover: bool = False, report: Report | None = None):
             shutil.rmtree(work, ignore_errors=True)
     elif kind in (".svg", ".svgz"):
         d = svg_drawing(full, report)
+    elif kind in MODEL_EXT:
+        d = model_drawing(full, kind, report)
     else:
         raise InterchangeError("Files of this type are not read here.", "unsupported")
     from app.doc.kinds import blockcache
@@ -176,6 +194,13 @@ def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False) -> 
                 c.block = remap[c.block.casefold()]
             if c.kind == "dimension":
                 c.associativity = {}
+            if c.kind == "solidbody":
+                from app.solid import ids
+
+                for path, data in src.blobs.items():
+                    d.blobs.setdefault(path, data)
+                c.face_ids, c.edge_ids = ids.fresh(d, len(c.face_ids), len(c.edge_ids))
+                c.lineage = {}
             d.add_entity(c, SPACE_MODEL)
             added["objects"] += 1
     from app.doc.kinds import blockcache

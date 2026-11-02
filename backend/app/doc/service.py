@@ -11,7 +11,7 @@ from app.doc.model import Drawing
 from app.sysvars import registry as sv
 
 EXT = ".fcad"
-FOREIGN_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz")
+FOREIGN_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs")
 MAX_RECENT = 30
 
 
@@ -93,7 +93,17 @@ class Service:
     def new(self, name: str = "", template: str = "") -> Document:
         spec = templates.lookup(template)
         if template and spec is None:
-            raise DocumentFault("Unknown template " + template + ".")
+            try:
+                loaded = templates.load_file(template)
+            except ValueError as err:
+                raise DocumentFault(str(err))
+            if loaded is None:
+                raise DocumentFault("Unknown template " + template + ".")
+            with self.lock:
+                self.counter += 1
+                tdrawing, tkind, _path = loaded
+                doc = Document(tdrawing, name.strip() or "Drawing%d" % self.counter, "", tkind, tdrawing.metric)
+                return self._register(doc)
         if spec is None:
             spec = {"kind": "drawing", "metric": bool(sv.session_value("MEASUREINIT")), "prefix": "Drawing"}
         metric = bool(spec["metric"])
@@ -160,9 +170,13 @@ class Service:
         from app.interchange import files
         from app.interchange.errors import InterchangeError
 
+        from app.doc import savecheck
+
         with doc.lock:
             if doc.in_tx():
                 raise DocumentFault("A command is still recording; finish it before saving.", 409)
+            if savecheck.guard(doc):
+                raise DocumentFault(savecheck.guard(doc), 409)
             doc.undo.end_group()
             try:
                 report = files.save_document(doc, target, version, binary)
@@ -183,13 +197,24 @@ class Service:
         target = (path or doc.path or "").strip()
         if not target:
             raise DocumentFault("The drawing has no file name yet; give a path.")
+        if path:
+            from app.core import outputs
+
+            try:
+                target = outputs.checked(target, (".fcad", ".dxf", ".dwg", ".dwt"), EXT)
+            except outputs.OutputRefused as err:
+                raise DocumentFault(str(err))
         if os.path.splitext(target)[1].lower() in (".dxf", ".dwg", ".dwt"):
             return self.save_foreign(doc, target)
         if os.path.splitext(target)[1] == "":
             target += EXT
+        from app.doc import savecheck
+
         with doc.lock:
             if doc.in_tx():
                 raise DocumentFault("A command is still recording; finish it before saving.", 409)
+            if savecheck.guard(doc):
+                raise DocumentFault(savecheck.guard(doc), 409)
             doc.undo.end_group()
             try:
                 dest = container.save(target, doc.drawing, doc.name, doc.created, bool(sv.session_value("ISAVEBAK")), doc.kind)

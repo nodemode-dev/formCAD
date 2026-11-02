@@ -171,7 +171,17 @@ def default_csv_name(ctx) -> str:
     return base + ".csv"
 
 
+def csv_target(path) -> str:
+    from app.core import outputs
+
+    try:
+        return outputs.checked(str(path), (".csv", ".txt"), ".csv")
+    except outputs.OutputRefused as err:
+        raise CommandError(str(err))
+
+
 def write_csv(t, path: str, sep: str) -> str:
+    path = csv_target(path)
     text = O.export_csv(t, sep)
     with open(path, "w", encoding="utf-8", newline="") as fh:
         fh.write(text)
@@ -215,8 +225,9 @@ def tableexport_exec(ctx, args):
         raise fail(err)
     path = args.get("path")
     if path:
+        path = csv_target(path)
         try:
-            with open(str(path), "w", encoding="utf-8", newline="") as fh:
+            with open(path, "w", encoding="utf-8", newline="") as fh:
                 fh.write(text)
         except OSError as err:
             raise CommandError("Could not write %s: %s" % (path, err))

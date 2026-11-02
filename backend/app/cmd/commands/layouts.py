@@ -3,9 +3,10 @@ import os
 
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
-from app.doc import container, layouts, papers, viewports, vpmax
+from app.doc import container, layouts, layouttemplate, papers, viewports, vpmax
 from app.doc.model import Drawing, SPACE_MODEL, layout_space
 
+TEMPLATE_READ = (".fcad", ".dxf", ".dwt")
 LAYOUT_OPTS = ["Copy", "Delete", "New", "Template", "Rename", "SAveas", "Set", "?"]
 SETUP_OPTS = ["Device", "Paper", "Orientation", "Margins", "Area", "Scale", "Fit", "Center", "STyle", "Lineweights", "Display", "Transparency", "Offset", "eXit"]
 TEMPLATE_EXT = ".fcad"
@@ -58,6 +59,12 @@ def save_template(ctx, name: str, path: str) -> str:
         target += TEMPLATE_EXT
     elif ext != TEMPLATE_EXT:
         raise CommandError("A layout template is saved as a %s file." % TEMPLATE_EXT)
+    from app.core import outputs
+
+    try:
+        target = outputs.checked(target, (TEMPLATE_EXT,))
+    except outputs.OutputRefused as err:
+        raise CommandError(str(err))
     clone = Drawing.from_dict(ctx.d.to_dict())
     keep = layout_space(rec["name"])
     for space in list(clone.spaces):
@@ -78,6 +85,42 @@ def save_template(ctx, name: str, path: str) -> str:
         return container.save(target, clone, rec["name"], ctx.doc.created, False, "drawing")
     except container.ContainerError as err:
         raise CommandError(err.message)
+
+
+def load_template(path: str):
+    full = os.path.realpath(os.path.expanduser(str(path).strip()))
+    if not str(path).strip():
+        raise CommandError("A file name is required.")
+    ext = os.path.splitext(full)[1].lower()
+    if ext not in TEMPLATE_READ:
+        raise CommandError("A layout template is a .fcad, .dxf or .dwt file.")
+    if not os.path.isfile(full):
+        raise CommandError('Cannot find the file "%s".' % path)
+    if ext == ".fcad":
+        try:
+            return container.load(full)[0]
+        except container.ContainerError as err:
+            raise CommandError(err.message)
+    from app.interchange import files
+    from app.interchange.errors import InterchangeError
+
+    try:
+        return files.read_any(full)[0]
+    except InterchangeError as err:
+        raise CommandError(err.message)
+
+
+def from_template(ctx, path: str, wanted=None) -> dict:
+    src = load_template(path)
+    try:
+        got = layouttemplate.import_layouts(ctx.d, src, wanted)
+    except (layouts.LayoutError, ValueError) as err:
+        raise CommandError(str(err))
+    for n in got["notes"]:
+        ctx.say(n)
+    for n in got["layouts"]:
+        ctx.say('Layout "%s" created from the template.' % n)
+    return {"layouts": got["layouts"], "objects": got["objects"], "notes": got["notes"]}
 
 
 def do(ctx, action: str, args: dict) -> dict:
@@ -144,7 +187,7 @@ def do(ctx, action: str, args: dict) -> dict:
             ctx.say("Layout: %s" % r["name"])
         return {"layouts": rows}
     if a == "template":
-        raise CommandError("LAYOUT Template is not available yet.")
+        return from_template(ctx, str(args.get("path", "")), args.get("name"))
     raise CommandError("Unknown layout action %s." % action)
 
 
@@ -236,8 +279,33 @@ def layout(ctx):
                 continue
             return
         if k == "Template":
-            ctx.say("LAYOUT Template is not available yet.")
-            continue
+            f = yield ctx.text("Enter template file name")
+            if f.kind != "text":
+                return
+            try:
+                src = load_template(str(f.value))
+            except CommandError as err:
+                ctx.say(str(err))
+                continue
+            found = layouts.names(src)
+            if not found:
+                ctx.say("The template has no layouts.")
+                continue
+            for n in found:
+                ctx.say("Layout: %s" % n)
+            w = yield ctx.text("Enter layout name to import or * for all", found[0] if len(found) == 1 else "*")
+            if w.kind != "text":
+                return
+            try:
+                got = layouttemplate.import_layouts(ctx.d, src, str(w.value))
+            except (layouts.LayoutError, ValueError) as err:
+                ctx.say(str(err))
+                continue
+            for n in got["notes"]:
+                ctx.say(n)
+            for n in got["layouts"]:
+                ctx.say('Layout "%s" created from the template.' % n)
+            return
         if k == "?":
             n = yield ctx.text("Enter layout name(s) to list", "*")
             if n.kind != "text":
@@ -269,7 +337,7 @@ def _variant(action: str, label: str, description: str):
     return run
 
 
-for _a, _l, _d in (("new", "New Layout", "Create a layout."), ("copy", "Copy Layout", "Copy a layout."), ("delete", "Delete Layout", "Delete a layout."), ("rename", "Rename Layout", "Rename a layout."), ("saveas", "Save Layout as Template", "Save a layout as a template."), ("set", "Switch Layout", "Switch the current tab."), ("list", "List Layouts", "List the layouts."), ("move", "Move Layout", "Move a layout tab.")):
+for _a, _l, _d in (("new", "New Layout", "Create a layout."), ("copy", "Copy Layout", "Copy a layout."), ("delete", "Delete Layout", "Delete a layout."), ("rename", "Rename Layout", "Rename a layout."), ("saveas", "Save Layout as Template", "Save a layout as a template."), ("template", "Layout From Template", "Import layouts with their page setup from a .fcad or .dxf template."), ("set", "Switch Layout", "Switch the current tab."), ("list", "List Layouts", "List the layouts."), ("move", "Move Layout", "Move a layout tab.")):
     _variant(_a, _l, _d)
 
 

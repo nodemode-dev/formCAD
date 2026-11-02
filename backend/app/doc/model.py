@@ -29,6 +29,7 @@ class Drawing:
         self.next_handle: int = FIRST_HANDLE
         self.foreign: dict = {}
         self.reserved3d: dict = {"parts": [], "assemblies": [], "pmi": [], "graphs": []}
+        self.blobs: dict = {}
         self.tolerances: dict = {"absolute": geom.EPS, "angular": geom.EPS, "parallel": geom.PARALLEL_EPS}
         self.relations: dict = {}
         self.recorder = None

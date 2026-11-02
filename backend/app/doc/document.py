@@ -48,6 +48,7 @@ class Document:
         self.space_rev: dict = {}
         self.header_rev = 0
         self.selection: list = []
+        self.subselection: dict = {"faces": [], "edges": [], "owners": []}
         self.prev_selection: list = []
         self.last_erased: list = []
         self.lastpoint = [0.0, 0.0, 0.0]
@@ -211,6 +212,7 @@ class Document:
         self.state_id = step.state_before
         step.state_before, step.state_after = step.state_after, step.state_before
         self.selection = []
+        self.subselection = {"faces": [], "edges": [], "owners": []}
         from app.doc import editstate
 
         editstate.reconcile(self)

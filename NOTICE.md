@@ -50,7 +50,11 @@ FormCAD bundles no DWG library or converter. DWG open and save are off until the
 
 ### Kernel worker (separate program, never bundled in the app)
 
-The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-binaries` releases, with its own notices and sources. It carries OpenCascade Technology 8.0.1 (LGPL-2.1 with the Open CASCADE exception 1.0) through cadquery-ocp-novtk 8.0.1.1.0 (Apache-2.0), and build123d 0.13.0 (Apache-2.0) with cadquery-ocp-proxy (Apache-2.0), ocp_gordon (Apache-2.0) and ocpsvg (license to be confirmed before the first kernel release). FormCAD runs it as a separate program and does not link to it.
+The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-binaries` releases, with its own notices and sources. It carries OpenCascade Technology 8.0.1 (LGPL-2.1 with the Open CASCADE exception 1.0) through cadquery-ocp-novtk 8.0.1.1.0 (Apache-2.0), and build123d 0.13.0 (Apache-2.0) with cadquery-ocp-proxy (Apache-2.0), ocp_gordon (Apache-2.0) and ocpsvg 0.7.x (Apache-2.0). FormCAD runs it as a separate program and does not link to it.
+
+| Work | License | Where |
+| --- | --- | --- |
+| Kernel worker third-party notices (OpenCascade 8.0.1, cadquery-ocp-novtk, build123d, ocpsvg, bd_materials, anytree, threejs-materials with a texture-licence flag) | LGPL-2.1 with the OCCT exception, Apache-2.0, MIT, BSD | `kernel/NOTICE.md` |
 
 ## Independent implementation
 

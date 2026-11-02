@@ -68,6 +68,10 @@ def encode(drawing: Drawing, title: str, created: str, kind: str = "drawing", ke
             info = zipfile.ZipInfo(name)
             info.external_attr = (stat.S_IFDIR | 0o755) << 16 | 0x10
             zf.writestr(info, b"")
+        from app.solid import blobs
+
+        for name, data in blobs.container_entries(drawing):
+            zf.writestr(name, data)
     return buf.getvalue()
 
 
@@ -235,6 +239,12 @@ def load(path: str):
             raw = zf.read(info)
         except (zipfile.BadZipFile, OSError, RuntimeError) as err:
             raise ContainerError("document.json cannot be read: " + str(err), "corrupt")
+        from app.solid import blobs
+
+        try:
+            stored = blobs.read_entries(zf)
+        except (zipfile.BadZipFile, OSError, RuntimeError) as err:
+            raise ContainerError("A stored 3D part cannot be read: " + str(err), "corrupt")
     try:
         data = json.loads(raw, parse_constant=_reject_constant)
     except ValueError as err:
@@ -244,5 +254,6 @@ def load(path: str):
         d = Drawing.from_dict(data)
     except (KeyError, TypeError, ValueError) as err:
         raise ContainerError("document.json could not be built: " + str(err), "baddoc")
+    d.blobs.update(stored)
     repair(d)
     return d, man

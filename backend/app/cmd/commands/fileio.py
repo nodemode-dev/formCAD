@@ -2,11 +2,12 @@ import os
 
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
+from app.core import outputs
 from app.doc.service import DocumentFault, service
 from app.interchange import files
 from app.interchange.errors import InterchangeError
 
-HINT = {"open": ".dxf, .dwg, .dwt, .svg, .svgz or .fcad", "saveas": ".fcad, .dxf, .dwg or .dwt", "export": ".dxf, .dwg, .dwt, .svg, .png or .pdf", "import": ".dxf, .dwg, .svg or .svgz"}
+HINT = {"open": ".dxf, .dwg, .dwt, .svg, .svgz, .step, .iges or .fcad", "saveas": ".fcad, .dxf, .dwg or .dwt", "export": ".dxf, .dwg, .dwt, .svg, .png, .pdf or .step", "import": ".dxf, .dwg, .svg, .svgz, .step or .iges"}
 
 
 def stem(ctx) -> str:
@@ -39,22 +40,36 @@ def do_open(ctx, path):
 
 
 def do_saveas(ctx, path, version="", binary=False):
+    try:
+        path = outputs.checked(path, (".fcad", ".dxf", ".dwg", ".dwt"), ".fcad")
+    except outputs.OutputRefused as err:
+        raise CommandError(str(err))
     ext = files.ext_of(path)
     try:
         if ext in (".dxf", ".dwg", ".dwt"):
             service.save_foreign(ctx.doc, path, version, binary)
-        elif ext in (".svg", ".png", ".pdf"):
+        elif ext in (".svg", ".png", ".pdf", ".step", ".stp", ".iges", ".igs"):
             raise CommandError("Use EXPORT to write %s files." % ext[1:].upper())
         else:
             service.save(ctx.doc, path)
     except DocumentFault as err:
         raise CommandError(err.message)
+    ctx.doc.save_version = version
+    ctx.doc.save_binary = bool(binary)
     ctx.say("Saved %s." % path)
     return {"path": path}
 
 
 def do_export(ctx, path, version="", binary=False):
+    try:
+        path = outputs.checked(path, (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf") + tuple(files.MODEL_EXT), ".dxf")
+    except outputs.OutputRefused as err:
+        raise CommandError(str(err))
     ext = files.ext_of(path)
+    if ext in files.MODEL_EXT:
+        from app.cmd.commands import solids
+
+        return solids.export_model(ctx, path, ext)
     if ext in files.PLOT_EXT:
         from app.cmd.commands import plot as P
 

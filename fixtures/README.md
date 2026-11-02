@@ -2,6 +2,10 @@
 
 Sample data for manual checks and demos. These are data files, not tests.
 
+## bracket.step and solids.fcad
+
+`bracket.step` is an L bracket made by the kernel worker through the engine's own commands in a millimetre drawing: a closed polyline profile (60 mm and 50 mm legs, 12 mm thick, an inner corner rounded with an 8 mm arc) extruded 40 mm, then two 8 mm holes subtracted through the bottom leg. One solid named `L bracket`, 11 faces, 27 edges, volume 46383.0 mm3, colour 0.62 0.66 0.72, written through EXPORT. Open it with OPEN or IMPORT. `solids.fcad` holds the same bracket plus a box with a vertical hole, a sphere, a cone, a torus and the union of two overlapping boxes (6 solids), with the stored shapes and cached meshes in `parts/` and `cache/`; it also holds the profile polyline of the bracket.
+
 ## doc-basic.fcad
 
 A metric drawing (template `drawing-mm-a3`, limits 420 x 297, layouts sized A3) created by the running engine through its command line API, then saved with `POST /api/docs/{id}/save`.
@@ -149,6 +153,10 @@ A metric drawing made through the real command routes (typed prompts, canvas pic
 
 External reference fixture, three `.fcad` drawings attached by relative path. `xrefs/host.fcad` holds a frame, one text line and three XATTACH references to `refs/plan.fcad` (at 0,0; at 400,0 scale 1.5 rotated 90; at 0,150 clipped by an XCLIP rectangle). `refs/plan.fcad` has walls, a door block and its own attachment of `refs/details/detail.fcad` (stored as `details/detail.fcad`, relative to the plan), so the host lists `plan` and the nested `plan|detail` as Loaded. The host carries a layer override for `plan|WALLS` (colour 5) that survives XREF Reload. Built through the real command routes; open `host.fcad` and run XREF to see the manager list. Moving the folder keeps the links; the `.bak` files are not shipped.
 
+## sketch.fcad
+
+Phase 15 fixture: sketch `Bracket` on plane XY, an L-shaped bracket profile (six lines, two holes) that reaches fully defined with zero degrees of freedom. Five named parameters (`width` 60, `height` 40, `thickness` 8, `hole_d` 6 in millimetres, and the equation `hole_offset = thickness * 1.5`), nine named dimensions (`base_w`, `flange_h`, `base_t`, `flange_t`, `hole_dia`, `h1_x`, `h1_y`, `h2_x`, `h2_y` driven by expressions over the parameters), six coincident joints, three horizontal and three vertical relations, one fix and one equal. Built through the constraint and sketch routes. Open it, run SKETCHSTATUS for `Bracket`, change `width` in PARAMETERS to see the profile and the holes follow, or add `DCALIGNED` on the base line with a different value to see it refused with the conflicting constraints named.
+
 ## plot/
 
 PDFs of `sheet.fcad` made by the plot engine: `sheet-layout1.pdf` (layout `Layout1`, A3 landscape, one 1:50 viewport) and `sheet-model-1to50.pdf` (model space at 1:50 on A3). `NOTE.md` records the measurement: the 4000 mm polyline edge is 80.000 mm on the page in both files.
@@ -156,3 +164,15 @@ PDFs of `sheet.fcad` made by the plot engine: `sheet-layout1.pdf` (layout `Layou
 ## dxf/
 
 One DXF per version family, `survival-r12.dxf`, `-r2000`, `-r2004`, `-r2007`, `-r2010`, `-r2013` and `-r2018`, each written from the same 1730 object drawing (every `.fcad` fixture above except lines-100k merged with a block, attribute, layer, view, user coordinate system, layout and viewport drawing). `SURVIVAL.md` records the save then reopen result entity by entity. R2007 and later reopen equal apart from three benign defaults listed there; R2000 and R2004 lose true colour, transparency and attribute position lock; R12 keeps the geometry that R12 can hold and counts the rest.
+
+## scripts/
+
+Script, alias and macro fixtures. `plate.scr` draws a 200 x 120 mounting plate with two holes and a centre line, then edits it (COPY, MOVE through `@pick`, ERASE through a crossing `@box`, OFFSET, TEXT, a DELAY and a LISP line); run it with SCRIPT on a `drawing-mm-a3` drawing. `plate.fcad` is that script's result saved and reopened. `shop.fcalias` is a command alias file in FormCAD's own `ALIAS, *COMMAND` format with an unknown target, an alias that shadows a command name and an external program line, so loading it prints three warnings and loads seven aliases. `bracket-sketch.scr` and `bracket-sketch.py` are one recorded session (rectangle, two circles, a line, a crossing selection and a MOVE) saved by the macro recorder as a script and as a Python macro; both replay to the same four objects.
+
+## macros/
+
+Python macros for the `formcad` client module (`backend/app/data/sdk/formcad.py`). `plate.py` draws a 120 x 80 plate with four holes, a centre line and a text, then edits it (MOVE, SCALE, COPY, ERASE, select, UNDO, REDO) and asserts the geometry numerically, so the exit status is the check; `typed.py` uses the recorder style (`doc.send`, `doc.script`, a programmatic form, undo and redo). Run one with `formcad-engine run --new --python-macro fixtures/macros/plate.py --save out.fcad`, or trust it in the macro list of the preferences and run it against the open drawing. Both run in a separate scrubbed `python -I` process with a timeout and memory limits and no network.
+
+## lisp/
+
+`bolt-pattern.lsp` is a parametric bolt-hole routine: `bolt-pattern` draws N circles on a pitch circle through `command`, puts them on layer BOLTS with `entmod`, moves the set and rotates it about the moved centre; `c:boltdemo` runs 6 holes of diameter 8 on a 60 pitch circle at (100,100), moved by (50,20) and rotated 15 degrees, and `bolt-centres` lists the hole centres through `ssget` and `entget` (expected: (150 + 30 cos(60 i + 15), 120 + 30 sin(60 i + 15)) for i = 0 to 5). Load it with APPLOAD (or put the folder in the LISP support folders and use `(load "bolt-pattern")`), type BOLTDEMO; one U takes back the whole routine. `bolt-pattern.fcad` is the result saved and reopened.

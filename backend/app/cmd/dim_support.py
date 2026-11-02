@@ -130,6 +130,19 @@ def ask_text(ctx):
     return None
 
 
+def ask_mtext(ctx):
+    r = yield ctx.text("Enter first line of dimension text <>")
+    if r.kind != "text":
+        return None
+    lines = [str(r.value)]
+    while True:
+        r = yield ctx.text("Enter next line of dimension text or press Enter to finish")
+        if r.kind != "text" or not str(r.value):
+            break
+        lines.append(str(r.value))
+    return "\\P".join(lines)
+
+
 def ask_text_angle(ctx):
     r = yield ctx.angle("Specify angle of dimension text", default=0.0)
     if r.kind == "number":
@@ -149,7 +162,7 @@ def location_prompt(ctx, msg, extras, state, builder, default_text=""):
         with_jig(pr, jg)
         r = yield pr
         if r.kind == "keyword" and r.value in ("Mtext", "Text"):
-            t = yield from ask_text(ctx)
+            t = yield from (ask_mtext(ctx) if r.value == "Mtext" else ask_text(ctx))
             if t is not None:
                 state["override"] = t
             continue

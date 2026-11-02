@@ -139,6 +139,14 @@ class CommandRunner:
         self.snap_override = None
         self.deferred = None
         self.sel_areas: list = []
+        self.script = None
+        self.recorder = None
+        self.later: list = []
+
+    def rec(self, kind: str, *args) -> None:
+        r = self.recorder
+        if r is not None and not (self.script is not None and self.script.executing):
+            r.add(self, kind, *args)
 
     def command_name(self) -> str:
         r = self.outer if (self.run and self.run.transparent and self.outer) else self.run
@@ -200,6 +208,16 @@ class CommandRunner:
         return [float(base[0]), float(base[1])] if base is not None else None
 
     def state(self) -> dict:
+        if getattr(self.doc, "lisp_session", None) is not None:
+            from app.lisp import hooks
+
+            hooks.poll(self)
+        if self.script is not None or self.later:
+            from app.cmd import script
+
+            with self.doc.lock:
+                script.run_later(self)
+                script.drain(self)
         run = self.run
         p = self.current_prompt()
         text = "Command:"
@@ -243,6 +261,10 @@ class CommandRunner:
         }
         if self.result is not None:
             out["result"] = self.result
+        if self.script is not None:
+            out["script"] = self.script.info()
+        if self.recorder is not None:
+            out["recording"] = self.recorder.info()
         return out
 
     def has_preview(self) -> bool:
@@ -313,6 +335,7 @@ class CommandRunner:
 
     def _echo(self, p: Prompt, pt) -> None:
         self.log("%s %.10g,%.10g" % (format_prompt(p), pt[0], pt[1]))
+        self.rec("point", pt)
 
     def submit_point(self, pt, snap=None) -> dict:
         self.begin_call()
@@ -401,6 +424,8 @@ class CommandRunner:
             if ent is not None and ent.handle in self._visible_handles():
                 from app.sysvars import registry as sv
 
+                self.rec("pick", pt, pick)
+
                 self.set_selection([ent.handle], "add" if sv.get_var(self.doc, "PICKADD") else "set")
             return
         if run.sel is not None:
@@ -409,6 +434,7 @@ class CommandRunner:
                 return
             if ent.handle not in self._visible_handles():
                 raise InputError("Nothing selected there.")
+            self.rec("pick", pt, pick)
             self._apply_selection(run.sel, [ent.handle])
             if run.sel.prompt.pick_one and run.sel.selected:
                 self._finish_selection()
@@ -417,7 +443,8 @@ class CommandRunner:
         if "entity" in p.accepts and "point" not in p.accepts and not run.frames:
             if ent is None or ent.handle not in self._visible_handles():
                 raise InputError("No object found there.")
-            self._echo(p, pt)
+            self.log("%s %.10g,%.10g" % (format_prompt(p), pt[0], pt[1]))
+            self.rec("pick", pt, pick)
             self._deliver(Input("entity", {"handle": ent.handle, "point": [pt[0], pt[1]], "shift": bool(pick.get("shift"))}))
             return
         self._canvas_point(pt, {"handle": ent.handle} if ent is not None else None)
@@ -433,6 +460,7 @@ class CommandRunner:
         except (TypeError, ValueError):
             raise InputError("Invalid handle list.")
         run = self.run
+        self.rec("selection", handles, mode, payload.get("box"))
         if run is None:
             self.set_selection(handles, mode)
             return
@@ -474,9 +502,11 @@ class CommandRunner:
             if len(pts) >= MAX_POLY_POINTS:
                 raise InputError("Too many polygon points.")
             pts.append(pt)
+            self.rec("point", pt)
             return
         pts.append(pt)
         if len(pts) == 2:
+            self.rec("area", kind, pts)
             self._select_window(sel, kind, pts)
             sel.window = None
 
@@ -552,6 +582,7 @@ class CommandRunner:
     def submit(self, text: str) -> dict:
         self.begin_call()
         with self.doc.lock:
+            self.rec("text", text)
             self._submit(text.replace("\r", "").replace("\n", " "))
             self.doc.live_touch()
         return self.state()
@@ -563,6 +594,10 @@ class CommandRunner:
             self._active(text)
 
     def _tokens(self, text: str) -> list:
+        if "(" in text:
+            from app.lisp import hooks
+
+            return hooks.split_tokens(text)
         return re.split(r"[ \t]", text)
 
     def _idle(self, text: str) -> None:
@@ -585,14 +620,28 @@ class CommandRunner:
                 return
         toks = self._tokens(line)
         word, rest = toks[0], toks[1:]
-        if word.startswith("("):
-            self._fail("The embedded language is not available yet.")
+        if word.startswith(("(", "!")):
+            from app.cmd import barred
+            from app.lisp import hooks
+
+            if barred.lisp_refusal(self):
+                self._fail(barred.lisp_refusal(self))
+                return
+            hooks.run_line(self, line)
             return
         transparent = word.startswith("'")
         if transparent:
             word = word[1:]
         spec = registry.resolve(word)
         if spec is None:
+            from app.cmd import barred
+            from app.lisp import hooks
+
+            if barred.lisp_refusal(self):
+                self._fail(barred.lisp_refusal(self))
+                return
+            if not transparent and hooks.lisp_command(self, word, rest):
+                return
             from app.sysvars import known
 
             bare = word.upper()
@@ -606,6 +655,14 @@ class CommandRunner:
     def _fail(self, msg: str) -> None:
         self.error = msg
         self.log(msg)
+
+    def _barred(self, spec) -> bool:
+        from app.cmd import barred
+
+        why = barred.refusal(self, spec)
+        if why:
+            self._fail(why)
+        return bool(why)
 
     def _active(self, text: str) -> None:
         run = self.run
@@ -629,6 +686,13 @@ class CommandRunner:
     def _feed_text(self, text: str) -> None:
         run = self.run
         p = run.prompt
+        from app.cmd import barred
+
+        why = barred.prompt_refusal(self, p)
+        if why:
+            self._fail(why)
+            self.cancel_run(quiet=True)
+            return
         self.log("%s %s" % (format_prompt(p), text))
         if text == "" and p.default is None:
             self._deliver(Input("enter"))
@@ -641,6 +705,8 @@ class CommandRunner:
         spec = registry.COMMANDS[name]
         from app.doc import editstate
 
+        if self._barred(spec):
+            return
         why = editstate.command_refusal(self.doc, spec.name)
         if why:
             self._fail(why)
@@ -814,6 +880,10 @@ class CommandRunner:
     def cancel(self) -> dict:
         self.begin_call()
         with self.doc.lock:
+            from app.cmd import script
+
+            self.rec("cancel")
+            script.on_cancel(self)
             if self.run is None:
                 self.doc.selection = []
             else:
@@ -837,6 +907,7 @@ class CommandRunner:
                 self._fail("Unknown command: %s" % name.upper())
                 return self.state()
             args = args or {}
+            self.rec("command", spec, args)
             if self.run is not None:
                 self.cancel_run(quiet=True)
             if "inputs" in args and isinstance(args["inputs"], list):
@@ -847,6 +918,14 @@ class CommandRunner:
         return self.state()
 
     def _programmatic(self, spec, args: dict) -> None:
+        if self._barred(spec):
+            return
+        from app.cmd import barred
+
+        why = barred.args_refusal(self, spec, args)
+        if why:
+            self._fail(why)
+            return
         if self.run is not None:
             self.cancel_run(quiet=True)
         if spec.execute is None:
@@ -888,11 +967,20 @@ class CommandRunner:
 
     def _feed(self, tok: str) -> None:
         run = self.run
+        if len(tok) > 1 and tok[0] in "(!":
+            from app.lisp import hooks
+
+            got = hooks.answer(self, tok)
+            if got is not None and self.run is run:
+                self._feed(got)
+            return
         if len(tok) > 1 and tok.startswith("'"):
             word = tok[1:]
             spec = registry.resolve(word)
             if spec is None:
                 self._fail("Unknown command: %s" % word.upper())
+                return
+            if self._barred(spec):
                 return
             self._start_transparent(spec)
             return

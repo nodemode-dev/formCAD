@@ -275,7 +275,9 @@ def run_edit(ctx, log, ent, pick, edges, ext_mode, quick, trimming):
     created, erased = apply_result(ctx, ent, results)
     if log is not None:
         log.push(rows, created)
-    return created, erased
+    after = ctx.d.get(ent.handle)
+    changed = bool(created or erased) or after is None or not rows or after.to_dict() != rows[0]["data"]
+    return created, erased, changed
 
 
 def fence_points(ctx, ent, pts):
@@ -306,11 +308,11 @@ def repeat_at(ctx, log, handle, points, edges, ext_mode, quick, trimming):
         if best is None or best[0] > 1e-6:
             continue
         try:
-            created, erased = run_edit(ctx, log, best[1], pt, edges, ext_mode, quick, trimming)
+            created, erased, did = run_edit(ctx, log, best[1], pt, edges, ext_mode, quick, trimming)
         except CommandError as err:
             ctx.say(str(err))
             continue
-        count += 1
+        count += 1 if did else 0
         cur = [h for h in cur if ctx.d.get(h) is not None] + created
     return count
 
@@ -460,10 +462,10 @@ def _trim_extend(ctx, is_trim):
                     continue
                 pt = path.closest(a.value)[1]
                 try:
-                    run_edit(ctx, log, e, pt, edges, ext_mode, quick if is_trim else False, is_trim)
-                    total += 1
-                except CommandError as err:
-                    ctx.say(str(err))
+                    _c, _e, did = run_edit(ctx, log, e, pt, edges, ext_mode, quick if is_trim else False, is_trim)
+                    total += 1 if did else 0
+                except CommandError:
+                    continue
             if not total:
                 ctx.say("No objects found.")
 
@@ -490,10 +492,10 @@ def _exec_edit(ctx, args, trimming):
 
     def one(ent, pt):
         nonlocal changed
-        created, erased = run_edit(ctx, None, ent, pt, edges, ext_mode, quick if trimming else False, trimming)
+        created, erased, did = run_edit(ctx, None, ent, pt, edges, ext_mode, quick if trimming else False, trimming)
         created_all.extend(created)
         erased_all.extend(erased)
-        changed += 1
+        changed += 1 if did else 0
 
     if "handle" in args:
         ent = ctx.d.get(int(args["handle"]))

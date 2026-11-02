@@ -10,9 +10,11 @@ from app.interchange.errors import InterchangeError
 MAX_DWG = 512 * 1024 * 1024
 MAX_DXF = 1024 * 1024 * 1024
 TIMEOUT = 300
-ODA_NAMES = ("ODAFileConverter", "ODAFileConverter.exe", "TeighaFileConverter")
+ODA_NAMES = ("ODAFileConverter", "ODAFileConverter.exe", "TeighaFileConverter", "TeighaFileConverter.exe")
 LIBRE_READ = ("dwg2dxf", "dwg2dxf.exe")
 LIBRE_WRITE = ("dxf2dwg", "dxf2dwg.exe")
+KNOWN_NAMES = frozenset(n.lower() for n in ODA_NAMES + LIBRE_READ + LIBRE_WRITE)
+MAX_TAIL = 64 * 1024
 ODA_VERSIONS = {"R2000": "ACAD2000", "R2004": "ACAD2004", "R2007": "ACAD2007", "R2010": "ACAD2010", "R2013": "ACAD2013", "R2018": "ACAD2018"}
 SETTINGS_FILE = "interchange.json"
 
@@ -35,6 +37,10 @@ def load_settings() -> dict:
 
 def save_settings(enabled=None, converter=None) -> dict:
     cur = load_settings()
+    if converter is not None:
+        want = str(converter).strip()
+        if want and os.path.basename(want.replace("\\", "/")).lower() not in KNOWN_NAMES:
+            raise InterchangeError("The converter must be ODAFileConverter, TeighaFileConverter, dwg2dxf or dxf2dwg.", "badconv")
     if enabled is not None:
         cur["dwgEnabled"] = bool(enabled)
     if converter is not None:
@@ -139,15 +145,19 @@ def oda_command(exe: str, src_dir: str, out_dir: str, version: str, out_type: st
 
 
 def _run(cmd: list, timeout: int = TIMEOUT) -> None:
-    try:
-        proc = subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, shell=False)
-    except subprocess.TimeoutExpired:
-        raise InterchangeError("The DWG converter did not finish within %d seconds and was stopped." % timeout, "timeout")
-    except OSError as err:
-        raise InterchangeError("The DWG converter could not be started: %s" % err, "start")
+    with tempfile.TemporaryFile() as errs:
+        try:
+            proc = subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errs, timeout=timeout, shell=False)
+        except subprocess.TimeoutExpired:
+            raise InterchangeError("The DWG converter did not finish within %d seconds and was stopped." % timeout, "timeout")
+        except OSError as err:
+            raise InterchangeError("The DWG converter could not be started: %s" % err, "start")
+        size = errs.seek(0, os.SEEK_END)
+        errs.seek(max(0, size - MAX_TAIL))
+        text = errs.read(MAX_TAIL)
     if proc.returncode != 0:
-        tail = (proc.stderr or proc.stdout or b"").decode("utf-8", "replace").strip().splitlines()[-3:]
-        raise InterchangeError("The DWG converter stopped with code %d. %s" % (proc.returncode, " ".join(tail)), "convfail")
+        tail = text.decode("utf-8", "replace").strip().splitlines()[-3:]
+        raise InterchangeError("The DWG converter stopped with code %d. %s" % (proc.returncode, " ".join(tail)[-400:]), "convfail")
 
 
 def dwg_to_dxf(path: str, timeout: int = TIMEOUT) -> tuple:

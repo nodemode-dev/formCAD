@@ -15,9 +15,30 @@ class PreviewBody(BaseModel):
     snap: Optional[dict[str, Any]] = None
 
 
+class SubRef(BaseModel):
+    body: int
+    face: Optional[int] = None
+    edge: Optional[int] = None
+
+
 class SelectionBody(BaseModel):
     handles: list[int] = []
     mode: Optional[str] = "set"
+    faces: list[SubRef] = []
+    edges: list[SubRef] = []
+    owners: list[int] = []
+
+
+def _merge_sub(old: list, new: list, mode: str, key: str) -> list:
+    keep = lambda r: (r["body"], r[key])
+    fresh = [{"body": r.body, key: getattr(r, key)} for r in new if getattr(r, key) is not None]
+    if mode == "add":
+        have = {keep(r) for r in old}
+        return old + [r for r in fresh if keep(r) not in have]
+    if mode == "remove":
+        gone = {keep(r) for r in fresh}
+        return [r for r in old if keep(r) not in gone]
+    return fresh
 
 
 class GripBody(BaseModel):
@@ -62,7 +83,7 @@ def get_selection(doc_id: str) -> dict:
 
     doc = _doc(doc_id)
     handles = doc.get_runner().current_selection()
-    return {"handles": handles, "pickfirst": bool(sv.get_var(doc, "PICKFIRST")), "rev": doc.rev}
+    return {"handles": handles, "pickfirst": bool(sv.get_var(doc, "PICKFIRST")), "rev": doc.rev, **doc.subselection}
 
 
 @router.put("/{doc_id}/selection")
@@ -74,7 +95,13 @@ def put_selection(doc_id: str, body: SelectionBody) -> dict:
     if mode not in ("set", "add", "remove"):
         raise HTTPException(400, "mode must be set, add or remove.")
     handles = doc.get_runner().set_selection(body.handles, mode)
-    return {"handles": handles, "pickfirst": bool(sv.get_var(doc, "PICKFIRST")), "rev": doc.rev}
+    with doc.lock:
+        sub = doc.subselection
+        faces = _merge_sub(sub["faces"], body.faces, mode, "face")
+        edges = _merge_sub(sub["edges"], body.edges, mode, "edge")
+        owners = sorted({r["body"] for r in faces + edges} | (set(body.owners) if mode != "remove" else set()))
+        doc.subselection = {"faces": faces, "edges": edges, "owners": owners}
+    return {"handles": handles, "pickfirst": bool(sv.get_var(doc, "PICKFIRST")), "rev": doc.rev, **doc.subselection}
 
 
 @router.get("/{doc_id}/grips")

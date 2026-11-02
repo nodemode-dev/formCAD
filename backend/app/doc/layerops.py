@@ -881,9 +881,12 @@ def export_states(d, names=None, path: str = "") -> dict:
     if path:
         from app.doc import container
 
-        target = os.path.expanduser(str(path))
-        if os.path.splitext(target)[1] == "":
-            target += ".fcls"
+        from app.core import outputs
+
+        try:
+            target = outputs.checked(str(path), (".fcls",), ".fcls")
+        except outputs.OutputRefused as err:
+            raise LayerError(str(err))
         try:
             container.atomic_write(target, json.dumps(data, indent=1).encode("utf-8"))
         except OSError as err:

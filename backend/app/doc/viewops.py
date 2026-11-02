@@ -52,11 +52,39 @@ def view_space_label(rec) -> str:
 def list_views(d) -> list:
     out = []
     for rec in d.tables["views"].values():
-        out.append({"name": rec["name"], "layout": rec.get("layout", ""), "space": view_space_label(rec), "center": list(rec["center"]), "width": rec["width"], "height": rec["height"], "twist": rec.get("twist", 0.0), "layerState": rec.get("layer_state", "")})
+        row = {"name": rec["name"], "layout": rec.get("layout", ""), "space": view_space_label(rec), "center": list(rec["center"]), "width": rec["width"], "height": rec["height"], "twist": rec.get("twist", 0.0), "layerState": rec.get("layer_state", "")}
+        if rec.get("camera3d"):
+            row["camera3d"] = rec["camera3d"]
+        out.append(row)
     return sorted(out, key=lambda r: LO.natural_key(r["name"]))
 
 
-def save_view(doc, name: str, window=None, snapshot=None) -> tuple:
+def clean_camera(camera) -> dict:
+    if not isinstance(camera, dict):
+        raise ViewError("The 3D camera is not valid.")
+    out = {}
+    for key in ("position", "target", "up"):
+        v = camera.get(key)
+        if v is None and key == "up":
+            continue
+        if not (isinstance(v, (list, tuple)) and len(v) == 3 and all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) for x in v)):
+            raise ViewError("The 3D camera is not valid.")
+        out[key] = [float(x) for x in v]
+    h = camera.get("height")
+    if not (isinstance(h, (int, float)) and not isinstance(h, bool) and math.isfinite(h) and h > 0):
+        raise ViewError("The 3D camera is not valid.")
+    out["height"] = float(h)
+    for key in ("projection", "mode"):
+        if isinstance(camera.get(key), str):
+            out[key] = camera[key][:24]
+    for key in ("fov", "distance", "zoom"):
+        v = camera.get(key)
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v):
+            out[key] = float(v)
+    return out
+
+
+def save_view(doc, name: str, window=None, snapshot=None, camera3d=None) -> tuple:
     d = doc.drawing
     name = str(name or "").strip()
     if not valid_view_name(name):
@@ -74,6 +102,8 @@ def save_view(doc, name: str, window=None, snapshot=None) -> tuple:
     snap = view_session(doc)["snapshot"] if snapshot is None else bool(snapshot)
     old = d.tables["views"].get(name)
     rec = {"name": old["name"] if old else name, "layout": current_layout(doc), "center": center, "width": w, "height": h, "twist": 0.0, "layer_state": ""}
+    if camera3d is not None:
+        rec["camera3d"] = clean_camera(camera3d)
     internal = "*V:" + rec["name"]
     if snap:
         LO.save_state(d, internal, internal=True, overwrite=True)
@@ -112,7 +142,10 @@ def restore_view(doc, name: str) -> dict:
         doc.current_space = space
     doc.set_view(center, height)
     doc.request_view("restore", center=center, height=height, space=space, name=rec["name"])
-    return {"name": rec["name"], "space": space, "center": center, "height": height, "notes": notes}
+    out = {"name": rec["name"], "space": space, "center": center, "height": height, "notes": notes}
+    if rec.get("camera3d"):
+        out["camera3d"] = rec["camera3d"]
+    return out
 
 
 def delete_views(d, spec) -> list:
@@ -199,8 +232,13 @@ def describe_tiles(doc) -> dict:
     tiles = []
     for i, t in enumerate(rec["tiles"]):
         tiles.append({"index": i + 1, "lowerLeft": list(t["lower_left"]), "upperRight": list(t["upper_right"]), "center": list(t["center"]), "height": t["height"], "aspect": t.get("aspect", 1.0), "current": i == cur})
-    configs = [r["name"] for r in d.tables["vports"].values() if r["name"] != "*Active"]
-    return {"tiles": tiles, "current": cur + 1, "configs": sorted(configs, key=LO.natural_key)}
+    saved = [r for r in d.tables["vports"].values() if r["name"] != "*Active"]
+    previews = {}
+    for r in saved:
+        at = max(0, min(int(r.get("current", 0)), len(r["tiles"]) - 1))
+        previews[r["name"]] = [{"index": i + 1, "lowerLeft": list(t["lower_left"]), "upperRight": list(t["upper_right"]), "current": i == at} for i, t in enumerate(r["tiles"])]
+    configs = [r["name"] for r in saved]
+    return {"tiles": tiles, "current": cur + 1, "configs": sorted(configs, key=LO.natural_key), "previews": previews}
 
 
 def rects_for(rect, count: int, orient: str) -> list:

@@ -43,6 +43,7 @@ class Prompt:
     preselect: bool = True
     hint: str = ""
     jig: Any = None
+    parse: Any = None
 
     def kind(self) -> str:
         if self.select:
@@ -75,6 +76,8 @@ class Env:
 
 def format_prompt(p: Prompt) -> str:
     msg = p.message
+    if p.hint == "raw":
+        return msg
     if p.options:
         kw = "/".join(p.options)
         if msg.endswith("?") or p.hint == "bare":
@@ -259,6 +262,8 @@ def default_input(p: Prompt) -> Input:
 
 
 def resolve(p: Prompt, text: str, env: Env):
+    if p.parse is not None:
+        return p.parse(p, text, env)
     if p.free_text:
         if text == "":
             return ("input", default_input(p) if p.default is not None else Input("enter"))

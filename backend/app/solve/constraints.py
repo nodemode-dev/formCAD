@@ -207,13 +207,15 @@ def build(sk, kind, refs, value, ctx):
         ent, part = split_ref(sk, refs[0])
         if pointlike(ent, part):
             f = pt(refs[0])
-            px, py = f(x0)
+            px, py = ctx["pt"] if "pt" in ctx else f(x0)
+            ctx["pt"] = [float(px), float(py)]
             fn = lambda x: np.array([f(x)[0] - px, f(x)[1] - py])
             rows = 2
         else:
             idx = list(range(ent.off, ent.off + ent.n))
             touch(ent, idx)
-            base = x0[idx].copy()
+            base = np.array(ctx["base"], dtype=float) if "base" in ctx else x0[idx].copy()
+            ctx["base"] = [float(v) for v in base]
             fn = lambda x: x[idx] - base
             rows = len(idx)
     elif kind in ("parallel", "perpendicular"):

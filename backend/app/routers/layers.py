@@ -38,6 +38,7 @@ class ActionBody(BaseModel):
     expr: Optional[dict[str, Any]] = None
     parent: Optional[str] = None
     snapshot: Optional[bool] = None
+    camera3d: Optional[dict[str, Any]] = None
     p1: Optional[list[float]] = None
     p2: Optional[list[float]] = None
 
@@ -189,7 +190,7 @@ def post_views(doc_id: str, body: ActionBody) -> dict:
         if action == "list":
             return {}
         if action == "save":
-            rec, replaced = VO.save_view(doc, name, None, body.snapshot)
+            rec, replaced = VO.save_view(doc, name, None, body.snapshot, body.camera3d)
             return {"view": rec["name"], "replaced": replaced}
         if action == "window":
             if not body.p1 or not body.p2:
