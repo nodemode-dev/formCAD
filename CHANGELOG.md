@@ -2,6 +2,18 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.6.0 · 2026-11-02
+
+- A built-in LISP language: type expressions at the command line, load routines with APPLOAD, run commands from routines, with file access limited to the support folders you choose and runaway routines stopped.
+- Scripts (.scr) with progress, stop and resume; your own command aliases; a macro recorder that saves what you do as a script or a Python macro.
+- Python macros that run in a separate, limited process after you trust each file.
+- FormCAD as an MCP server for agents such as Claude Code, over stdio or HTTP, with a tool for every command; a local control protocol; a command-line tool that converts and runs files without the window.
+- Plugins from a folder or from installed packages, off until you enable each one and checked against their file hashes.
+- Inquiry and file commands: LIST, STATUS, TIME, COUNT, NEW, CLOSE, SAVE, AUDIT, RECOVER and COMPARE.
+- A 3D view: open STEP and IGES files, create boxes, cylinders, spheres, cones, tori and extrusions, combine them, measure mass properties, and view them wireframe, shaded, with edges, hidden line, ghosted, x-ray or technical, with orbit, a view cube, named views and construction planes.
+- Parametric constraints on drawings and sketches: geometric and dimensional constraints, auto-constrain, status colours, a conflict explainer that refuses over-defining dimensions, and a Parameters Manager with equations and units.
+- Layouts from template files; Named Viewports shows the configuration you pick; a wider layer manager in viewports; several fixes to TRIM, ARRAYPOLAR, DIMLINEAR and MLEADER.
+
 ## 0.5.0 · 2026-11-02
 
 - Blocks with base points, insertion at any scale and rotation, exploded insertion, writing a block to its own drawing, purge, replace and burst; attributes with prompts, defaults, display modes, editing, synchronising and the Block Attribute Manager; attribute data extraction to CSV.
