@@ -11,6 +11,7 @@ import { layoutState } from '../ui/layout-state';
 import { sysvars } from '../ui/sysvar-store';
 import { toast } from '../ui/toast';
 import { LEVEL_IDS, PLANE_IDS, STD_VIEW_IDS } from './menu-ids';
+import { fetchGrid, fetchPlane } from './plane-api';
 import { parseScene } from './scene-format';
 import type { AngleConvention, BodyData, DisplayMode, PickLevel, Projection, SceneModel, SelectionState } from './types';
 import { MODE_LABELS, MODE_ORDER } from './types';
@@ -39,11 +40,12 @@ function loadPrefs(): Prefs {
   }
 }
 
-async function fetchScene(id: string, since: number): Promise<ArrayBuffer | null> {
+async function fetchScene(id: string, since: number, hold = ''): Promise<ArrayBuffer | null> {
   const headers: Record<string, string> = {};
   const tok = token();
   if (tok) headers['X-FormCAD-Token'] = tok;
-  const res = await fetch(`/api/docs/${enc(id)}/scene?since=${since}`, { headers });
+  const url = hold ? `/api/docs/${enc(id)}/part/scene-at?to=${enc(hold)}` : `/api/docs/${enc(id)}/scene?since=${since}`;
+  const res = await fetch(url, { headers });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(res.statusText || `The 3D data request failed (${res.status})`);
   try {
@@ -53,9 +55,21 @@ async function fetchScene(id: string, since: number): Promise<ArrayBuffer | null
   }
 }
 
+function sceneSig(bodies: Map<number, BodyData>): string {
+  const rows: string[] = [];
+  for (const b of bodies.values()) {
+    const p = b.positions;
+    const step = Math.max(3, Math.floor(p.length / 96 / 3) * 3);
+    let sum = 0;
+    for (let i = 0; i < p.length; i += step) sum += p[i] * 1.31 + p[i + 1] * 2.17 + p[i + 2] * 3.07;
+    rows.push(`${b.id}:${p.length}:${b.indices.length}:${sum.toFixed(6)}`);
+  }
+  return rows.sort().join('|');
+}
+
 const hint = (text: string): void => { document.dispatchEvent(new CustomEvent('formcad:hint', { detail: text })); };
 
-class View3dController {
+export class View3dController {
   vp: Viewport3D | null = null;
   on = false;
   failed = '';
@@ -69,6 +83,7 @@ class View3dController {
   private cache = new Map<number, BodyData>();
   private cacheDoc = '';
   private cacheRev = 0;
+  private hold = '';
   private busy = false;
   private again = false;
   private timer = 0;
@@ -125,6 +140,8 @@ class View3dController {
     if (this.failed) return null;
     try {
       const vp = new Viewport3D(this.host, {
+        askPlane: (spec) => (docStore.activeId ? fetchPlane(docStore.activeId, spec) : Promise.reject(new Error('No drawing is open'))),
+        askGrid: (ask) => (docStore.activeId ? fetchGrid(docStore.activeId, ask) : Promise.reject(new Error('No drawing is open'))),
         onMode: () => this.sync(),
         onProjection: () => this.sync(),
         onLevel: () => this.sync(),
@@ -143,6 +160,7 @@ class View3dController {
       vp.setCubeVisible(this.prefs.cube);
       if (this.prefs.projection === 'parallel') vp.rig.setProjection('parallel');
       this.vp = vp;
+      document.dispatchEvent(new CustomEvent('formcad:view3d-created', { detail: { vp } }));
       this.applyVars();
       this.sync();
       if (import.meta.env.DEV) Object.assign(window, { formcadView3d: this });
@@ -164,6 +182,7 @@ class View3dController {
     vp.rig.setZoomFactor(sysvars.num('ZOOMFACTOR', 60));
     const os = sysvars.num('OSMODE', 4133);
     vp.snapOn = (os & 16384) === 0 && (os & 16383) !== 0;
+    vp.gridSnap = sysvars.num('SNAPMODE', 0) === 1;
     vp.snapAllowed = (k) => (k === 'vertex' ? (os & 1) !== 0 : k === 'midpoint' ? (os & 2) !== 0 : k === 'center' ? (os & 4) !== 0 : true);
   }
 
@@ -297,9 +316,24 @@ class View3dController {
     if (this.on) void this.leave(); else void this.enter();
   }
 
+  holdAt(fid: string | null): void {
+    const next = fid ?? '';
+    if (next === this.hold) return;
+    this.hold = next;
+    this.cache.clear();
+    this.cacheDoc = '';
+    this.cacheRev = 0;
+    this.firstFit = false;
+    if (this.on) void this.load(false).catch(() => undefined);
+  }
+
   schedule(): void {
     if (this.timer) return;
     this.timer = window.setTimeout(() => { this.timer = 0; void this.load(false).catch(() => undefined); }, 120);
+  }
+
+  refresh(): Promise<void> {
+    return this.on ? this.load(false).catch(() => undefined) : Promise.resolve();
   }
 
   private async load(first: boolean): Promise<void> {
@@ -311,15 +345,19 @@ class View3dController {
     try {
       do {
         this.again = false;
-        const same = this.cacheDoc === id && this.cacheRev > 0;
-        const buf = await fetchScene(id, same ? this.cacheRev : 0);
+        const held = this.hold;
+        const same = !held && this.cacheDoc === id && this.cacheRev > 0;
+        const buf = await fetchScene(id, same ? this.cacheRev : 0, held);
+        if (held !== this.hold) { this.again = true; continue; }
         if (docStore.activeId !== id) break;
         if (buf) {
           const parsed = parseScene(buf);
+          const before = sceneSig(this.cache);
           if (!parsed.delta || !same) this.cache.clear();
           for (const r of parsed.removed) this.cache.delete(r);
           for (const h of parsed.hidden) this.cache.delete(h);
           for (const b of parsed.bodies) this.cache.set(b.id, b);
+          if (before && before !== sceneSig(this.cache)) document.dispatchEvent(new CustomEvent('formcad:scene-touched', { detail: { doc: id } }));
           this.cacheDoc = id;
           this.cacheRev = parsed.rev;
         } else {
@@ -362,10 +400,17 @@ class View3dController {
 
   private sendPoint(p: [number, number, number], snap: string | null): void {
     const id = docStore.activeId;
+    const vp = this.vp;
     if (!id || !this.expectPoint) return;
-    void api.sendCanvasInput(id, { point: p as unknown as [number, number], ...(snap ? { snap: { mode: snap, handle: null, at: [p[0], p[1]] } } : {}) })
-      .then((state) => document.dispatchEvent(new CustomEvent('formcad:command-state', { detail: { doc: id, state } })))
-      .catch(() => undefined);
+    const post = (at: [number, number, number]): void => {
+      void api.sendCanvasInput(id, { point: at as unknown as [number, number], ...(snap ? { snap: { mode: snap, handle: null, at: [at[0], at[1]] } } : {}) })
+        .then((state) => document.dispatchEvent(new CustomEvent('formcad:command-state', { detail: { doc: id, state } })))
+        .catch(() => undefined);
+    };
+    if (!vp || !vp.gridSnap || snap) { post(p); return; }
+    fetchGrid(id, { plane: vp.plane, target: p, visible: 1, radius: 1, point: p, step: vp.gridStep })
+      .then((g) => post(g.snapped ?? p))
+      .catch(() => post(p));
   }
 
   private add(id: string, label: string, run: () => void, opts: { checked?: () => boolean; keys?: string[]; enabled?: () => boolean } = {}): void {
@@ -426,6 +471,17 @@ class View3dController {
   }
 }
 
+let live: View3dController | null = null;
+const waiting: Array<(c: View3dController) => void> = [];
+
+export const view3d = (): View3dController | null => live;
+
+export function onView3d(fn: (c: View3dController) => void): void {
+  if (live) fn(live);
+  else waiting.push(fn);
+}
+
 onShellMounted((ctx) => {
-  new View3dController(ctx.hosts.root, ctx.hosts.stage, ctx.hosts.status);
+  live = new View3dController(ctx.hosts.root, ctx.hosts.stage, ctx.hosts.status);
+  for (const fn of waiting.splice(0)) fn(live);
 });

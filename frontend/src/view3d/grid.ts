@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Palette } from './kit';
-import { fromLocal, niceStep, toLocal } from './planes';
-import type { ConstructionPlane } from './types';
+import { planeCoords } from './planes';
+import type { ConstructionPlane, GridAsk, GridLines } from './types';
 
 const VERT = `
 uniform float uExtent;
@@ -46,6 +46,13 @@ export class ConstructionGrid {
   readonly mesh: THREE.Mesh;
   private readonly mat: THREE.ShaderMaterial;
   private plane: ConstructionPlane;
+  private asked = '';
+  private busy = false;
+  private waiting: GridAsk | null = null;
+  private seq = 0;
+  ask: ((a: GridAsk) => Promise<GridLines>) | null = null;
+  onLines: (() => void) | null = null;
+  step = 10;
 
   constructor(plane: ConstructionPlane, pal: Palette) {
     this.plane = plane;
@@ -62,7 +69,7 @@ export class ConstructionGrid {
         uColor: { value: pal.grid.clone() },
         uAxisX: { value: pal.axisX.clone() },
         uAxisY: { value: pal.axisY.clone() },
-        uAlpha: { value: 1 },
+        uAlpha: { value: 0 },
       },
     });
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat);
@@ -81,26 +88,43 @@ export class ConstructionGrid {
 
   setPlane(p: ConstructionPlane): void {
     this.plane = p;
+    this.seq += 1;
     const x = new THREE.Vector3(...p.x), y = new THREE.Vector3(...p.y), z = new THREE.Vector3(...p.z);
     this.mesh.matrix.makeBasis(x, y, z).setPosition(...p.origin);
     this.mesh.matrixWorldNeedsUpdate = true;
   }
 
-  fit(target: THREE.Vector3, visible: number, radius: number): number {
-    const l = toLocal(this.plane, [target.x, target.y, target.z]);
-    const off = Math.hypot(l[0], l[1]);
-    const extent = Math.max(visible * 3, radius * 2, off * 2, 1);
-    const step = niceStep(visible);
-    this.mat.uniforms.uExtent.value = extent;
-    this.mat.uniforms.uStep.value = step;
-    (this.mat.uniforms.uCenter.value as THREE.Vector2).set(l[0], l[1]);
-    return step;
+  fit(target: THREE.Vector3, visible: number, radius: number): void {
+    const c = planeCoords(this.plane, [target.x, target.y, target.z]);
+    (this.mat.uniforms.uCenter.value as THREE.Vector2).set(c[0], c[1]);
+    const bin = (v: number, per: number): number => Math.round(Math.log2(Math.max(v, 1e-9)) * per);
+    const key = `${this.seq}|${bin(visible, 2)}|${bin(radius, 1)}|${bin(Math.hypot(c[0], c[1]), 1)}`;
+    if (key === this.asked) return;
+    this.asked = key;
+    this.send({ plane: this.plane, target: [target.x, target.y, target.z], visible, radius });
   }
 
-  snapToStep(w: [number, number, number], step: number): [number, number, number] {
-    const l = toLocal(this.plane, w);
-    const q = (v: number): number => Math.round(v / step) * step;
-    return fromLocal(this.plane, [q(l[0]), q(l[1])]);
+  private send(a: GridAsk): void {
+    if (!this.ask) return;
+    if (this.busy) { this.waiting = a; return; }
+    this.busy = true;
+    const seq = this.seq;
+    this.ask(a).then((g) => {
+      if (seq === this.seq) this.apply(g);
+    }).catch(() => undefined).finally(() => {
+      this.busy = false;
+      const next = this.waiting;
+      this.waiting = null;
+      if (next) this.send({ ...next, plane: this.plane });
+    });
+  }
+
+  private apply(g: GridLines): void {
+    this.mat.uniforms.uExtent.value = g.extent;
+    this.mat.uniforms.uStep.value = g.step;
+    this.mat.uniforms.uAlpha.value = 1;
+    this.step = g.step;
+    this.onLines?.();
   }
 
   dispose(): void {

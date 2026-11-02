@@ -359,7 +359,7 @@ export class SettingsDialog extends Dialog {
     const tokenFile = pathRow('Token file', () => { void this.copy(this.tokenPath()); });
     this.syncs.push(() => tokenFile.set(this.tokenPath()));
     add('Agents',
-      grp('Outside agents', address.el, tokenFile.el, nt('An outside agent connects to the address above and sends the token from the file in the X-FormCAD-Token header. The token changes every time the engine starts.')),
+      grp('Outside agents', address.el, tokenFile.el, nt('An outside agent connects to the address above and sends the token from the file in the X-FormCAD-Token header. The token changes every time the engine starts.'), nt('The control port, when it is switched on with a control-port option, is trusted completely: anything that can read its token file on this computer acts as you, with no limits on files or settings. Leave it off unless a program you wrote needs it.')),
       grp('Connect Claude Code', ...mcpRows((fn) => this.syncs.push(fn))));
 
     this.body.appendChild(el('<div class="cv-prefs"></div>'));

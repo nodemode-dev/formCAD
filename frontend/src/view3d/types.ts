@@ -77,7 +77,28 @@ export interface CameraSpec {
   height: number;
 }
 
+export type PlaneSpec = { world: string } | { points: Vec3[] } | { face: { point: Vec3; normal: Vec3 } };
+
+export interface GridLines {
+  step: number;
+  extent: number;
+  center: [number, number];
+  major: number;
+  snapped?: Vec3;
+}
+
+export interface GridAsk {
+  plane: ConstructionPlane;
+  target: Vec3;
+  visible: number;
+  radius: number;
+  point?: Vec3;
+  step?: number;
+}
+
 export interface ViewListener {
+  askPlane?: (spec: PlaneSpec) => Promise<ConstructionPlane>;
+  askGrid?: (ask: GridAsk) => Promise<GridLines>;
   onMode?: (mode: DisplayMode) => void;
   onProjection?: (p: Projection) => void;
   onSelection?: (s: SelectionState) => void;

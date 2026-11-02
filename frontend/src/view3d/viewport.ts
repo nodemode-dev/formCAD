@@ -4,12 +4,14 @@ import { BodyView } from './body-view';
 import { ViewCube } from './cube';
 import { ConstructionGrid } from './grid';
 import { Highlight, highlightColor } from './highlight';
+import type { ViewLayer } from './layer';
 import { EDGES_VISIBLE, FACE_VISIBLE, FACES_OCCLUDE, ModeKit, readPalette, type Palette } from './kit';
 import { Overlay, resolveInk } from './overlay';
 import { Picker, type EdgeHit, type FaceHit } from './pick';
-import { planeOnFace, planeThrough, rayHit, worldPlane } from './planes';
+import { RefGeometry, type RefItem } from './refgeo';
+import { rayHit, STARTING_PLANE } from './planes';
 import { Rig } from './rig';
-import type { AngleConvention, CameraSpec, ConstructionPlane, DisplayMode, PickLevel, Projection, SceneModel, SelectionState, SnapHit, SnapKind, Vec3, ViewListener } from './types';
+import type { AngleConvention, CameraSpec, ConstructionPlane, DisplayMode, PickLevel, PlaneSpec, Projection, SceneModel, SelectionState, SnapHit, SnapKind, Vec3, ViewListener } from './types';
 import { MODE_LABELS, MODE_ORDER } from './types';
 import { directionFor, HOME_DIRECTION, standardView } from './views';
 
@@ -33,12 +35,18 @@ export class Viewport3D {
   snapAllowed: (k: SnapKind) => boolean = () => true;
   gridOn = true;
   gridSnap = false;
-  plane: ConstructionPlane = worldPlane('top');
+  plane: ConstructionPlane = STARTING_PLANE;
   sel: SelectionState = { bodies: [], faces: [], edges: [] };
   model: SceneModel = { rev: 0, bodies: [], snaps: [] };
   frames = 0;
   lastCpuMs = 0;
+  onPick: ((s: SelectionState) => void) | null = null;
   private readonly group = new THREE.Group();
+  private readonly previewGroup = new THREE.Group();
+  private previewViews: BodyView[] = [];
+  private readonly refGeo = new RefGeometry();
+  private refItems: RefItem[] = [];
+  private readonly layers: ViewLayer[] = [];
   private readonly views = new Map<number, BodyView>();
   private readonly hemi = new THREE.HemisphereLight(0xffffff, 0x70767f, 1.25);
   private readonly key = new THREE.DirectionalLight(0xffffff, 2.1);
@@ -83,9 +91,11 @@ export class Viewport3D {
     this.renderer.setPixelRatio(this.dpr);
     this.kit = new ModeKit(this.pal);
     this.rig = new Rig(this.canvas);
-    this.scene.add(this.group, this.hemi, this.key, this.key.target);
+    this.scene.add(this.group, this.previewGroup, this.refGeo.group, this.hemi, this.key, this.key.target);
     this.grid = new ConstructionGrid(this.plane, this.pal);
     this.scene.add(this.grid.mesh);
+    this.grid.ask = (a) => (this.ls.askGrid ? this.ls.askGrid(a) : Promise.reject(new Error('No engine')));
+    this.grid.onLines = () => this.invalidate();
     this.cube = new ViewCube(this.pal);
     const look = (id: number): BodyView | undefined => this.views.get(id);
     this.hoverHL = new Highlight(look, highlightColor(this.pal, 'hover'), this.kit.resolution);
@@ -106,6 +116,7 @@ export class Viewport3D {
   get active(): boolean { return this.isActive; }
   get projection(): Projection { return this.rig.projection; }
   get hasBodies(): boolean { return this.views.size > 0; }
+  get gridStep(): number { return this.grid.step; }
   get pending(): string { return this.job ? (this.job.kind === 'three' ? `three:${this.job.pts.length}` : 'face') : ''; }
 
   private bind(): void {
@@ -309,7 +320,7 @@ export class Viewport3D {
     if (job.kind === 'face') {
       if (!tg.face) { this.ls.onHint?.(t('Click a face to put the plane on it.')); return; }
       this.job = null;
-      this.setPlane(planeOnFace(tg.face.point, tg.face.normal));
+      this.requestPlane({ face: { point: tg.face.point, normal: tg.face.normal } });
       this.ls.onHint?.('');
       return;
     }
@@ -321,12 +332,18 @@ export class Viewport3D {
       this.invalidate();
       return;
     }
-    const p = planeThrough(job.pts[0], job.pts[1], job.pts[2]);
+    const pts = [job.pts[0], job.pts[1], job.pts[2]];
     this.job = null;
-    if (!p) { this.ls.onHint?.(t('The three points are on one line. Try again.')); return; }
-    this.setPlane(p);
     this.ls.onHint?.('');
+    this.requestPlane({ points: pts }, t('The three points are on one line. Try again.'));
     this.invalidate();
+  }
+
+  private requestPlane(spec: PlaneSpec, failHint?: string): void {
+    if (!this.ls.askPlane) return;
+    this.ls.askPlane(spec).then((p) => this.setPlane(p)).catch((e: unknown) => {
+      this.ls.onHint?.(failHint ?? (e instanceof Error ? e.message : t('The plane could not be made.')));
+    });
   }
 
   setSelection(s: SelectionState, notify: boolean): void {
@@ -334,7 +351,53 @@ export class Viewport3D {
     this.sel = { bodies: [...s.bodies], faces: [...s.faces], edges: [...s.edges] };
     this.syncHighlights();
     this.invalidate();
-    if (notify) this.ls.onSelection?.(this.sel);
+    if (notify) {
+      if (this.onPick) this.onPick(this.sel);
+      else this.ls.onSelection?.(this.sel);
+    }
+  }
+
+  setPreview(model: SceneModel | null): void {
+    const next = (model?.bodies ?? []).map((b) => new BodyView(b));
+    for (const v of next) { v.apply(this.kit, this.mode); this.previewGroup.add(v.group); }
+    for (const v of this.previewViews) { this.previewGroup.remove(v.group); v.dispose(); }
+    this.previewViews = next;
+    this.group.visible = next.length === 0;
+    this.invalidate();
+  }
+
+  get previewing(): boolean { return this.previewViews.length > 0; }
+
+  setReference(items: RefItem[]): void {
+    this.refItems = items;
+    this.refGeo.set(items, Math.max(this.rig.radius * 0.7, 1), this.pal);
+    this.invalidate();
+  }
+
+  get referenceCount(): number { return this.refItems.length; }
+
+  addLayer(layer: ViewLayer): void {
+    this.layers.push(layer);
+    this.scene.add(layer.group);
+    layer.resolution?.(this.w, this.h);
+    this.invalidate();
+  }
+
+  project(p: Vec3): { x: number; y: number } | null {
+    this.picker.sync(this.w, this.h);
+    return this.picker.project(p);
+  }
+
+  rayAt(px: number, py: number): { origin: Vec3; direction: Vec3 } {
+    const ray = this.rig.ndcToRay((px / this.w) * 2 - 1, -((py / this.h) * 2 - 1));
+    return { origin: [ray.origin.x, ray.origin.y, ray.origin.z], direction: [ray.direction.x, ray.direction.y, ray.direction.z] };
+  }
+
+  get size(): { w: number; h: number } { return { w: this.w, h: this.h }; }
+
+  fitLayers(): void {
+    this.updateBounds();
+    this.zoomExtents(false);
   }
 
   setBodySelection(ids: number[]): void {
@@ -360,7 +423,7 @@ export class Viewport3D {
       const v = this.views.get(f.body);
       if (v) {
         const info = this.faceFrame(v, f.face);
-        if (info) { this.setPlane(planeOnFace(info.point, info.normal)); return; }
+        if (info) { this.requestPlane({ face: { point: info.point, normal: info.normal } }); return; }
       }
     }
     this.job = { kind: 'face' };
@@ -391,7 +454,7 @@ export class Viewport3D {
   }
 
   setWorldPlane(id: string): void {
-    this.setPlane(worldPlane(id));
+    this.requestPlane({ world: id });
   }
 
   setGrid(on: boolean): void {
@@ -455,6 +518,10 @@ export class Viewport3D {
   private bounds(): { min: Vec3; max: Vec3 } {
     const min: Vec3 = [Infinity, Infinity, Infinity], max: Vec3 = [-Infinity, -Infinity, -Infinity];
     for (const v of this.views.values()) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v.min[k]); max[k] = Math.max(max[k], v.max[k]); }
+    for (const l of this.layers) {
+      const b = l.bounds?.();
+      if (b) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], b.min[k]); max[k] = Math.max(max[k], b.max[k]); }
+    }
     if (!Number.isFinite(min[0])) return { min: [-100, -100, -50], max: [100, 100, 50] };
     return { min, max };
   }
@@ -468,6 +535,7 @@ export class Viewport3D {
 
   private applyAll(): void {
     for (const v of this.views.values()) v.apply(this.kit, this.mode);
+    for (const v of this.previewViews) v.apply(this.kit, this.mode);
   }
 
   setMode(m: DisplayMode): void {
@@ -552,6 +620,7 @@ export class Viewport3D {
     this.selHL.setColor(highlightColor(this.pal, 'select'));
     this.hoverHL.setColor(highlightColor(this.pal, 'hover'));
     this.overlay.ink = resolveInk(this.probe);
+    for (const l of this.layers) l.palette?.(this.pal);
     this.applyAll();
     this.invalidate();
   }
@@ -576,6 +645,7 @@ export class Viewport3D {
     this.selHL.setResolution(w, h);
     this.hoverHL.setResolution(w, h);
     this.overlay.size(w, h, this.dpr);
+    for (const l of this.layers) l.resolution?.(w, h);
     this.renderNow(true);
   }
 
@@ -606,6 +676,14 @@ export class Viewport3D {
   private drawOverlay(): void {
     const g = this.overlay.begin();
     this.overlay.triad(g, this.rig.camera.quaternion, this.pal);
+    if (this.refGeo.count) {
+      this.picker.sync(this.w, this.h);
+      this.refGeo.drawLabels(g, (p) => this.picker.project(p), this.overlay.ink.text);
+    }
+    if (this.layers.length) {
+      this.picker.sync(this.w, this.h);
+      for (const l of this.layers) l.draw?.(g, (p) => this.picker.project(p), this.overlay.ink, this.pal);
+    }
     const snapColor = `#${this.pal.snap.getHexString()}`;
     if (this.job?.kind === 'three') {
       this.picker.sync(this.w, this.h);
@@ -648,6 +726,9 @@ export class Viewport3D {
     if (this.raf) cancelAnimationFrame(this.raf);
     if (this.pickRaf) cancelAnimationFrame(this.pickRaf);
     for (const v of this.views.values()) v.dispose();
+    for (const v of this.previewViews) v.dispose();
+    this.refGeo.dispose();
+    for (const l of this.layers) l.dispose();
     this.rig.dispose();
     this.kit.dispose();
     this.grid.dispose();

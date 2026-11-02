@@ -120,7 +120,7 @@ export class Dock {
 
   private place(group: Group): void {
     const order = group.panel.order ?? 100;
-    const next = Array.from(this.groups.values()).find((g) => g !== group && (g.panel.order ?? 100) > order);
+    const next = Array.from(this.groups.values()).filter((g) => g !== group && (g.panel.order ?? 100) > order).sort((a, b) => (a.panel.order ?? 100) - (b.panel.order ?? 100))[0];
     if (next) this.column.insertBefore(group.root, next.root);
     else this.column.appendChild(group.root);
   }

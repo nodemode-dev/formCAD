@@ -11,5 +11,7 @@ import './ui/output/register';
 import './ui/param/register';
 import './ui/auto/register';
 import './view3d/mount';
+import './view3d/nurbs-ui';
+import './part/register';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });

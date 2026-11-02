@@ -162,6 +162,14 @@ const sketch = (): MenuItem[] => section('Sketch', () => [
   E('Sketch Constraints', 'autoconstrain', 'sketch'), E('Sketch Dimensions', 'dim', 'sketch'), E('Sketch Status', 'sketchstatus'),
 ]);
 
+const partMenu = (): MenuItem[] => section('Part', () => [
+  'pt-sketch', 'pt-finish-sketch', 'pt-edit-sketch', SEP,
+  'pt-extrude', 'pt-extrude-cut', 'pt-revolve', 'pt-revolve-cut', 'pt-sweep', 'pt-sweep-cut', 'pt-loft', 'pt-loft-cut', 'pt-boundary', 'pt-rib', 'pt-hole', SEP,
+  'pt-fillet', 'pt-chamfer', 'pt-shell', 'pt-draft', 'pt-pattern', 'pt-mirror', SEP,
+  'pt-edit', 'pt-rebuild', 'pt-force-rebuild', 'pt-roll-end', SEP,
+  'pt-design-table', 'pt-materials', 'pt-mass',
+]);
+
 const model = (): MenuItem[] => section('Model', () => [
   E('Extrude', 'extrude'), E('Revolve', 'revolve'), E('Sweep', 'sweep'), E('Loft', 'loft'), SEP,
   E('Hole...', 'hole'), E('Fillet Edges', 'filletedge'), E('Chamfer Edges', 'chamferedge'), E('Shell', 'shell'), E('Draft', 'draft'), E('Rib', 'rib'), SEP,
@@ -172,12 +180,22 @@ const model = (): MenuItem[] => section('Model', () => [
   E('Measure Body', 'massprop', 'body'), E('Section Analysis', 'sectionanalysis'), 'install-kernel',
 ]);
 
+const curve = (): MenuItem[] => section('Curve', () => [
+  E('Control Points', 'crv'), E('Through Points', 'crvinterp'), E('Blend Curve', 'crvblend'), SEP,
+  E('Match Curve', 'crvmatch'), E('Offset Curve', 'crvoffset'), E('Extend Curve', 'crvextend'), E('Sub-curve', 'crvsub'), E('Reverse Direction', 'crvreverse'), SEP,
+  E('Fit to Tolerance', 'crvfit'), E('Rebuild', 'crvrebuild'), E('Change Degree', 'crvdegree'), E('Insert or Remove Knot', 'crvknot'),
+  E('Simplify', 'crvsimplify'), E('Periodic or Open', 'crvperiodic'), SEP,
+  E('Continuity Report', 'crvcont'), SEP, 'u7-points-cv', 'u7-points-ep', 'u7-points-off',
+]);
+
 const surface = (): MenuItem[] => section('Surface', () => [
-  E('Extrude Surface', 'surfextrude'), E('Revolve Surface', 'surfrevolve'), E('Sweep Surface', 'surfsweep'), E('Loft Surface', 'surfloft'),
-  E('Network Surface', 'surfnetwork'), E('Patch', 'surfpatch'), SEP,
-  E('Offset Surface', 'surfoffset'), E('Trim Surface', 'surftrim'), E('Untrim Surface', 'surfuntrim'), E('Extend Surface', 'surfextend'),
-  E('Fillet Surface', 'surffillet'), E('Blend Surface', 'surfblend'), E('Stitch', 'surfstitch'), E('Thicken', 'surfthicken'), SEP,
-  E('Curvature Analysis', 'surfcurvature'), E('Zebra Analysis', 'surfzebra'), E('Edit Control Points', 'surfcvedit'),
+  E('Loft', 'srfloft'), E('Sweep', 'srfsweep'), E('Network', 'srfnetwork'), E('Patch', 'srfpatch'), E('Planar', 'srfplanar'), E('From Edge Curves', 'srfedge'),
+  E('Extrude Curve', 'srfextrude'), E('Revolve Curve', 'srfrevolve'), SEP,
+  E('Blend', 'srfblend'), E('Match', 'srfmatch'), E('Extend', 'srfextend'), E('Offset', 'srfoffset'), E('Trim', 'srftrim'), E('Split', 'srfsplit'), E('Join', 'srfjoin'), SEP,
+  S('Edge Treatment', E('Fillet Edge', 'filletedge'), E('Chamfer Edge', 'chamferedge'), E('Blend Edge', 'blendedge')),
+  S('Boolean', E('Boolean with Diagnostics', 'boolop'), E('Check Boolean', 'boolcheck'), 'u7-diag-open'), SEP,
+  E('Seam Continuity', 'seamcheck'), 'u7-seams-sel', E('Naked Edges', 'nakededges'), E('Surface Report', 'surfreport'), 'u7-clear-analysis', SEP,
+  E('Model Tolerance...', 'modeltol'), 'u7-tol-open',
 ]);
 
 const assembly = (): MenuItem[] => section('Assembly', () => [
@@ -245,7 +263,9 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Dimension', items: dimension },
     { label: 'Parametric', items: parametric },
     { label: 'Sketch', items: sketch },
+    { label: 'Part', items: partMenu },
     { label: 'Model', items: model },
+    { label: 'Curve', items: curve },
     { label: 'Surface', items: surface },
     { label: 'Assembly', items: assembly },
     { label: 'Drawing', items: drawing },

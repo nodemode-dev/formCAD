@@ -78,13 +78,21 @@ class LayoutTabs {
   }
 
   private openList(anchor: HTMLElement): void {
-    this.listPop.root.replaceChildren(...this.tabs.map((x) => {
-      const b = el<HTMLButtonElement>('<button type="button"></button>');
-      b.dataset.tab = x.key;
-      setText(b, x.label);
-      if (x.current) b.style.fontWeight = '700';
-      return b;
-    }));
+    patchList(this.listPop.root, this.tabs, {
+      key: (x) => x.key,
+      create: (x) => {
+        const b = el<HTMLButtonElement>('<button type="button"></button>');
+        b.dataset.tab = x.key;
+        setText(b, x.label);
+        if (x.current) b.style.fontWeight = '700';
+        return b;
+      },
+      update: (node, x) => {
+        setText(node, x.label);
+        const weight = x.current ? '700' : '';
+        if (node.style.fontWeight !== weight) node.style.fontWeight = weight;
+      },
+    });
     this.listPop.show(anchor);
   }
 
@@ -261,13 +269,20 @@ class ViewportBar {
       } catch { /* keep defaults */ }
     }
     const cur = layoutState.target()?.scaleText ?? '';
-    this.pop.root.replaceChildren(...this.scales.map((s) => {
-      const b = el<HTMLButtonElement>('<button type="button"></button>');
-      b.dataset.scale = s;
-      setText(b, s);
-      if (s === cur) b.style.fontWeight = '700';
-      return b;
-    }));
+    patchList(this.pop.root, this.scales, {
+      key: (s) => s,
+      create: (s) => {
+        const b = el<HTMLButtonElement>('<button type="button"></button>');
+        b.dataset.scale = s;
+        setText(b, s);
+        if (s === cur) b.style.fontWeight = '700';
+        return b;
+      },
+      update: (node, s) => {
+        const weight = s === cur ? '700' : '';
+        if (node.style.fontWeight !== weight) node.style.fontWeight = weight;
+      },
+    });
     this.pop.show(this.scale);
   }
 

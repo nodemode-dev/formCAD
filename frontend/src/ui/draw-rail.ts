@@ -90,6 +90,27 @@ const GROUPS: Tool[][] = [
     { cmd: 'x:dimcontinue', icon: 'dimContinue', label: 'Continue Dimension' },
     { cmd: 'x:qdim', icon: 'qdim', label: 'Quick Dimension' },
   ],
+  [
+    { cmd: 'x:crv', icon: 'csCurve', label: 'Curve by Control Points' },
+    { cmd: 'x:crvinterp', icon: 'csInterp', label: 'Curve through Points' },
+    { cmd: 'x:crvblend', icon: 'csBlendCurve', label: 'Blend Curve' },
+    { cmd: 'x:crvmatch', icon: 'csMatchCurve', label: 'Match Curve' },
+    { cmd: 'x:crvrebuild', icon: 'csRebuild', label: 'Rebuild Curve' },
+    { cmd: 'x:crvoffset', icon: 'csOffsetCurve', label: 'Offset Curve' },
+  ],
+  [
+    { cmd: 'x:srfloft', icon: 'csLoftSrf', label: 'Loft Surface' },
+    { cmd: 'x:srfsweep', icon: 'csSweepSrf', label: 'Sweep Surface' },
+    { cmd: 'x:srfnetwork', icon: 'csNetwork', label: 'Network Surface' },
+    { cmd: 'x:srfpatch', icon: 'csPatch', label: 'Patch Surface' },
+    { cmd: 'x:srfplanar', icon: 'csPlanar', label: 'Planar Surface' },
+    { cmd: 'x:srfblend', icon: 'csBlendSrf', label: 'Blend Surface' },
+    { cmd: 'x:srfmatch', icon: 'csMatchSrf', label: 'Match Surface' },
+    { cmd: 'x:boolop', icon: 'csBool', label: 'Boolean with Diagnostics' },
+    { cmd: 'x:filletedge', icon: 'csFilletEdge', label: 'Fillet Edge' },
+    { cmd: 'x:seamcheck', icon: 'csSeam', label: 'Seam Continuity' },
+    { cmd: 'x:nakededges', icon: 'csNaked', label: 'Naked Edges' },
+  ],
 ];
 
 onShellMounted((ctx) => {

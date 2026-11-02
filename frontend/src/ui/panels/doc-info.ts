@@ -1,5 +1,6 @@
 import type { DocSummary } from '../../io/api';
 import type { DockPanel } from '../dock';
+import { modelToleranceRows } from './model-tol-rows';
 import { infoRow } from './pref-rows';
 
 export interface DocInfoDeps {
@@ -40,6 +41,7 @@ export function docInfoPanel(deps: DocInfoDeps): DockPanel {
       };
       body.classList.add('cv-docinfo');
       for (const r of Object.values(rows)) body.appendChild(r.el);
+      body.append(...modelToleranceRows());
       const paint = (): void => {
         const d = deps.current();
         rows.name.set(d?.name ?? '');
