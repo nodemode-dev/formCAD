@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## App icon, v0.7.0 (src-tauri/icons/, public/favicon.png, public/splash.html, index.html, assets/formcad_icon.png)
+
+The owner's new icon (a gradient gear lifted over its white outline on a dark rounded tile, 1024 px PNG with transparency) replaces the drawn mark everywhere. The six bundle icons the Tauri config lists (32, 128, 256, the PNG, ICNS and ICO) were generated from it with `tauri icon` into a scratch folder and only those six copied in; the Android, iOS and Windows Store sizes it also makes are not used. The favicon is a 256 px PNG (`favicon.svg` removed). The splash embeds a 144 px WebP (4.2 KB) as a data URI in the `img` at 72 by 72 CSS px, so it paints with the first frame and cannot pop in later; the old inline SVG mark is gone. `assets/formcad_icon.png` is the 1024 px source (the old SVG removed). Checked: the splash rendered in Chromium with the icon, the embedded bytes equal the generated WebP.
+
 ## Audit round two, v0.6.0 (io/api-auto.ts, view3d/{kit,cube,grid}.ts, styles/tokens.css)
 
 LISP support folders are read and saved through `/api/automation/lisp-support` (the programmatic `lisp support` action no longer exists). The 3D viewport palette reads its edge, paper, grid and view-cube colours from `--v3d-*` tokens (dark values on `:root`, light values on `body.theme-light`); the only literals left in `view3d/` are CSS keywords used when a token is missing.

@@ -43,6 +43,7 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | --- | --- | --- |
 | tauri 2, tauri-plugin-shell, tauri-plugin-dialog, tauri-plugin-single-instance, regex, serde, serde_json | MIT OR Apache-2.0 | `src-tauri/Cargo.toml`, exact versions in `src-tauri/Cargo.lock` |
 | objc2, objc2-app-kit, objc2-foundation (macOS) | MIT OR Apache-2.0 OR Zlib | `src-tauri/Cargo.toml` |
+| FormCAD app icon (gear over its outline), supplied by the owner | Copyright 2026 NodeAgentc, Inc., part of this product | `assets/formcad_icon.png` (1024 px source), `src-tauri/icons/`, `frontend/public/favicon.png`, embedded in `frontend/public/splash.html` |
 
 ### DWG converters (optional, installed by the user, never shipped)
 
