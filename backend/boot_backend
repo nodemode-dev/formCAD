@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+cd "$(dirname "$0")"
+[ -f venv/bin/activate ] || { echo "[formCAD] backend venv missing, run ./formCAD install" >&2; exit 1; }
+source venv/bin/activate
+exec uvicorn app.main:app --reload --reload-dir app --host "${FORMCAD_HOST:-127.0.0.1}" --port "${FORMCAD_PORT:-8290}"

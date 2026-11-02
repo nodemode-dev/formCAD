@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+keyring
+httpx
+ezdxf
+numpy
