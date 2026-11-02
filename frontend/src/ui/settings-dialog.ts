@@ -12,6 +12,7 @@ import {
   ANGLE_UNITS, ANIMATION_MODES, DEFAULT_PREFS, DRAW_UNITS, SAVE_VERSIONS, loadPrefs, updatePrefs, type Prefs,
 } from './prefs';
 import { dwgRows } from './output/dwg-prefs';
+import { macroRows, mcpRows, pluginRows } from './auto/automation-prefs';
 import { sysvars } from './sysvar-store';
 import { DEFAULT_ACCENT, DEFAULT_THEME, STORAGE_KEY, THEMES, readChoice, setAccent, setIntensity, setTheme, themeSwatchesHtml } from './themes';
 import { toast } from './toast';
@@ -348,14 +349,18 @@ export class SettingsDialog extends Dialog {
         nt('Switching these off speeds up large drawings.')),
       grp('Engine', platform.el, version.el));
 
-    add('Plugins', grp('Registered tools', this.toolList, nt('Tools added by plugins appear here and in the tool rail.')));
+    add('Plugins',
+      grp('Registered tools', this.toolList, nt('Tools added by plugins appear here and in the tool rail.')),
+      grp('Installed plugins', ...pluginRows((fn) => this.syncs.push(fn))),
+      grp('Python macros', ...macroRows((fn) => this.syncs.push(fn))));
 
     const address = pathRow('MCP address', () => { void this.copy(`${location.origin}/mcp`); });
     address.set(`${location.origin}/mcp`);
     const tokenFile = pathRow('Token file', () => { void this.copy(this.tokenPath()); });
     this.syncs.push(() => tokenFile.set(this.tokenPath()));
     add('Agents',
-      grp('Outside agents', address.el, tokenFile.el, nt('An outside agent connects to the address above and sends the token from the file in the X-FormCAD-Token header. The token changes every time the engine starts.')));
+      grp('Outside agents', address.el, tokenFile.el, nt('An outside agent connects to the address above and sends the token from the file in the X-FormCAD-Token header. The token changes every time the engine starts.')),
+      grp('Connect Claude Code', ...mcpRows((fn) => this.syncs.push(fn))));
 
     this.body.appendChild(el('<div class="cv-prefs"></div>'));
     q(this.body, '.cv-prefs').append(pages);

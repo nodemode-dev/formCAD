@@ -1,5 +1,6 @@
 import type { MenuDef, MenuItem, SubMenu } from './menu';
 import { WORKSPACES } from './titlebar-tools';
+import { V3_MENU } from '../view3d/menu-ids';
 
 export interface EngineCommand {
   id: string;
@@ -70,7 +71,7 @@ const view = (): MenuItem[] => section('View', () => [
     E('New Viewports...', 'vports'), E('Named Viewports...', 'vports', 'named'), E('Polygonal Viewport', 'mview', 'polygonal')),
   S('Attribute Display', E('Normal', 'attdisp', 'normal'), E('On', 'attdisp', 'on'), E('Off', 'attdisp', 'off')),
   S('Show Annotative Objects', E('All Scales', 'annoallvisible', 'all'), E('Current Scale Only', 'annoallvisible', 'current')),
-  SEP, 'toggle-viewcube', 'toggle-ucs-icon', SEP,
+  SEP, S('3D View', ...V3_MENU), SEP, 'toggle-viewcube', 'toggle-ucs-icon', SEP,
   S('Interface Theme', 'theme-system', 'theme-light', 'theme-dark'),
   S('Accessibility', E('Show System Cursor', 'systemcursor'), S('Animation Effects', 'anim-system', 'anim-on', 'anim-off')),
   SEP, 'custom-title-bar', 'menus-in-window',
@@ -217,7 +218,7 @@ const tools = (): MenuItem[] => section('Tools', () => [
   S('Extra Tools', E('Break-line Symbol', 'breakline'), E('Convert Text to Mtext', 'txt2mtxt'), E('Explode Attributes to Text', 'burst'),
     E('Move/Copy/Rotate', 'mocoro'), E('Replace Block...', 'blockreplace')),
   E('Count', 'count'), E('Compare Drawings...', 'compare'), E('Data Extraction...', 'dataextraction'), SEP,
-  E('Load Application...', 'appload'), E('Run Script...', 'script'), E('3D Mouse...', 'mouse3d'),
+  E('LISP Console...', 'lispconsole'), E('Load Application...', 'appload'), E('Run Script...', 'script'), E('Macro Recorder...', 'macrorecorder'), E('3D Mouse...', 'mouse3d'),
 ]);
 
 const windowMenu = (): MenuItem[] => section('Window', () => [

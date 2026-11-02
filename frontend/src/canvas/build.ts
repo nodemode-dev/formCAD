@@ -1,4 +1,5 @@
 import { BatchData } from './batch';
+import { barOf } from './cmarks';
 import { opacityOf, pack, packRaw } from './color';
 import { dashRun, dashable, polylineLength } from './dash';
 import { bandTriangles, fillRings } from './fill';
@@ -43,6 +44,14 @@ export class Emitter {
     } else {
       this.flag = 0;
       this.col = pack(item.color[0], item.color[1], item.color[2], a);
+    }
+    const bar = barOf(item.prims);
+    if (bar && bar.rgb) {
+      this.flag = 0;
+      this.col = pack(bar.rgb[0], bar.rgb[1], bar.rgb[2], a);
+    } else if (bar && bar.state === 'fully') {
+      this.flag = 1;
+      this.col = packRaw(255, 255, 255, a);
     }
     const w = this.ctx.lwOn ? (item.lw || 0) * this.ctx.lwK : 0;
     this.thick = w > 1.001;

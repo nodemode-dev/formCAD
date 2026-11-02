@@ -149,6 +149,12 @@
   --canvas-handle: #3b82f6;
   --canvas-paper: #ffffff;
   --canvas-paper-edge: rgba(0, 0, 0, 0.55);
+  --v3d-edge-ink: #0d1014;
+  --v3d-edge-soft: #cfd6de;
+  --v3d-paper: #e9ecef;
+  --v3d-cube-base: #aab2bd;
+  --v3d-cube-ink: #14181d;
+  --v3d-grid: #9aa4b2;
 }
 
 :root {
@@ -177,6 +183,12 @@ body.theme-light {
   --canvas-grid: rgba(0, 0, 0, 0.08);
   --canvas-grid-major: rgba(0, 0, 0, 0.18);
   --canvas-crosshair: #14171c;
+  --v3d-edge-ink: #14171c;
+  --v3d-edge-soft: #22262c;
+  --v3d-paper: #fbfbf8;
+  --v3d-cube-base: #f4f5f7;
+  --v3d-cube-ink: #1c2026;
+  --v3d-grid: #3a4350;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

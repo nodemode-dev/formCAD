@@ -1,4 +1,4 @@
-import { cad, type TileInfo, type ViewRow } from '../../io/api-cad';
+import { cad, type TileBox, type ViewRow } from '../../io/api-cad';
 import { api, ApiError } from '../../io/api';
 import { Dialog } from '../dialogs';
 import { docStore } from '../doc-store';
@@ -158,7 +158,8 @@ export class ViewManager extends Dialog {
 
 export class NamedViewports extends Dialog {
   private configs: string[] = [];
-  private tiles: TileInfo[] = [];
+  private tiles: TileBox[] = [];
+  private previews: Record<string, TileBox[]> = {};
   private selected = '';
   private readonly list: HTMLElement;
   private readonly preview: SVGSVGElement;
@@ -202,6 +203,7 @@ export class NamedViewports extends Dialog {
       const r = await cad.vports(id);
       this.configs = r.configs;
       this.tiles = r.tiles;
+      this.previews = r.previews ?? {};
       if (!this.configs.includes(this.selected)) this.selected = this.configs[0] ?? '';
       this.paint();
     } catch (e) {
@@ -232,6 +234,7 @@ export class NamedViewports extends Dialog {
     try {
       const r = await cad.vportAction(id, { option: 'delete', names: [this.selected] });
       this.configs = r.configs ?? this.configs.filter((c) => c !== this.selected);
+      this.previews = r.previews ?? this.previews;
       this.selected = this.configs[0] ?? '';
       this.paint();
     } catch (e) {
@@ -250,11 +253,20 @@ export class NamedViewports extends Dialog {
         setClass(n, 'is-selected', c.name === this.selected);
       },
     });
-    const svg = this.tiles.map((tile) => {
+    const shown = this.previews[this.selected] ?? this.tiles;
+    const rects = this.preview.children;
+    while (rects.length < shown.length) this.preview.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'rect'));
+    while (rects.length > shown.length) this.preview.lastElementChild?.remove();
+    shown.forEach((tile, i) => {
       const [x0, y0] = tile.lowerLeft, [x1, y1] = tile.upperRight;
-      return `<rect x="${(x0 * 180).toFixed(1)}" y="${((1 - y1) * 120).toFixed(1)}" width="${((x1 - x0) * 180).toFixed(1)}" height="${((y1 - y0) * 120).toFixed(1)}" class="${tile.current ? 'is-cur' : ''}"/>`;
-    }).join('');
-    if (this.preview.dataset.k !== svg) { this.preview.dataset.k = svg; this.preview.innerHTML = svg; }
+      const r = rects[i] as SVGRectElement;
+      const put = (k: string, v: string): void => { if (r.getAttribute(k) !== v) r.setAttribute(k, v); };
+      put('x', (x0 * 180).toFixed(1));
+      put('y', ((1 - y1) * 120).toFixed(1));
+      put('width', ((x1 - x0) * 180).toFixed(1));
+      put('height', ((y1 - y0) * 120).toFixed(1));
+      put('class', tile.current ? 'is-cur' : '');
+    });
     setDisabled(this.bRestore, !this.selected);
     setDisabled(this.bDelete, !this.selected);
   }

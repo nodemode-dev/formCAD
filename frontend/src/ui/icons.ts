@@ -222,6 +222,8 @@ export const ICONS: Record<string, string> = {
   insertBlock: s('<rect x="4" y="9" width="11" height="11" rx="1.2"/><path d="M15 6h5M17.5 3.5v5"/>'),
   xref: s('<rect x="3.5" y="4" width="11" height="11" rx="1.2" stroke-dasharray="3 2"/><path d="M10 12h8.5a2 2 0 0 1 0 4H15"/><path d="M13 14l-3 2 3 2"/>'),
   blockEdit: s('<rect x="3.5" y="5" width="12" height="12" rx="1.2"/><path d="M14 20l6-6 1.8 1.8-6 6H14z"/>'),
+  perspective: s('<path d="M3.5 5.5l17 3.5v6l-17 3.5z"/><path d="M3.5 5.5l5 3.8v5.4l-5 3.8"/><path d="M8.5 9.3l12-.3M8.5 14.7l12 .3"/>'),
+  parallel: s('<rect x="4" y="6" width="12" height="12" rx="1"/><path d="M4 6l4-2.5h12L16 6M20 3.5V15.5L16 18"/>'),
 };
 
 export function icon(name: string, size = 16): string {

@@ -46,6 +46,8 @@ export interface LayerQuery { filter?: string; search?: string; sort?: string; d
 
 export interface ViewRow { name: string; layout: string; space: string; center: number[]; width: number; height: number; twist: number; layerState: string }
 export interface TileInfo { index: number; lowerLeft: number[]; upperRight: number[]; center: number[]; height: number; aspect: number; current: boolean }
+export interface TileBox { index: number; lowerLeft: number[]; upperRight: number[]; current: boolean }
+export interface TileListing { tiles: TileInfo[]; current: number; configs: string[]; previews?: Record<string, TileBox[]> }
 
 export interface LayoutRow { name: string; order: number; paper: string; width: number; height: number; landscape: boolean; viewports: number; objects: number; current: boolean }
 export interface LayoutSummary { tab: string; current: string; viewport: number; maximized: number; layouts: LayoutRow[]; rev: number; result?: Record<string, unknown> }
@@ -68,8 +70,8 @@ export const cad = {
 
   views: (id: string): Promise<{ views: ViewRow[]; snapshot: boolean; space: string }> => call('GET', `${d(id)}/views`),
   viewAction: (id: string, body: Record<string, unknown>): Promise<{ views: ViewRow[]; snapshot: boolean; space: string; result?: Record<string, unknown> }> => call('POST', `${d(id)}/views`, body),
-  vports: (id: string): Promise<{ tiles: TileInfo[]; current: number; configs: string[] }> => call('GET', `${d(id)}/vports`),
-  vportAction: (id: string, body: Record<string, unknown>): Promise<{ tiles: TileInfo[]; current: number; configs: string[] }> => call('POST', `${d(id)}/vports`, body),
+  vports: (id: string): Promise<TileListing> => call('GET', `${d(id)}/vports`),
+  vportAction: (id: string, body: Record<string, unknown>): Promise<TileListing> => call('POST', `${d(id)}/vports`, body),
 
   layouts: (id: string): Promise<LayoutSummary> => call('GET', `${d(id)}/layouts`),
   layoutAction: (id: string, body: Record<string, unknown>): Promise<LayoutSummary> => call('POST', `${d(id)}/layouts`, body),

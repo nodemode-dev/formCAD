@@ -7,12 +7,12 @@ import { sendCommand } from './dialogs/engine';
 import { interceptCommand } from './dialogs/intercept';
 import { docStore } from './doc-store';
 import { el, patchList, q, setClass, setDisabled, setHidden, setText, setTitle } from './dom';
+import { pickLayoutTemplatePath } from './file-dialogs';
 import { icon } from './icons';
 import { t } from './i18n';
 import { layoutState } from './layout-state';
 import { Popover } from './panels/popover';
 import { selection } from './panels/selection-bus';
-import { toast } from './toast';
 
 const DEFAULT_SCALES = ['1:1', '1:2', '1:5', '1:10', '1:20', '1:25', '1:50', '1:100', '1:200', '1:500', '1:1000', '2:1', '5:1', '10:1'];
 
@@ -25,6 +25,7 @@ class LayoutTabs {
   private readonly listPop = new Popover('lm-pop-menu lt-list', 220);
   private readonly menuPop = new Popover('lm-pop-menu', 200);
   private menuTab = '';
+  private readonly pointer = el<HTMLElement>('<span aria-hidden="true" style="position:fixed;width:1px;height:1px;pointer-events:none"></span>');
   private tabs: Tab[] = [];
   private sig = '';
 
@@ -99,20 +100,26 @@ class LayoutTabs {
       ['left', 'Move Left', !model], ['right', 'Move Right', !model], ['sep', '', true],
       ['pagesetup', 'Page Setup Manager...', true], ['plot', 'Print...', true],
     ];
-    this.menuPop.root.replaceChildren(...items.map(([m, label, on]) => {
-      if (m === 'sep') return el('<div class="lm-pop-sep"></div>');
-      const b = el<HTMLButtonElement>('<button type="button"></button>');
-      b.dataset.m = m;
+    const root = this.menuPop.root;
+    if (root.children.length !== items.length) {
+      root.replaceChildren(...items.map(([m]) => {
+        if (m === 'sep') return el('<div class="lm-pop-sep"></div>');
+        const b = el<HTMLButtonElement>('<button type="button"></button>');
+        b.dataset.m = m;
+        return b;
+      }));
+    }
+    items.forEach(([m, label, on], i) => {
+      if (m === 'sep') return;
+      const b = root.children[i] as HTMLButtonElement;
       setText(b, t(label));
-      b.disabled = !on;
-      return b;
-    }));
-    const ghost = el<HTMLElement>('<span style="position:fixed;width:1px;height:1px"></span>');
+      if (b.disabled !== !on) b.disabled = !on;
+    });
+    const ghost = this.pointer;
     ghost.style.left = `${e.clientX}px`;
     ghost.style.top = `${e.clientY}px`;
-    document.body.appendChild(ghost);
+    if (!ghost.isConnected) document.body.appendChild(ghost);
     this.menuPop.show(ghost);
-    ghost.remove();
   }
 
   private async rename(name: string): Promise<void> {
@@ -124,7 +131,10 @@ class LayoutTabs {
     const rows = this.rows();
     const at = rows.findIndex((r) => r.name === tab);
     if (m === 'new') await layoutState.action({ action: 'new' });
-    else if (m === 'template') toast(t('Layout templates are not available yet'), 'info');
+    else if (m === 'template') {
+      const path = await pickLayoutTemplatePath();
+      if (path) await layoutState.action({ action: 'template', path });
+    }
     else if (m === 'delete') {
       if (await confirmAction(t('Delete Layout'), `${t('Delete layout')} "${tab}"?`, t('Delete'), true)) await layoutState.action({ action: 'delete', name: tab });
     } else if (m === 'rename') await this.rename(tab);

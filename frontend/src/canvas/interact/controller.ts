@@ -5,6 +5,7 @@ import { IDLE_STATE, pointLike, type Ctx, type Pointer } from './ctx';
 import { DynamicInput, EMPTY_DYN, type InputField, type DynView } from './dyn';
 import { angleOf, dist, polar } from './geom';
 import { Gripper, type GripRef } from './gripper';
+import { ConstraintLayer, markMenu } from './constraint-layer';
 import { ContextMenu } from './menu';
 import { MenuBuilder, type MenuHost } from './menus';
 import { Selector } from './select';
@@ -61,6 +62,7 @@ export class Interaction implements Ctx {
   private readonly sel: Selector;
   private readonly grips: Gripper;
   private readonly builder: MenuBuilder;
+  private readonly marks: ConstraintLayer;
   private names = new Set<string>();
   private namesLoaded = false;
   private cycle = 0;
@@ -98,6 +100,7 @@ export class Interaction implements Ctx {
     this.sel = new Selector(this, this.menu);
     this.grips = new Gripper(this, () => this.sel.selected, (items) => this.setJig(items));
     this.builder = new MenuBuilder(this.menuHost());
+    this.marks = new ConstraintLayer(canvas, host);
 
     this.dyn.onRow = (i) => this.pickOption(i);
     this.dyn.onRowHover = (i) => { this.optIdx = i; this.schedule(); };
@@ -738,6 +741,11 @@ export class Interaction implements Ctx {
       else if (st.expect === 'entity') void this.sel.pickEntity(e.px, e.py);
       return;
     }
+    const mark = this.canvas.markAt(e.px, e.py);
+    if (mark) {
+      document.dispatchEvent(new CustomEvent('formcad:set-selection', { detail: { handles: this.canvas.markHandles(mark.id), mode: 'set' } }));
+      return;
+    }
     const g = this.grips.hit(e.px, e.py);
     if (g) {
       if (e.shift) this.grips.toggleHot(g);
@@ -796,6 +804,11 @@ export class Interaction implements Ctx {
       return;
     }
     if (!st.active) {
+      const mark = this.canvas.markAt(e.px, e.py);
+      if (mark) {
+        this.menu.open(cx, cy, markMenu(this.canvas, mark, this.marks));
+        return;
+      }
       const g = this.grips.hit(e.px, e.py);
       if (g) {
         this.menu.open(cx, cy, this.builder.grip(g));

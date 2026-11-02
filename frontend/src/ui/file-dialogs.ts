@@ -39,7 +39,8 @@ export async function pickPath(mode: 'open' | 'save', title: string, suggested: 
 export const pickOpenPath = (): Promise<string | null> => pickPath('open', 'Open', '', OPEN_KINDS, 'Open');
 export const pickSavePath = (suggested: string): Promise<string | null> => pickPath('save', 'Save As', suggested, SAVE_KINDS, 'Save');
 export const pickImportPath = (): Promise<string | null> => pickPath('open', 'Import', '', IMPORT_KINDS, 'Import');
-export const pickExportPath = (suggested: string): Promise<string | null> => pickPath('save', 'Export', suggested, EXPORT_KINDS, 'Export');
+export const pickLayoutTemplatePath = (): Promise<string | null> => pickPath('open', 'Layout From Template', '', [{ name: 'Layout templates', extensions: ['fcad', 'dxf', 'dwt'] }, FCAD, DXF, DWT], 'Import');
+export const pickExportPath =(suggested: string): Promise<string | null> => pickPath('save', 'Export', suggested, EXPORT_KINDS, 'Export');
 export const pickPlotPath = (suggested: string, output: string): Promise<string | null> => pickPath('save', 'Plot to File', suggested, [PLOT_KINDS[output] ?? PDF], 'Plot');
 
 export async function onOpenPaths(handler: (paths: string[]) => void): Promise<void> {

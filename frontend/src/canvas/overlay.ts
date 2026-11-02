@@ -1,4 +1,5 @@
 import type { Camera } from './camera';
+import { drawMarks } from './cmarks';
 import { css } from './color';
 import { itemRuns } from './pick';
 import type { DisplayStore } from './store';
@@ -276,6 +277,7 @@ export function drawOverlays(ctx: CanvasRenderingContext2D, e: OverlayEnv, o: Ov
   if (h.length) highlight(ctx, e, h);
   const b = o.get<BoxMark>('selection-box');
   if (b.length) selectionBox(ctx, e, b);
+  drawMarks(ctx, e.cam, e.th, e.store, e.width, e.height);
   const g = o.get<GripMark>('grips');
   if (g.length) grips(ctx, e, g);
   const t = o.get<TrackMark>('tracking');

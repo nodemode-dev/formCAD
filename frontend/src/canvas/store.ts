@@ -1,7 +1,8 @@
 import { BatchData } from './batch';
 import { Emitter, type BuildCtx } from './build';
+import { barOf } from './cmarks';
 import { RTree } from './spatial';
-import type { DisplayItem, DisplayPayload, Handle, LayerState, LayoutPayload, Rect } from './types';
+import type { ConstraintBar, DisplayItem, DisplayPayload, Handle, LayerState, LayoutPayload, Rect } from './types';
 
 const CHUNK_SPAN = 4096;
 const MAX_CHUNKS = 256;
@@ -53,6 +54,7 @@ export class DisplayStore {
   readonly items = new Map<Handle, DisplayItem>();
   readonly chunks = new Map<number, Chunk>();
   readonly infinite = new Map<Handle, DisplayItem>();
+  readonly bars = new Map<Handle, ConstraintBar>();
   layers: Record<string, LayerState> = {};
   extentsHint: Rect | null = null;
   sheet: Rect | null = null;
@@ -86,6 +88,7 @@ export class DisplayStore {
 
   clear(): void {
     this.items.clear();
+    this.bars.clear();
     this.dropChunks();
     this.infinite.clear();
     this.seqOf.clear();
@@ -137,12 +140,14 @@ export class DisplayStore {
       }
     }
     this.items.delete(h);
+    this.bars.delete(h);
     this.seqOf.delete(h);
   }
 
   apply(p: DisplayPayload): void {
     if (p.full) {
       this.items.clear();
+      this.bars.clear();
       this.dropChunks();
       this.infinite.clear();
       this.seqOf.clear();
@@ -155,6 +160,8 @@ export class DisplayStore {
       if (!finite(it.bounds) && !this.isInfinite(it)) it.bounds = [0, 0, 0, 0];
       this.detach(it.h);
       this.items.set(it.h, it);
+      const bar = barOf(it.prims);
+      if (bar) this.bars.set(it.h, bar);
       this.seqOf.set(it.h, this.seq++);
       if (this.isInfinite(it)) this.infinite.set(it.h, it);
       else {

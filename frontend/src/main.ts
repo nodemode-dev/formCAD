@@ -8,5 +8,8 @@ import './ui/draw-rail';
 import './ui/dialogs/register';
 import './ui/u3-register';
 import './ui/output/register';
+import './ui/param/register';
+import './ui/auto/register';
+import './view3d/mount';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });

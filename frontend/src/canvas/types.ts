@@ -20,7 +20,24 @@ export type Geom =
 export type Prim =
   | { t: 'pl'; pts: number[]; closed?: boolean }
   | { t: 'tri'; pts: number[] }
-  | { t: 'fill'; rings: number[][]; c?: number[]; mask?: boolean };
+  | { t: 'fill'; rings: number[][]; c?: number[]; mask?: boolean }
+  | ConstraintBar;
+
+export type ConstraintState = 'none' | 'under' | 'fully' | 'over';
+export interface ConstraintGlyph { id: number; k: string; p: Pt; slot: number; dangling: boolean }
+export interface ConstraintDim { id: number; name: string; expr: string; value: number | null; driving: boolean; kind: string; p: Pt }
+export interface ConstraintBar {
+  t: 'cbar';
+  state: ConstraintState;
+  dof: number;
+  rgb: Rgb | null;
+  glyphs: ConstraintGlyph[];
+  dims: ConstraintDim[];
+  dangling?: boolean;
+  sketch?: { name: string; status: string; dof: number; construction?: boolean };
+}
+
+export interface MarkHit { kind: 'glyph' | 'dim'; id: number; handle: Handle; glyph?: ConstraintGlyph; dim?: ConstraintDim; px: number; py: number }
 
 export interface Grip { id: string | number; p: Pt; kind?: string }
 
@@ -167,6 +184,10 @@ export interface CanvasApi {
   panBy(dx: number, dy: number): void;
   setViewCubeVisible(on: boolean): void;
   setUcsIconVisible(on: boolean): void;
-  stats(): { items: number; chunks: number; builds: number; frames: number };
+  markAt(px: number, py: number): MarkHit | null;
+  setMarkHover(hit: MarkHit | null): void;
+  markHandles(id: number): Handle[];
+  marked(): number;
+  stats():{ items: number; chunks: number; builds: number; frames: number };
   on<K extends keyof CanvasEvents>(event: K, fn: (e: CanvasEvents[K]) => void): () => void;
 }

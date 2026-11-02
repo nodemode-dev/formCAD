@@ -17,7 +17,7 @@
 .lm-filter.is-on { background: var(--accent-soft); color: var(--accent-ink); }
 .lm-table { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); overflow: hidden; }
 .lm-grid { --vp1: 0px; --vp2: 0px; display: grid; grid-template-columns: 40px minmax(150px, 1.2fr) 40px 54px 48px 44px 96px 118px 96px 88px var(--vp1) var(--vp2) 84px minmax(120px, 1fr); align-items: center; min-width: 0; }
-.cv-scrim.is-vp .lm-grid { --vp1: 56px; --vp2: 112px; }
+.cv-scrim.is-vp .lm-grid { --vp1: 48px; --vp2: 96px; grid-template-columns: 40px minmax(110px, 1.2fr) 36px 48px 44px 40px 84px 104px 84px 80px var(--vp1) var(--vp2) 72px minmax(60px, 1fr); }
 .lm-head { height: var(--ctl); border-bottom: 1px solid var(--border-color); background: var(--surface-1); color: var(--text-muted); font-size: var(--fs-11); font-weight: 600; }
 .lm-h { display: flex; align-items: center; gap: 2px; min-width: 0; height: 100%; padding: 0 var(--space-1); overflow: hidden; white-space: nowrap; user-select: none; }
 .lm-h > span { overflow: hidden; text-overflow: ellipsis; }

@@ -58,6 +58,13 @@ export class Dialog {
       const next = row[(at + step + row.length) % row.length];
       if (at >= 0 && next) { e.preventDefault(); next.focus(); }
     });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || this.scrim.hidden || e.defaultPrevented || this.scrim.contains(document.activeElement)) return;
+      const open = document.querySelectorAll('.cv-scrim:not([hidden])');
+      if (open[open.length - 1] !== this.scrim) return;
+      e.preventDefault();
+      this.close();
+    });
     document.getElementById('overlay-root')?.appendChild(this.scrim);
   }
 
@@ -120,7 +127,8 @@ export class Dialog {
     if (this.isOpen) return;
     this.relabel();
     this.lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    document.getElementById('overlay-root')?.appendChild(this.scrim);
+    const stack = document.getElementById('overlay-root');
+    if (stack && stack.lastElementChild !== this.scrim) stack.appendChild(this.scrim);
     this.scrim.hidden = false;
     const spot = Dialog.spots[this.english];
     if (spot) this.moveFrame(q<HTMLElement>(this.scrim, '.cv-dialog'), spot.x, spot.y);

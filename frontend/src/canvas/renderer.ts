@@ -3,6 +3,7 @@ import { BatchData } from './batch';
 import { Emitter } from './build';
 import { Camera } from './camera';
 import { Chrome, drawCursor, type ChromePart } from './chrome';
+import { handlesOf, hitMark, markState } from './cmarks';
 import { css, isDark } from './color';
 import { CpuPainter } from './cpu';
 import { GlPainter } from './gl';
@@ -12,7 +13,7 @@ import { newDyn, type DynLayer, type PaintView, type Painter } from './painter';
 import { distanceTo, distanceToInfinite, touchesRect } from './pick';
 import { DisplayStore, type BuildOptions } from './store';
 import { readTheme, type Theme } from './theme';
-import type { CanvasApi, CanvasDeps, CanvasEvents, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
+import type { CanvasApi, CanvasDeps, CanvasEvents, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, MarkHit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
 
 const VIEW_KEY = 'formCAD.canvasView';
 const WORK_MS = 10;
@@ -575,6 +576,20 @@ export class Renderer implements CanvasApi {
   worldFromScreen(px: number, py: number): Pt { return this.cam.toWorld(px, py); }
 
   screenFromWorld(x: number, y: number): Pt { return this.cam.toScreen(x, y); }
+
+  markAt(px: number, py: number): MarkHit | null { return hitMark(this.cam, this.store, this.cssW, this.cssH, px, py); }
+
+  markHandles(id: number): Handle[] { return handlesOf(this.store, id); }
+
+  marked(): number { return this.store.bars.size; }
+
+  setMarkHover(hit: MarkHit | null): void {
+    const a = markState.hover;
+    if (a === hit || (a && hit && a.id === hit.id && a.kind === hit.kind)) return;
+    markState.hover = hit;
+    this.dirtyTop = true;
+    this.schedule();
+  }
 
   pickAt(px: number, py: number, aperturePx?: number): Hit[] {
     const [x, y] = this.cam.toWorld(px, py);
