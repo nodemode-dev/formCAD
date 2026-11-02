@@ -1,0 +1,38 @@
+{
+  "format": "formcad-materials",
+  "version": 1,
+  "units": {"density": "kg/m3", "youngs_modulus": "GPa", "poissons_ratio": "1"},
+  "note": "Seed rows carry only values read from the cited sources. Add your own materials with the materials library; no value here is invented.",
+  "materials": [
+    {
+      "name": "Stainless steel 304",
+      "grade": "304",
+      "density": 7880.0,
+      "youngs_modulus": 198.8,
+      "poissons_ratio": 0.29,
+      "provenance": "Density 7.880 g/cm3 at 295 K, Young's modulus 198.8 GPa at 300 K and Poisson's ratio 0.290 at 295 K from NBS IR 80-1627 Table 4 (https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nbsir80-1627.pdf). Young's modulus also agrees with the NIST cryogenic fit (Bradley and Radebaugh, https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=913059). The printed 99.6 GPa in the NBS table is a typo and is not used.",
+      "single_source_fields": ["density", "poissons_ratio"],
+      "single_source": false
+    },
+    {
+      "name": "Aluminium 6061",
+      "grade": "6061 (temper not separated)",
+      "density": 2700.0,
+      "youngs_modulus": 68.9,
+      "poissons_ratio": 0.33,
+      "provenance": "Density 2.70 g/cm3 at 20 C, Young's modulus 10.0e3 ksi (68.9 GPa, typical) and Poisson's ratio 0.33 from the NASA Materials Data Handbook for Al 6061, CR-123772, 1972 (https://ntrs.nasa.gov/api/citations/19720022808/downloads/19720022808.pdf). NIST gives 70.10 GPa at 300 K for the modulus (Bradley and Radebaugh), about 1.7 percent higher; this row keeps the NASA typical value.",
+      "single_source_fields": ["density", "poissons_ratio"],
+      "single_source": false
+    },
+    {
+      "name": "Titanium Ti-6Al-4V",
+      "grade": "Ti-6Al-4V",
+      "density": 4424.0,
+      "youngs_modulus": 113.8,
+      "poissons_ratio": 0.342,
+      "provenance": "Density 4.424 g/cm3 at 20 C, Young's modulus 16.5e3 ksi (113.8 GPa, handbook abstract value; the design value is 16.0e3 ksi, 110.3 GPa) and Poisson's ratio 0.342 from the NASA Materials Data Handbook for Ti-6Al-4V, 1972 (https://ntrs.nasa.gov/api/citations/19720022814/downloads/19720022814.pdf). Single source: confirm against your own data before relying on it.",
+      "single_source_fields": ["density", "youngs_modulus", "poissons_ratio"],
+      "single_source": true
+    }
+  ]
+}
