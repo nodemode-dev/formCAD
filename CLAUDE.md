@@ -20,6 +20,8 @@ formCAD is a Tauri 2 desktop CAD app: vanilla TypeScript and Vite interface in `
 
 - `backend/app/main.py` `ROUTERS` is the only place routers are mounted; `app/doc/` is the drawing database, `app/cmd/` the command pipeline and commands, `app/sysvars/` the system variables.
 - The engine never imports OCP or build123d. 3D work goes to the `formcad-kernel` worker (`kernel/`) over JSON lines on stdio; the desktop app downloads that worker from formCAD-binaries and verifies every file against `backend/app/data/kernel-licence.json`.
+- `assets/formcad_icon.png` is repo-level art (the README logo and the 1024 px source of the app icon); it is not wired into the build. The bundle icons live in `src-tauri/icons/`, the favicon in `frontend/public/`.
+- `README.md` follows the form family layout (centred logo and badges, What it is, Highlights, Quick Start, Configuration, Architecture, Status, Development, Contributors, Licensing) in the README compression style; keep it that way when editing.
 - `frontend/src/app.ts` is the composition root; shell sections register from `ui/shell-part1.ts` and `ui/shell-part2.ts`; dock panels register with `registerDockPanel`.
 - Read `backend/HASHOUT_LOG.md` and `frontend/HASHOUT_LOG.md` before editing those trees, and log decisions there in the same change.
 - Behaviour specs come from the clean-room encyclopedia in the planning sidecar, never from another product's code.
