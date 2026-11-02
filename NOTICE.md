@@ -32,6 +32,8 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | --- | --- | --- |
 | fastapi 0.141.1, keyring 25.7.0, ezdxf 1.4.5 | MIT | `backend/requirements.txt` |
 | uvicorn 0.53.0, httpx 0.28.1, numpy 2.5.4 | BSD-3-Clause | `backend/requirements.txt` |
+| fonttools 4.68.0 | MIT | `backend/requirements.txt`, `backend/requirements_macos.txt` |
+| formcad-stroke single-stroke drafting font, drawn for FormCAD | Apache-2.0 (original work, no third-party glyph data) | `backend/app/data/fonts/formcad-stroke.json` |
 | PyInstaller 6.22.3 | GPL-2.0-or-later with bootloader exception | build tool only; the bootloader exception covers the frozen engine |
 
 ### Desktop shell

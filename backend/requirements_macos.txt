@@ -4,3 +4,4 @@ keyring
 httpx
 ezdxf
 numpy
+fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT

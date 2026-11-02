@@ -23,8 +23,10 @@ ROUTERS = [
     ("app.routers.kernel", "/api/kernel"),
     ("app.routers.events", "/api"),
     ("app.routers.docs", "/api/docs"),
+    ("app.routers.display", "/api/docs"),
     ("app.routers.commands", "/api/commands"),
     ("app.routers.sysvars", "/api/sysvars"),
+    ("app.routers.canvas", "/api/docs"),
 ]
 
 
