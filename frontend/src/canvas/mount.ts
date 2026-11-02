@@ -9,6 +9,7 @@ import { loadPrefs } from '../ui/prefs';
 import { sysvars } from '../ui/sysvar-store';
 import { toast } from '../ui/toast';
 import { mountCanvas } from './index';
+import { attachInteraction } from './interact';
 import type { CanvasApi, CursorMode } from './types';
 
 let canvas: CanvasApi | null = null;
@@ -38,7 +39,8 @@ onShellMounted((ctx) => {
     stored,
   });
   canvas = c;
-  if (import.meta.env.DEV) (window as unknown as { formcadCanvas?: CanvasApi }).formcadCanvas = c;
+  const interact = attachInteraction(c, ctx.hosts.canvasHost);
+  if (import.meta.env.DEV) Object.assign(window, { formcadCanvas: c, formcadInteract: interact });
 
   c.setDocument(docStore.activeId);
   let last = docStore.activeId;

@@ -247,10 +247,26 @@ export interface CursorOptions {
   y: number;
   width: number;
   height: number;
+  iso?: number[] | null;
 }
 
 export function drawCursor(ctx: CanvasRenderingContext2D, o: CursorOptions): void {
   if (o.mode === 'none') return;
+  if (o.iso && o.mode !== 'pick') {
+    const r = Math.max(12, (o.sizePct / 100) * o.height);
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = o.dark ? 'rgb(232,232,232)' : 'rgb(32,32,32)';
+    ctx.beginPath();
+    for (const a of o.iso) {
+      const dx = Math.cos((a * Math.PI) / 180) * r;
+      const dy = -Math.sin((a * Math.PI) / 180) * r;
+      ctx.moveTo(o.x - dx, o.y - dy);
+      ctx.lineTo(o.x + dx, o.y + dy);
+    }
+    ctx.stroke();
+    return;
+  }
   const arm = Math.max(12, (o.sizePct / 100) * o.height);
   const half = o.mode === 'pick' ? o.pickbox * 1.5 : 0;
   const x = Math.round(o.x) + 0.5;

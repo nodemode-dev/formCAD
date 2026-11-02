@@ -100,6 +100,7 @@ export interface CanvasEvents {
   click: PointerInfo;
   drag: DragInfo;
   dblclick: PointerInfo;
+  display: number;
 }
 
 export interface DocEventInfo {
@@ -132,6 +133,9 @@ export interface CanvasApi {
   refresh(): void;
   pickAt(px: number, py: number, aperturePx?: number): Hit[];
   boxQuery(rect: Rect, crossing: boolean): Handle[];
+  itemsIn(rect: Rect): DisplayItem[];
+  item(h: Handle): DisplayItem | undefined;
+  setEffectivePoint(p: Pt | null): void;
   worldFromScreen(px: number, py: number): Pt;
   screenFromWorld(x: number, y: number): Pt;
   setOverlay(name: OverlayName, items: OverlayItems | null): void;

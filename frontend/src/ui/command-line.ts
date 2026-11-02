@@ -253,7 +253,10 @@ export class CommandLine {
   }
 
   private clearInput(): void {
-    if (this.input.value) this.input.value = '';
+    if (this.input.value) {
+      this.input.value = '';
+      document.dispatchEvent(new CustomEvent('formcad:cmdline-text'));
+    }
     this.recallAt = -1;
     this.hideSuggestions();
   }
@@ -327,6 +330,7 @@ export class CommandLine {
       this.state = s;
       this.render();
     }
+    document.dispatchEvent(new CustomEvent('formcad:cmdline-applied', { detail: { doc: id, state: s } }));
   }
 
   private async send(fn: (id: string) => Promise<CommandLineState>): Promise<void> {
@@ -491,6 +495,7 @@ export class CommandLine {
   }
 
   private afterEdit(): void {
+    document.dispatchEvent(new CustomEvent('formcad:cmdline-text'));
     this.recallAt = -1;
     this.focus();
     this.refreshSuggestions();

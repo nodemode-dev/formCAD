@@ -1,0 +1,18 @@
+.cv-dyn { position: absolute; inset: 0; z-index: var(--z-raised); overflow: hidden; pointer-events: none; font-family: var(--font-ui); font-size: var(--fs-12); }
+.cv-dyn-tip { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2); border: 1px solid var(--border-light); border-radius: var(--radius-xs); background: var(--bg-secondary); color: var(--text-secondary); white-space: nowrap; will-change: transform; }
+.cv-dyn-tip[hidden], .cv-dyn-list[hidden], .cv-dyn-badge[hidden], .cv-dyn-box[hidden], .cv-dyn-row[hidden], .cv-dyn-msg[hidden], .cv-dyn-at[hidden], .cv-dyn-arrow[hidden], .cv-dyn-label[hidden], .cv-dyn-lock[hidden] { display: none; }
+.cv-dyn-msg { color: var(--text-muted); }
+.cv-dyn-at { color: var(--text-secondary); }
+.cv-dyn-box { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 48px; padding: 1px var(--space-1); border: 1px solid var(--border-light); border-radius: var(--radius-xs); background: var(--bg-primary); }
+.cv-dyn-box.is-active { border-color: var(--accent-color); box-shadow: 0 0 0 0.5px var(--accent-color); }
+.cv-dyn-label { color: var(--text-muted); }
+.cv-dyn-value { min-width: 24px; color: var(--text-primary); font-family: var(--font-mono); }
+.cv-dyn-value.is-live { color: var(--text-muted); }
+.cv-dyn-lock { color: var(--accent-color); font-size: var(--fs-10); }
+.cv-dyn-arrow { color: var(--text-secondary); }
+.cv-dyn-list { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; min-width: 88px; padding: var(--space-1); border: 1px solid var(--border-light); border-radius: var(--radius-xs); background: var(--bg-secondary); pointer-events: auto; will-change: transform; }
+.cv-dyn-row { display: block; width: 100%; height: 22px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--text-primary); font: inherit; text-align: left; cursor: pointer; }
+.cv-dyn-row.is-active { background: var(--accent-soft); }
+.cv-dyn-row.is-active::before { content: '\2022'; margin-right: var(--space-1); color: var(--accent-color); }
+.cv-dyn-badge { position: absolute; left: 0; top: 0; display: block; width: 16px; height: 16px; color: var(--text-secondary); will-change: transform; }
+.cv-canvas-menu { z-index: var(--z-context); }

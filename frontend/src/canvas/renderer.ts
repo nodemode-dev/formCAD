@@ -23,6 +23,7 @@ interface Cfg {
   unitY: number;
   major: number;
   iso: boolean;
+  isoPlane: number;
   cursorSize: number;
   pickbox: number;
   gripSize: number;
@@ -53,6 +54,7 @@ export class Renderer implements CanvasApi {
   private dirtyTop = true;
   private pointer: { px: number; py: number } | null = null;
   private cursorDirty = false;
+  private effective: Pt | null = null;
   private override: CursorMode | null = null;
   private docId: string | null = null;
   private space = 'model';
@@ -93,7 +95,7 @@ export class Renderer implements CanvasApi {
     this.painter = this.makePainter();
     this.loadChromeState();
     this.store.setOptions(this.cfg.opts);
-    this.store.onChange(() => { this.dirtyScene = true; this.dirtyBg = true; this.dirtyTop = true; this.schedule(); });
+    this.store.onChange(() => { this.dirtyScene = true; this.dirtyBg = true; this.dirtyTop = true; this.schedule(); this.emit('display', this.store.rev); });
 
     const ro = new ResizeObserver((entries) => {
       const r = entries[entries.length - 1].contentRect;
@@ -163,6 +165,7 @@ export class Renderer implements CanvasApi {
       unitY,
       major: d.sysvar('GRIDMAJOR', 5),
       iso: d.sysvar('SNAPSTYL', 0) === 1,
+      isoPlane: d.sysvar('SNAPISOPAIR', 0),
       cursorSize: d.sysvar('CURSORSIZE', 5),
       pickbox: d.sysvar('PICKBOX', 3),
       gripSize: d.sysvar('GRIPSIZE', 5),
@@ -173,7 +176,7 @@ export class Renderer implements CanvasApi {
         fillOn: d.sysvar('FILLMODE', 1) !== 0,
         trOn: d.sysvar('TRANSPARENCYDISPLAY', 1) !== 0,
         dashOn: true,
-        ltScale: d.sysvar('LTSCALE', 1) || 1,
+        ltScale: 1,
       },
     };
   }
@@ -366,6 +369,7 @@ export class Renderer implements CanvasApi {
         pickbox: this.cfg.pickbox,
         mode: this.cursorMode(),
         dark: this.store.sheet ? false : isDark(this.theme.bg),
+        iso: this.cfg.iso ? (this.cfg.isoPlane === 1 ? [30, 150] : this.cfg.isoPlane === 2 ? [30, 90] : [90, 150]) : null,
         x: this.pointer.px,
         y: this.pointer.py,
         width: this.cssW,
@@ -397,7 +401,7 @@ export class Renderer implements CanvasApi {
 
   private dispatchCursor(): void {
     if (this.pointer) {
-      const [x, y] = this.cam.toWorld(this.pointer.px, this.pointer.py);
+      const [x, y] = this.effective ?? this.cam.toWorld(this.pointer.px, this.pointer.py);
       document.dispatchEvent(new CustomEvent('formcad:cursor', { detail: { x, y, z: 0 } }));
     } else document.dispatchEvent(new CustomEvent('formcad:cursor', { detail: null }));
   }
@@ -565,6 +569,22 @@ export class Renderer implements CanvasApi {
     });
     found.sort((a, b) => a.order - b.order);
     return found.map((it) => it.h as Handle);
+  }
+
+  itemsIn(rect: Rect): DisplayItem[] {
+    const { tree, list } = this.store.index();
+    const out: DisplayItem[] = [];
+    tree.query(rect[0], rect[1], rect[2], rect[3], (i) => { out.push(list[i]); });
+    for (const it of this.store.visibleInfinite()) out.push(it);
+    return out;
+  }
+
+  item(h: Handle): DisplayItem | undefined { return this.store.items.get(h); }
+
+  setEffectivePoint(p: Pt | null): void {
+    this.effective = p;
+    this.cursorDirty = true;
+    this.schedule();
   }
 
   setOverlay(name: OverlayName, items: OverlayItems | null): void {

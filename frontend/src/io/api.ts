@@ -1,4 +1,4 @@
-import type { DisplayPayload } from '../canvas/types';
+import type { DisplayItem, DisplayPayload } from '../canvas/types';
 
 export interface Health { ok: boolean; version: string }
 
@@ -34,6 +34,28 @@ export interface CommandLineState {
   expect?: 'point' | 'distance' | 'angle' | 'selection' | 'entity' | 'keyword' | 'text' | 'number' | 'none';
   base?: [number, number] | null;
   preview?: boolean;
+  accepts?: string[];
+  snapOverride?: string | null;
+  selection?: Array<string | number>;
+  suspended?: string | null;
+}
+
+export interface SnapPayload { mode: string; handle: string | number | null; at: [number, number]; aperture?: number }
+export type CanvasInput =
+  | { point: [number, number]; snap?: SnapPayload }
+  | { pick: { point: [number, number]; handle: string | number } }
+  | { selection: { handles: Array<string | number>; mode: 'set' | 'add' | 'remove' } };
+export interface GripRequest {
+  handle: string | number;
+  grip: string | number;
+  mode: 'stretch' | 'move' | 'rotate' | 'scale' | 'mirror';
+  to: [number, number];
+  base?: [number, number];
+  copy?: boolean;
+  preview?: boolean;
+  option?: string;
+  value?: number;
+  more?: Array<[number, number]>;
 }
 
 export type EntityRecord = { id: string; type: string; [key: string]: unknown };
@@ -120,6 +142,12 @@ export const api = {
   sendInput: (id: string, text: string): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/input`, { text }),
   runCommand: (id: string, command: string, args?: Record<string, unknown>): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/command`, args === undefined ? { command } : { command, args }),
   cancelCommand: (id: string): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/cancel`),
+  sendCanvasInput: (id: string, body: CanvasInput): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/input`, body),
+  preview: (id: string, point: [number, number], snap?: SnapPayload): Promise<{ items: DisplayItem[] }> => call('POST', `/api/docs/${enc(id)}/preview`, snap ? { point, snap } : { point }),
+  gripSets: (id: string, handles: Array<string | number>): Promise<{ sets: Array<{ h: string | number; grips: Array<{ id: string | number; p: [number, number]; kind?: string }> }> }> => call('GET', `/api/docs/${enc(id)}/grips?handles=${handles.join(',')}`),
+  getSelection: (id: string): Promise<{ handles: Array<string | number>; pickfirst: boolean; rev: number }> => call('GET', `/api/docs/${enc(id)}/selection`),
+  putSelection: (id: string, handles: Array<string | number>, mode: 'set' | 'add' | 'remove' = 'set'): Promise<{ handles: Array<string | number>; pickfirst: boolean; rev: number }> => call('PUT', `/api/docs/${enc(id)}/selection`, { handles, mode }),
+  grip: (id: string, body: GripRequest): Promise<{ items?: DisplayItem[]; rev?: number; label?: string; handles?: Array<string | number> }> => call('POST', `/api/docs/${enc(id)}/grip`, body),
 
   recent: (): Promise<{ items: FileItem[] }> => list('/api/recent'),
   library: (): Promise<{ items: FileItem[] }> => list('/api/library'),

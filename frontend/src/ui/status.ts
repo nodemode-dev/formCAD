@@ -1,3 +1,4 @@
+import { fmtLinear } from '../canvas/interact/units';
 import { api, type Capabilities, type KernelStatus } from '../io/api';
 import { events } from '../io/events';
 import type { Commands } from './commands';
@@ -137,8 +138,9 @@ export class StatusBar {
 
   setCursor(c: CursorDetail | null): void {
     if (!c) { setText(this.coord, ''); return; }
-    const p = loadPrefs().precision;
-    const f = (n: number): string => n.toFixed(Math.max(0, Math.min(8, p)));
+    const units = this.d.sysvars.num('LUNITS', 2);
+    const prec = this.d.sysvars.num('LUPREC', loadPrefs().precision);
+    const f = (n: number): string => fmtLinear(n, units, prec);
     setText(this.coord, `X ${f(c.x)}  Y ${f(c.y)}  Z ${f(c.z ?? 0)}`);
   }
 
