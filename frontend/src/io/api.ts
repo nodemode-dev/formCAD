@@ -1,3 +1,5 @@
+import type { DisplayPayload } from '../canvas/types';
+
 export interface Health { ok: boolean; version: string }
 
 export interface KernelInfo { available: boolean; version: string | null; path: string | null; source: string | null }
@@ -29,6 +31,9 @@ export interface CommandLineState {
   error?: string;
   historySize?: number;
   transparent?: boolean;
+  expect?: 'point' | 'distance' | 'angle' | 'selection' | 'entity' | 'keyword' | 'text' | 'number' | 'none';
+  base?: [number, number] | null;
+  preview?: boolean;
 }
 
 export type EntityRecord = { id: string; type: string; [key: string]: unknown };
@@ -106,6 +111,11 @@ export const api = {
   undo: (id: string, steps?: number): Promise<UndoResult> => call('POST', `/api/docs/${enc(id)}/undo`, steps === undefined ? {} : { steps }),
   redo: (id: string, steps?: number): Promise<UndoResult> => call('POST', `/api/docs/${enc(id)}/redo`, steps === undefined ? {} : { steps }),
   snapshot: (id: string, since?: number): Promise<Snapshot> => call('GET', `/api/docs/${enc(id)}/snapshot${since === undefined ? '' : `?since=${since}`}`),
+
+  display: (id: string, since?: number, space?: string): Promise<DisplayPayload> => {
+    const q = [since === undefined ? '' : `since=${since}`, space ? `space=${encodeURIComponent(space)}` : ''].filter(Boolean).join('&');
+    return call('GET', `/api/docs/${enc(id)}/display${q ? `?${q}` : ''}`);
+  },
 
   sendInput: (id: string, text: string): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/input`, { text }),
   runCommand: (id: string, command: string, args?: Record<string, unknown>): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/command`, args === undefined ? { command } : { command, args }),
