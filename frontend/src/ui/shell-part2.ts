@@ -90,7 +90,18 @@ function mount(ctx: AppContext): void {
   });
   document.addEventListener('formcad:ui', (e) => {
     const action = (e as CustomEvent<{ action: string }>).detail.action;
-    if (action === 'palette:properties') dock.reveal('doc-info');
+    if (action === 'palette:properties' || action.startsWith('panel:reveal:')) {
+      if (!loadPrefs().showDock) updatePrefs({ showDock: true });
+      dock.reveal(action.startsWith('panel:reveal:') ? action.slice(13) : 'properties');
+    } else if (action.startsWith('panel:toggle:')) {
+      const id = action.slice(13);
+      const node = document.querySelector<HTMLElement>(`.cv-group[data-panel="${id}"]`);
+      const box = node?.getBoundingClientRect(), col = node?.parentElement?.getBoundingClientRect();
+      const inView = !!box && !!col && box.bottom > col.top + 40 && box.top < col.bottom - 40;
+      if (!loadPrefs().showDock) { updatePrefs({ showDock: true }); dock.reveal(id); }
+      else if (dock.isFolded(id) || !inView) dock.reveal(id);
+      else updatePrefs({ showDock: false });
+    }
     else if (action === 'reset-palettes' || action === 'reset-layout') dock.resetLayout();
     else if (action === 'command-history') line.toggleHistory();
   });

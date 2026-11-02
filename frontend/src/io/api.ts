@@ -58,8 +58,37 @@ export interface GripRequest {
   more?: Array<[number, number]>;
 }
 
-export type EntityRecord = { id: string; type: string; [key: string]: unknown };
+export interface PatternSwatch { name: string; description: string; user: boolean; solid: boolean; segs: number[][] }
+export interface HatchFields {
+  handle: number;
+  pattern: string;
+  solid: boolean;
+  scale: number;
+  angle: number;
+  associative: boolean;
+  island: number;
+  origin: [number, number];
+  originMode: string;
+  gap: number;
+  gradient: { name: string; color1: string | number; color2: string | number; tint: number; one: boolean; angle: number; centered: boolean } | null;
+  loops: Array<{ outer: boolean }>;
+}
+export interface MTextProps { position?: number[]; height?: number; width?: number; attachment?: number | string; justify?: string; rotation?: number; style?: string; line_spacing?: number; exact?: boolean; columns?: unknown; [key: string]: unknown }
+export interface MTextPending { pending: true; props: MTextProps }
+export interface MTextRecord { handle: number; contents: string; props: MTextProps; plain: string; layer: string }
+
+export type EntityRecord ={ id: string; type: string; [key: string]: unknown };
 export interface Snapshot { rev: number; entities: EntityRecord[]; removed: string[]; tables: Record<string, unknown> }
+
+export interface PropertyField { value: unknown; varies: boolean; type: string; readonly: boolean; options?: unknown[] }
+export interface PropertiesKind { count: number; handles: number[]; props: Record<string, PropertyField> }
+export interface PropertiesPayload { handles: number[]; count: number; general: Record<string, PropertyField>; kinds: Record<string, PropertiesKind>; rev?: number }
+export interface PropertiesResult { changed: number; locked: number; rev: number; properties: PropertiesPayload }
+export interface FindMatch { handle: number; kind: string; hits: number }
+export interface FindResult { matches: FindMatch[]; total: number; selected?: number[]; rev: number; replaced?: number; locked?: number; hits?: number }
+export interface FindRequest { text: string; replace?: string; matchCase?: boolean; wholeWord?: boolean; select?: boolean }
+export interface CalcRequest { expression?: string; variables?: Record<string, unknown>; picks?: unknown[]; docId?: string; convert?: { value: number; from: string; to: string; type?: string }; units?: string; pick?: { mode: string; points: unknown[] } }
+export interface CalcResult { ok: boolean; kind?: string; value?: unknown; text?: string; error?: string; needsPick?: string; units?: Record<string, Record<string, number>> }
 
 export interface FileItem { name: string; path: string; size: number; modified: number | string; kind: string }
 export interface KernelStatus { available: boolean; version: string | null; installing: boolean; progress: number; message: string }
@@ -149,9 +178,21 @@ export const api = {
   putSelection: (id: string, handles: Array<string | number>, mode: 'set' | 'add' | 'remove' = 'set'): Promise<{ handles: Array<string | number>; pickfirst: boolean; rev: number }> => call('PUT', `/api/docs/${enc(id)}/selection`, { handles, mode }),
   grip: (id: string, body: GripRequest): Promise<{ items?: DisplayItem[]; rev?: number; label?: string; handles?: Array<string | number> }> => call('POST', `/api/docs/${enc(id)}/grip`, body),
 
+  properties: (id: string, handles?: Array<string | number>): Promise<PropertiesPayload> => call('GET', `/api/docs/${enc(id)}/properties${handles ? `?handles=${handles.join(',')}` : ''}`),
+  setProperties: (id: string, handles: Array<string | number>, changes: Record<string, unknown>, kind?: string): Promise<PropertiesResult> => call('PUT', `/api/docs/${enc(id)}/properties`, kind ? { handles, changes, kind } : { handles, changes }),
+  find: (id: string, req: FindRequest): Promise<FindResult> => call('POST', `/api/docs/${enc(id)}/find`, req),
+  calc: (req: CalcRequest): Promise<CalcResult> => call('POST', '/api/calc', req),
+
   recent: (): Promise<{ items: FileItem[] }> => list('/api/recent'),
   library: (): Promise<{ items: FileItem[] }> => list('/api/library'),
   outputs: (): Promise<{ items: FileItem[] }> => list('/api/outputs'),
+
+  patternSwatches: (): Promise<{ patterns: PatternSwatch[]; side: number }> => call('GET', '/api/ui/patterns'),
+  hatchFields: (id: string, handle: string | number): Promise<HatchFields> => call('GET', `/api/docs/${enc(id)}/ui/hatch/${enc(String(handle))}`),
+  dimPreview: (id: string, vars: Record<string, unknown>, kind: string, style?: string): Promise<{ items: DisplayItem[] }> => call('POST', `/api/docs/${enc(id)}/ui/dimstyle-preview`, { vars, kind, ...(style ? { style } : {}) }),
+  mtextPending: (id: string): Promise<MTextPending> => call('GET', `/api/docs/${enc(id)}/mtext`),
+  mtextRead: (id: string, handle: string | number): Promise<MTextRecord> => call('GET', `/api/docs/${enc(id)}/mtext?handle=${enc(String(handle))}`),
+  mtextWrite: (id: string, body: { handle?: string | number; contents: string; props?: Record<string, unknown> }): Promise<{ handle: number | null; created?: boolean; state?: CommandLineState }> => call('POST', `/api/docs/${enc(id)}/mtext`, body),
 
   kernelStatus: (): Promise<KernelStatus> => call('GET', '/api/kernel/status'),
   kernelInstall: (): Promise<KernelStatus> => call('POST', '/api/kernel/install'),

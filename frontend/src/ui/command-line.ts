@@ -1,5 +1,6 @@
 import { api, ApiError, type CommandLineState, type CommandMeta } from '../io/api';
 import { anyDialogOpen } from './dialogs';
+import { interceptCommand } from './dialogs/intercept';
 import { el, patchList, q, setClass, setHidden, setText, store, stored } from './dom';
 import { icon } from './icons';
 import { sysvars } from './sysvar-store';
@@ -348,6 +349,7 @@ export class CommandLine {
 
   private async runCommand(name: string): Promise<void> {
     this.remember(name.toUpperCase());
+    if (this.docId && !this.state.active && interceptCommand(name)) return;
     await this.send((id) => api.runCommand(id, name));
     this.focus();
   }
@@ -383,6 +385,10 @@ export class CommandLine {
       const word = text.trim().split(/[\s{]/)[0].replace(/^'/, '');
       const cmd = this.resolve(word);
       if (cmd) this.remember(cmd.toUpperCase());
+      if (cmd && typed && !/\s/.test(text.trim()) && interceptCommand(cmd)) {
+        this.clearInput();
+        return;
+      }
     }
     this.clearInput();
     await this.send((id) => api.sendInput(id, text));

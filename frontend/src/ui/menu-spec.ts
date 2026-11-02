@@ -57,7 +57,7 @@ const file = (recentCount: () => number): MenuItem[] => section('File', () => [
 const edit = (): MenuItem[] => section('Edit', () => [
   'undo', 'redo', SEP, 'cut', 'copy', E('Copy with Base Point', 'copybase', undefined, ['Shift+Mod+C']), E('Cut with Base Point', 'cutbase'),
   'paste', E('Paste as Block', 'pasteblock', undefined, ['Shift+Mod+V']), E('Paste to Original Coordinates', 'pasteorig'),
-  E('Clear', 'erase', 'clear', ['Delete']), SEP, 'select-all', E('Quick Select...', 'qselect'), E('Find...', 'find'), SEP, 'language',
+  E('Clear', 'erase', 'clear', ['Delete']), SEP, 'select-all', 'open-quick-select', 'open-find', SEP, 'language',
 ]);
 
 const view = (): MenuItem[] => section('View', () => [
@@ -122,7 +122,7 @@ const dimension = (): MenuItem[] => section('Dimension', () => [
 ]);
 
 const modify = (): MenuItem[] => section('Modify', () => [
-  E('Properties', 'properties'), E('Match Properties', 'matchprop'), SEP,
+  'open-properties', E('Match Properties', 'matchprop'), SEP,
   E('Erase', 'erase'), E('Copy', 'copy'), E('Mirror', 'mirror'), E('Offset', 'offset'),
   S('Array', E('Rectangular Array', 'arrayrect'), E('Polar Array', 'arraypolar'), E('Path Array', 'arraypath')),
   E('Move', 'move'), E('Rotate', 'rotate'), E('Scale', 'scale'), E('Stretch', 'stretch'), E('Lengthen', 'lengthen'),
@@ -202,7 +202,8 @@ const graph = (): MenuItem[] => section('Graph', () => [
 const tools = (): MenuItem[] => section('Tools', () => [
   'settings', E('Drafting Settings...', 'dsettings'), E('Cycle Isometric Plane', 'isoplane', undefined, ['F5', 'Mod+E']),
   S('Inquiry', E('Distance', 'dist'), E('Radius', 'radius.measure'), E('Angle', 'angle.measure'), E('Area', 'area'), E('Region/Mass Properties', 'massprop'),
-    E('Volume', 'volume.measure'), E('List', 'list'), E('ID Point', 'id'), E('QuickCalc', 'cal', undefined, ['Mod+8']), E('Set Variable', 'setvar')),
+    E('Volume', 'volume.measure'), E('List', 'list'), E('ID Point', 'id'), 'win-quickcalc', E('Set Variable', 'setvar')),
+  'open-quick-select',
   S('Draw Order', E('Bring to Front', 'draworder', 'front'), E('Send to Back', 'draworder', 'back'), E('Bring Above Objects', 'draworder', 'above'),
     E('Send Under Objects', 'draworder', 'under'), E('Send Hatches to Back', 'draworder', 'hatchback'),
     S('Bring Annotations to Front', E('All Annotation Objects', 'draworder', 'annoall'), E('Text Objects Only', 'draworder', 'annotext'),
@@ -220,7 +221,7 @@ const tools = (): MenuItem[] => section('Tools', () => [
 ]);
 
 const windowMenu = (): MenuItem[] => section('Window', () => [
-  'win-toolsets', 'win-properties', 'win-layers', E('QuickCalc', 'cal', undefined, ['Mod+8']), E('Reference Manager', 'xref'), SEP,
+  'win-toolsets', 'win-properties', 'win-layers', 'win-quickcalc', 'toggle-quickprops', E('Reference Manager', 'xref'), SEP,
   'win-toolbar', 'win-filetabs', 'win-statusbar', 'win-cmdline', 'win-cmdhistory', 'win-menubar', SEP,
   'win-hide-palettes', 'win-reset-palettes', 'win-reset-layout', SEP,
   S('Workspace', ...WORKSPACES.map((w) => `workspace-${w.id}`)),

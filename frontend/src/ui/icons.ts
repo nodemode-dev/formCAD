@@ -186,6 +186,9 @@ export const ICONS: Record<string, string> = {
   centerMark: s('<circle cx="12" cy="12" r="7"/><path d="M12 3v18M3 12h18" stroke-dasharray="4 2"/>'),
   centerLine: s('<path d="M5 5v14M19 5v14"/><path d="M12 3v18" stroke-dasharray="4 2"/>'),
   breakLine: s('<path d="M3 12h5l2-4 3 8 2-4h6"/>'),
+  calculator: s('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8"/><path d="M8.5 11.5h1M12 11.5h1M15.5 11.5h0.5M8.5 15h1M12 15h1M15.5 15h0.5M8.5 18h1M12 18h4"/>'),
+  quickSelect: s('<path d="M4 5h16l-6 7v6l-4 2v-8z"/><path d="M17 15l1.2 1.2L21 13.5"/>'),
+  quickProps: s('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 12.5h5"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/>'),
 };
 
 export function icon(name: string, size = 16): string {

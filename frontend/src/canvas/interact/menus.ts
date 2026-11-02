@@ -89,7 +89,7 @@ export class MenuBuilder {
     }
     const g6 = has ? this.group(this.cmd('Add Selected', 'addselected'), this.cmd('Select Similar', 'selectsimilar'), { label: 'Deselect All', run: () => this.h.clearSelection() }) : [];
     const g7 = this.group({ label: 'Undo', run: () => this.h.ui('undo') }, { label: 'Redo', run: () => this.h.ui('redo') }, this.cmd('Pan', 'pan'), this.cmd('Zoom', 'zoom'));
-    const g8 = this.group(this.cmd('Quick Select...', 'qselect'), this.cmd('Find...', 'find'));
+    const g8 = this.group({ label: 'Quick Select...', run: () => this.h.ui('open-quick-select') }, { label: 'Find...', run: () => this.h.ui('open-find') });
     const g9 = this.group(has ? { label: 'Properties', run: () => this.h.properties() } : null, { label: 'Options', run: () => this.h.ui('settings') });
     return this.join([g1, g3, g4, g5, g6, g7, g8, g9]);
   }

@@ -52,6 +52,7 @@ export class Interaction implements Ctx {
   private shiftDown = false;
   private ctrlDown = false;
   private queued = false;
+  private selKey = '';
   private res: Resolved | null = null;
   private effPoint: Pt | null = null;
   private readonly tracker = new Tracker();
@@ -119,6 +120,18 @@ export class Interaction implements Ctx {
       document.addEventListener(n, onState);
       this.off.push(() => document.removeEventListener(n, onState));
     }
+    const onSetSelection = (e: Event): void => {
+      const d = (e as CustomEvent<{ handles: Array<string | number>; mode?: 'set' | 'add' | 'remove'; commit?: boolean }>).detail;
+      const mode = d.mode ?? 'set';
+      const next = mode === 'set' ? new Set(d.handles) : new Set(this.sel.selected);
+      if (mode === 'add') for (const h of d.handles) next.add(h);
+      if (mode === 'remove') for (const h of d.handles) next.delete(h);
+      this.sel.selected = next;
+      this.schedule();
+      if (d.commit !== false) void this.sel.commit();
+    };
+    document.addEventListener('formcad:set-selection', onSetSelection);
+    this.off.push(() => document.removeEventListener('formcad:set-selection', onSetSelection));
     const onText = (): void => { this.lock2 = this.typedStr() === '' ? false : this.lock2; this.schedule(); };
     document.addEventListener('formcad:cmdline-text', onText);
     this.off.push(() => document.removeEventListener('formcad:cmdline-text', onText));
@@ -362,9 +375,18 @@ export class Interaction implements Ctx {
     return { ...r, p: [x, y] };
   }
 
+  private announceSelection(id: string | null): void {
+    const handles = id ? [...this.sel.selected] : [];
+    const key = `${id ?? ''}|${handles.join(',')}`;
+    if (key === this.selKey) return;
+    this.selKey = key;
+    document.dispatchEvent(new CustomEvent('formcad:selection', { detail: { doc: id, handles } }));
+  }
+
   private frame(): void {
     const id = this.deps.docId();
     const cv = this.canvas;
+    this.announceSelection(id);
     if (!id) {
       this.res = null;
       cv.setOverlay('snap-marker', null);

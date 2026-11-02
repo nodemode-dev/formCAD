@@ -3,6 +3,7 @@ import { api, ApiError, type Capabilities, type CommandLineState } from '../io/a
 import { CaptionButtons, CUSTOM_TITLE_BAR_KEY, wantsCustomTitleBar } from './caption-buttons';
 import { commands, type Command } from './commands';
 import { docStore } from './doc-store';
+import { interceptCommand } from './dialogs/intercept';
 import { watchExitRequests } from './exit-guard';
 import { isMac, setClass, stored, store } from './dom';
 import { onOpenPaths } from './file-dialogs';
@@ -83,6 +84,7 @@ async function runEngine(label: string, name: string, option?: string): Promise<
   let doc = docStore.current();
   if (!doc) doc = await docStore.create();
   if (!doc) return;
+  if (!option && interceptCommand(name)) return;
   try {
     report(label, option ? await api.runCommand(doc.id, name, { option }) : await api.sendInput(doc.id, name), doc.id);
   } catch (e) {
