@@ -1,0 +1,2 @@
+class SolveError(ValueError):
+    pass
