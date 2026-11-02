@@ -45,6 +45,13 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | objc2, objc2-app-kit, objc2-foundation (macOS) | MIT OR Apache-2.0 OR Zlib | `src-tauri/Cargo.toml` |
 | FormCAD app icon (gear over its outline), supplied by the owner | Copyright 2026 NodeAgentc, Inc., part of this product | `assets/formcad_icon.png` (1024 px source), `src-tauri/icons/`, `frontend/public/favicon.png`, embedded in `frontend/public/splash.html` |
 
+### Seed data
+
+| Work | License | Where |
+| --- | --- | --- |
+| Material properties for 304 stainless steel and 6061 aluminium (NIST and NBS publications) and Ti-6Al-4V (a 1972 NASA handbook) | numerical facts from US government publications, cited per row | `backend/app/data/materials.json` (each row carries its source) |
+| Metric coarse thread pitches from a public copy of IS 4218 Part 2 | numerical facts, cited per row with a status | `backend/app/data/hole-sizes.json` |
+
 ### DWG converters (optional, installed by the user, never shipped)
 
 FormCAD bundles no DWG library or converter. DWG open and save are off until the user points FormCAD at a converter program they installed themselves (for example the ODA File Converter, under ODA's own terms, or LibreDWG's `dwg2dxf` and `dxf2dwg`, GPL-3.0-or-later). The engine runs that program as a separate process with an argument list and a timeout, and exchanges files through a temporary folder; nothing from either program is linked, imported or distributed. Code: `backend/app/interchange/dwg.py`.

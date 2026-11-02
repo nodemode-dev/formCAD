@@ -110,7 +110,27 @@ def announce_port(server, data) -> None:
     threading.Thread(target=run, name="formcad-port-file", daemon=True).start()
 
 
+def leading_settings_dir(argv: list[str]):
+    if not argv or not (argv[0] == "--settings-dir" or argv[0].startswith("--settings-dir=")):
+        return None
+    if argv[0] == "--settings-dir":
+        if len(argv) < 2:
+            return None
+        value, rest = argv[1], argv[2:]
+    else:
+        value, rest = argv[0].partition("=")[2], argv[1:]
+    if not rest or rest[0].startswith("-"):
+        return None
+    return value, rest
+
+
 def main() -> int:
+    lead = leading_settings_dir(sys.argv[1:])
+    if lead is not None:
+        from app.automation import cli
+
+        cli.settings_dir({"--settings-dir": lead[0]})
+        return run_cli(lead[1])
     if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
         return run_cli(sys.argv[1:])
     if len(sys.argv) > 1 and sys.argv[1] in ("--help", "-h"):

@@ -66,6 +66,83 @@ def load_operations() -> None:
         return
     for module in (kernel_ops, kernel_io, kernel_props):
         METHODS.update(module.METHODS)
+    try:
+        import kernel_feat
+
+        METHODS.update(kernel_feat.METHODS)
+        kernel_feat.load_plugins()
+        METHODS.update(kernel_feat.METHODS)
+    except Exception as err:
+        failure0 = str(err)
+
+        def feat_unavailable(_params):
+            raise RuntimeError("The part feature operations could not be loaded (%s)." % failure0)
+
+        for name in ("feat_extrude", "feat_revolve", "feat_signatures", "feat_topology", "feat_rays"):
+            METHODS.setdefault(name, feat_unavailable)
+    try:
+        import kernel_bodies
+
+        METHODS.update(kernel_bodies.METHODS)
+    except Exception as err:
+        failure = str(err)
+
+        def bodies_unavailable(_params):
+            raise RuntimeError("The multibody operations could not be loaded (%s)." % failure)
+
+        for name in ("combine", "split", "geometry", "body_props"):
+            METHODS.setdefault(name, bodies_unavailable)
+    try:
+        import kernel_features2
+
+        METHODS.update(kernel_features2.METHODS)
+    except Exception as err:
+        failure2 = str(err)
+
+        def features2_unavailable(_params):
+            raise RuntimeError("The dress-up and pattern operations could not be loaded (%s)." % failure2)
+
+        for name in ("feature_fillet", "feature_chamfer", "feature_shell", "feature_draft", "feature_pattern", "feature_mirror", "feature_precheck"):
+            METHODS.setdefault(name, features2_unavailable)
+    try:
+        import kernel_shapes
+
+        METHODS.update(kernel_shapes.METHODS)
+    except Exception as err:
+        failure3 = str(err)
+
+        def shapes_unavailable(_params):
+            raise RuntimeError("The sweep, loft and hole operations could not be loaded (%s)." % failure3)
+
+        for name in ("sweep", "sweep_preview", "loft", "boundary_solid", "rib", "hole"):
+            METHODS.setdefault(name, shapes_unavailable)
+    try:
+        import kernel_curves
+
+        METHODS.update(kernel_curves.METHODS)
+    except Exception as err:
+        failure4 = str(err)
+
+        def curves_unavailable(_params):
+            raise RuntimeError("The curve operations could not be loaded (%s)." % failure4)
+
+        for name in ("curve_make", "curve_interpolate", "curve_approximate", "curve_refit", "curve_rebuild", "curve_degree", "curve_continuity", "curve_offset", "curve_extend"):
+            METHODS.setdefault(name, curves_unavailable)
+    try:
+        import kernel_diag
+        import kernel_match
+        import kernel_surf
+
+        for module in (kernel_surf, kernel_match, kernel_diag):
+            METHODS.update(module.METHODS)
+    except Exception as err:
+        failure5 = str(err)
+
+        def surfaces_unavailable(_params):
+            raise RuntimeError("The surface operations could not be loaded (%s)." % failure5)
+
+        for name in ("surf_loft", "surf_sweep", "surf_network", "surf_patch", "surf_extrude", "surf_revolve", "surf_planar", "surf_edge", "surf_extend", "surf_offset", "surf_split", "surf_join", "surf_continuity", "surf_blend", "surf_match", "bool_diag", "fillet_edge", "chamfer_edge"):
+            METHODS.setdefault(name, surfaces_unavailable)
 
 
 def reply(payload: dict) -> None:

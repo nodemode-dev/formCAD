@@ -95,6 +95,10 @@ def grips_of(e) -> list:
         out = [_g(v["p"], "vertex", "v%d" % i) for i, v in enumerate(e.vertices)]
     elif e.kind == "helix":
         out = [_g(e.center, "center", "center")]
+    elif e.kind == "nurbscurve":
+        from app.nurbs3d import grips as curve_grips
+
+        out = curve_grips.points(e)
     elif e.kind in ("assoc_array", "viewport"):
         out = [_g(p, kind, gid) for gid, p, kind in e.grip_points()]
     elif e.kind in ("mleader", "leader", "table"):
@@ -265,6 +269,14 @@ def stretch(e, gid, to) -> None:
         e.points[_idx(gid)] = list(t)
     elif e.kind == "mline":
         e.vertices[_idx(gid)]["p"] = [t[0], t[1]]
+    elif e.kind == "nurbscurve":
+        from app.nurbs3d import grips as curve_grips
+        from app.nurbs3d.form import FormError
+
+        try:
+            curve_grips.stretch(e, gid, t)
+        except FormError as err:
+            raise GripError(str(err))
     elif e.kind in ("assoc_array", "viewport"):
         e.stretch_grip(gid, t)
     elif e.kind in ("mleader", "leader", "table"):

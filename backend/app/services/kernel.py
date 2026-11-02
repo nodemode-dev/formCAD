@@ -119,6 +119,10 @@ class Worker:
                 line = self.lines.get(timeout=max(0.0, deadline - time.monotonic()))
             except queue.Empty as err:
                 self.process.kill()
+                try:
+                    self.process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    pass
                 raise KernelError(f"The kernel worker did not answer {method} in time.") from err
             if line is None:
                 raise KernelError("The kernel worker exited.")

@@ -79,6 +79,22 @@ def _stat(path, *args, **kwargs):
 _STAT = os.stat
 
 
+def _guarded_path(fn):
+    def call(path, *args, **kwargs):
+        _readable(path, "inspecting")
+        return fn(path, *args, **kwargs)
+
+    call.__name__ = fn.__name__
+    return call
+
+
+def _guard_path_functions():
+    for name in ("exists", "lexists", "isfile", "isdir", "islink", "getsize", "getmtime", "getatime", "getctime"):
+        original = getattr(os.path, name, None)
+        if original is not None:
+            setattr(os.path, name, _guarded_path(original))
+
+
 def _hook(event, args):
     if event in ("os.listdir", "os.scandir"):
         _readable(args[0] if args else None, "listing")
@@ -175,6 +191,7 @@ def main():
     WRITE_ROOTS.extend(_write_roots())
     _limits()
     os.stat = _stat
+    _guard_path_functions()
     sys.addaudithook(_hook)
     sys.argv = [name]
     try:

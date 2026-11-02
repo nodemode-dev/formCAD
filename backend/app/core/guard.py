@@ -80,7 +80,7 @@ def run_files(given) -> tuple:
 CALLER = contextvars.ContextVar("formcad_caller", default="")
 FILES = contextvars.ContextVar("formcad_files", default=())
 MACRO_DENIED_FIRST = {"open", "recovery", "autosave"}
-MACRO_DENIED_LATER = {"save", "plot", "macro", "export", "xrefs", "import"}
+MACRO_DENIED_LATER = {"save", "plot", "macro", "export", "xrefs", "import", "materiallib"}
 
 
 def _macro_route_ok(path: str) -> bool:

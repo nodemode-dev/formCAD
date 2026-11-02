@@ -176,3 +176,23 @@ Python macros for the `formcad` client module (`backend/app/data/sdk/formcad.py`
 ## lisp/
 
 `bolt-pattern.lsp` is a parametric bolt-hole routine: `bolt-pattern` draws N circles on a pitch circle through `command`, puts them on layer BOLTS with `entmod`, moves the set and rotates it about the moved centre; `c:boltdemo` runs 6 holes of diameter 8 on a 60 pitch circle at (100,100), moved by (50,20) and rotated 15 degrees, and `bolt-centres` lists the hole centres through `ssget` and `entget` (expected: (150 + 30 cos(60 i + 15), 120 + 30 sin(60 i + 15)) for i = 0 to 5). Load it with APPLOAD (or put the folder in the LISP support folders and use `(load "bolt-pattern")`), type BOLTDEMO; one U takes back the whole routine. `bolt-pattern.fcad` is the result saved and reopened.
+
+## curves.fcad
+
+A metric drawing with three `nurbscurve` entities made through the curve commands: an interpolated degree 3 curve through five 3D points (CRVINTERP), a degree 3 control point curve (CRV), and the G2 blend between the end of the first and the start of the second (CRVBLEND, shape factor 1). CRVCONT reports G2 from the kernel for both joins. Saved through `POST /api/docs/{id}/save`; reopened poles, knots and samples match exactly. `GET /api/docs/{id}/curves` lists them.
+
+## part-adv.fcad
+
+Phase 17 exit (bodies and data), millimetres. Eight solid bodies, each with its closed-form volume, centre of mass and mass stored in the body's `source.expect`; `GET /api/docs/{id}/bodies/exitcheck` compares the kernel's mass properties with them and passes within 1e-6 relative (measured worst: 4e-11). Bodies: Swept tube (annulus R10 r7 swept along a quarter arc of radius 50, 304 stainless), Lofted block (rectangle 40 x 20 at z=0 to rectangle 16 x 24 at z=30 with centres offset (5, 3), 6061), Counterbored plate (60 x 40 x 20 with a diameter 8 hole and a diameter 14 x 6 counterbore at (20, 12), Ti-6Al-4V), Frustum (cone radii 12 and 5, height 20), Torus (R30 r5), Hollow cylinder (made with Combine subtract), and Split block in two pieces (made with Split Body at x=205). The reference geometry table holds nine items (planes by face, offset, three points and angle; axes by two points and by two planes; points by coordinates and face centre; the coordinate system Plate corner), the parameters L and W, and the configurations Default, Heavy and Light (values and per-body materials). Open it, call `POST /bodies/massprops` with `cs: "Plate corner"` for inertia about that system.
+
+## shape features (no fixture file yet)
+
+The sweep, loft, boundary solid, rib and hole features were checked on scratch documents only, each saved and reopened without a status change: a tube (annulus r 10 and 8 swept 100, volume pi(100-64)100), a loft between a 20 and a 10 square 40 apart (prismatoid 9333.33), a six-patch boundary cube of 1000, a rib of 80 x 20 x 6 in a box cavity, and two counterbored holes. P4F owns `part-adv.fcad`; these can be rebuilt from the feature parameters above.
+
+## part-core.fcad
+
+Phase 16 exit (feature tree), millimetres. A part document of 13 features: sketch Base (100 x 60 rectangle with the driving dimensions `plate_w` and `plate_d`), Plate extrude 20, sketch on the plate top, Boss extrude 15 (circle r12), Boss draft 3 degrees, Shell 1 mm opened at the boss top, a pocket sketch and Pocket (8 deep), a hole sketch and through Hole, a circular Holes pattern of 4, Corners fillet r4 on the four vertical plate edges and Chamfer 0.3 on the boss rim. Every reference is a named key (`F2:cap:end`, `e(F4:cap:end|F4:side:h...)`), so `PUT /parameters/plate_w` with another expression rebuilds the whole chain with every feature `ok` and no reference lost (checked at 140, 100 and 120, and after save and reopen with a cold cache). Measured here: full build of 13 features 570 ms, edit of the root dimension about 650 ms (sketch 0.1 ms, extrudes 1 to 30 ms, the dress-up and pattern features 50 to 130 ms each), edit of the last feature about 120 ms.
+
+## surface.fcad
+
+Phase 18 exit (surfaces), millimetres, document tolerances set with MODELTOL to 0.001 mm and 0.001 rad. Three surface bodies: `Surface A` and `Surface B` (cubic lofts through three curves, 100 mm wide, spanning y 0 to 50 and y 100 to 150) and `Blend A-B`, made with SRFBLEND at G2 on both ends (Hermite construction after the filling attempt, influence 0.6). SEAMCHECK on the saved and reopened file reports G2 at both seams: seam A gap 1.5e-13 mm, normal angle 3.7e-8 rad, curvature gap 3.3e-9; seam B gap 5.6e-13 mm, angle 1.5e-7 rad, curvature gap 2.0e-8, all under the tolerances (1e-3 mm, 1e-3 rad, 1.4e-4 to 1.5e-4 relative to curvature). The blend body stores its construction report under `source.report`.

@@ -26,6 +26,8 @@ def _call(method, path, body=None, raw=False):
         with urllib.request.urlopen(req, timeout=TIMEOUT) as res:
             payload = res.read()
     except urllib.error.HTTPError as err:
+        if err.code == 401:
+            raise FormCADError("FormCAD does not let a macro call %s. Macros draw and edit; saving, opening, exporting, printing and settings are done from the FormCAD window." % path.split("?")[0])
         text = err.read().decode("utf-8", "replace")
         try:
             text = json.loads(text).get("detail", text)

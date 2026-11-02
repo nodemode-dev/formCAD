@@ -288,18 +288,17 @@ def arrange(doc, count: int, orient: str = "") -> dict:
     rec = copy.deepcopy(active_rec(d))
     cur = current_index(doc)
     t = rec["tiles"][cur]
-    rect = (t["lower_left"][0], t["lower_left"][1], t["upper_right"][0], t["upper_right"][1])
-    parts = rects_for(rect, count, orient)
+    parts = rects_for((0.0, 0.0, 1.0, 1.0), count, orient)
     if any((p[2] - p[0]) < MIN_TILE or (p[3] - p[1]) < MIN_TILE for p in parts):
         raise ViewError("The current viewport is too small to divide.")
-    if len(rec["tiles"]) - 1 + count > MAX_TILES:
+    if count > MAX_TILES:
         raise ViewError("There are too many viewports.")
     fresh = []
     for p in parts:
         fresh.append({"lower_left": [p[0], p[1]], "upper_right": [p[2], p[3]], "center": list(t["center"]), "height": t["height"], "aspect": (p[2] - p[0]) / max(p[3] - p[1], 1e-9)})
-    rec["tiles"] = rec["tiles"][:cur] + fresh + rec["tiles"][cur + 1:]
+    rec["tiles"] = fresh
     d.table_set("vports", rec)
-    view_session(doc)["tile"] = cur
+    view_session(doc)["tile"] = max(range(len(fresh)), key=lambda i: _area(fresh[i]))
     return describe_tiles(doc)
 
 

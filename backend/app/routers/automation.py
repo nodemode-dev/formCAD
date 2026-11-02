@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -146,8 +147,8 @@ def python_set(body: PythonBody) -> dict:
     path = body.path.strip()
     if path and not os.path.isfile(path):
         raise HTTPException(400, "That interpreter does not exist.")
-    if path and not os.path.basename(path).lower().startswith("py"):
-        raise HTTPException(400, "The interpreter file name must start with python or py.")
+    if path and not re.fullmatch(r"(python(w)?\d*(\.\d+)*|py|pypy\d*(\.\d+)*)(\.exe)?", os.path.basename(path).lower()):
+        raise HTTPException(400, "The interpreter file name must be python, python3, python3.12, py or pypy.")
     data = macros.load_settings()
     if path:
         data["python"] = path

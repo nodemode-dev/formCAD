@@ -276,7 +276,9 @@ def f_autoload(L, file, cmds):
 
 @fn("ver", 0, 0)
 def f_ver(L):
-    return "FormCAD LISP 0.6 (en)"
+    from app import __version__
+
+    return "FormCAD LISP %s (en)" % __version__
 
 
 @fn("vl-load-com", 0, 0)

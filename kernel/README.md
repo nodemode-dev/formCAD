@@ -14,6 +14,35 @@ The geometry worker of FormCAD. It is a separate program: the engine starts it a
 | `mass_properties` | `id`, `density` | volume (only for a closed valid solid), area, centroid, inertia |
 | `bounds` | `id`, `mode` geometry or mesh | min, max |
 | `check`, `shape_summary`, `shape_free`, `shape_list` | | |
+| `combine` | `op` add, subtract or common; `bodies` (first is the base); `fuzzy` (mm), `analyze`, `force`, `retry`, `unify` | `id`, `summary`, `history`, `diagnostics` (argument analyzer findings, fuzzy used, whether the larger-fuzzy retry ran) |
+| `split` | `body`; `planes` (`{origin, normal}`) and/or `tools` (shape ids of surfaces or solids); `fuzzy`, `analyze`, `force` | `pieces` (each `id`, `summary`, per-face and per-edge `history` against the body) |
+| `geometry` | `id` and one of `face`, `edge`, `vertex` (0-based index) | surface or curve kind with origin and normal (plane), axis and radius (cylinder, cone), centre (sphere, torus, circle), end points, midpoint and centroid, in millimetres |
+| `body_props` | `id`, `eps` (relative integration error, default 1e-9) | area always; volume, centroid, inertia about the centre of mass per unit density, principal moments and axes only for a closed valid solid |
+| `feature_fillet` | `id`, `edges` (indices or `{edge, radius}`, `{edge, radius1, radius2}`, `{edge, points: [[position, radius]]}`), `faces`, `radius`, `profile` | `ok`, `id`, `summary`, `history`, `contours`, `blend_faces`, `warnings`, or `failed` edges with a reason |
+| `feature_chamfer` | `id`, `edges`, `faces`, `distance`, `distance2` with `face`, or `angle` with `face` | as `feature_fillet` |
+| `feature_shell` | `id`, `faces` to remove, `thickness`, `direction` inward or outward, `join` arc or intersection | as `feature_fillet` |
+| `feature_draft` | `id`, `faces`, `angle`, `pull`, `neutral_plane`, `allow_partial` | as `feature_fillet`, plus `drafted_faces` |
+| `feature_pattern` | `id`, `seed`, `op` fuse, cut or copies, `pattern` linear (`directions`) or circular (`axis`, `count`, `angle`), `skip`, `include_seed` | as `feature_fillet`, plus `instance_faces` |
+| `feature_mirror` | `id`, `plane`, `mode` feature (`seed`, `op`) or body (`merge`) | as `feature_pattern` |
+| `feature_precheck` | `kind`, then the parameters of that feature | `ok`, `errors`, `warnings` |
+| `feat_extrude` | `id` (base body or none), `op` add or cut, `profile` (`frame`, `regions`, `open`), `end1`/`end2` with depths, `mid`, `flip`, `draft1`/`draft2`, `thin`, `target` face for up to face | `ok`, `id`, `summary`, `history`, `created` (face index to role), `adjacency`, `tool`, `warnings`, `errors` |
+| `feat_revolve` | `id`, `op`, `profile`, `axis` (`origin`, `dir`), `angle1`, `angle2`, `mid`, `flip`, `thin` | as `feat_extrude` |
+| `sweep`, `loft`, `boundary_solid`, `rib`, `hole`, `sweep_preview` | module `kernel_shapes.py`. `sweep`: `profile`, `path` (shape, segments, nurbs record, vertices or planar sketch), `mode` fixed, frenet, corrected_frenet or binormal, `twist`, `scale_end`, `transition`, `guide`, `guide_contact`. `loft`: `sections` (profiles or a point at either end), `ruled`, `smoothing`, `start`/`end` condition. `boundary_solid`: `surfaces` (curve groups), `cap_planar`, `tolerance`. `rib`: `id`, `profile` (open), `thickness`, `thickness_side`, `grow`, `flip`, `draft`. `hole`: `id`, `spec` (kind, diameter, depth or through, cbore, csk, tap_drill, thread), `positions`, `normal` | `id`, `summary`, `origins` (face index to role), `volume`, `warnings` |
+| `feat_sweep`, `feat_loft`, `feat_boundary`, `feat_rib`, `feat_hole` | the same parameters plus `op` add, cut or new, with the base in `id` | as `feat_extrude`; `feat_hole` adds `cosmetic_threads` |
+| `feat_signatures` | `id`, `faces`, `edges` | per index: `k` kind, `n`, `c`, `a`, `r`, `l` |
+| `feat_topology` | `id` | `faces`, `edges`, `vertices` with adjacency |
+| `feat_rays` | `id`, `rays` | hit faces for each ray |
+| `curve_make` | `curve` (degree, poles, weights, knots, mults, periodic), `tol`, `angle_tol` | `curve`, `tolerances` (audit of vertex, edge and face tolerances) |
+| `curve_interpolate` | `points`, `tangents`, `parametrization` chord, centripetal or uniform, `periodic` | `curve`, `deviation`, `tolerances` |
+| `curve_approximate`, `curve_refit`, `curve_rebuild`, `curve_simplify` | `curve` or `points`, `degree`, `count`, `tol` | `curve`, `deviation`, `tol_used` |
+| `curve_degree`, `curve_knot_insert`, `curve_knot_remove`, `curve_periodic`, `curve_trim`, `curve_reverse` | `curve` plus the knob of each | `curve`, `deviation` |
+| `curve_offset`, `curve_extend` | `curve`, `distance` and `normal`, or `end`, `length`, `kind` line, arc or smooth | `curve`, `deviation` |
+| `curve_continuity` | `a`, `b`, `end_a`, `end_b`, `tol`, `angle_tol`, `curvature_tol` | OCCT G0 to G2 flags and measured gaps |
+| `curve_eval`, `curve_to_shape`, `curve_from_shape` | `curve` and `params`, or a shape id | points and derivatives, or a stored edge chain |
+| `surf_loft`, `surf_sweep`, `surf_network`, `surf_patch`, `surf_extrude`, `surf_revolve`, `surf_planar`, `surf_edge` | module `kernel_surf.py`; every call carries `tol` (mm) and `angtol` (rad). Curves are specs: `line`, `circle`, `ellipse`, `bspline`, `path`, `shape`, `shape_edge`. Sweep takes `rail`, optional `rail2`, `profiles`, `frame`; network `u`, `v` | `id`, `summary`, `report` (method errors and a stored-tolerance audit) |
+| `surf_extend`, `surf_match`, `surf_blend`, `surf_continuity`, `surf_edges` | module `kernel_match.py`; a side is `{face: {id, index}, edge: {id, index}}`. Blend: `continuity` 0 to 2, `influence`, `method` auto, filling or hermite. Match: `moving`, `target`, `continuity`. Extend: `face`, `edge`, `length` | `id`, `summary`, `report` with `level`, `max_gap`, `max_angle`, `max_curvature_gap`; G3 is not measured |
+| `surf_offset`, `surf_split`, `surf_join`, `surf_naked` | module `kernel_surf.py` and `kernel_diag.py`; split takes `tool_curves` and `direction` or `tools`, with `remove_points` to trim; join takes `ids`, `solid` | `id` or `pieces`, `report`, `history`; join and naked add free-edge polylines |
+| `bool_diag`, `fillet_edge`, `chamfer_edge` | module `kernel_diag.py`; boolean `op`, `base`, `tools`, `fuzzy`, `max_fuzzy`, `retry`, `check_only`; fillet `edges`, `radius`, `radius2`, `radii`, `continuity`; chamfer `distance`, `distance2`, `angle` | `id`, `summary`, `report` (argument analysis, retry ladder, fuzzy value used, result check), `history` |
 
 The third-party notices of the worker are in `NOTICE.md`.
 

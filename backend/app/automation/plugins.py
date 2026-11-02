@@ -1,4 +1,6 @@
 import hashlib
+import importlib.abc
+import importlib.machinery
 import importlib.metadata
 import importlib.util
 import json
@@ -127,6 +129,65 @@ def _store(plugin_id: str, record: dict | None) -> None:
         macros.save_settings(data)
 
 
+CODE_SUFFIXES = (".py", ".so", ".pyd", ".dll", ".pth", ".json", ".txt")
+MAX_DIGEST_FILES = 4000
+_digests: dict = {}
+
+
+def _digest_files(dist, target: str) -> list:
+    paths = {}
+    for rel in getattr(dist, "files", None) or []:
+        name = str(rel)
+        if "__pycache__" in name or name.endswith(".pyc") or name.endswith("RECORD"):
+            continue
+        try:
+            full = Path(str(dist.locate_file(rel)))
+        except Exception:
+            continue
+        if full.is_file():
+            paths["dist/" + name.replace("\\", "/")] = full
+    top = target.split(":")[0].split(".")[0].strip()
+    if top:
+        try:
+            spec = importlib.util.find_spec(top)
+        except Exception:
+            spec = None
+        if spec is not None:
+            roots = [Path(p) for p in (spec.submodule_search_locations or [])]
+            if not roots and spec.origin and spec.origin not in ("built-in", "frozen") and os.path.isfile(spec.origin):
+                paths["module/" + Path(spec.origin).name] = Path(spec.origin)
+            for root in roots:
+                for item in sorted(root.rglob("*")):
+                    if len(paths) > MAX_DIGEST_FILES:
+                        break
+                    if item.is_file() and item.suffix in CODE_SUFFIXES and "__pycache__" not in item.parts:
+                        paths["module/" + item.relative_to(root).as_posix()] = item
+    return sorted(paths.items())
+
+
+def distribution_digest(dist, target: str) -> str:
+    try:
+        files = _digest_files(dist, target)
+        key = (getattr(dist, "name", ""), getattr(dist, "version", ""), target, tuple((n, p.stat().st_mtime_ns, p.stat().st_size) for n, p in files))
+    except OSError:
+        return ""
+    cached = _digests.get(key)
+    if cached:
+        return cached
+    h = hashlib.sha256()
+    for name, path in files:
+        try:
+            part = sha256_of(path)
+        except OSError:
+            return ""
+        h.update(name.encode("utf-8") + b"\0" + part.encode("ascii") + b"\n")
+    out = h.hexdigest()
+    if len(_digests) > 32:
+        _digests.clear()
+    _digests[key] = out
+    return out
+
+
 def entry_point_items() -> list:
     try:
         found = importlib.metadata.entry_points(group=GROUP)
@@ -135,7 +196,8 @@ def entry_point_items() -> list:
     out = []
     for ep in found:
         dist = getattr(ep, "dist", None)
-        out.append({"id": "ep:" + ep.name, "tier": "entry-point", "name": ep.name, "version": getattr(dist, "version", "") if dist else "", "package": getattr(dist, "name", "") if dist else "", "target": ep.value, "ep": ep})
+        digest = distribution_digest(dist, ep.value) if dist else ""
+        out.append({"id": "ep:" + ep.name, "tier": "entry-point", "name": ep.name, "version": getattr(dist, "version", "") if dist else "", "package": getattr(dist, "name", "") if dist else "", "target": ep.value, "manifestSha256": digest, "ep": ep})
     return out
 
 
@@ -144,9 +206,17 @@ def discover() -> list:
     items = []
     for ep in entry_point_items():
         rec = flags.get(ep["id"], {})
-        enabled = bool(rec.get("enabled")) and rec.get("version") == ep["version"]
+        problems = []
+        if rec.get("enabled"):
+            if rec.get("version") != ep["version"]:
+                problems.append("the installed version changed since it was enabled")
+            if not rec.get("distSha256"):
+                problems.append("it was enabled before distribution hashes were recorded; enable it again")
+            elif not ep["manifestSha256"] or rec.get("distSha256") != ep["manifestSha256"]:
+                problems.append("the installed files changed since it was enabled")
+        enabled = bool(rec.get("enabled")) and not problems
         item = {k: v for k, v in ep.items() if k != "ep"}
-        item.update({"description": "", "enabled": enabled, "problems": [] if not rec.get("enabled") or enabled else ["the installed version changed since it was enabled"], "permissions": []})
+        item.update({"description": "", "enabled": enabled, "problems": problems, "permissions": []})
         items.append(item)
     base = folder()
     for directory in sorted(p for p in base.iterdir() if p.is_dir()):
@@ -226,14 +296,93 @@ def _unregister(commands: list) -> None:
                     registry.ALIASES.pop(a, None)
 
 
-def _load_module(plugin_id: str, path: Path):
-    spec = importlib.util.spec_from_file_location("formcad_plugin_" + re.sub(r"\W", "_", plugin_id), str(path), submodule_search_locations=[str(path.parent)])
-    if spec is None or spec.loader is None:
-        raise PluginError("The entry file cannot be imported.")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+FINDERS: dict = {}
+
+
+def read_verified(directory: Path, expected_manifest: str) -> tuple:
+    try:
+        raw = (directory / MANIFEST).read_bytes()
+    except OSError as err:
+        raise PluginError("plugin.json cannot be read: %s" % err)
+    if hashlib.sha256(raw).hexdigest() != expected_manifest:
+        raise PluginError("The manifest changed since it was enabled.")
+    try:
+        files = json.loads(raw.decode("utf-8"))["files"]
+    except (ValueError, KeyError, TypeError):
+        raise PluginError("plugin.json cannot be read.")
+    blobs = {}
+    for name, digest in files.items():
+        try:
+            data = (directory / name).read_bytes()
+        except OSError:
+            raise PluginError("%s is missing" % name)
+        if len(data) > MAX_FILE or hashlib.sha256(data).hexdigest() != digest:
+            raise PluginError("%s changed" % name)
+        blobs[os.path.normpath(name)] = data
+    return files, blobs
+
+
+class VerifiedImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    def __init__(self, root: str, directory: Path, entry: str, blobs: dict):
+        self.root = root
+        self.directory = directory
+        self.entry = os.path.normpath(entry)
+        self.blobs = blobs
+        self.base = os.path.dirname(self.entry)
+
+    def locate(self, fullname: str):
+        if fullname == self.root:
+            return self.entry, True
+        if not fullname.startswith(self.root + "."):
+            return None
+        rel = os.path.join(self.base, *fullname[len(self.root) + 1:].split("."))
+        for cand, pkg in ((rel + ".py", False), (os.path.join(rel, "__init__.py"), True)):
+            if os.path.normpath(cand) in self.blobs:
+                return os.path.normpath(cand), pkg
+        return None
+
+    def find_spec(self, fullname, path=None, target=None):
+        hit = self.locate(fullname)
+        if hit is None:
+            return None
+        name, pkg = hit
+        origin = str(self.directory / name)
+        spec = importlib.machinery.ModuleSpec(fullname, self, origin=origin, is_package=pkg)
+        spec.has_location = True
+        if pkg:
+            spec.submodule_search_locations = [os.path.dirname(origin)]
+        return spec
+
+    def create_module(self, spec):
+        return None
+
+    def exec_module(self, module):
+        name, _pkg = self.locate(module.__spec__.name)
+        code = compile(self.blobs[name], module.__spec__.origin, "exec", dont_inherit=True)
+        exec(code, module.__dict__)
+
+
+def _forget(plugin_id: str) -> None:
+    root = "formcad_plugin_" + re.sub(r"\W", "_", plugin_id)
+    finder = FINDERS.pop(plugin_id, None)
+    if finder is not None and finder in sys.meta_path:
+        sys.meta_path.remove(finder)
+    for name in [n for n in sys.modules if n == root or n.startswith(root + ".")]:
+        sys.modules.pop(name, None)
+
+
+def _load_module(plugin_id: str, directory: Path, entry: str, expected_manifest: str):
+    _forget(plugin_id)
+    _files, blobs = read_verified(directory, expected_manifest)
+    root = "formcad_plugin_" + re.sub(r"\W", "_", plugin_id)
+    finder = VerifiedImporter(root, directory, entry, blobs)
+    sys.meta_path.insert(0, finder)
+    FINDERS[plugin_id] = finder
+    try:
+        return importlib.import_module(root)
+    except Exception:
+        _forget(plugin_id)
+        raise
 
 
 def load(plugin_id: str) -> dict:
@@ -252,13 +401,14 @@ def load(plugin_id: str) -> dict:
                 target = ep.load()
                 register = target if callable(target) else getattr(target, "register", None)
             else:
-                module = _load_module(plugin_id, Path(item["path"]) / item["entry"])
+                module = _load_module(plugin_id, Path(item["path"]), item["entry"], item["manifestSha256"])
                 register = getattr(module, "register", None)
             if not callable(register):
                 raise PluginError("The plugin defines no register(api) function.")
             register(api)
         except Exception as err:
             _unregister(api.commands)
+            _forget(plugin_id)
             FAILED[plugin_id] = "%s: %s" % (type(err).__name__, err)
             raise PluginError(FAILED[plugin_id])
         FAILED.pop(plugin_id, None)
@@ -271,6 +421,7 @@ def unload(plugin_id: str) -> None:
         info = LOADED.pop(plugin_id, None)
         if info:
             _unregister(info["commands"])
+        _forget(plugin_id)
 
 
 def set_enabled(plugin_id: str, enabled: bool, manifest_sha256: str = "") -> dict:
@@ -291,7 +442,13 @@ def set_enabled(plugin_id: str, enabled: bool, manifest_sha256: str = "") -> dic
                 raise PluginError("The plugin changed after it was shown. Review it again.")
             _store(plugin_id, {"enabled": True, "manifestSha256": item["manifestSha256"], "version": item["version"], "at": int(time.time())})
         else:
-            _store(plugin_id, {"enabled": True, "version": item["version"], "at": int(time.time())})
+            if not item.get("manifestSha256"):
+                raise PluginError("The installed files of this plugin cannot be read, so no hash can be recorded.")
+            if not manifest_sha256:
+                raise PluginError("Enabling a plugin needs the distribution hash that was shown; use the plugin manager.")
+            if manifest_sha256 != item["manifestSha256"]:
+                raise PluginError("The installed files changed after they were shown. Review the plugin again.")
+            _store(plugin_id, {"enabled": True, "distSha256": item["manifestSha256"], "version": item["version"], "at": int(time.time())})
         load(plugin_id)
     from app.automation import mcp
 

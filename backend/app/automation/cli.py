@@ -495,6 +495,13 @@ def cmd_mcp(argv: list) -> int:
     if "--connect" in opts:
         if not opts["--connect"]:
             raise Usage("--connect needs HOST:PORT or auto; it never falls back to a headless drawing.")
+        if opts["--connect"] != "auto":
+            import urllib.parse
+
+            given = opts["--connect"]
+            host = (urllib.parse.urlsplit(given if "://" in given else "//" + given).hostname or "").lower()
+            if host not in ("127.0.0.1", "localhost", "::1"):
+                raise Usage("--connect accepts only 127.0.0.1, localhost or ::1; the session token is never sent to another computer.")
         return stdio.serve_bridge(opts["--connect"])
     headless()
     return stdio.serve_headless(tools)

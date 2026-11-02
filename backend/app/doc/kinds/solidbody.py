@@ -25,6 +25,7 @@ class SolidBody(Entity):
     summary: dict = field(default_factory=dict)
     offset: list = field(default_factory=_o)
     extent: list = field(default_factory=list)
+    material: str = ""
 
     def move_by(self, d) -> None:
         self.offset = [self.offset[0] + d[0], self.offset[1] + d[1], self.offset[2] + (d[2] if len(d) > 2 else 0.0)]

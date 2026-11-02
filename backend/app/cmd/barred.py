@@ -4,8 +4,8 @@ from app.core import guard
 
 MACRO_GROUPS = {"draw", "modify", "format", "annotate", "annotation", "constraints", "inquiry", "block", "layout", "solids", "edit", "view", "tools", "script", "settings", "extra"}
 MACRO_NAMES = {"purge", "-purge", "audit"}
-MACRO_BARRED = {"aliasedit", "reinit", "dsettings"}
-AGENT_BARRED = {"pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay"}
+MACRO_BARRED = {"aliasedit", "reinit", "dsettings", "materiallib", "modeltol"}
+AGENT_BARRED = {"pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay", "materiallib", "modeltol"}
 
 
 def caller(runner=None) -> str:
