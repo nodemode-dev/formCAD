@@ -68,7 +68,15 @@ class Frontend(StaticFiles):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=config.APP_NAME, version=config.VERSION, lifespan=lifespan)
+    open_docs = os.environ.get("FORMCAD_API_DOCS") == "1"
+    app = FastAPI(
+        title=config.APP_NAME,
+        version=config.VERSION,
+        lifespan=lifespan,
+        docs_url="/docs" if open_docs else None,
+        redoc_url=None,
+        openapi_url="/openapi.json" if open_docs else None,
+    )
     app.add_middleware(CORSMiddleware, allow_origins=config.cors_origins(), allow_methods=["*"], allow_headers=["*"])
     app.add_middleware(guard.Guard, origins=config.allowed_origins())
     register(app)
