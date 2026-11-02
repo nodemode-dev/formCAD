@@ -29,12 +29,13 @@ src="$(fc_native_path "$FORMCAD_ROOT")"
 extra=()
 [ -z "${FORMCAD_PYI_ARCH:-}" ] || extra+=(--target-arch "$FORMCAD_PYI_ARCH")
 [ ! -d "$FORMCAD_ROOT/setup/pyi_hooks" ] || extra+=(--additional-hooks-dir "$src/setup/pyi_hooks")
-[ ! -d "$FORMCAD_ROOT/backend/app/data" ] || extra+=(--add-data "$src/backend/app/data${sep}data")
+[ ! -d "$FORMCAD_ROOT/backend/app/data" ] || extra+=(--add-data "$src/backend/app/data${sep}app/data")
 rm -rf build/pyinstaller dist-engine
 pyinstaller --noconfirm --clean --onedir --name formcad-engine \
   --distpath dist-engine --workpath build/pyinstaller --specpath build/pyinstaller \
   --add-data "$src/frontend/dist${sep}frontend_dist" \
   --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring \
+  --hidden-import numpy --hidden-import ezdxf \
   "${extra[@]}" \
   "$src/backend/formcad_engine.py"
 out="$FORMCAD_ROOT/src-tauri/engine"
