@@ -27,6 +27,11 @@ ROUTERS = [
     ("app.routers.commands", "/api/commands"),
     ("app.routers.sysvars", "/api/sysvars"),
     ("app.routers.canvas", "/api/docs"),
+    ("app.routers.tables", "/api/docs"),
+    ("app.routers.mtext", "/api/docs"),
+    ("app.routers.properties", "/api/docs"),
+    ("app.routers.calc", "/api"),
+    ("app.routers.uistyle", "/api"),
 ]
 
 

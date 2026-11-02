@@ -221,6 +221,9 @@ def build(runner, pt) -> dict:
     if run is None:
         return {"items": []}
     cursor = [float(pt[0]), float(pt[1]), 0.0]
+    if run.sel is not None and run.sel.window and run.sel.window[0] in ("fence", "wp", "cp") and run.sel.window[1]:
+        chain = [[p[0], p[1]] for p in run.sel.window[1]] + [[cursor[0], cursor[1]]]
+        return {"items": items([poly(chain, run.sel.window[0] != "fence" and len(chain) > 2)])}
     if run.sel is not None and run.sel.window and len(run.sel.window[1]) == 1:
         a = run.sel.window[1][0]
         return {"items": items([poly([[a[0], a[1]], [cursor[0], a[1]], [cursor[0], cursor[1]], [a[0], cursor[1]]], True)])}

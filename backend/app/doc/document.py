@@ -6,7 +6,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from app.doc import events, geom
+from app.doc import commit_hooks, events, geom
 from app.doc.model import Drawing
 from app.doc.undo import Step, Tx, UndoManager
 
@@ -115,6 +115,8 @@ class Document:
         self._tx_depth -= 1
         if self._tx_depth > 0:
             return None
+        if tx.before:
+            commit_hooks.run(self, tx)
         self._tx = None
         self.drawing.recorder = None
         if not tx.before:

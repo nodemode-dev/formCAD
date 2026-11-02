@@ -2,7 +2,7 @@ import copy
 import math
 from dataclasses import fields
 
-from app.cmd import jig
+from app.cmd import annot_grips, jig
 from app.doc import geom
 from app.doc.entities import AttDef, Arc, Circle, Dimension, Ellipse, Hatch, Insert, Line, LwPolyline, MText, Point, Polyline3d, Ray, Solid, Spline, Text, XLine
 
@@ -78,13 +78,10 @@ def grips_of(e) -> list:
     elif isinstance(e, (MText, AttDef, Insert)):
         out = [_g(e.position, "insert", "ins")]
     elif isinstance(e, Dimension):
-        out = [_g(e.def_point, "defpoint", "d0")]
-        for name, gid in (("p13", "d13"), ("p14", "d14")):
-            if getattr(e, name):
-                out.append(_g(getattr(e, name), "defpoint", gid))
-        if e.text_point:
-            out.append(_g(e.text_point, "text", "text"))
-    elif isinstance(e, Hatch):
+        from app.dim import dimgrips
+
+        out = [_g(p, kind, gid) for gid, kind, p in dimgrips.points(e)]
+    elif isinstance(e, Hatch) or e.kind == "region":
         b = e.bounds()
         if b:
             out = [_g([(b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0], "center", "center")]
@@ -96,6 +93,10 @@ def grips_of(e) -> list:
         out = [_g(v["p"], "vertex", "v%d" % i) for i, v in enumerate(e.vertices)]
     elif e.kind == "helix":
         out = [_g(e.center, "center", "center")]
+    elif e.kind == "assoc_array":
+        out = [_g(p, kind, gid) for gid, p, kind in e.grip_points()]
+    elif e.kind in ("mleader", "leader", "table"):
+        out = [_g(p, kind, gid) for gid, p, kind in annot_grips.points_of(e)]
     return out
 
 
@@ -252,16 +253,20 @@ def stretch(e, gid, to) -> None:
                 raise GripError(DEGENERATE)
             e.direction = [d[0] / n, d[1] / n, 0.0]
     elif isinstance(e, Dimension):
-        name = {"d0": "def_point", "d13": "p13", "d14": "p14", "text": "text_point"}[gid]
-        setattr(e, name, list(t))
-        if gid == "text":
-            e.text_moved = True
+        from app.dim import dimgrips
+
+        if not dimgrips.stretch(e, gid, t):
+            raise GripError(DEGENERATE)
     elif isinstance(e, Solid):
         e.corners[_idx(gid)] = list(t)
     elif e.kind == "wipeout":
         e.points[_idx(gid)] = list(t)
     elif e.kind == "mline":
         e.vertices[_idx(gid)]["p"] = [t[0], t[1]]
+    elif e.kind == "assoc_array":
+        e.stretch_grip(gid, t)
+    elif e.kind in ("mleader", "leader", "table"):
+        annot_grips.stretch(e, gid, t)
     else:
         _shift(e, pos, t)
 
@@ -448,14 +453,24 @@ def transform(e, xf) -> None:
         e.pattern_scale *= xf.k
         if xf.mode == "rotate":
             e.pattern_angle += xf.angle
+            if e.gradient:
+                e.gradient["angle"] = float(e.gradient.get("angle", 0.0)) + xf.angle
+        elif xf.flip:
+            e.pattern_angle = xf.ang(e.pattern_angle)
+            if e.gradient:
+                e.gradient["angle"] = xf.ang(float(e.gradient.get("angle", 0.0)))
+    elif e.kind == "region":
+        for loop in e.loops:
+            for v in loop.get("vertices", []):
+                v["p"] = _pt2(xf, v["p"])
+                if xf.flip:
+                    v["bulge"] = -(v.get("bulge", 0.0) or 0.0)
     elif isinstance(e, Solid):
         e.corners = [P(p) for p in e.corners]
     elif isinstance(e, Dimension):
-        for name in Dimension.POINTS:
-            v = getattr(e, name)
-            if v:
-                setattr(e, name, P(v))
-        e.measurement *= xf.k
+        from app.dim import dimgrips
+
+        dimgrips.transform(e, xf, P)
     elif e.kind == "wipeout":
         e.points = [P(p) for p in e.points]
     elif e.kind == "mline":
@@ -471,6 +486,10 @@ def transform(e, xf) -> None:
         if xf.flip:
             e.ccw = not e.ccw
         e.rebuild()
+    elif e.kind == "assoc_array":
+        e.apply_xf(xf)
+    elif hasattr(e, "apply_transform"):
+        e.apply_transform(xf)
     else:
         raise GripError(DEGENERATE)
 

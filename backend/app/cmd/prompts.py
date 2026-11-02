@@ -94,6 +94,9 @@ def tail_word(keyword: str) -> str:
     head, _, tail = keyword.rpartition(" ")
     if head and head.islower() and tail[:1].isupper():
         return tail
+    joined = re.match(r"^([a-z]+)([A-Z][a-z]*)$", keyword)
+    if joined and len(joined.group(1)) > 1:
+        return joined.group(2)
     return ""
 
 
@@ -118,6 +121,10 @@ def match_keyword(options, text: str):
         return None
     for kw in options:
         if t == kw.lower() or t == shortcut_of(kw) or t == tail_word(kw).lower():
+            return kw
+    for kw in options:
+        caps = "".join(ch for ch in kw if ch.isupper()).lower()
+        if kw[:1].islower() and caps and t == caps:
             return kw
     for kw in options:
         sc = shortcut_of(kw)

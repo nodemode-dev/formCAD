@@ -2,7 +2,7 @@ import math
 
 from app.cmd import units
 from app.cmd.prompts import Prompt
-from app.doc import geom
+from app.doc import annotation, geom
 from app.doc.entities import Arc, Circle, Entity, Line, LwPolyline, Point
 from app.sysvars import registry as sv
 
@@ -94,6 +94,7 @@ class Context:
         ent.ltscale = h.get("CELTSCALE", 1.0)
         if isinstance(ent, THICK_KINDS):
             ent.thickness = float(h.get("THICKNESS", 0.0))
+        annotation.stamp_new(self.d, ent)
         return ent
 
     def add(self, ent: Entity) -> int:

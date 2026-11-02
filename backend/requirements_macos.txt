@@ -5,3 +5,4 @@ httpx
 ezdxf
 numpy
 fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT
+uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Apache-2.0, bundles HarfBuzz under the MIT licence

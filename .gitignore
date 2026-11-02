@@ -25,3 +25,4 @@ src-tauri/engine/
 *.cer
 *.certSigningRequest
 .claude/settings.local.json
+*.fcad.bak

@@ -82,6 +82,8 @@ class OutlineFont:
             self.italic = bool(style & 2)
         self.em_over_cap = self.upem / self.cap
         self.cache = {}
+        self.id_cache = {}
+        self._hb = None
         self.name = _norm(self.family())
 
     def family(self):
@@ -145,6 +147,37 @@ class OutlineFont:
 
     def missing(self):
         return None
+
+    def shaper(self):
+        if self._hb is None:
+            import uharfbuzz as hb
+
+            with LOCK:
+                blob = hb.Blob.from_file_path(self.path)
+                face = hb.Face(blob, self.index)
+                self._hb = hb.Font(face)
+        return self._hb
+
+    def glyph_by_id(self, gid):
+        g = self.id_cache.get(gid)
+        if g is not None:
+            return g
+        with LOCK:
+            order = self.ttf.getGlyphOrder()
+            name = order[gid] if 0 <= gid < len(order) else None
+            pen = FlatPen(self.glyph_set, self.cap * FLATNESS)
+            if name is not None:
+                try:
+                    self.glyph_set[name].draw(pen)
+                except Exception:
+                    pen.rings = []
+        k = 1.0 / self.cap
+        total = sum(len(r) for r in pen.rings)
+        rings = pen.rings if total <= MAX_POINTS else []
+        contours = [np.array(r, dtype=float) * k for r in rings]
+        g = Glyph(0.0, 0.0, contours=contours, box=box_of(contours), build_tris=_build)
+        self.id_cache[gid] = g
+        return g
 
 
 def _build(contours):

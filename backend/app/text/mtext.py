@@ -1,7 +1,7 @@
 import math
 import re
 
-from app.text import codes, fonts, place
+from app.text import codes, fonts, paragraph, place
 from app.text.model import Sink, affine, compose, rotation
 
 STACK_SCALE = 0.7
@@ -325,7 +325,9 @@ class Ctx:
         return fs
 
 
-def _cwidth(ctx, st, ch, scale=1.0):
+def _cwidth(ctx, st, ch, scale=1.0, info=None):
+    if info is not None:
+        return info[0].adv * st.h * scale * st.wf * st.track
     g = ctx.fs(st).glyph(ch)
     return g.adv * st.h * scale * st.wf * st.track
 
@@ -342,7 +344,7 @@ def _text_width(ctx, st, text, scale):
 
 def item_width(ctx, it):
     if it[0] == "c":
-        return _cwidth(ctx, it[2], it[1])
+        return _cwidth(ctx, it[2], it[1], 1.0, it[4] if len(it) > 4 else None)
     if it[0] == "stack":
         _k, top, bot, sep, st = it
         wn = _text_width(ctx, st, top, STACK_SCALE)
@@ -357,6 +359,8 @@ def _trail(ctx, it):
     if it[0] != "c":
         return 0.0
     st = it[2]
+    if len(it) > 4:
+        return it[4][0].trail * st.h * st.wf
     return ctx.fs(st).glyph(it[1]).trail * st.h * st.wf
 
 
@@ -475,6 +479,12 @@ def break_lines(ctx, para, width, base_h):
             line.x1 = max(line.x1, x)
             continue
         vis, total = _tok_widths(ctx, tok)
+        if width > 0 and vis > limit - p.left + 1e-9:
+            pieces = paragraph.thai_pieces(tok)
+            if len(pieces) > 1:
+                toks[idx:idx] = pieces[1:]
+                tok = pieces[0]
+                vis, total = _tok_widths(ctx, tok)
         if line.cells and width > 0 and x + vis > limit + 1e-9:
             lines.append(line)
             line = Line(para, p.left, False)
@@ -496,12 +506,15 @@ def break_lines(ctx, para, width, base_h):
         while ln.cells and ln.cells[-1][0][0] == "c" and ln.cells[-1][0][1] == " " and not ln.cells[-1][0][3]:
             ln.cells.pop()
             ln.spaces = max(0, ln.spaces - 1)
+        paragraph.reorder_line(ln)
     return lines
 
 
 def _align_of(line, attach_col):
     a = line.para.props.align
     if a is None:
+        if getattr(line.para, "rtl", False):
+            return "r"
         return ("l", "c", "r")[attach_col]
     return a
 
@@ -517,6 +530,7 @@ def layout(base_fs, contents, height, width, attachment, rot, position, line_spa
     parsed = parse(contents or "", base, Props(), colmode)
     lines = []
     for para in parsed.paras:
+        paragraph.annotate(ctx, para)
         got = break_lines(ctx, para, width, height)
         got[-1].hard = True
         lines.extend(got)
@@ -596,7 +610,7 @@ def layout(base_fs, contents, height, width, attachment, rot, position, line_spa
                 run += 1
             gx = x + ln.shift + stretch * run + coff
             if it[0] == "c":
-                _draw_char(ctx, sink, it[2], it[1], gx, ln.y, fill)
+                _draw_char(ctx, sink, it[2], it[1], gx, ln.y, fill, 1.0, 0.0, it[4] if len(it) > 4 else None)
                 st = it[2]
                 if st.ul or st.ol or st.sk:
                     marks.append((gx, gx + w, st))
@@ -627,8 +641,12 @@ def _col_height(col, hc, heights):
     return hc
 
 
-def _draw_char(ctx, sink, st, ch, x, y, fill, scale=1.0, dy=0.0):
+def _draw_char(ctx, sink, st, ch, x, y, fill, scale=1.0, dy=0.0, info=None):
     fs = ctx.fs(st)
+    if info is not None:
+        for g, gx, gy in info[0].glyphs:
+            place.emit(sink, fs, g, x + gx * st.h * scale * st.wf, y + dy + gy * st.h * scale, st.h * scale, st.wf, place.shear_of(st.obl), 1.0, 1.0, st.ckey, fill)
+        return
     g = fs.glyph(ch)
     if g is None:
         return

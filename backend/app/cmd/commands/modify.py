@@ -5,14 +5,39 @@ from app.doc import geom
 from app.doc.entities import entity_from_dict
 
 
+NEIGHBOURS = 64
+LOCKED_MSG = "The object is on a locked layer."
+
+
+def targets(ctx, args) -> list:
+    if "handles" in args:
+        raw = args["handles"]
+    elif "handle" in args:
+        raw = [args["handle"]]
+    else:
+        raw = ctx.runner.current_selection()
+    out = []
+    for h in raw:
+        try:
+            v = int(h)
+        except (TypeError, ValueError):
+            raise CommandError("Invalid handle.")
+        if v not in out:
+            out.append(v)
+    return out
+
+
 def _erase(ctx, handles):
     stash = []
     count = 0
-    for e in ctx.editable(handles):
+    rows = ctx.editable(handles)
+    for e in rows:
         lst = ctx.d.spaces.get(e.owner, [])
         idx = lst.index(e.handle) if e.handle in lst else -1
-        below = lst[idx - 1] if idx > 0 else None
-        stash.append((e.to_dict(), below))
+        below = list(reversed(lst[max(idx - NEIGHBOURS, 0) : idx])) if idx > 0 else []
+        above = lst[idx + 1 : idx + 1 + NEIGHBOURS] if idx >= 0 else []
+        stash.append({"data": e.to_dict(), "index": idx, "below": below, "above": above})
+    for e in rows:
         ctx.d.erase_entity(e.handle)
         count += 1
     if stash:
@@ -26,7 +51,10 @@ def erase(ctx):
     if s.kind != "selection" or not s.value:
         return
     n = _erase(ctx, s.value)
-    ctx.say("%d erased" % n if n else "0 erased")
+    if n:
+        ctx.say("%d erased." % n)
+    else:
+        ctx.say(LOCKED_MSG)
 
 
 @executes("erase")
@@ -34,39 +62,48 @@ def erase_exec(ctx, args):
     if args.get("all"):
         handles = [e.handle for e in ctx.visible_entities()]
     else:
-        handles = [int(h) for h in args.get("handles", [])]
+        handles = targets(ctx, args)
     return {"erased": _erase(ctx, handles)}
+
+
+def _restore_one(ctx, row) -> bool:
+    ent = entity_from_dict(row["data"])
+    d = ctx.d
+    if ent.handle in d.ents or ent.owner not in d.spaces or ent.handle >= d.next_handle:
+        return False
+    if d.layer(ent.layer) is None:
+        return False
+    if not d.restore_entity(ent):
+        return False
+    lst = d.spaces[ent.owner]
+    lst.remove(ent.handle)
+    for h in row["below"]:
+        if h in d.ents and h in lst and h != ent.handle:
+            lst.insert(lst.index(h) + 1, ent.handle)
+            return True
+    for h in row["above"]:
+        if h in d.ents and h in lst and h != ent.handle:
+            lst.insert(lst.index(h), ent.handle)
+            return True
+    lst.append(ent.handle)
+    return True
+
+
+def _oops(ctx) -> int:
+    rows = sorted(ctx.doc.last_erased, key=lambda r: r["index"])
+    return sum(1 for r in rows if _restore_one(ctx, r))
 
 
 @command("oops", group="modify", label="Oops", description="Restore the objects removed by the last erase.", menu="")
 def oops(ctx):
-    stash = ctx.doc.last_erased
-    restored = 0
-    for data, below in stash:
-        ent = entity_from_dict(data)
-        if ent.handle in ctx.d.ents or ent.owner not in ctx.d.spaces:
-            continue
-        if not ctx.d.restore_entity(ent):
-            continue
-        lst = ctx.d.spaces[ent.owner]
-        lst.remove(ent.handle)
-        if below is not None and below in lst:
-            lst.insert(lst.index(below) + 1, ent.handle)
-        else:
-            lst.append(ent.handle)
-        restored += 1
-    if restored:
-        ctx.doc.last_erased = []
-    ctx.say("%d restored" % restored)
+    n = _oops(ctx)
+    ctx.say("%d object(s) restored." % n)
     yield from ()
 
 
 @executes("oops")
 def oops_exec(ctx, args):
-    before = len(ctx.d.ents)
-    for _ in oops(ctx):
-        pass
-    return {"restored": len(ctx.d.ents) - before}
+    return {"restored": _oops(ctx)}
 
 
 def _displace(ctx, handles, vec):
@@ -93,7 +130,7 @@ def move(ctx):
             return
         vec = [d.value[0], d.value[1], 0.0]
     elif b.kind == "point":
-        p = yield ctx.point("Specify second point", base=b.value, default_text="use first point as displacement", jig=lambda q: jig.moved_items(ctx.d, s.value, _vec(b.value, q)))
+        p = yield ctx.point("Specify second point or", base=b.value, default_text="use first point as displacement", jig=lambda q: jig.moved_items(ctx.d, s.value, _vec(b.value, q)))
         if p.kind == "point":
             vec = _vec(b.value, p.value)
         elif p.kind == "enter":
@@ -107,7 +144,7 @@ def move(ctx):
 
 @executes("move")
 def move_exec(ctx, args):
-    handles = [int(h) for h in args.get("handles", [])]
+    handles = targets(ctx, args)
     if "delta" in args:
         vec = geom.as_pt(args["delta"])
     elif "from" in args and "to" in args:
@@ -129,6 +166,16 @@ def _copies(ctx, handles, vec, count=1):
             clone.move_by(shift)
             made.append(ctx.d.add_entity(clone, e.owner))
     return made
+
+
+def _array_jig(ctx, handles, base, cursor, count, fit):
+    v = _vec(base, cursor)
+    if fit:
+        v = [v[0] / (count - 1), v[1] / (count - 1), 0.0]
+    out = []
+    for k in range(1, min(count, 200)):
+        out.extend(jig.moved_items(ctx.d, handles, [v[0] * k, v[1] * k, 0.0]))
+    return out
 
 
 @command("copy", aliases=("co", "cp"), group="modify", label="Copy", description="Copy objects repeatedly by displacement.", menu="Modify > Copy")
@@ -163,9 +210,9 @@ def copy(ctx):
             n = yield ctx.number("Enter number of items to array", default=2, integer=True, minimum=2, maximum=10000)
             if n.kind != "number":
                 continue
-            q = yield ctx.point("Specify second point", ["Fit"], base=base)
+            q = yield ctx.point("Specify second point", ["Fit"], base=base, jig=lambda c, cnt=n.value: _array_jig(ctx, handles, base, c, cnt, False))
             if q.kind == "keyword":
-                q = yield ctx.point("Specify second point to fit array", base=base)
+                q = yield ctx.point("Specify second point to fit array", base=base, jig=lambda c, cnt=n.value: _array_jig(ctx, handles, base, c, cnt, True))
                 if q.kind != "point":
                     continue
                 v = _vec(base, q.value)
@@ -184,7 +231,7 @@ def copy(ctx):
 
 @executes("copy")
 def copy_exec(ctx, args):
-    handles = [int(h) for h in args.get("handles", [])]
+    handles = targets(ctx, args)
     count = int(args.get("count", 1))
     if not 1 <= count <= 10000:
         raise CommandError("count must be 1 to 10000.")

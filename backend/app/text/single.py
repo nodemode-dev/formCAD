@@ -1,7 +1,9 @@
 import math
 
-from app.text import codes, place
+from app.text import codes, place, shaping
 from app.text.model import Sink, affine, compose, rotation
+
+VERTICAL_PITCH = 1.4
 
 
 class Laid:
@@ -14,26 +16,56 @@ class Laid:
         self.height = height
 
 
-def _run(fs, chars, h, wf, shear, fill):
+def _shape(fs, chars):
+    text = [c[0] for c in chars]
+    clusters, levels, base = shaping.shape(fs, text)
+    return clusters, shaping.visual(text, levels, base)
+
+
+def _run_vertical(fs, chars, h, wf, shear, fill, shaped):
+    clusters, _order = shaped
+    sink = Sink()
+    cols = max((cl.adv for cl in clusters), default=0.0) * h * wf
+    y = 0.0
+    ink_lo = 0.0
+    ink_hi = 0.0
+    for cl, (ch, ul, ol, sk) in zip(clusters, chars):
+        if not cl.glyphs:
+            continue
+        x = (cols - cl.adv * h * wf) / 2.0
+        for g, gx, gy in cl.glyphs:
+            place.emit(sink, fs, g, x + gx * h * wf, y + gy * h, h, wf, shear, 1.0, 1.0, None, fill)
+            if g.box[3] > g.box[1]:
+                ink_lo = min(ink_lo, y + g.box[1] * h)
+                ink_hi = max(ink_hi, y + g.box[3] * h)
+        y -= h * VERTICAL_PITCH
+    return sink, cols, ink_lo, max(ink_hi, h)
+
+
+def _run(fs, chars, h, wf, shear, fill, shaped, vertical=False):
+    if vertical:
+        return _run_vertical(fs, chars, h, wf, shear, fill, shaped)
+    clusters, order = shaped
     sink = Sink()
     cursor = 0.0
     ink_lo = 0.0
     ink_hi = 0.0
     last_trail = 0.0
     spans = []
-    for ch, ul, ol, sk in chars:
-        g = fs.glyph(ch)
-        if g is None:
-            continue
-        place.emit(sink, fs, g, cursor, 0.0, h, wf, shear, 1.0, 1.0, None, fill)
-        step = g.adv * h * wf
-        if g.box[3] > g.box[1]:
-            ink_lo = min(ink_lo, g.box[1] * h)
-            ink_hi = max(ink_hi, g.box[3] * h)
+    for i in order:
+        cl = clusters[i]
+        _ch, ul, ol, sk = chars[i]
+        for g, gx, gy in cl.glyphs:
+            place.emit(sink, fs, g, cursor + gx * h * wf, gy * h, h, wf, shear, 1.0, 1.0, None, fill)
+            if g.box[3] > g.box[1]:
+                ink_lo = min(ink_lo, g.box[1] * h + gy * h)
+                ink_hi = max(ink_hi, g.box[3] * h + gy * h)
+        step = cl.adv * h * wf
         if ul or ol or sk:
             spans.append((cursor, cursor + step, ul, ol, sk))
         cursor += step
-        last_trail = g.trail * h * wf
+        if cl.glyphs:
+            last_trail = cl.trail * h * wf
     width = max(cursor - last_trail, 0.0)
     merged = []
     for x0, x1, ul, ol, sk in spans:
@@ -53,10 +85,11 @@ def _run(fs, chars, h, wf, shear, fill):
     return sink, width, ink_lo, ink_hi
 
 
-def layout(fs, text, height, wf, oblique, back, upside, halign, valign, position, align_point, rot, fill):
+def layout(fs, text, height, wf, oblique, back, upside, halign, valign, position, align_point, rot, fill, vertical=False):
     chars = codes.decode(text)
     shear = place.shear_of(oblique)
-    sink, width, lo, hi = _run(fs, chars, height, wf, shear, fill)
+    shaped = _shape(fs, chars)
+    sink, width, lo, hi = _run(fs, chars, height, wf, shear, fill, shaped, vertical)
     h = height
     fitted = halign in (3, 5) and align_point is not None and width > 1e-12
     if fitted:
@@ -69,7 +102,7 @@ def layout(fs, text, height, wf, oblique, back, upside, halign, valign, position
                 h = height * factor
             else:
                 wf = wf * factor
-            sink, width, lo, hi = _run(fs, chars, h, wf, shear, fill)
+            sink, width, lo, hi = _run(fs, chars, h, wf, shear, fill, shaped, vertical)
             rot = math.atan2(dy, dx)
         origin = (position[0], position[1])
         anchor = (0.0, 0.0)

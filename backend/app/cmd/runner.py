@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass, replace
 
 from app.cmd import jig, registry, snaps
+from app.doc import curveops
 from app.cmd.context import CommandCancel, CommandError, Context
 from app.cmd.prompts import Env, Input, InputError, Prompt, format_prompt, match_keyword, parse_point, point_to_input, resolve
 from app.doc import geom
@@ -14,7 +15,9 @@ HISTORY_MAX = 5000
 HISTORY_DROP = 1000
 STATE_HISTORY = 200
 MAX_FRAMES = 32
-SEL_WORDS = ("All", "Last", "Previous", "Window", "Crossing", "BOX", "Add", "Remove", "Undo")
+SEL_WORDS = ("All", "Last", "Previous", "Window", "Crossing", "BOX", "Fence", "WPolygon", "CPolygon", "Add", "Remove", "Undo")
+POLY_KINDS = ("fence", "wp", "cp")
+MAX_POLY_POINTS = 10000
 FILTER_AXES = {".x": "x", ".y": "y", ".z": "z", ".xy": "xy", ".xz": "xz", ".yz": "yz"}
 
 
@@ -84,8 +87,13 @@ class SelState:
         self.window = None
         self.steps: list = []
         self.single = False
+        self.areas: list = []
 
     def message(self) -> str:
+        if self.window and self.window[0] == "fence":
+            return "Specify first fence point" if len(self.window[1]) == 0 else "Specify next fence point"
+        if self.window and self.window[0] in ("wp", "cp"):
+            return "Specify first polygon point" if len(self.window[1]) == 0 else "Specify endpoint of line"
         if self.window:
             return "Specify first corner" if len(self.window[1]) == 0 else "Specify opposite corner"
         if self.mode == "remove":
@@ -130,6 +138,7 @@ class CommandRunner:
         self.result = None
         self.snap_override = None
         self.deferred = None
+        self.sel_areas: list = []
 
     def command_name(self) -> str:
         r = self.outer if (self.run and self.run.transparent and self.outer) else self.run
@@ -241,6 +250,8 @@ class CommandRunner:
         if run is None:
             return False
         if run.sel is not None:
+            if run.sel.window and run.sel.window[0] in POLY_KINDS:
+                return len(run.sel.window[1]) >= 1
             return bool(run.sel.window and len(run.sel.window[1]) == 1)
         if run.frames or run.prompt is None:
             return False
@@ -341,6 +352,7 @@ class CommandRunner:
             if not sv.get_var(doc, "PICKFIRST"):
                 found = []
                 mode = "set"
+            found = self._grouped(found)
             if mode == "add":
                 found = list(doc.selection) + [h for h in found if h not in doc.selection]
             elif mode == "remove":
@@ -401,7 +413,7 @@ class CommandRunner:
             if ent is None or ent.handle not in self._visible_handles():
                 raise InputError("No object found there.")
             self._echo(p, pt)
-            self._deliver(Input("entity", {"handle": ent.handle, "point": [pt[0], pt[1]]}))
+            self._deliver(Input("entity", {"handle": ent.handle, "point": [pt[0], pt[1]], "shift": bool(pick.get("shift"))}))
             return
         self._canvas_point(pt, {"handle": ent.handle} if ent is not None else None)
 
@@ -428,6 +440,7 @@ class CommandRunner:
             if h in vis and h not in found:
                 found.append(h)
         if mode == "set":
+            found = self._grouped(found, sel.prompt)
             sel.steps.append(list(sel.selected))
             sel.selected = found
             self.log("%d found, %d total" % (len(found), len(found)) if found else "0 found")
@@ -444,6 +457,11 @@ class CommandRunner:
             sel.window = ("auto", [pt])
             return
         kind, pts = sel.window
+        if kind in POLY_KINDS:
+            if len(pts) >= MAX_POLY_POINTS:
+                raise InputError("Too many polygon points.")
+            pts.append(pt)
+            return
         pts.append(pt)
         if len(pts) == 2:
             self._select_window(sel, kind, pts)
@@ -714,6 +732,7 @@ class CommandRunner:
             return None
         doc.prev_selection = list(valid)
         doc.selection = []
+        self.sel_areas = []
         self.log("%d found" % len(valid))
         return valid
 
@@ -739,6 +758,9 @@ class CommandRunner:
                 doc.rollback()
             else:
                 try:
+                    from app.doc import groups
+
+                    groups.purge(doc.drawing)
                     step = doc.commit(True)
                 except CommandFailed as err:
                     self._fail(str(err))
@@ -827,6 +849,9 @@ class CommandRunner:
                 self._fail("Internal error in %s: %s" % (spec.name.upper(), err))
                 return
             if spec.undoable:
+                from app.doc import groups
+
+                groups.purge(doc.drawing)
                 step = doc.commit(True)
                 if step is not None:
                     doc.selection = []
@@ -974,6 +999,8 @@ class CommandRunner:
         if sel.window is not None:
             kind, pts = sel.window
             if t == "":
+                if kind in POLY_KINDS:
+                    self._select_poly(sel, kind, pts)
                 sel.window = None
                 return
             try:
@@ -984,6 +1011,12 @@ class CommandRunner:
             if pt is None:
                 self._fail("Invalid point.")
                 return
+            if kind in POLY_KINDS:
+                if len(pts) >= MAX_POLY_POINTS:
+                    self._fail("Too many polygon points.")
+                    return
+                pts.append(pt)
+                return
             pts.append(pt)
             if len(pts) == 2:
                 self._select_window(sel, kind, pts)
@@ -992,7 +1025,13 @@ class CommandRunner:
         if t == "":
             self._finish_selection()
             return
-        word = match_keyword(list(SEL_WORDS) + ["Single", "Multiple", "Auto", "Fence"], t)
+        extra = match_keyword(list(prompt.options), t) if prompt.options else None
+        if extra:
+            self.sel_carry = list(sel.selected)
+            run.sel = None
+            self._advance(Input("keyword", extra, text=t))
+            return
+        word = match_keyword(list(SEL_WORDS) + ["Single", "Multiple", "Auto"], t)
         low = t.lower()
         if low in ("p", "previous"):
             word = "Previous"
@@ -1010,7 +1049,10 @@ class CommandRunner:
                 self._finish_selection()
             return
         if word in ("Window", "Crossing", "BOX"):
-            sel.window = ("crossing" if word == "Crossing" else "window", [])
+            sel.window = ("crossing" if word == "Crossing" else "auto" if word == "BOX" else "window", [])
+            return
+        if word in ("Fence", "WPolygon", "CPolygon"):
+            sel.window = ("fence" if word == "Fence" else "wp" if word == "WPolygon" else "cp", [])
             return
         if word == "Add":
             sel.mode = "add"
@@ -1034,7 +1076,7 @@ class CommandRunner:
             if prompt.pick_one and sel.selected:
                 self._finish_selection()
             return
-        if word in ("Single", "Multiple", "Auto", "Fence"):
+        if word in ("Single", "Multiple", "Auto"):
             return
         self._fail("Select objects with ALL, Last, Previous, Window, Crossing, #handle or a pick on the canvas.")
 
@@ -1059,18 +1101,61 @@ class CommandRunner:
         if kind == "auto":
             kind = "window" if pts[1][0] >= pts[0][0] else "crossing"
         box = (min(pts[0][0], pts[1][0]), min(pts[0][1], pts[1][1]), max(pts[0][0], pts[1][0]), max(pts[0][1], pts[1][1]))
+        rect = [[box[0], box[1]], [box[2], box[1]], [box[2], box[3]], [box[0], box[3]]]
         found = []
         for e in self._candidates():
             b = e.bounds()
-            if b is None:
-                continue
-            if kind == "window" and geom.box_inside(b, box):
-                found.append(e.handle)
-            elif kind == "crossing" and geom.boxes_overlap(b, box):
-                found.append(e.handle)
+            if kind == "window":
+                if b is not None and geom.box_inside(b, box):
+                    found.append(e.handle)
+            elif b is None:
+                if e.kind in ("xline", "ray") and curveops.hit_by_polygon(e, rect, "cross"):
+                    found.append(e.handle)
+            elif geom.boxes_overlap(b, box):
+                if geom.box_inside(b, box) or curveops.hit_by_polygon(e, rect, "cross"):
+                    found.append(e.handle)
+        sel.areas.append({"kind": kind, "pts": [list(p) for p in pts], "handles": list(found)})
         self._apply_selection(sel, found)
 
+    def _select_poly(self, sel: SelState, kind: str, pts: list) -> None:
+        need = 2 if kind == "fence" else 3
+        if len(pts) < need:
+            self.log("Too few points; selection mode dropped.")
+            return
+        poly = [[p[0], p[1]] for p in pts]
+        found = []
+        for e in self._candidates():
+            b = e.bounds()
+            if kind == "fence":
+                if curveops.hit_by_fence(e, poly):
+                    found.append(e.handle)
+            elif kind == "wp":
+                if b is not None and curveops.hit_by_polygon(e, poly, "window"):
+                    found.append(e.handle)
+            elif curveops.hit_by_polygon(e, poly, "cross"):
+                found.append(e.handle)
+        sel.areas.append({"kind": kind, "pts": [list(p) for p in pts], "handles": list(found)})
+        self._apply_selection(sel, found)
+
+    def _grouped(self, found: list, prompt=None) -> list:
+        from app.doc import groups
+        from app.sysvars import registry as sv
+
+        if not found or (prompt is not None and prompt.hint == "nogroup"):
+            return found
+        style = int(sv.get_var(self.doc, "PICKSTYLE"))
+        if not style & 3:
+            return found
+        visible = self._visible_handles()
+        out = list(found)
+        if style & 1:
+            out = groups.expand(self.doc.drawing, out, visible)
+        if style & 2:
+            out = groups.expand_hatch(self.doc.drawing, out, visible)
+        return out
+
     def _apply_selection(self, sel: SelState, found: list) -> None:
+        found = self._grouped(found, sel.prompt)
         sel.steps.append(list(sel.selected))
         if sel.mode == "remove":
             sel.selected = [h for h in sel.selected if h not in found]
@@ -1089,4 +1174,5 @@ class CommandRunner:
         if handles:
             self.doc.prev_selection = list(handles)
         run.sel = None
+        self.sel_areas = list(sel.areas)
         self._advance(Input("selection", handles))

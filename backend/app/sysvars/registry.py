@@ -389,6 +389,10 @@ def _apply_drawing(doc, vd: VarDef, key: str, v):
             style["vars"][key] = float(stored) if isinstance(cur, float) and not isinstance(stored, str) else stored
         else:
             d.set_header(key, list(stored) if isinstance(stored, list) else stored)
+            if key == "CANNOSCALE":
+                from app.doc import annotation
+
+                annotation.on_scale_changed(doc, stored)
 
     if doc.in_tx():
         write()

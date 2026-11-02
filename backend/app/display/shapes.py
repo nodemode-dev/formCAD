@@ -250,7 +250,7 @@ def text(e, ctx):
     obl = float(e.oblique or 0.0) + float(rec.get("oblique", 0.0) or 0.0)
     pos = xy(e.position)
     ap = xy(e.align_point) if e.align_point else None
-    laid = single.layout(fs, e.text or "", height, wf, obl, bool(rec.get("backwards")), bool(rec.get("upside_down")), int(e.halign), int(e.valign), pos, ap, float(e.rotation), bool(ctx.textfill))
+    laid = single.layout(fs, e.text or "", height, wf, obl, bool(rec.get("backwards")), bool(rec.get("upside_down")), int(e.halign), int(e.valign), pos, ap, float(e.rotation), bool(ctx.textfill), bool(rec.get("vertical")))
     return _laid_result(laid, e, ctx)
 
 

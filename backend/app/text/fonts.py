@@ -1,14 +1,21 @@
+import logging
 import os
 import sys
 import threading
 from pathlib import Path
 
-from app.text import stroke
+from app.text import scripts, stroke
 from app.text.model import Glyph, box_of
 
 EXTS = (".ttf", ".otf", ".ttc", ".otc")
 STROKE_NAMES = {"txt", "simplex", "romans", "romanc", "monotxt", "iso", "isocp", "isocp2", "isocpeur", "isoct", "gothice", "italic", "scripts", "complex", "formcad-stroke"}
 WELL_KNOWN = ("arialunicodems", "arialuni", "notosanscjkjp-regular", "notosanscjk-regular", "notosanscjksc-regular", "notosanscjk", "msgothic", "meiryo", "pingfang", "hiragino", "applegothic", "malgun", "simsun", "dejavusans", "liberationsans-regular", "arial", "segoeui", "seguisym", "helvetica", "notosans-regular", "freesans", "unifont")
+SCRIPT_FONTS = {
+    "arabic": ("Noto Sans Arabic", "Noto Naskh Arabic", "Segoe UI", "Tahoma", "Arial", "Geeza Pro", "Al Bayan", "Damascus", "DejaVu Sans", "FreeSerif", "FreeSans", "Arial Unicode MS"),
+    "hebrew": ("Noto Sans Hebrew", "Segoe UI", "Arial", "Arial Hebrew", "Lucida Grande", "DejaVu Sans", "FreeSerif", "FreeSans", "Arial Unicode MS"),
+    "thai": ("TH Sarabun New", "Angsana New", "Cordia New", "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", "Leelawadee", "Tahoma", "Thonburi", "Ayuthaya", "Loma", "Garuda", "Norasi", "FreeSerif", "DejaVu Sans", "Arial Unicode MS"),
+}
+SCRIPT_FACES = {}
 MAX_SCAN_FILES = 60
 MAX_SCAN_BYTES = 512 * 1024 * 1024
 MAX_FAMILY_FILES = 3000
@@ -123,6 +130,7 @@ class Registry:
                 return
             from fontTools.ttLib import TTCollection, TTFont
 
+            logging.getLogger("fontTools").setLevel(logging.ERROR)
             fam = {}
             for path in self.files[:MAX_FAMILY_FILES]:
                 try:
@@ -260,11 +268,31 @@ class FontSet:
             if face is not None:
                 yield face
 
+    def face_for(self, ch):
+        return self._lookup(" " if ch == " " else ch)
+
+    def _script_faces(self, script):
+        got = SCRIPT_FACES.get(script)
+        if got is None:
+            got = []
+            for name in SCRIPT_FONTS.get(script, ()):
+                face = registry.find(name)
+                if face is not None and all(face is not f for f in got):
+                    got.append(face)
+            SCRIPT_FACES[script] = got
+        return got
+
     def _lookup(self, ch):
         if self.primary.has(ch):
             return self.primary
         if self.sticky is not None and self.sticky.has(ch):
             return self.sticky
+        script = scripts.script_of(ch)
+        if script != "other":
+            for face in self._script_faces(script):
+                if face.has(ch):
+                    self.sticky = face
+                    return face
         for face in self._chain():
             if face.has(ch):
                 self.sticky = face

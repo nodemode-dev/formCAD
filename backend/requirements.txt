@@ -5,3 +5,4 @@ httpx==0.28.1   # the kernel download from the formCAD-binaries releases; BSD-3-
 ezdxf==1.4.5   # DXF read and write; MIT
 numpy==2.5.4   # geometry arrays; BSD-3-Clause
 fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT
+uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Apache-2.0, bundles HarfBuzz under the MIT licence

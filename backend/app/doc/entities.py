@@ -415,6 +415,9 @@ class Hatch(Entity):
     origin: list = field(default_factory=lambda: [0.0, 0.0])
     background: Any = None
     pattern_lines: list = field(default_factory=list)
+    origin_mode: str = "current"
+    gap: float = 0.0
+    annotative: bool = False
 
     def move_by(self, d):
         for loop in self.loops:
@@ -423,7 +426,9 @@ class Hatch(Entity):
         self.origin = _shift(self.origin, d)
 
     def bounds(self):
-        pts = [v["p"] for loop in self.loops for v in loop.get("vertices", [])]
+        from app.doc import planar
+
+        pts = [p for loop in self.loops for p in planar.flatten_loop(loop.get("vertices", []))]
         return geom.bounds_of_points(pts)
 
 
