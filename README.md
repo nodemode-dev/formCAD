@@ -8,7 +8,7 @@ Part of the NodeMode form family: built for macOS, Windows and Linux by formcomp
 
 ## Status
 
-Early build. 2D drafting runs: every Draw and Modify command, arrays, hatches, regions, text, dimensions, leaders and tables, with snaps, tracking, selection, grips, the Properties palette and the style managers. Blocks, layouts and DXF exchange arrive in the next version. The plan lives in the planning sidecar that ships beside each repo version.
+Early build. 2D drafting runs: every Draw and Modify command, arrays, hatches, regions, text, dimensions, leaders and tables, with snaps, tracking, selection, grips, the Properties palette and the style managers; blocks with attributes, the Block Editor, external references, layers, layouts and viewports; DXF open and save, SVG import, DWG through a converter you install; plotting to PDF, PNG and SVG. Automation, scripting and the 3D viewport arrive next. The plan lives in the planning sidecar that ships beside each repo version.
 
 ## Quick start
 

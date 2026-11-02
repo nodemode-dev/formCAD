@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.5.0 · 2026-11-02
+
+- Blocks with base points, insertion at any scale and rotation, exploded insertion, writing a block to its own drawing, purge, replace and burst; attributes with prompts, defaults, display modes, editing, synchronising and the Block Attribute Manager; attribute data extraction to CSV.
+- The Block Editor with dynamic block parameters and actions, in-place reference editing, and external references to other drawings with relative, absolute or no paths, nesting, reload, unload, bind and clipping.
+- Layers completed: every property, filters, layer states, and the layer tools (isolate, freeze, lock, merge, delete, walk, previous and more); the Layer Properties Manager and a Layers panel.
+- Layouts with paper sizes, margins and page setups; viewports with their own scale, lock, clipping and per-viewport layer overrides; switching between paper and model space; named views and tiled model viewports.
+- DXF open and save from R12 to R2018, keeping layers, blocks, attributes, layouts and viewports; SVG and SVGZ import; DWG open and save through a converter you install yourself.
+- Plotting to PDF (several sheets, layers you can switch in the viewer, searchable text, links), PNG at a set resolution and SVG in millimetres, with colour-dependent and named plot styles, page setups, plot preview and publishing several layouts at once.
+- The Properties palette now asks the engine to change lengths, angles and areas, and Quick Select runs in the engine.
+- Stretch with a crossing window drawn on the canvas now moves only the points inside it.
+
 ## 0.4.0 · 2026-11-02
 
 - Every Modify command: erase and restore, move, copy, rotate, scale, mirror, stretch, offset, trim and extend (quick and standard), break, join, lengthen, align, reverse, fillet, chamfer, blend, explode, polyline and spline editing, nested copy, move-copy-rotate, change space and flatten.
