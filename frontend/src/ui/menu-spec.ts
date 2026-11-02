@@ -114,10 +114,10 @@ const draw = (): MenuItem[] => section('Draw', () => [
 const dimension = (): MenuItem[] => section('Dimension', () => [
   E('Linear', 'dimlinear'), E('Aligned', 'dimaligned'), E('Arc Length', 'dimarc'), E('Ordinate', 'dimordinate'), E('Radius', 'dimradius'),
   E('Jogged', 'dimjogged'), E('Diameter', 'dimdiameter'), E('Angular', 'dimangular'), E('Quick Dimension', 'qdim'), E('Baseline', 'dimbaseline'),
-  E('Continue', 'dimcontinue'), E('Dimension', 'dim'), SEP, E('Multileader', 'mleader'), E('Tolerance...', 'tolerance'), E('Inspection', 'diminspect'),
+  E('Continue', 'dimcontinue'), E('Dimension', 'dim'), SEP, E('Multileader', 'mleader'), E('Leader', 'leader'), E('Tolerance...', 'tolerance'), E('Inspection', 'diminspect'),
   E('Jogged Linear', 'dimjogline'), E('Dimension Space', 'dimspace'), E('Dimension Break', 'dimbreak'), SEP,
-  S('Align Text', E('Home', 'dimtedit', 'home'), E('Left', 'dimtedit', 'left'), E('Right', 'dimtedit', 'right'), E('Center', 'dimtedit', 'center'), E('Angle', 'dimtedit', 'angle')),
-  E('Oblique', 'dimedit', 'oblique'), E('Override', 'dimoverride'), E('Update', 'dimstyle', 'apply'), E('Reassociate Dimensions', 'dimreassociate'),
+  S('Align Text', E('Home', 'dimtedit.home'), E('Left', 'dimtedit.left'), E('Right', 'dimtedit.right'), E('Center', 'dimtedit.center'), E('Angle', 'dimtedit.angle')),
+  E('Oblique', 'dimedit.oblique'), E('Override', 'dimoverride'), E('Update', 'dimstyle.update'), E('Reassociate Dimensions', 'dimreassociate'),
   SEP, E('Dimension Style...', 'dimstyle.dimension'),
 ]);
 
@@ -134,7 +134,7 @@ const modify = (): MenuItem[] => section('Modify', () => [
     E('Edit Array', 'arrayedit'), E('Block Description...', 'blockdesc'),
     S('Attribute', E('Single...', 'attedit'), E('Global', '-attedit'), E('Block Attribute Manager...', 'battman'), E('Synchronize Attributes', 'attsync')),
     S('External Reference', E('Bind...', 'xbind')),
-    S('Multileader', E('Add Leader', 'mleaderedit', 'add'), E('Remove Leader', 'mleaderedit', 'remove'), E('Align', 'mleaderalign'), E('Collect', 'mleadercollect'))),
+    S('Multileader', E('Add Leader', 'mleaderedit.add'), E('Remove Leader', 'mleaderedit.remove'), E('Align', 'mleaderalign'), E('Collect', 'mleadercollect'))),
   S('Clip', E('Viewport', 'vpclip')),
   S('3D Operations', E('Align', 'align')),
   S('Solid Editing', E('Union', 'union'), E('Subtract', 'subtract'), E('Intersect', 'intersect')),

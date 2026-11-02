@@ -122,6 +122,7 @@ export function distanceTo(item: DisplayItem, x: number, y: number, tol: number)
     for (const q of item.geom.box) ring.push(q[0], q[1]);
     if (inRing(x, y, ring)) best = 0;
   }
+  if (item.kind === 'table' && item.bounds && x >= item.bounds[0] && x <= item.bounds[2] && y >= item.bounds[1] && y <= item.bounds[3]) return 0;
   if (item.prims && best > 0) {
     for (const p of item.prims) {
       if (p.t === 'tri') {

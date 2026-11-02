@@ -11,6 +11,7 @@
 .cv-cmd-name { flex: none; color: var(--text-muted); letter-spacing: 0.04em; }
 .cv-cmd-name[hidden], .cv-cmd-kw[hidden] { display: none; }
 .cv-cmd-pre, .cv-cmd-post { flex: none; max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: pre; color: var(--text-secondary); }
+.cv-cmd-pre { min-width: 15ch; }
 .cv-cmd-kw { display: inline-flex; flex: none; align-items: center; color: var(--text-muted); }
 .cv-cmd-opts { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0 var(--space-1); }
 .cv-cmd-kw-btn { position: relative; padding: 0 var(--space-1); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--accent-ink); font: inherit; cursor: pointer; }

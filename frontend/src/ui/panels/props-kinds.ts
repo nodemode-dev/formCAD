@@ -193,9 +193,18 @@ export const KINDS: KindSpec[] = [
   { kind: 'mline', title: 'Multiline', rows: [plain('scale', 'Scale'), plain('justification', 'Justification'), plain('closed', 'Closed', 'bool')] },
   { kind: 'wipeout', title: 'Wipeout', rows: [] },
   { kind: 'assoc_array', title: 'Associative Array', rows: arrayRows },
-  { kind: 'leader', title: 'Leader', rows: [] },
-  { kind: 'mleader', title: 'Multileader', rows: [] },
-  { kind: 'table', title: 'Table', rows: [] },
+  {
+    kind: 'leader', title: 'Leader',
+    rows: [plain('arrowhead', 'Arrowhead', 'bool'), plain('spline', 'Spline', 'bool'), plain('arrow_size', 'Arrow size'), fixed('style', 'Style'), fixed('vertices', 'Vertices'), fixed('length', 'Length')],
+  },
+  {
+    kind: 'mleader', title: 'Multileader',
+    rows: [plain('text', 'Contents', 'text'), fixed('content_type', 'Content'), fixed('leader_type', 'Leader type'), fixed('style', 'Style'), fixed('leader_lines', 'Leader lines'), plain('size_scale', 'Scale'), axis('px', 'Content X', 'content_pos', 0), axis('py', 'Content Y', 'content_pos', 1)],
+  },
+  {
+    kind: 'table', title: 'Table',
+    rows: [axis('px', 'Position X', 'position', 0), axis('py', 'Position Y', 'position', 1), plain('rotation', 'Rotation'), fixed('style', 'Style'), fixed('table_rows', 'Rows'), fixed('table_columns', 'Columns'), fixed('table_width', 'Width')],
+  },
   { kind: 'region', title: 'Region', rows: [] },
   { kind: 'viewport', title: 'Viewport', rows: [] },
 ];

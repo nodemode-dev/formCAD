@@ -224,8 +224,32 @@ def tableexport_exec(ctx, args):
     return {"csv": text, "path": path}
 
 
-def read_link(path: str):
-    full = os.path.abspath(os.path.expanduser(path))
+def drawing_folder(ctx) -> str:
+    return os.path.dirname(os.path.abspath(ctx.doc.path)) if ctx.doc.path else ""
+
+
+def resolve_link(path: str, folder: str) -> str:
+    p = os.path.expanduser(path)
+    if os.path.isabs(p):
+        if os.path.isfile(p) or not folder:
+            return os.path.abspath(p)
+        beside = os.path.join(folder, os.path.basename(p.replace("\\", "/")))
+        return beside if os.path.isfile(beside) else os.path.abspath(p)
+    if folder:
+        return os.path.abspath(os.path.join(folder, p))
+    return os.path.abspath(p)
+
+
+def stored_link(full: str, folder: str) -> str:
+    if folder:
+        rel = os.path.relpath(full, folder)
+        if not rel.startswith("..") and not os.path.isabs(rel):
+            return rel.replace(os.sep, "/")
+    return full
+
+
+def read_link(path: str, folder: str = ""):
+    full = resolve_link(path, folder)
     if not os.path.isfile(full):
         raise CommandError("The file %s was not found." % path)
     if os.path.getsize(full) > MAX_LINK_BYTES:
@@ -236,7 +260,8 @@ def read_link(path: str):
 
 
 def apply_link(ctx, t, path: str, start_row=None) -> None:
-    full, rows = read_link(path)
+    folder = drawing_folder(ctx)
+    full, rows = read_link(path, folder)
     start = (1 if t.title else 0) if start_row is None else int(start_row)
     if start < 0:
         raise CommandError("Requires a positive row.")
@@ -251,7 +276,7 @@ def apply_link(ctx, t, path: str, start_row=None) -> None:
     for r in title_wide:
         if r < start:
             t.cells[r][0]["span"] = [t.cells[r][0]["span"][0], t.cols()]
-    t.link = {"path": full, "start_row": start}
+    t.link = {"path": stored_link(full, folder), "start_row": start}
 
 
 @command("datalink", group="annotation", label="Data Link", description="Fill a table from a CSV or delimited text file and keep the link.", menu="")

@@ -384,6 +384,9 @@ FIELDS = {
     "mline": [_plain("scale"), _plain("justification", "integer", integer=True, minimum=0), _plain("closed", "bool")],
     "wipeout": [],
     "assoc_array": _array_fields(),
+    "leader": [_plain("arrowhead", "bool"), _plain("spline", "bool"), _plain("arrow_size", nonneg=True), _ro("style", lambda e: e.style, "string"), _ro("vertices", lambda e: len(e.points), "integer"), _ro("length", lambda e: sum(geom.dist(e.points[i], e.points[i + 1]) for i in range(len(e.points) - 1)))],
+    "mleader": [_plain("text", "string"), _ro("content_type", lambda e: e.content_type, "string"), _ro("leader_type", lambda e: e.leader_type, "string"), _ro("style", lambda e: e.style, "string"), _ro("leader_lines", lambda e: len(e.leaders), "integer"), _plain("size_scale", pos=True), _pt("content_pos")],
+    "table": [_pt("position"), _plain("rotation", deg=True), _ro("style", lambda e: e.style, "string"), _ro("table_rows", lambda e: e.rows(), "integer"), _ro("table_columns", lambda e: e.cols(), "integer"), _ro("table_width", lambda e: e.width())],
 }
 
 

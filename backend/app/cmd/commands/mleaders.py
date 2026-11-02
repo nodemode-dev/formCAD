@@ -368,8 +368,7 @@ def edit_leaders(ctx, handle, add=(), remove=(), say=True) -> dict:
     return {"added": added, "removed": removed, "leaders": len(ent.leaders)}
 
 
-@command("mleaderedit", aliases=("mledit",), group="annotation", label="Add/Remove Leader", description="Add leaders to or remove leaders from a multileader.", menu="Modify > Object > Multileader > Add Leader")
-def mleaderedit(ctx):
+def mleaderedit_flow(ctx, mode):
     s = yield ctx.select("Select a multileader", pick_one=True)
     if s.kind != "selection":
         return
@@ -380,7 +379,6 @@ def mleaderedit(ctx):
     ent = found[0]
     if ctx.locked(ent):
         raise CommandError("The multileader is on a locked layer.")
-    mode = "add"
     added = removed = 0
     while True:
         if mode == "add":
@@ -403,6 +401,21 @@ def mleaderedit(ctx):
         ctx.say("%d leader(s) added." % added)
     if removed:
         ctx.say("%d leader(s) removed." % removed)
+
+
+@command("mleaderedit", aliases=(), group="annotation", label="Add/Remove Leader", description="Add leaders to or remove leaders from a multileader.", menu="Modify > Object > Multileader > Add Leader")
+def mleaderedit(ctx):
+    yield from mleaderedit_flow(ctx, "add")
+
+
+@command("mleaderedit.add", group="annotation", label="Add Leader", description="Add leaders to a multileader.", menu="Modify > Object > Multileader > Add Leader")
+def mleaderedit_add(ctx):
+    yield from mleaderedit_flow(ctx, "add")
+
+
+@command("mleaderedit.remove", group="annotation", label="Remove Leader", description="Remove leaders from a multileader.", menu="Modify > Object > Multileader > Remove Leader")
+def mleaderedit_remove(ctx):
+    yield from mleaderedit_flow(ctx, "remove")
 
 
 @executes("mleaderedit")

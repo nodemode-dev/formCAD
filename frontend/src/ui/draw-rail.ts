@@ -40,6 +40,56 @@ const GROUPS: Tool[][] = [
     { cmd: 'x:centerline', icon: 'centerLine', label: 'Center Line' },
     { cmd: 'x:breakline', icon: 'breakLine', label: 'Break Line' },
   ],
+  [
+    { cmd: 'x:move', icon: 'move', label: 'Move' },
+    { cmd: 'x:copy', icon: 'copy', label: 'Copy' },
+    { cmd: 'x:rotate', icon: 'rotate', label: 'Rotate' },
+    { cmd: 'x:scale', icon: 'scale', label: 'Scale' },
+    { cmd: 'x:mirror', icon: 'mirror', label: 'Mirror' },
+    { cmd: 'x:stretch', icon: 'stretch', label: 'Stretch' },
+  ],
+  [
+    { cmd: 'x:offset', icon: 'offset', label: 'Offset' },
+    { cmd: 'x:trim', icon: 'trim', label: 'Trim' },
+    { cmd: 'x:extend', icon: 'extend', label: 'Extend' },
+    { cmd: 'x:fillet', icon: 'fillet', label: 'Fillet' },
+    { cmd: 'x:chamfer', icon: 'chamfer', label: 'Chamfer' },
+    { cmd: 'x:blend', icon: 'blend', label: 'Blend' },
+  ],
+  [
+    { cmd: 'x:break', icon: 'breakCut', label: 'Break' },
+    { cmd: 'x:join', icon: 'join', label: 'Join' },
+    { cmd: 'x:lengthen', icon: 'lengthen', label: 'Lengthen' },
+    { cmd: 'x:explode', icon: 'explode', label: 'Explode' },
+    { cmd: 'x:arrayrect', icon: 'array', label: 'Rectangular Array' },
+    { cmd: 'x:align', icon: 'alignObj', label: 'Align' },
+    { cmd: 'x:matchprop', icon: 'matchProp', label: 'Match Properties' },
+    { cmd: 'x:erase', icon: 'erase', label: 'Erase' },
+  ],
+  [
+    { cmd: 'x:hatch', icon: 'hatch', label: 'Hatch' },
+    { cmd: 'x:gradient', icon: 'gradient', label: 'Gradient' },
+    { cmd: 'x:boundary', icon: 'boundary', label: 'Boundary' },
+    { cmd: 'x:region', icon: 'region', label: 'Region' },
+  ],
+  [
+    { cmd: 'x:text', icon: 'text', label: 'Single Line Text' },
+    { cmd: 'x:mtext', icon: 'mtext', label: 'Multiline Text' },
+    { cmd: 'x:table', icon: 'table', label: 'Table' },
+    { cmd: 'x:mleader', icon: 'mleader', label: 'Multileader' },
+    { cmd: 'x:leader', icon: 'leader', label: 'Leader' },
+  ],
+  [
+    { cmd: 'x:dimlinear', icon: 'dimLinear', label: 'Linear Dimension' },
+    { cmd: 'x:dimaligned', icon: 'dimAligned', label: 'Aligned Dimension' },
+    { cmd: 'x:dimradius', icon: 'dimRadius', label: 'Radius Dimension' },
+    { cmd: 'x:dimdiameter', icon: 'dimDiameter', label: 'Diameter Dimension' },
+    { cmd: 'x:dimangular', icon: 'dimAngular', label: 'Angular Dimension' },
+    { cmd: 'x:dimarc', icon: 'dimArc', label: 'Arc Length Dimension' },
+    { cmd: 'x:dimbaseline', icon: 'dimBaseline', label: 'Baseline Dimension' },
+    { cmd: 'x:dimcontinue', icon: 'dimContinue', label: 'Continue Dimension' },
+    { cmd: 'x:qdim', icon: 'qdim', label: 'Quick Dimension' },
+  ],
 ];
 
 onShellMounted((ctx) => {
@@ -49,6 +99,7 @@ onShellMounted((ctx) => {
     if (i > 0) rail.append(el('<span class="cv-rail-sep" role="separator"></span>'));
     for (const tool of group) {
       const node = el<HTMLButtonElement>(`<button class="cv-tool" type="button" data-cmd="${tool.cmd}">${icon(tool.icon, 18)}</button>`);
+      node.addEventListener('mousedown', (e) => e.preventDefault());
       rail.append(node);
       buttons.push({ node, tool });
     }

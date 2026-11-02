@@ -189,6 +189,23 @@ export const ICONS: Record<string, string> = {
   calculator: s('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8"/><path d="M8.5 11.5h1M12 11.5h1M15.5 11.5h0.5M8.5 15h1M12 15h1M15.5 15h0.5M8.5 18h1M12 18h4"/>'),
   quickSelect: s('<path d="M4 5h16l-6 7v6l-4 2v-8z"/><path d="M17 15l1.2 1.2L21 13.5"/>'),
   quickProps: s('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 12.5h5"/><circle cx="16" cy="16" r="2.2" fill="currentColor" stroke="none"/>'),
+  stretch: s('<rect x="4" y="8" width="9" height="8" rx="1"/><path d="M13 12h8M18.5 9.5L21 12l-2.5 2.5"/><path d="M3 5h8" stroke-dasharray="1.8 2"/>'),
+  lengthen: s('<path d="M3.5 12h11"/><path d="M14.5 12h6" stroke-dasharray="1.8 2"/><path d="M18 9.5L20.5 12 18 14.5"/><path d="M3.5 9v6"/>'),
+  breakCut: s('<path d="M3 12h6.5M14.5 12H21"/><path d="M9.5 8v8M14.5 8v8"/>'),
+  join: s('<path d="M3 16h8M13 8h8"/><path d="M11 16l2-8"/>'),
+  blend: s('<path d="M3 17h5c6 0 2-10 8-10h5"/>'),
+  alignObj: s('<path d="M4 4v16"/><rect x="7" y="6" width="9" height="5" rx="1"/><rect x="7" y="13" width="13" height="5" rx="1"/>'),
+  matchProp: s('<path d="M5 19l1-4 8-8 3 3-8 8z"/><path d="M14 7l3 3"/><path d="M17 4l3 3"/>'),
+  gradient: s('<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M7.5 4v16" opacity=".25"/><path d="M11 4v16" opacity=".5"/><path d="M14.5 4v16" opacity=".75"/><path d="M18 4v16"/>'),
+  boundary: s('<path d="M5 8l5-4h9v10l-5 6H5z" stroke-dasharray="2 2"/><circle cx="12" cy="12" r="2"/>'),
+  region: s('<path d="M4 9l8-5 8 5v8l-8 4-8-4z" fill="currentColor" fill-opacity=".18"/>'),
+  table: s('<rect x="3.5" y="5" width="17" height="14" rx="1"/><path d="M3.5 10h17M3.5 14.5h17M10 5v14M15.5 5v14"/>'),
+  mleader: s('<path d="M5 18l6-6h4"/><path d="M4.5 19.5l1.2-4.2 3 2.4z" fill="currentColor"/><path d="M15 8h5M15 11h5M15 14h3"/>'),
+  dimArc: s('<path d="M5 17a9 9 0 0 1 14 0"/><path d="M4 14l1 3 3-1M20 14l-1 3-3-1"/>'),
+  dimDiameter: s('<circle cx="12" cy="12" r="7.5"/><path d="M6.5 17.5l11-11"/><path d="M6.5 17.5l.4-3M6.5 17.5l3-.4M17.5 6.5l-.4 3M17.5 6.5l-3 .4"/>'),
+  dimBaseline: s('<path d="M5 4v16M12 9v11M19 14v6"/><path d="M5 8h7M5 13h14"/>'),
+  dimContinue: s('<path d="M4 6v12M12 6v12M20 6v12"/><path d="M4 12h16"/>'),
+  qdim: s('<path d="M5 4v6M12 4v6M19 4v6M5 7h14"/><path d="M6 14h4M13 14h5M6 18h12" stroke-dasharray="1.8 2"/>'),
 };
 
 export function icon(name: string, size = 16): string {
