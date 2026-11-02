@@ -22,11 +22,16 @@ def selfcheck() -> int:
     info["formcad"] = __version__
     info["dist_bundled"] = os.path.isdir(os.path.join(resource_dir(), "frontend_dist"))
     try:
-        import app.main  # noqa: F401
+        import importlib
+
+        import app.main
         from app.services import kernel
 
+        for path, _prefix in app.main.ROUTERS:
+            importlib.import_module(path)
         record = kernel.record()
         info["app"] = "ok"
+        info["routers"] = len(app.main.ROUTERS)
         info["kernel_record"] = "ok" if record.get("program") == "formcad-kernel" else "missing"
     except Exception as exc:
         info["app"] = f"failed: {exc!r}"
