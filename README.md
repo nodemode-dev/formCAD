@@ -1,6 +1,6 @@
 # formCAD
 
-![version](https://img.shields.io/badge/version-0.5.0-f97316) ![license](https://img.shields.io/badge/license-Apache--2.0-3a7bff) ![stage](https://img.shields.io/badge/stage-early%20build-717072)
+![version](https://img.shields.io/badge/version-0.6.0-f97316) ![license](https://img.shields.io/badge/license-Apache--2.0-3a7bff) ![stage](https://img.shields.io/badge/stage-early%20build-717072)
 
 FormCAD: parametric solids, NURBS and SubD surfaces, 2D drafting, manufacturing, simulation and visual programming in one open desktop app. Instead of SolidWorks, Fusion, Rhino, Grasshopper and CADcraft.
 
