@@ -1,7 +1,7 @@
 import { BatchData } from './batch';
 import { Emitter, type BuildCtx } from './build';
 import { RTree } from './spatial';
-import type { DisplayItem, DisplayPayload, Handle, LayerState, Rect } from './types';
+import type { DisplayItem, DisplayPayload, Handle, LayerState, LayoutPayload, Rect } from './types';
 
 const CHUNK_SPAN = 4096;
 const MAX_CHUNKS = 256;
@@ -57,6 +57,8 @@ export class DisplayStore {
   extentsHint: Rect | null = null;
   sheet: Rect | null = null;
   printable: Rect | null = null;
+  layout: LayoutPayload | null = null;
+  layoutVersion = 0;
   builds = 0;
   opts: BuildOptions = { lwOn: false, lwScale: 1, fillOn: true, trOn: true, dashOn: true, ltScale: 1 };
   private span = CHUNK_SPAN;
@@ -93,6 +95,7 @@ export class DisplayStore {
     this.extentsHint = null;
     this.sheet = null;
     this.printable = null;
+    this.layout = null;
     this.rev = -1;
     this.span = CHUNK_SPAN;
     this.fire();
@@ -164,8 +167,10 @@ export class DisplayStore {
     this.rev = p.rev;
     if (p.space) this.space = p.space;
     if (p.extents && finite(p.extents)) this.extentsHint = p.extents;
-    this.sheet = p.sheet ?? null;
-    this.printable = p.printable ?? null;
+    this.layout = p.layout ?? null;
+    this.layoutVersion++;
+    this.sheet = p.sheet ?? (p.layout ? [0, 0, p.layout.paper.width, p.layout.paper.height] : null);
+    this.printable = p.printable ?? p.layout?.printable ?? null;
     this.tree = null;
     this.fire();
   }

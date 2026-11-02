@@ -100,13 +100,13 @@ export class Selector {
     void this.commit();
   }
 
-  async applyPrompt(found: Handle[], shift: boolean): Promise<void> {
+  async applyPrompt(found: Handle[], shift: boolean, box?: [number, number, number, number]): Promise<void> {
     const id = this.cx.doc();
     if (!id || !found.length) return;
     for (const h of found) { if (shift) this.pending.delete(h); else this.pending.add(h); }
     this.cx.schedule();
     try {
-      const st = await api.sendCanvasInput(id, { selection: { handles: found, mode: shift ? 'remove' : 'add' } });
+      const st = await api.sendCanvasInput(id, { selection: { handles: found, mode: shift ? 'remove' : 'add', box } });
       this.cx.publish(id, st);
     } catch (e) {
       this.cx.toast(e instanceof ApiError || e instanceof Error ? e.message : 'The engine did not answer');
@@ -126,8 +126,8 @@ export class Selector {
     this.endCycle();
   }
 
-  deliver(found: Handle[], shift: boolean, prompt: boolean): void {
-    if (prompt) void this.applyPrompt(found, shift);
+  deliver(found: Handle[], shift: boolean, prompt: boolean, box?: [number, number, number, number]): void {
+    if (prompt) void this.applyPrompt(found, shift, box);
     else this.applyIdle(found, shift);
   }
 
@@ -215,7 +215,7 @@ export class Selector {
       if (!prompt && !this.cx.set().pickadd && !shift) this.clearSelection();
       return;
     }
-    this.deliver(found, shift, prompt);
+    this.deliver(found, shift, prompt, [x0, y0, x1, y1]);
   }
 
   cancelWindow(): boolean {

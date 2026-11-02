@@ -20,8 +20,6 @@ export interface KindSpec {
 export const NEED_ONE = 'Select one object, or objects that share this value, to edit it.';
 
 const pt = (f?: PropertyField): [number, number] | null => (f && !f.varies && Array.isArray(f.value) && f.value.length >= 2 ? [Number(f.value[0]), Number(f.value[1])] : null);
-const num = (f?: PropertyField): number | null => (f && !f.varies && typeof f.value === 'number' ? f.value : null);
-const open = (f?: PropertyField): PropertyField | undefined => (f ? { ...f, readonly: false } : undefined);
 
 function axis(id: string, label: string, field: string, i: 0 | 1): RowDef {
   return {
@@ -60,43 +58,17 @@ function between(id: string, label: string, a: string, b: string, i: 0 | 1): Row
   };
 }
 
-const lineLength: RowDef = {
-  id: 'length', label: 'Length', type: 'number',
-  show: (p) => open(p.length),
-  write: (v, p) => {
-    const s = pt(p.start), e = pt(p.end), len = num(p.length);
-    if (!s || !e || len === null) return NEED_ONE;
-    const k = len > 0 ? Number(v) / len : 0;
-    return { end: len > 0 ? [s[0] + (e[0] - s[0]) * k, s[1] + (e[1] - s[1]) * k] : [s[0] + Number(v), s[1]] };
-  },
-};
+const lineLength: RowDef = plain('length', 'Length');
 
-const lineAngle: RowDef = {
-  id: 'angle', label: 'Angle', type: 'number',
-  show: (p) => open(p.angle),
-  write: (v, p) => {
-    const s = pt(p.start), e = pt(p.end), len = num(p.length);
-    if (!s || !e || len === null) return NEED_ONE;
-    const a = (Number(v) * Math.PI) / 180;
-    return { end: [s[0] + len * Math.cos(a), s[1] + len * Math.sin(a)] };
-  },
-};
+const lineAngle: RowDef = plain('angle', 'Angle');
 
 const circleRows: RowDef[] = [
   axis('cx', 'Center X', 'center', 0),
   axis('cy', 'Center Y', 'center', 1),
   plain('radius', 'Radius'),
   plain('diameter', 'Diameter'),
-  {
-    id: 'circumference', label: 'Circumference', type: 'number',
-    show: (p) => open(p.circumference),
-    write: (v) => ({ radius: Number(v) / (2 * Math.PI) }),
-  },
-  {
-    id: 'area', label: 'Area', type: 'number',
-    show: (p) => open(p.area),
-    write: (v) => (Number(v) > 0 ? { radius: Math.sqrt(Number(v) / Math.PI) } : 'The area must be greater than zero.'),
-  },
+  plain('circumference', 'Circumference'),
+  plain('area', 'Area'),
 ];
 
 const shapeOf = (shapes: string[], def: RowDef): RowDef => ({

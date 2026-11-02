@@ -214,7 +214,7 @@ const tools = (): MenuItem[] => section('Tools', () => [
   S('Xref and Block In-place Editing', E('Edit Reference In-Place', 'refedit'), E('Add to Working Set', 'refset', 'add'), E('Save Reference Edits', 'refclose', 'save')),
   SEP,
   S('Customize', E('Edit Command Aliases...', 'aliasedit')),
-  S('Express Tools', E('Break-line Symbol', 'breakline'), E('Convert Text to Mtext', 'txt2mtxt'), E('Explode Attributes to Text', 'burst'),
+  S('Extra Tools', E('Break-line Symbol', 'breakline'), E('Convert Text to Mtext', 'txt2mtxt'), E('Explode Attributes to Text', 'burst'),
     E('Move/Copy/Rotate', 'mocoro'), E('Replace Block...', 'blockreplace')),
   E('Count', 'count'), E('Compare Drawings...', 'compare'), E('Data Extraction...', 'dataextraction'), SEP,
   E('Load Application...', 'appload'), E('Run Script...', 'script'), E('3D Mouse...', 'mouse3d'),

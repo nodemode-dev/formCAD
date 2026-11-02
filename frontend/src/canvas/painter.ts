@@ -21,13 +21,14 @@ export interface DynLayer {
   version: number;
   uploaded: number;
   gpu: unknown;
+  clip?: number[] | null;
 }
 
 export interface Painter {
   readonly kind: 'webgl2' | 'canvas2d';
   readonly retains: boolean;
   resize(cssW: number, cssH: number, dpr: number): void;
-  frame(view: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[]): void;
+  frame(view: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under?: DynLayer[]): void;
   onLost(fn: (restored: boolean) => void): void;
   release(gpu: unknown): void;
   dispose(): void;

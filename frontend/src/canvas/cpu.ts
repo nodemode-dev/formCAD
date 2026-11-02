@@ -112,10 +112,26 @@ export class CpuPainter implements Painter {
     }
   }
 
-  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[]): void {
+  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = []): void {
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.w, this.h);
+    for (const d of under) {
+      if (!d.data) continue;
+      ctx.save();
+      if (d.clip) {
+        ctx.beginPath();
+        for (let i = 0; i + 1 < d.clip.length; i += 2) {
+          const x = (d.clip[i] - v.cx) * v.scale + this.w / 2;
+          const y = this.h / 2 - (d.clip[i + 1] - v.cy) * v.scale;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.clip('evenodd');
+      }
+      this.draw(d.data, d.ox, d.oy, v);
+      ctx.restore();
+    }
     const r = v.visible;
     for (const c of chunks) {
       if (!c.built || !c.data) continue;

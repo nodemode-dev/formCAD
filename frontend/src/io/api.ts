@@ -15,7 +15,7 @@ export interface Capabilities {
 export interface CommandMeta { name: string; aliases: string[]; group: string; label: string; description: string; menu: string }
 export interface SysVar { name: string; value: unknown; type: string; scope: string; readonly: boolean; description: string; default?: unknown; range?: string; profile?: boolean }
 
-export interface DocSummary { id: string; name: string; path: string | null; modified: string; rev: number; kind: string; created?: number | string; dirty: boolean; untitled?: boolean; entities?: number; metric?: boolean; space?: string }
+export interface DocSummary { id: string; name: string; path: string | null; modified: string; rev: number; kind: string; created?: number | string; dirty: boolean; untitled?: boolean; entities?: number; metric?: boolean; space?: string; tab?: string; viewport?: number; maximized?: number }
 export interface DocCreate { name?: string; template?: string }
 
 export interface PromptOption { key: string; label: string }
@@ -44,7 +44,7 @@ export interface SnapPayload { mode: string; handle: string | number | null; at:
 export type CanvasInput =
   | { point: [number, number]; snap?: SnapPayload }
   | { pick: { point: [number, number]; handle: string | number } }
-  | { selection: { handles: Array<string | number>; mode: 'set' | 'add' | 'remove' } };
+  | { selection: { handles: Array<string | number>; mode: 'set' | 'add' | 'remove'; box?: [number, number, number, number] } };
 export interface GripRequest {
   handle: string | number;
   grip: string | number;
@@ -87,6 +87,9 @@ export interface PropertiesResult { changed: number; locked: number; rev: number
 export interface FindMatch { handle: number; kind: string; hits: number }
 export interface FindResult { matches: FindMatch[]; total: number; selected?: number[]; rev: number; replaced?: number; locked?: number; hits?: number }
 export interface FindRequest { text: string; replace?: string; matchCase?: boolean; wholeWord?: boolean; select?: boolean }
+export interface QSelectInfo { kinds: Array<{ kind: string; count: number }>; props: Array<{ id: string; label: string; choices: string[] | null }> }
+export interface QSelectRequest { scope: 'all' | 'sel'; kind: string; property: string; operator: string; value: string; how: 'include' | 'exclude'; append: boolean }
+export interface QSelectResult { handles: number[]; count: number; rev: number }
 export interface CalcRequest { expression?: string; variables?: Record<string, unknown>; picks?: unknown[]; docId?: string; convert?: { value: number; from: string; to: string; type?: string }; units?: string; pick?: { mode: string; points: unknown[] } }
 export interface CalcResult { ok: boolean; kind?: string; value?: unknown; text?: string; error?: string; needsPick?: string; units?: Record<string, Record<string, number>> }
 
@@ -114,7 +117,7 @@ export function token(): string {
 
 const TIMEOUT_MS = 30000;
 
-async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = {};
   const tok = token();
   if (tok) headers['X-FormCAD-Token'] = tok;
@@ -181,6 +184,8 @@ export const api = {
   properties: (id: string, handles?: Array<string | number>): Promise<PropertiesPayload> => call('GET', `/api/docs/${enc(id)}/properties${handles ? `?handles=${handles.join(',')}` : ''}`),
   setProperties: (id: string, handles: Array<string | number>, changes: Record<string, unknown>, kind?: string): Promise<PropertiesResult> => call('PUT', `/api/docs/${enc(id)}/properties`, kind ? { handles, changes, kind } : { handles, changes }),
   find: (id: string, req: FindRequest): Promise<FindResult> => call('POST', `/api/docs/${enc(id)}/find`, req),
+  qselectInfo: (id: string, scope: string, kind: string): Promise<QSelectInfo> => call('GET', `/api/docs/${enc(id)}/qselect?scope=${enc(scope)}&kind=${enc(kind)}`),
+  qselect: (id: string, req: QSelectRequest): Promise<QSelectResult> => call('POST', `/api/docs/${enc(id)}/qselect`, req),
   calc: (req: CalcRequest): Promise<CalcResult> => call('POST', '/api/calc', req),
 
   recent: (): Promise<{ items: FileItem[] }> => list('/api/recent'),

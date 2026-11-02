@@ -1,5 +1,4 @@
-import { drawingCanvas } from '../../canvas/mount';
-import { api } from '../../io/api';
+import { api, type QSelectInfo } from '../../io/api';
 import { Dialog } from '../dialogs';
 import { docStore } from '../doc-store';
 import { el, patchList, q, setClass, setText } from '../dom';
@@ -8,11 +7,11 @@ import { failure } from './engine-run';
 import { radioRow } from './pref-rows';
 import { setOptions } from './prop-rows';
 import { kindTitle } from './props-kinds';
-import { matches, propsFor, type Operator, type QuickProp, type Rec } from './quick-select-model';
 import { selection } from './selection-bus';
 
-const OPERATORS: ReadonlyArray<readonly [Operator, string]> = [['=', '= Equals'], ['<>', '<> Not Equal'], ['>', '> Greater than'], ['<', '< Less than'], ['*', '* Wildcard Match']];
-const BASIC_COLORS = ['ByLayer', 'ByBlock', 'Red', 'Yellow', 'Green', 'Cyan', 'Blue', 'Magenta', 'White'];
+type QuickProp = QSelectInfo['props'][number];
+
+const OPERATORS: ReadonlyArray<readonly [string, string]> = [['=', '= Equals'], ['<>', '<> Not Equal'], ['>', '> Greater than'], ['<', '< Less than'], ['*', '* Wildcard Match']];
 
 export class QuickSelectDialog extends Dialog {
   private readonly scope = el<HTMLSelectElement>('<select class="cv-input" aria-label="Apply to"></select>');
@@ -23,7 +22,8 @@ export class QuickSelectDialog extends Dialog {
   private readonly values = el<HTMLDataListElement>('<datalist id="qs-values"></datalist>');
   private readonly append: HTMLInputElement;
   private readonly count = el<HTMLElement>('<p class="cv-note qs-count" role="status"></p>');
-  private records = new Map<number, Rec>();
+  private info: QSelectInfo | null = null;
+  private seq = 0;
   private how: 'include' | 'exclude' = 'include';
   private propId = 'color';
   private readonly ok: HTMLButtonElement;
@@ -47,15 +47,15 @@ export class QuickSelectDialog extends Dialog {
     setOptions(this.scope, [['all', 'Entire drawing'], ['sel', 'Current selection']]);
     setOptions(this.op, OPERATORS.map(([k, label]) => [k, label] as const));
     this.button('Cancel', 'ghost', () => this.close());
-    this.ok = this.button('OK', 'primary', () => this.apply());
-    this.scope.addEventListener('change', () => this.fillTypes());
-    this.type.addEventListener('change', () => this.fillProps());
+    this.ok = this.button('OK', 'primary', () => { void this.apply(); });
+    this.scope.addEventListener('change', () => { void this.load(true); });
+    this.type.addEventListener('change', () => { void this.load(false); });
     this.op.addEventListener('change', () => this.fillValues());
     this.list.addEventListener('click', (e) => {
       const id = (e.target as HTMLElement).closest<HTMLElement>('[data-key]')?.dataset.key;
       if (id) { this.propId = id; this.paintProps(); this.fillValues(); }
     });
-    this.value.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.apply(); } });
+    this.value.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); void this.apply(); } });
   }
 
   async show(): Promise<void> {
@@ -64,50 +64,42 @@ export class QuickSelectDialog extends Dialog {
     this.open(this.value);
     this.ok.disabled = true;
     setText(this.count, 'Reading the drawing');
+    const has = selection.handles.length > 0;
+    this.scope.options[1].disabled = !has;
+    if (!has && this.scope.value === 'sel') this.scope.value = 'all';
+    await this.load(true);
+  }
+
+  private async load(types: boolean): Promise<void> {
+    const doc = docStore.activeId;
+    if (!doc) return;
+    const mine = ++this.seq;
     try {
-      const snap = await api.snapshot(doc);
-      const cv = drawingCanvas();
-      this.records = new Map();
-      for (const raw of snap.entities as unknown as Rec[]) {
-        const h = Number(raw.handle);
-        if (Number.isFinite(h) && (!cv || cv.item(h))) this.records.set(h, raw);
-      }
+      const info = await api.qselectInfo(doc, this.scope.value, this.type.value);
+      if (mine !== this.seq) return;
+      this.info = info;
     } catch (e) {
       setText(this.count, failure(e));
       return;
     }
-    const has = selection.handles.length > 0;
-    this.scope.options[1].disabled = !has;
-    if (!has && this.scope.value === 'sel') this.scope.value = 'all';
     this.ok.disabled = false;
     setText(this.count, '');
-    this.fillTypes();
-  }
-
-  private scoped(): Rec[] {
-    if (this.scope.value === 'sel') {
-      const keep = new Set(selection.handles);
-      return Array.from(this.records.entries()).filter(([h]) => keep.has(h)).map(([, r]) => r);
-    }
-    return Array.from(this.records.values());
-  }
-
-  private fillTypes(): void {
-    const counts = new Map<string, number>();
-    for (const r of this.scoped()) counts.set(String(r.kind), (counts.get(String(r.kind)) ?? 0) + 1);
-    const kinds = Array.from(counts.keys()).sort((a, b) => kindTitle(a).localeCompare(kindTitle(b)));
+    if (!types) { this.fillProps(); return; }
     const keep = this.type.value;
-    setOptions(this.type, [['', 'Multiple'], ...kinds.map((k) => [k, `${kindTitle(k)} (${counts.get(k)})`] as const)]);
-    this.type.value = kinds.includes(keep) ? keep : '';
-    this.fillProps();
+    const kinds = this.info.kinds.slice().sort((a, b) => kindTitle(a.kind).localeCompare(kindTitle(b.kind)));
+    setOptions(this.type, [['', 'Multiple'], ...kinds.map((k) => [k.kind, `${kindTitle(k.kind)} (${k.count})`] as const)]);
+    this.type.value = kinds.some((k) => k.kind === keep) ? keep : '';
+    if (this.type.value !== keep) void this.load(false);
+    else this.fillProps();
   }
 
   private props(): QuickProp[] {
-    return propsFor(this.type.value || null);
+    return this.info?.props ?? [];
   }
 
   private paintProps(): void {
     const list = this.props();
+    if (!list.length) return;
     if (!list.some((p) => p.id === this.propId)) this.propId = list[0].id;
     patchList(this.list, list, {
       key: (p) => p.id,
@@ -135,16 +127,7 @@ export class QuickSelectDialog extends Dialog {
     const prop = this.props().find((p) => p.id === this.propId);
     const wild = this.op.value === '*';
     this.value.placeholder = wild ? 'Pattern, for example *wall*' : '';
-    let choices: string[] = [];
-    if (prop?.choices === 'color') choices = BASIC_COLORS;
-    else if (prop?.choices) {
-      const seen = new Set<string>();
-      for (const r of this.scoped()) {
-        const v = prop.get(r);
-        if (v !== null) seen.add(String(v));
-      }
-      choices = Array.from(seen).sort();
-    }
+    const choices = prop?.choices ?? [];
     while (this.values.options.length > choices.length) this.values.removeChild(this.values.lastChild as Node);
     choices.forEach((c, i) => {
       let o = this.values.options[i];
@@ -153,23 +136,25 @@ export class QuickSelectDialog extends Dialog {
     });
   }
 
-  private apply(): void {
-    const prop = this.props().find((p) => p.id === this.propId);
-    const kind = this.type.value;
-    const typed = this.value.value.trim();
-    const wild = this.op.value === '*';
-    const scope = this.scoped();
-    const ofType = scope.filter((r) => !kind || r.kind === kind);
-    const useCriterion = !!prop && (typed !== '' || wild);
-    const hit = new Set<number>();
-    for (const r of ofType) if (!useCriterion || (prop && matches(prop.get(r), this.op.value as Operator, typed))) hit.add(Number(r.handle));
-    let result: number[];
-    if (this.how === 'include') result = Array.from(hit);
-    else result = scope.map((r) => Number(r.handle)).filter((h) => !hit.has(h));
-    if (this.append.checked) result = Array.from(new Set([...selection.handles, ...result]));
-    if (!result.length) { setText(this.count, 'No objects match the criteria.'); return; }
-    selection.select(result);
-    this.close();
-    toast(`${result.length} ${result.length === 1 ? 'object' : 'objects'} selected.`, 'info');
+  private async apply(): Promise<void> {
+    const doc = docStore.activeId;
+    if (!doc || this.ok.disabled) return;
+    try {
+      const out = await api.qselect(doc, {
+        scope: this.scope.value === 'sel' ? 'sel' : 'all',
+        kind: this.type.value,
+        property: this.propId,
+        operator: this.op.value,
+        value: this.value.value.trim(),
+        how: this.how,
+        append: this.append.checked,
+      });
+      if (!out.count) { setText(this.count, 'No objects match the criteria.'); return; }
+      selection.select(out.handles);
+      this.close();
+      toast(`${out.count} ${out.count === 1 ? 'object' : 'objects'} selected.`, 'info');
+    } catch (e) {
+      setText(this.count, failure(e));
+    }
   }
 }

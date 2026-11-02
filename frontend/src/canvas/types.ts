@@ -43,7 +43,28 @@ export interface DisplayItem {
 
 export interface LayerState { color?: Rgb | string; on?: boolean; frozen?: boolean; locked?: boolean; lw?: number; lt?: string }
 
+export interface LayoutViewport {
+  h: number;
+  items: DisplayItem[];
+  clip: Array<{ p: number[]; bulge?: number }> | null;
+  outline: number[][];
+  bounds: Rect;
+  on: boolean;
+  active: boolean;
+  contentVisible: boolean;
+}
+
+export interface LayoutPayload {
+  name: string;
+  active: number;
+  maximized: number;
+  paper: { width: number; height: number; widthMm: number; heightMm: number };
+  printable: Rect;
+  viewports: LayoutViewport[];
+}
+
 export interface DisplayPayload {
+  layout?: LayoutPayload | null;
   rev: number;
   full: boolean;
   space?: string;

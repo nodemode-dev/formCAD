@@ -3,7 +3,7 @@ import { BatchData } from './batch';
 import { Emitter } from './build';
 import { Camera } from './camera';
 import { Chrome, drawCursor, type ChromePart } from './chrome';
-import { isDark } from './color';
+import { css, isDark } from './color';
 import { CpuPainter } from './cpu';
 import { GlPainter } from './gl';
 import { bindInput } from './input';
@@ -67,6 +67,8 @@ export class Renderer implements CanvasApi {
   private jigItems: DisplayItem[] = [];
   private jigBand = NaN;
   private infKey = '';
+  private readonly under: DynLayer[] = [];
+  private underKey = '';
   private readonly listeners = new Map<string, Set<(e: never) => void>>();
   private readonly off: Array<() => void> = [];
   private hasSize = false;
@@ -323,11 +325,55 @@ export class Renderer implements CanvasApi {
       bg: [bg[0] / 255, bg[1] / 255, bg[2] / 255],
       visible: vis,
     };
-    this.painter.frame(pv, this.store.chunks.values(), dyn);
+    this.syncLayout(band);
+    this.painter.frame(pv, this.store.chunks.values(), dyn, this.under);
     if (this.store.dead.length) {
       for (const g of this.store.dead) this.painter.release(g);
       this.store.dead.length = 0;
     }
+  }
+
+  private syncLayout(band: number): void {
+    const lay = this.store.layout;
+    const key = lay ? `${this.store.layoutVersion}|${band}` : '';
+    if (key === this.underKey) return;
+    this.underKey = key;
+    for (const d of this.under) if (d.gpu) this.painter.release(d.gpu);
+    this.under.length = 0;
+    if (!lay) return;
+    for (const vp of lay.viewports) {
+      if (!vp.on || !vp.contentVisible || !vp.items.length) continue;
+      const d = newDyn();
+      d.ox = (vp.bounds[0] + vp.bounds[2]) / 2;
+      d.oy = (vp.bounds[1] + vp.bounds[3]) / 2;
+      const data = new BatchData();
+      const em = new Emitter(this.store.makeCtx(d.ox, d.oy, band));
+      for (const it of vp.items) em.emit(it, data);
+      data.close();
+      d.data = data;
+      d.version = 1;
+      const ring = vp.outline.length >= 3 ? vp.outline : [[vp.bounds[0], vp.bounds[1]], [vp.bounds[2], vp.bounds[1]], [vp.bounds[2], vp.bounds[3]], [vp.bounds[0], vp.bounds[3]]];
+      d.clip = ring.flatMap((p) => [p[0], p[1]]);
+      this.under.push(d);
+    }
+  }
+
+  private paintActiveViewport(ctx: CanvasRenderingContext2D): void {
+    const lay = this.store.layout;
+    const vp = lay ? lay.viewports.find((v) => v.h === lay.active) : undefined;
+    if (!vp) return;
+    const ring = vp.outline.length >= 3 ? vp.outline : [[vp.bounds[0], vp.bounds[1]], [vp.bounds[2], vp.bounds[1]], [vp.bounds[2], vp.bounds[3]], [vp.bounds[0], vp.bounds[3]]];
+    ctx.save();
+    ctx.beginPath();
+    ring.forEach((p, i) => {
+      const [x, y] = this.cam.toScreen(p[0], p[1]);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = css(this.theme.accent);
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
   }
 
   private buildJig(band: number): void {
@@ -360,6 +406,7 @@ export class Renderer implements CanvasApi {
       width: this.cssW,
       height: this.cssH,
     };
+    this.paintActiveViewport(ctx);
     drawOverlays(ctx, env, this.overlays);
     const system = this.deps.systemCursor();
     const part = this.chrome.hover;
@@ -442,7 +489,7 @@ export class Renderer implements CanvasApi {
       return;
     }
     this.needFit = false;
-    const ext = this.store.extents();
+    const ext = this.store.sheet ?? this.store.extents();
     let box: Rect | null = ext && ext[2] > ext[0] || ext && ext[3] > ext[1] ? ext : null;
     if (!box) {
       const lo = this.deps.sysvarVec('LIMMIN') ?? [0, 0];

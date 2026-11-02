@@ -11,6 +11,7 @@ import { aciRow, buttonRow, colorDefaultRow, enable, infoRow, pathRow, radioRow,
 import {
   ANGLE_UNITS, ANIMATION_MODES, DEFAULT_PREFS, DRAW_UNITS, SAVE_VERSIONS, loadPrefs, updatePrefs, type Prefs,
 } from './prefs';
+import { dwgRows } from './output/dwg-prefs';
 import { sysvars } from './sysvar-store';
 import { DEFAULT_ACCENT, DEFAULT_THEME, STORAGE_KEY, THEMES, readChoice, setAccent, setIntensity, setTheme, themeSwatchesHtml } from './themes';
 import { toast } from './toast';
@@ -293,7 +294,8 @@ export class SettingsDialog extends Dialog {
         this.vNumber('Automatic save every (minutes, 0 is off)', 'SAVETIME', 0, 600, 1),
         this.vCheck('Create backup copy with each save', 'ISAVEBAK'),
         this.vText('Automatic save file location', 'SAVEFILEPATH', 'Folder chosen by the app'),
-        nt('The backup keeps the previous file as name.bak.')));
+        nt('The backup keeps the previous file as name.bak.')),
+      grp('DWG files', ...dwgRows((fn) => this.syncs.push(fn))));
 
     add('Plot and Publish',
       grp('Plotting',

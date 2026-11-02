@@ -14,7 +14,6 @@ import type { PropRow } from './prop-rows';
 import { GENERAL, KIND_BY_NAME, KINDS, kindTitle, type RowDef } from './props-kinds';
 import { buildRow } from './row-factory';
 import { selection } from './selection-bus';
-import { polylineArea } from './poly-area';
 
 export interface TableNames {
   layers: string[];
@@ -187,22 +186,6 @@ export function propertiesPanel(): DockPanel {
         paint();
       };
 
-      const withExtras = (p: PropertiesPayload): PropertiesPayload => {
-        const poly = p.kinds.lwpolyline;
-        const cv = drawingCanvas();
-        if (poly && cv && !poly.props.area) {
-          const areas = poly.handles.map((h) => {
-            const g = cv.item(h)?.geom as { type?: string; verts?: number[][]; closed?: boolean } | undefined;
-            return g && g.type === 'poly' && g.verts && g.closed ? polylineArea(g.verts) : null;
-          });
-          const first = areas[0];
-          const same = areas.every((a) => a !== null && first !== null && Math.abs(a - first) < 1e-9);
-          const known = areas.every((a) => a !== null);
-          poly.props = { ...poly.props, area: { value: same ? first : null, varies: known && !same, type: 'number', readonly: true } };
-        }
-        return p;
-      };
-
       const refresh = async (): Promise<void> => {
         const mine = ++seq;
         const base = properties.payload;
@@ -223,7 +206,7 @@ export function propertiesPanel(): DockPanel {
           }
           if (mine !== seq) return;
         } else filter = null;
-        view = withExtras(next);
+        view = next;
         paint();
       };
 

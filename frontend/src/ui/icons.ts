@@ -206,6 +206,22 @@ export const ICONS: Record<string, string> = {
   dimBaseline: s('<path d="M5 4v16M12 9v11M19 14v6"/><path d="M5 8h7M5 13h14"/>'),
   dimContinue: s('<path d="M4 6v12M12 6v12M20 6v12"/><path d="M4 12h16"/>'),
   qdim: s('<path d="M5 4v6M12 4v6M19 4v6M5 7h14"/><path d="M6 14h4M13 14h5M6 18h12" stroke-dasharray="1.8 2"/>'),
+  bulbOn: s('<path d="M9 17.5h6M10 20.5h4"/><path d="M12 3.5a6 6 0 0 0-3.4 10.9c.6.5.9 1.2.9 2.1h5c0-.9.3-1.6.9-2.1A6 6 0 0 0 12 3.5z"/>'),
+  bulbOff: s('<path d="M9 17.5h6M10 20.5h4"/><path d="M12 3.5a6 6 0 0 0-3.4 10.9c.6.5.9 1.2.9 2.1h5c0-.9.3-1.6.9-2.1A6 6 0 0 0 12 3.5z" opacity=".35"/>'),
+  snow: s('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><path d="M9.5 4.8L12 6.8l2.5-2M9.5 19.2l2.5-2 2.5 2"/>'),
+  sheet: s('<path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4"/>'),
+  sheetFull: s('<path d="M7 3.5h7l4 4v13H7z" fill="currentColor" fill-opacity=".25"/><path d="M14 3.5v4h4"/><path d="M9.5 12h5M9.5 15h5"/>'),
+  printOff: s('<path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M7 14h10v6H7z"/><path d="M4 20L20 4" stroke="var(--danger-text)"/>'),
+  vpFreeze: s('<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/><circle cx="19" cy="19" r="2.2" fill="currentColor" stroke="none"/>'),
+  paperSpace: s('<rect x="4" y="3.5" width="16" height="17" rx="1"/><rect x="7" y="7" width="10" height="7" stroke-dasharray="2 1.6"/>'),
+  modelSpace: s('<rect x="4" y="3.5" width="16" height="17" rx="1"/><path d="M8 16l3-6 2.5 4 2-3"/>'),
+  vpMaximize: s('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><rect x="8" y="8" width="8" height="8" rx="1"/>'),
+  layerMatch: s('<path d="M12 4l8 4.5-8 4.5-8-4.5z"/><path d="M4 13l8 4.5 8-4.5"/><path d="M16 20l3-3"/>'),
+  layerPrev: s('<path d="M12 4l8 4.5-8 4.5-8-4.5z"/><path d="M4 13l8 4.5 8-4.5"/><path d="M8 21l-3-2.5 3-2.5"/>'),
+  layerIso: s('<path d="M12 4l8 4.5-8 4.5-8-4.5z" fill="currentColor" fill-opacity=".3"/><path d="M4 13l8 4.5 8-4.5" opacity=".4"/>'),
+  insertBlock: s('<rect x="4" y="9" width="11" height="11" rx="1.2"/><path d="M15 6h5M17.5 3.5v5"/>'),
+  xref: s('<rect x="3.5" y="4" width="11" height="11" rx="1.2" stroke-dasharray="3 2"/><path d="M10 12h8.5a2 2 0 0 1 0 4H15"/><path d="M13 14l-3 2 3 2"/>'),
+  blockEdit: s('<rect x="3.5" y="5" width="12" height="12" rx="1.2"/><path d="M14 20l6-6 1.8 1.8-6 6H14z"/>'),
 };
 
 export function icon(name: string, size = 16): string {

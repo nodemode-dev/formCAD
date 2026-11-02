@@ -3,6 +3,9 @@ import { events } from '../io/events';
 import { askSaveChanges } from './dialogs';
 import { stored, store } from './dom';
 import { pickOpenPath, pickSavePath } from './file-dialogs';
+import { tellNotes } from './output/notes';
+import { out as outputApi } from './output/output-api';
+import { trackWork } from './output/job-feed';
 import { toast } from './toast';
 
 const HOME_KEY = 'formCAD.home';
@@ -121,9 +124,11 @@ export class DocStore {
 
   async openPath(path: string): Promise<DocSummary | null> {
     try {
-      const doc = await api.openDoc(path);
+      const foreign = !/\.fcad$/i.test(path.trim());
+      const doc = foreign ? await trackWork(`Open ${path.split(/[\\/]/).pop() ?? path}`, () => outputApi.openForeign(path)) : await api.openDoc(path);
       this.upsert(doc);
       void this.refreshRecent();
+      if (foreign) tellNotes(`Opened ${doc.name}.`, (doc as { notes?: Parameters<typeof tellNotes>[1] }).notes);
       return doc;
     } catch (e) {
       toast(failure(e), 'error');
@@ -156,8 +161,11 @@ export class DocStore {
     const path = await pickSavePath(doc.path ?? `${doc.name.replace(/\.fcad$/i, '')}.fcad`);
     if (!path) return false;
     try {
-      this.upsert(await api.saveDoc(doc.id, path), false);
+      const foreign = /\.(dxf|dwg|dwt)$/i.test(path.trim());
+      const saved = foreign ? await trackWork(`Save ${path.split(/[\\/]/).pop() ?? path}`, () => outputApi.saveAs(doc.id, path)) : await api.saveDoc(doc.id, path);
+      this.upsert(saved, false);
       void this.refreshRecent();
+      if (foreign) tellNotes(`Saved ${path.split(/[\\/]/).pop() ?? path}.`, (saved as { notes?: Parameters<typeof tellNotes>[1] }).notes);
       return true;
     } catch (e) {
       toast(failure(e), 'error');

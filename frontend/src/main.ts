@@ -6,5 +6,7 @@ import './ui/shell-part3';
 import './canvas/mount';
 import './ui/draw-rail';
 import './ui/dialogs/register';
+import './ui/u3-register';
+import './ui/output/register';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });

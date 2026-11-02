@@ -55,6 +55,10 @@ export class EventsClient {
     return () => { this.watchers.delete(fn); };
   }
 
+  inject(e: EngineEvent): void {
+    for (const fn of this.listeners.get(e.type) ?? []) fn(e);
+  }
+
   private setState(s: LinkState): void {
     if (this.link === s) return;
     this.link = s;

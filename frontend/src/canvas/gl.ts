@@ -101,7 +101,7 @@ export class GlPainter implements Painter {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+    const gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
     if (!gl) throw new Error('webgl2');
     this.gl = gl;
     this.flat = program(gl, VS_FLAT, FS);
@@ -241,12 +241,60 @@ export class GlPainter implements Painter {
     }
   }
 
-  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[]): void {
+  private clipBuf: WebGLBuffer | null = null;
+
+  private stencilClip(poly: number[], v: PaintView): void {
+    const gl = this.gl;
+    const n = poly.length >> 1;
+    if (n < 3) return;
+    const tris = (n - 2) * 3;
+    const buf = new ArrayBuffer(tris * 16);
+    const f = new Float32Array(buf);
+    const u = new Uint32Array(buf);
+    for (let i = 0; i < n - 2; i++) {
+      const ids = [0, i + 1, i + 2];
+      for (let k = 0; k < 3; k++) {
+        const o = (i * 3 + k) * 4;
+        f[o] = poly[ids[k] * 2] - v.cx;
+        f[o + 1] = poly[ids[k] * 2 + 1] - v.cy;
+        u[o + 2] = 0xffffffff;
+        u[o + 3] = 0;
+      }
+    }
+    this.clipBuf ??= gl.createBuffer();
+    if (!this.clipBuf) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.clipBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, buf, gl.DYNAMIC_DRAW);
+    gl.enable(gl.STENCIL_TEST);
+    gl.clear(gl.STENCIL_BUFFER_BIT);
+    gl.colorMask(false, false, false, false);
+    gl.stencilFunc(gl.ALWAYS, 0, 1);
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.INVERT);
+    gl.useProgram(this.flat);
+    gl.uniform2f(this.fu.u_off, 0, 0);
+    gl.uniform2f(this.fu.u_k, (2 * v.scale) / v.width, (2 * v.scale) / v.height);
+    gl.uniform1f(this.fu.u_contrast, v.contrast);
+    gl.uniform3f(this.fu.u_bg, v.bg[0], v.bg[1], v.bg[2]);
+    this.flatPointers(this.clipBuf, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, tris);
+    gl.colorMask(true, true, true, true);
+    gl.stencilFunc(gl.EQUAL, 1, 1);
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+  }
+
+  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = []): void {
     if (this.lost || this.gl.isContextLost()) return;
     const gl = this.gl;
     gl.viewport(0, 0, this.w, this.h);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    for (const d of under) {
+      const g = this.upload(d);
+      if (!g) continue;
+      if (d.clip) this.stencilClip(d.clip, v);
+      this.drawOne(g, d.ox, d.oy, v);
+      if (d.clip) gl.disable(gl.STENCIL_TEST);
+    }
     const r = v.visible;
     for (const c of chunks) {
       if (!c.built) continue;
