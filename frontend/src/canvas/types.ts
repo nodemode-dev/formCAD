@@ -20,7 +20,7 @@ export type Geom =
 export type Prim =
   | { t: 'pl'; pts: number[]; closed?: boolean }
   | { t: 'tri'; pts: number[] }
-  | { t: 'fill'; rings: number[][] };
+  | { t: 'fill'; rings: number[][]; c?: number[]; mask?: boolean };
 
 export interface Grip { id: string | number; p: Pt; kind?: string }
 

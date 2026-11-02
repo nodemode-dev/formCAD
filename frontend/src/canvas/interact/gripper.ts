@@ -41,9 +41,6 @@ export class Gripper {
   private lastKey = '';
   private cache: GripRef[] = [];
   private cacheItems: DisplayItem[] = [];
-  private dirty = false;
-  private readonly defs = new WeakMap<DisplayItem, Array<{ id: string | number; p: Pt; kind?: string }>>();
-  private readonly loading = new Set<DisplayItem>();
 
   constructor(private readonly cx: Ctx, private readonly selected: () => Set<Handle>, private readonly setJig: (items: DisplayItem[] | null) => void) {}
 
@@ -60,39 +57,15 @@ export class Gripper {
       const it = this.cx.canvas.item(h);
       if (it) items.push(it);
     }
-    if (items.length === this.cacheItems.length && items.every((it, i) => it === this.cacheItems[i]) && !this.dirty) return this.cache;
-    this.dirty = false;
+    if (items.length === this.cacheItems.length && items.every((it, i) => it === this.cacheItems[i])) return this.cache;
     const out: GripRef[] = [];
-    const missing: DisplayItem[] = [];
     for (const it of items) {
-      const defs = this.defs.get(it);
-      if (!defs) {
-        if (it.grips && it.grips.length) missing.push(it);
-        continue;
-      }
-      for (const g of defs) out.push({ h: it.h as Handle, id: g.id, p: g.p, kind: g.kind ?? '', geom: it.geom?.type ?? '', item: it });
+      if (!it.grips) continue;
+      for (const g of it.grips) out.push({ h: it.h as Handle, id: g.id, p: g.p, kind: g.kind ?? '', geom: it.geom?.type ?? '', item: it });
     }
     this.cacheItems = items;
     this.cache = out;
-    if (missing.length) void this.load(missing);
     return out;
-  }
-
-  private async load(items: DisplayItem[]): Promise<void> {
-    const id = this.cx.doc();
-    const fresh = items.filter((it) => !this.loading.has(it));
-    if (!id || !fresh.length) return;
-    for (const it of fresh) this.loading.add(it);
-    try {
-      const r = await api.gripSets(id, fresh.map((it) => it.h as Handle));
-      const by = new Map(r.sets.map((s) => [s.h, s.grips]));
-      for (const it of fresh) this.defs.set(it, by.get(it.h as Handle) ?? []);
-    } catch {
-      for (const it of fresh) this.defs.set(it, []);
-    }
-    for (const it of fresh) this.loading.delete(it);
-    this.dirty = true;
-    this.cx.schedule();
   }
 
   invalidate(): void {

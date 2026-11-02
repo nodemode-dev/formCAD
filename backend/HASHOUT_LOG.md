@@ -2,6 +2,14 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## Draw integration · _v0.3.0 (app/display/state.py, formcad_engine.py, setup/freeze_backend)
+
+Grip ids: the display list no longer builds grips in `display/shapes.py` order. `make_entry` takes `grips_of(entity)` from `app/cmd/grips.py`, so `items[].grips[].id` are the strings the `/grips` and `/grip` routes use (`start`, `mid`, `end`, `center`, `q0`..`q3`, `v0`, `m0`, `f0`, `c0`, `ins`, ...) in that order, and the fast line path emits `start, mid, end` literally. Kinds are `grips_of` kinds (`vertex`, `segmid`, `quadrant`, `insert`, ...). The grip lists built inside `shapes.py` and `extra_d2.py` are now unused by the display route (insert expansion still reads them for children); remove them when those files are next edited. Entities with no `grips_of` entry (a kind it does not know) show no grips, which matches the fact that `/grip` could not edit them.
+
+Frozen engine was broken: it started but served no routes. `--collect-submodules app` is evaluated by the `pyinstaller` command line before `--paths` takes effect, so with the console script `app` was "not a package" and only 9 statically reachable `app.*` modules reached the bundle (`app.routers.system` and the others were missing; `register()` skips a missing router silently, so every `/api` route answered 404 or 405). `setup/freeze_backend` now runs `PYTHONPATH=<repo>/backend pyinstaller ... --paths <repo>/backend`; the bundle holds all 73 `app` modules. `--selfcheck` now imports every module in `ROUTERS` and prints `"routers": 8`, so a bundle without them fails the check. Verified: the frozen engine (142 MB, 224 files) passes `--selfcheck`, starts, creates a document, runs LINE from `/input` point payloads, and answers `/display` with grip ids `["start","mid","end"]`.
+
+Verified through the real interface (see the frontend log): one of every Draw command is created by menu, rail icon or typed command with canvas point, pick and snap payloads; the grip route moves only the dragged end of a LINE and undo restores it.
+
 ## Draw commands part 2 · _v0.3.0 (cmd/commands/draw_points.py, draw_splines.py, draw_marks.py, draw_mline.py, cmd/draw_support.py, doc/nurbs.py, doc/curvepath.py, doc/kinds/, display/extra_d2.py)
 
 POINT, POINT.MULTIPLE (moved out of `draw.py`), PTYPE (command `ddptype`), LIMITS, DIVIDE, MEASURE, SPLINE and SPLINE.CV, HELIX, REVCLOUD (rectangular, `.polygonal`, `.freehand`), WIPEOUT, 3DPOLY, CENTERMARK, CENTERLINE, BREAKLINE, MLINE, MLSTYLE and MLEDIT, every option of A1, each with a jig where a point prompt exists and a programmatic `executes` form. 271 recorded checks in `sidecar/handoff/D2.md` (typed prompt sequences and canvas payloads through the real token guard, numeric geometry, undo of each); fixture `fixtures/draw-all-part2.fcad`.

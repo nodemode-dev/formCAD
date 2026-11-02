@@ -36,12 +36,8 @@ export class Emitter {
     this.data = data;
     this.item = item;
     const a = opacityOf(item.tr || 0, this.ctx.trOn);
-    const mask = item.kind === 'wipeout';
-    if (mask) {
-      this.flag = 2;
-      this.col = packRaw(0, 0, 0, 255);
-      data.split();
-    } else if (item.color7) {
+    const masked = !!item.prims && item.prims.some((p) => p.t === 'fill' && p.mask);
+    if (item.color7) {
       this.flag = 1;
       this.col = packRaw(255, 255, 255, a);
     } else {
@@ -51,10 +47,11 @@ export class Emitter {
     const w = this.ctx.lwOn ? (item.lw || 0) * this.ctx.lwK : 0;
     this.thick = w > 1.001;
     this.width = Math.min(12, Math.max(1, w));
-    if (item.geom && item.geom.type !== 'text' && item.geom.type !== 'xline' && item.geom.type !== 'ray') this.geom(item.geom);
+    const drawGeom = item.geom && item.geom.type !== 'text' && item.geom.type !== 'xline' && item.geom.type !== 'ray';
     if (item.geom && (item.geom.type === 'xline' || item.geom.type === 'ray')) return false;
-    if (item.prims) this.prims(item.prims, item.geom?.type === 'text' ? item.bounds : null);
-    if (mask) data.split();
+    if (masked && item.prims) this.prims(item.prims, null);
+    if (drawGeom && item.geom) this.geom(item.geom);
+    if (!masked && item.prims) this.prims(item.prims, item.geom?.type === 'text' ? item.bounds : null);
     return this.sensitive;
   }
 
@@ -218,6 +215,16 @@ export class Emitter {
         if (!solid) continue;
         const a = p.pts;
         for (let i = 0; i + 5 < a.length; i += 6) this.tri(a[i], a[i + 1], a[i + 2], a[i + 3], a[i + 4], a[i + 5]);
+      } else if (p.t === 'fill' && p.mask) {
+        const flag = this.flag;
+        const col = this.col;
+        this.data.split();
+        this.flag = 2;
+        this.col = packRaw(0, 0, 0, 255);
+        fillRings(p.rings, (a, b, c, d, e, f) => this.tri(a, b, c, d, e, f));
+        this.data.split();
+        this.flag = flag;
+        this.col = col;
       } else if (p.t === 'fill') {
         if (this.ctx.fillOn) fillRings(p.rings, (a, b, c, d, e, f) => this.tri(a, b, c, d, e, f));
         else for (const ring of p.rings) this.chain(ring, true);

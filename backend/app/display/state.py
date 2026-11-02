@@ -2,6 +2,7 @@ import json
 import weakref
 from bisect import bisect_right
 
+from app.cmd.grips import grips_of
 from app.display import extra_d2, insert, palette, shapes
 from app.display.resolve import Context
 
@@ -33,7 +34,7 @@ def head_of(pp):
     return head
 
 
-LINE_FMT = '{"h":%d,"kind":"line",%s,"order":%d,"geom":{"type":"line","p1":[%r,%r],"p2":[%r,%r]},"prims":[],"grips":[{"id":0,"p":[%r,%r],"kind":"end"},{"id":1,"p":[%r,%r],"kind":"end"},{"id":2,"p":[%r,%r],"kind":"mid"}],"bounds":[%r,%r,%r,%r]}'
+LINE_FMT = '{"h":%d,"kind":"line",%s,"order":%d,"geom":{"type":"line","p1":[%r,%r],"p2":[%r,%r]},"prims":[],"grips":[{"id":"start","p":[%r,%r],"kind":"end"},{"id":"mid","p":[%r,%r],"kind":"mid"},{"id":"end","p":[%r,%r],"kind":"end"}],"bounds":[%r,%r,%r,%r]}'
 
 
 def line_entry(e, ctx, order, rev):
@@ -49,7 +50,7 @@ def line_entry(e, ctx, order, rev):
         by0, by1 = y1, y0
     else:
         by0, by1 = y0, y1
-    js = LINE_FMT % (e.handle, head_of(pp), order, x0, y0, x1, y1, x0, y0, x1, y1, mx, my, bx0, by0, bx1, by1)
+    js = LINE_FMT % (e.handle, head_of(pp), order, x0, y0, x1, y1, x0, y0, mx, my, x1, y1, bx0, by0, bx1, by1)
     return Entry(e.handle, order, (bx0, by0, bx1, by1), js, rev, pp.layer.casefold(), None)
 
 
@@ -97,7 +98,8 @@ def make_entry(e, ctx, order, rev):
     res = shapes.build(e, ctx)
     if res is None:
         return None
-    g, prims, grips, bb = res
+    g, prims, _shape_grips, bb = res
+    grips = grips_of(e)
     pp = ctx.props(e)
     if prims and e.kind in TEXT_KINDS:
         fix_prims(prims)

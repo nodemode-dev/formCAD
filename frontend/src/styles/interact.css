@@ -6,7 +6,7 @@
 .cv-dyn-box { display: inline-flex; align-items: center; gap: var(--space-1); min-width: 48px; padding: 1px var(--space-1); border: 1px solid var(--border-light); border-radius: var(--radius-xs); background: var(--bg-primary); }
 .cv-dyn-box.is-active { border-color: var(--accent-color); box-shadow: 0 0 0 0.5px var(--accent-color); }
 .cv-dyn-label { color: var(--text-muted); }
-.cv-dyn-value { min-width: 24px; color: var(--text-primary); font-family: var(--font-mono); }
+.cv-dyn-value { min-width: 9ch; color: var(--text-primary); font-family: var(--font-mono); }
 .cv-dyn-value.is-live { color: var(--text-muted); }
 .cv-dyn-lock { color: var(--accent-color); font-size: var(--fs-10); }
 .cv-dyn-arrow { color: var(--text-secondary); }

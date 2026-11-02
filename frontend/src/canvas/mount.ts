@@ -62,13 +62,13 @@ onShellMounted((ctx) => {
     if (!commands.get(id)) commands.add({ id, label, group: 'View', run });
   };
   add('zoom-extents-canvas', 'Zoom Extents', () => c.zoomExtents());
-  add('toggle-viewcube', 'Toggle ViewCube', () => {
+  add('toggle-viewcube', 'ViewCube', () => {
     const on = stored('formCAD.canvasView');
     let cube = true;
     try { cube = (JSON.parse(on ?? '{}') as { cube?: boolean }).cube !== false; } catch { cube = true; }
     c.setViewCubeVisible(!cube);
   });
-  add('toggle-ucs-icon', 'Toggle UCS Icon', () => {
+  add('toggle-ucs-icon', 'UCS Icon', () => {
     let ucs = true;
     try { ucs = (JSON.parse(stored('formCAD.canvasView') ?? '{}') as { ucs?: boolean }).ucs !== false; } catch { ucs = true; }
     c.setUcsIconVisible(!ucs);

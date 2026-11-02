@@ -173,6 +173,19 @@ export const ICONS: Record<string, string> = {
   cmdline: s('<rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M6.5 16l2 1-2 1M11 18h5"/><path d="M3 10h18M3 7h12M3 4h8" opacity=".5"/>'),
   kernel: s('<rect x="6" y="6" width="12" height="12" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5" rx=".6"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/>'),
   measure: s('<rect x="2.5" y="8.5" width="19" height="7" rx="1.2" transform="rotate(-30 12 12)"/><path d="M7.1 10.9l1 1.7M10.1 9.1l1.5 2.6M13.1 7.4l1 1.7M16.1 5.6l1.5 2.6"/>'),
+  xline: s('<path d="M3 19L21 5"/><path d="M3 19l-1 .8M21 5l1-.8" stroke-dasharray="1 2"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>'),
+  ray: s('<circle cx="5" cy="19" r="1.5" fill="currentColor"/><path d="M6.2 17.8L21 5"/>'),
+  mline: s('<path d="M4 9h16M4 15h16"/><path d="M4 9v6M20 9v6" opacity=".5"/>'),
+  poly3d: s('<path d="M4 17l5-9 4 6 7-9"/><path d="M4 20h16" opacity=".5"/>'),
+  donut: s('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>'),
+  solid2d: s('<path d="M4 18l3-12h12l-3 12z" fill="currentColor" fill-opacity=".35"/>'),
+  helix: s('<path d="M7 4c8 0 8 3 0 4s-8 4 0 4 8 3 0 4-8 3 0 4" transform="translate(5 0)"/>'),
+  revcloud: s('<path d="M5 15a3 3 0 0 1 1.5-5.5 3.5 3.5 0 0 1 6-1.8 3.5 3.5 0 0 1 5.5 2.3A3 3 0 0 1 18.5 15z"/>'),
+  wipeout: s('<rect x="4" y="6" width="16" height="12" fill="currentColor" fill-opacity=".3"/><path d="M4 18L20 6"/>'),
+  divide: s('<path d="M4 18L20 6"/><circle cx="9.3" cy="14.7" r="1.3" fill="currentColor"/><circle cx="14.7" cy="10.7" r="1.3" fill="currentColor"/>'),
+  centerMark: s('<circle cx="12" cy="12" r="7"/><path d="M12 3v18M3 12h18" stroke-dasharray="4 2"/>'),
+  centerLine: s('<path d="M5 5v14M19 5v14"/><path d="M12 3v18" stroke-dasharray="4 2"/>'),
+  breakLine: s('<path d="M3 12h5l2-4 3 8 2-4h6"/>'),
 };
 
 export function icon(name: string, size = 16): string {

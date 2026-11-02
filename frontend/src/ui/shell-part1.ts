@@ -84,7 +84,7 @@ async function runEngine(label: string, name: string, option?: string): Promise<
   if (!doc) doc = await docStore.create();
   if (!doc) return;
   try {
-    report(label, await api.runCommand(doc.id, name, option ? { option } : undefined), doc.id);
+    report(label, option ? await api.runCommand(doc.id, name, { option }) : await api.sendInput(doc.id, name), doc.id);
   } catch (e) {
     toast(e instanceof ApiError || e instanceof Error ? e.message : 'The engine did not answer', 'error');
   }
