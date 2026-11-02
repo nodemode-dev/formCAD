@@ -1,3 +1,4 @@
+from app.cmd import jig
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
 from app.doc import geom
@@ -87,12 +88,12 @@ def move(ctx):
         return
     b = yield ctx.point("Specify base point", ["Displacement"])
     if b.kind == "enter" or (b.kind == "keyword"):
-        d = yield ctx.point("Specify displacement", default=[0.0, 0.0, 0.0])
+        d = yield ctx.point("Specify displacement", default=[0.0, 0.0, 0.0], jig=lambda q: jig.moved_items(ctx.d, s.value, [q[0], q[1], 0.0]))
         if d.kind != "point":
             return
         vec = [d.value[0], d.value[1], 0.0]
     elif b.kind == "point":
-        p = yield ctx.point("Specify second point", base=b.value, default_text="use first point as displacement")
+        p = yield ctx.point("Specify second point", base=b.value, default_text="use first point as displacement", jig=lambda q: jig.moved_items(ctx.d, s.value, _vec(b.value, q)))
         if p.kind == "point":
             vec = _vec(b.value, p.value)
         elif p.kind == "enter":
@@ -138,7 +139,7 @@ def copy(ctx):
     handles = list(s.value)
     b = yield ctx.point("Specify base point", ["Displacement"])
     if b.kind == "enter" or b.kind == "keyword":
-        d = yield ctx.point("Specify displacement", default=[0.0, 0.0, 0.0])
+        d = yield ctx.point("Specify displacement", default=[0.0, 0.0, 0.0], jig=lambda q: jig.moved_items(ctx.d, handles, [q[0], q[1], 0.0]))
         if d.kind != "point":
             return
         _copies(ctx, handles, [d.value[0], d.value[1], 0.0])
@@ -148,7 +149,7 @@ def copy(ctx):
     base = b.value
     batches = []
     while True:
-        p = yield ctx.point("Specify second point", ["Array", "Exit", "Undo"], base=base, default="Exit", default_text="Exit")
+        p = yield ctx.point("Specify second point", ["Array", "Exit", "Undo"], base=base, default="Exit", default_text="Exit", jig=lambda q: jig.moved_items(ctx.d, handles, _vec(base, q)))
         if p.kind == "enter" or (p.kind == "keyword" and p.value == "Exit"):
             return
         if p.kind == "keyword" and p.value == "Undo":

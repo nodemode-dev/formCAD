@@ -42,10 +42,13 @@ class Prompt:
     pick_one: bool = False
     preselect: bool = True
     hint: str = ""
+    jig: Any = None
 
     def kind(self) -> str:
         if self.select:
             return "select"
+        if "entity" in self.accepts and "point" not in self.accepts:
+            return "entity"
         if self.free_text:
             return "text"
         if "point" in self.accepts:

@@ -27,7 +27,11 @@ class StepsBody(BaseModel):
 
 
 class TextBody(BaseModel):
-    text: str = ""
+    text: Optional[str] = None
+    point: Optional[list[float]] = None
+    snap: Optional[dict[str, Any]] = None
+    pick: Optional[dict[str, Any]] = None
+    selection: Optional[dict[str, Any]] = None
 
 
 class CommandBody(BaseModel):
@@ -157,7 +161,14 @@ def state(doc_id: str) -> dict:
 
 @router.post("/{doc_id}/input")
 def send_input(doc_id: str, body: TextBody) -> dict:
-    return _doc(doc_id).get_runner().submit(body.text)
+    runner = _doc(doc_id).get_runner()
+    if body.point is not None:
+        return runner.submit_point(body.point, body.snap)
+    if body.pick is not None:
+        return runner.submit_pick(body.pick)
+    if body.selection is not None:
+        return runner.submit_selection(body.selection)
+    return runner.submit(body.text or "")
 
 
 @router.post("/{doc_id}/command")

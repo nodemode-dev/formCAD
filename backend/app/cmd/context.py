@@ -49,13 +49,16 @@ class Context:
     def fp(self, p) -> str:
         return "%s,%s" % (self.fd(p[0]), self.fd(p[1]))
 
-    def point(self, msg, options=(), default=None, base=None, rect=False, default_text=""):
+    def point(self, msg, options=(), default=None, base=None, rect=False, default_text="", jig=None):
         dt = default_text or (self.fp(default) if default is not None else "")
-        return Prompt(msg, ("point",), list(options), default, dt, base, rect_corner=rect)
+        return Prompt(msg, ("point",), list(options), default, dt, base, rect_corner=rect, jig=jig)
 
-    def distance(self, msg, options=(), default=None, base=None, positive=False, nonneg=False):
+    def distance(self, msg, options=(), default=None, base=None, positive=False, nonneg=False, jig=None):
         dt = self.fd(default) if isinstance(default, (int, float)) else ""
-        return Prompt(msg, ("distance", "point"), list(options), default, dt, base, positive=positive, nonneg=nonneg)
+        return Prompt(msg, ("distance", "point"), list(options), default, dt, base, positive=positive, nonneg=nonneg, jig=jig)
+
+    def entity(self, msg, options=()):
+        return Prompt(msg, ("entity",), list(options))
 
     def number(self, msg, options=(), default=None, integer=False, positive=False, minimum=None, maximum=None, default_text=""):
         dt = default_text or (str(default) if default is not None else "")

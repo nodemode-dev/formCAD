@@ -1,5 +1,6 @@
 import math
 
+from app.cmd import jig
 from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
 from app.doc import geom
@@ -14,6 +15,10 @@ def _pt(v):
 
 def _make_arc(center, r, a0, a1):
     return Arc(center=list(center), radius=r, start_angle=geom.norm_angle(a0), end_angle=geom.norm_angle(a1))
+
+
+def _arc_shape(a):
+    return jig.arc(a.center, a.radius, a.start_angle, a.end_angle)
 
 
 def _arc_from_bulge(ctx, p0, p1, bulge):
@@ -37,7 +42,7 @@ def line(ctx):
             opts = ["Undo"]
             if len(pts) >= 3:
                 opts.append("Close")
-            r = yield ctx.point("Specify next point", opts, base=pts[-1])
+            r = yield ctx.point("Specify next point", opts, base=pts[-1], jig=lambda p: jig.rubber(pts[-1], p))
             if r.kind == "enter":
                 return
             if r.kind == "keyword" and r.value == "Undo":
@@ -93,10 +98,10 @@ def circle(ctx):
             a = yield ctx.point("Specify first point on circle")
             if a.kind != "point":
                 return
-            b = yield ctx.point("Specify second point on circle")
+            b = yield ctx.point("Specify second point on circle", jig=lambda p: jig.rubber(a.value, p))
             if b.kind != "point":
                 return
-            c = yield ctx.point("Specify third point on circle")
+            c = yield ctx.point("Specify third point on circle", jig=lambda p: jig.circle_3p(a.value, b.value, p))
             if c.kind != "point":
                 return
             res = geom.circle_from_3pts(a.value, b.value, c.value)
@@ -108,7 +113,7 @@ def circle(ctx):
             a = yield ctx.point("Specify first end point of circle's diameter")
             if a.kind != "point":
                 return
-            b = yield ctx.point("Specify second end point of circle's diameter", base=a.value)
+            b = yield ctx.point("Specify second end point of circle's diameter", base=a.value, jig=lambda p: jig.circle_2p(a.value, p))
             if b.kind != "point":
                 return
             _finish_circle(ctx, geom.midpoint(a.value, b.value), geom.dist(a.value, b.value) / 2.0)
@@ -119,9 +124,9 @@ def circle(ctx):
     center = r.value
     last = float(ctx.d.header.get("CIRCLERAD", 0.0))
     default = last if last > 0 else None
-    rr = yield ctx.distance("Specify radius of circle", ["Diameter"], default=default, base=center, positive=True)
+    rr = yield ctx.distance("Specify radius of circle", ["Diameter"], default=default, base=center, positive=True, jig=lambda p: jig.circle_radius(center, p))
     if rr.kind == "keyword":
-        dd = yield ctx.distance("Specify diameter of circle", default=default * 2 if default else None, base=center, positive=True)
+        dd = yield ctx.distance("Specify diameter of circle", default=default * 2 if default else None, base=center, positive=True, jig=lambda p: jig.circle_radius(center, p, 0.5))
         if dd.kind != "number":
             return
         _finish_circle(ctx, center, dd.value / 2.0)
@@ -209,7 +214,7 @@ def arc(ctx):
             raise CommandError("No line or arc to continue.")
         s, phi = _tail_point(prev)
         ctx.set_last(s)
-        e = yield ctx.point("Specify end point of arc", base=s)
+        e = yield ctx.point("Specify end point of arc", base=s, jig=lambda p: [_arc_shape(_arc_from_start_end_tangent(ctx, s, p, phi))])
         if e.kind != "point":
             return
         ctx.add(_arc_from_start_end_tangent(ctx, s, e.value, phi))
@@ -218,7 +223,7 @@ def arc(ctx):
         c = yield ctx.point("Specify center point of arc")
         if c.kind != "point":
             return
-        s = yield ctx.point("Specify start point of arc", base=c.value)
+        s = yield ctx.point("Specify start point of arc", base=c.value, jig=lambda p: jig.rubber(c.value, p))
         if s.kind != "point":
             return
         yield from _finish_center_arc(ctx, s.value, c.value)
@@ -226,22 +231,22 @@ def arc(ctx):
     if r.kind != "point":
         return
     start = r.value
-    m = yield ctx.point("Specify second point of arc", ["Center", "End"], base=start)
+    m = yield ctx.point("Specify second point of arc", ["Center", "End"], base=start, jig=lambda p: jig.rubber(start, p))
     if m.kind == "keyword" and m.value == "Center":
-        c = yield ctx.point("Specify center point of arc")
+        c = yield ctx.point("Specify center point of arc", jig=lambda p: jig.rubber(start, p))
         if c.kind != "point":
             return
         yield from _finish_center_arc(ctx, start, c.value)
         return
     if m.kind == "keyword" and m.value == "End":
-        e = yield ctx.point("Specify end point of arc", base=start)
+        e = yield ctx.point("Specify end point of arc", base=start, jig=lambda p: jig.rubber(start, p))
         if e.kind != "point":
             return
         yield from _finish_end_arc(ctx, start, e.value)
         return
     if m.kind != "point":
         return
-    e = yield ctx.point("Specify end point of arc", base=m.value)
+    e = yield ctx.point("Specify end point of arc", base=m.value, jig=lambda p: jig.arc_through(start, m.value, p))
     if e.kind != "point":
         return
     res = geom.arc_from_3pts(start, m.value, e.value)
@@ -251,7 +256,7 @@ def arc(ctx):
 
 
 def _finish_center_arc(ctx, s, c):
-    e = yield ctx.point("Specify end point of arc", ["Angle", "chord Length"], base=c)
+    e = yield ctx.point("Specify end point of arc", ["Angle", "chord Length"], base=c, jig=lambda p: jig.arc_centre_ends(s, c, p) + jig.rubber(c, p))
     if e.kind == "point":
         ctx.add(_arc_sce(ctx, s, c, e.value))
     elif e.kind == "keyword" and e.value == "Angle":
@@ -267,7 +272,7 @@ def _finish_center_arc(ctx, s, c):
 
 
 def _finish_end_arc(ctx, s, e):
-    k = yield ctx.point("Specify center point of arc", ["Angle", "Direction", "Radius"], base=s)
+    k = yield ctx.point("Specify center point of arc", ["Angle", "Direction", "Radius"], base=s, jig=lambda p: jig.arc_centre_ends(s, p, e))
     if k.kind == "point":
         c = k.value
         if abs(geom.dist(c, s) - geom.dist(c, e)) > 1e-6 * max(1.0, geom.dist(c, s)):
@@ -388,6 +393,29 @@ def finish_rect(ctx, m, origin, w, h, u, v):
     return handle
 
 
+def _rect_preview(ctx, m, c1, c2, rot, center_mode, dims):
+    u = (math.cos(rot), math.sin(rot))
+    v = (-math.sin(rot), math.cos(rot))
+    dx, dy = c2[0] - c1[0], c2[1] - c1[1]
+    w = dx * u[0] + dy * u[1]
+    h = dx * v[0] + dy * v[1]
+    origin = c1
+    if dims:
+        w = dims[0] * (1.0 if w >= 0 else -1.0)
+        h = dims[1] * (1.0 if h >= 0 else -1.0)
+        if center_mode:
+            origin = [c1[0] - (w * u[0] + h * v[0]) / 2, c1[1] - (w * u[1] + h * v[1]) / 2]
+    elif center_mode:
+        origin = [c1[0] - w * u[0] - h * v[0], c1[1] - w * u[1] - h * v[1]]
+        w, h = 2 * w, 2 * h
+    tol = ctx.d.tolerances["absolute"]
+    if abs(w) < tol or abs(h) < tol:
+        return jig.rubber(c1, c2)
+    corners = _corner_polygon(w, h, origin, u, v)
+    verts = _rect_vertices(corners, m["fillet"], m["chamfer"], 1.0 if w * h > 0 else -1.0)
+    return [jig.poly(verts, True)]
+
+
 def _rect_modes(m):
     out = []
     if m["chamfer"]:
@@ -451,7 +479,7 @@ def rectang(ctx):
     c1 = r.value
     dims = None
     while True:
-        o = yield ctx.point("Specify other corner point", ["Area", "Dimensions", "Rotation"], base=c1, rect=True)
+        o = yield ctx.point("Specify other corner point", ["Area", "Dimensions", "Rotation"], base=c1, rect=True, jig=lambda p: _rect_preview(ctx, m, c1, p, rot, center_mode, dims))
         if o.kind == "point":
             break
         if o.kind != "keyword":
@@ -609,6 +637,13 @@ def _bulge_tangent(s, e, phi):
     return math.tan(diff / 2.0)
 
 
+def _pline_arc_preview(last, p, tangent):
+    b = _bulge_tangent(last, p, tangent)
+    if b is None:
+        return jig.rubber(last, p)
+    return [jig.segment(last, p, b)]
+
+
 def _width_prompts(ctx, st, half):
     label = "half-width" if half else "width"
     a = yield ctx.distance("Specify starting %s" % label, default=st.sw / (2 if half else 1), nonneg=True)
@@ -638,7 +673,7 @@ def pline(ctx):
             if len(st.verts) >= 2:
                 opts.append("Close")
             opts += ["Halfwidth", "Length", "Undo", "Width"]
-            r = yield ctx.point("Specify next point", opts, base=last)
+            r = yield ctx.point("Specify next point", opts, base=last, jig=lambda p: jig.rubber(last, p))
             if r.kind == "enter":
                 return
             if r.kind == "point":
@@ -669,7 +704,7 @@ def pline(ctx):
                 st.pop_vertex()
             continue
         opts = ["Angle", "CEnter", "CLose", "Direction", "Halfwidth", "Line", "Radius", "Second pt", "Undo", "Width"]
-        r = yield ctx.point("Specify endpoint of arc", opts, base=last)
+        r = yield ctx.point("Specify endpoint of arc", opts, base=last, jig=lambda p: _pline_arc_preview(last, p, st.tangent()))
         if r.kind == "enter":
             return
         if r.kind == "point":
@@ -701,10 +736,10 @@ def pline(ctx):
             st.sync()
             return
         elif k == "Second pt":
-            p2 = yield ctx.point("Specify second point on arc", base=last)
+            p2 = yield ctx.point("Specify second point on arc", base=last, jig=lambda p: jig.rubber(last, p))
             if p2.kind != "point":
                 continue
-            p3 = yield ctx.point("Specify end point of arc", base=p2.value)
+            p3 = yield ctx.point("Specify end point of arc", base=p2.value, jig=lambda p: jig.arc_through(last, p2.value, p))
             if p3.kind != "point":
                 continue
             res = geom.circle_from_3pts(last, p2.value, p3.value)
@@ -717,7 +752,7 @@ def pline(ctx):
             a = yield ctx.angle("Specify the tangent direction for the start point of arc", base=last)
             if a.kind != "number":
                 continue
-            e = yield ctx.point("Specify endpoint of arc", base=last)
+            e = yield ctx.point("Specify endpoint of arc", base=last, jig=lambda p: _pline_arc_preview(last, p, a.value))
             if e.kind != "point":
                 continue
             b = _bulge_tangent(last, e.value, a.value)
@@ -729,7 +764,7 @@ def pline(ctx):
             a = yield ctx.angle("Specify included angle", absolute=False)
             if a.kind != "number" or abs(a.value) < 1e-9 or abs(a.value) >= geom.TAU:
                 continue
-            e = yield ctx.point("Specify endpoint of arc", ["CEnter", "Radius"], base=last)
+            e = yield ctx.point("Specify endpoint of arc", ["CEnter", "Radius"], base=last, jig=lambda p: [jig.segment(last, p, math.tan(a.value / 4.0))])
             if e.kind == "point":
                 st.add_vertex(e.value, math.tan(a.value / 4.0))
             elif e.kind == "keyword" and e.value == "CEnter":
