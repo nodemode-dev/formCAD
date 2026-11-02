@@ -2,11 +2,11 @@ import { SNAP_NAMES } from '../overlay';
 import type { CanvasApi, Handle, Pt, Rect } from '../types';
 import { angleOf, cross, dist, dot, EPS, intersect, len, nearestOn, normAng, onSweep, polar, segsOf, TAU, type Seg, type SegLine } from './geom';
 import type { Settings } from './settings';
-import { chooseSnap, cycleList, findSnaps, modeMask, OS, type SnapHit, type SnapMode } from './snaps';
+import { chooseSnap, cycleList, findSnaps, modeMask, OS, type SnapCandidate, type SnapMode } from './snaps';
 import { fmtLinear } from './units';
 
-export type PathKind = 'polar' | 'otrack' | 'ext' | 'par';
-export interface RayPath { t: 'ray'; o: Pt; d: Pt; bi: boolean; name: string; kind: PathKind; handle: Handle | null; origin: Pt }
+export type TrackPathType = 'polar' | 'otrack' | 'ext' | 'par';
+export interface RayPath { t: 'ray'; o: Pt; d: Pt; bi: boolean; name: string; kind: TrackPathType; handle: Handle | null; origin: Pt }
 export interface CircPath { t: 'circ'; c: Pt; r: number; a0: number; a1: number; full: boolean; name: string; kind: 'ext'; handle: Handle | null; origin: Pt }
 export type Path = RayPath | CircPath;
 
@@ -35,8 +35,8 @@ export interface ResolveIn {
 
 export interface Resolved {
   p: Pt;
-  snap: SnapHit | null;
-  hits: SnapHit[];
+  snap: SnapCandidate | null;
+  hits: SnapCandidate[];
   cycleCount: number;
   slide: Path | null;
   engaged: Path[];
@@ -148,7 +148,7 @@ export class Tracker {
     }
   }
 
-  private extFor(hit: SnapHit, canvas: CanvasApi): Acq {
+  private extFor(hit: SnapCandidate, canvas: CanvasApi): Acq {
     const acq: Acq = { p: hit.p, mode: hit.mode, handle: hit.handle };
     const it = hit.handle !== null ? canvas.item(hit.handle) : undefined;
     const g = it?.geom;

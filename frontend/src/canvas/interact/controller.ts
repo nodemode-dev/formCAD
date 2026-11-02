@@ -2,7 +2,7 @@ import { api, ApiError, type CanvasInput, type CommandLineState, type SnapPayloa
 import { SNAP_NAMES } from '../overlay';
 import type { CanvasApi, DisplayItem, DragInfo, GripMark, PointerInfo, Pt, SnapMark, TrackMark } from '../types';
 import { IDLE_STATE, pointLike, type Ctx, type Pointer } from './ctx';
-import { DynamicInput, EMPTY_DYN, type DynBox, type DynView } from './dyn';
+import { DynamicInput, EMPTY_DYN, type InputField, type DynView } from './dyn';
 import { angleOf, dist, polar } from './geom';
 import { Gripper, type GripRef } from './gripper';
 import { ContextMenu } from './menu';
@@ -526,7 +526,7 @@ export class Interaction implements Ctx {
     }
   }
 
-  private liveBoxes(res: Resolved | null): DynBox[] {
+  private liveBoxes(res: Resolved | null): InputField[] {
     const s = this.settings;
     const st = this.st;
     const base = st.base ?? null;
@@ -540,7 +540,7 @@ export class Interaction implements Ctx {
       const t = this.parseTyped(text, true);
       const len = dist(a, p);
       const ang = ((angleOf(a, p) / DEG) % 360 + 360) % 360;
-      const out: DynBox[] = [];
+      const out: InputField[] = [];
       const bits = [1, 2, 4, 8, 16].filter((b) => (s.dyndigrip & b) !== 0);
       const shown = bits.slice(0, s.dyndivis === 0 ? 1 : s.dyndivis === 1 ? 2 : 3);
       const old = dist(a, gs.grips[0].p);
@@ -589,7 +589,7 @@ export class Interaction implements Ctx {
     }
     const labels = base && polarFmt ? ['', '<'] : ['X', 'Y'];
     const lives = [live0, live1];
-    return [0, 1].map((i): DynBox => {
+    return [0, 1].map((i): InputField => {
       const tv = typedAt(i);
       return {
         label: labels[i],

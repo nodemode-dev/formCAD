@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from .errors import SolveError
+from .errors import SolverFault
 
 TAU = 2.0 * math.pi
 
@@ -21,7 +21,7 @@ def split_ref(sk, ref):
         eid, part = ref, "whole"
     ent = sk.ents.get(eid)
     if ent is None:
-        raise SolveError("unknown entity %s" % (eid,))
+        raise SolverFault("unknown entity %s" % (eid,))
     return ent, part
 
 
@@ -64,7 +64,7 @@ def point_fn(ent, part):
                 s = math.sin(x[o + t]) * x[o + 4]
                 return x[o] + c * x[o + 2] - s * x[o + 3], x[o + 1] + c * x[o + 3] + s * x[o + 2]
             return ep, [o, o + 1, o + 2, o + 3, o + 4, o + t]
-    raise SolveError("%s has no reference '%s'" % (ent.kind, part))
+    raise SolverFault("%s has no reference '%s'" % (ent.kind, part))
 
 
 def line_fn(ent):
@@ -104,7 +104,7 @@ def on_curve(ent):
             v = -(px - x[o]) * e1y + (py - x[o + 1]) * e1x
             return (math.sqrt((u / a) ** 2 + (v / b) ** 2) - 1.0) * a
         return ell, [o, o + 1, o + 2, o + 3, o + 4]
-    raise SolveError("cannot place a point on %s" % k)
+    raise SolverFault("cannot place a point on %s" % k)
 
 
 def _sign(v):
@@ -117,7 +117,7 @@ def _wrap(a):
 
 def _need(refs, n, kind):
     if len(refs) != n:
-        raise SolveError("%s expects %d reference(s)" % (kind, n))
+        raise SolverFault("%s expects %d reference(s)" % (kind, n))
 
 
 def _kind_of(ent, part):
@@ -145,7 +145,7 @@ def build(sk, kind, refs, value, ctx):
     def pt(ref):
         ent, part = split_ref(sk, ref)
         if not pointlike(ent, part):
-            raise SolveError("%s needs a point reference" % kind)
+            raise SolverFault("%s needs a point reference" % kind)
         f, idx = point_fn(ent, part)
         touch(ent, idx)
         return f
@@ -153,7 +153,7 @@ def build(sk, kind, refs, value, ctx):
     def lin(ref):
         ent, part = split_ref(sk, ref)
         if ent.kind != "line" or part != "whole":
-            raise SolveError("%s needs a line" % kind)
+            raise SolverFault("%s needs a line" % kind)
         f, idx = line_fn(ent)
         touch(ent, idx)
         return ent.off
@@ -161,12 +161,12 @@ def build(sk, kind, refs, value, ctx):
     def crv(ref):
         ent, part = split_ref(sk, ref)
         if ent.kind not in ("circle", "arc", "ellipse") or part != "whole":
-            raise SolveError("%s needs a circle, arc or ellipse" % kind)
+            raise SolverFault("%s needs a circle, arc or ellipse" % kind)
         touch(ent, [ent.off, ent.off + 1])
         return ent
 
     if kind in DIMENSIONAL and value is None:
-        raise SolveError("%s needs a value" % kind)
+        raise SolverFault("%s needs a value" % kind)
 
     if kind == "coincident":
         _need(refs, 2, kind)
@@ -181,13 +181,13 @@ def build(sk, kind, refs, value, ctx):
             fp = pt(pref)
             cent, cpart = split_ref(sk, cref)
             if cpart != "whole":
-                raise SolveError("coincident needs a point and a curve")
+                raise SolverFault("coincident needs a point and a curve")
             fc, idx = on_curve(cent)
             touch(cent, idx)
             fn = lambda x: np.array([fc(x, *fp(x))])
             rows = 1
         else:
-            raise SolveError("coincident needs at least one point")
+            raise SolverFault("coincident needs at least one point")
     elif kind == "collinear":
         _need(refs, 2, kind)
         a, b = lin(refs[0]), lin(refs[1])
@@ -242,7 +242,7 @@ def build(sk, kind, refs, value, ctx):
                 o = ent.off
                 fn = lambda x: np.array([x[o + 2 + ax]])
             else:
-                raise SolveError("%s needs a line, an ellipse or two points" % kind)
+                raise SolverFault("%s needs a line, an ellipse or two points" % kind)
         else:
             _need(refs, 2, kind)
             fa, fb = pt(refs[0]), pt(refs[1])
@@ -298,7 +298,7 @@ def build(sk, kind, refs, value, ctx):
             else:
                 fn = lambda x: np.array([math.hypot(x[cb] - x[ca], x[cb + 1] - x[ca + 1]) - mode * (x[ca + 2] - x[cb + 2])])
         else:
-            raise SolveError("tangent is defined for line with circle, arc or ellipse, and for circle or arc pairs")
+            raise SolverFault("tangent is defined for line with circle, arc or ellipse, and for circle or arc pairs")
         rows = 1
     elif kind == "symmetric":
         _need(refs, 3, kind)
@@ -344,7 +344,7 @@ def build(sk, kind, refs, value, ctx):
             fn = lambda x: np.array(r1(x) + r2(x))
             rows = 4
         else:
-            raise SolveError("symmetric needs two points, two lines or two circles, and an axis line")
+            raise SolverFault("symmetric needs two points, two lines or two circles, and an axis line")
     elif kind == "equal":
         _need(refs, 2, kind)
         ea, _ = split_ref(sk, refs[0])
@@ -359,12 +359,12 @@ def build(sk, kind, refs, value, ctx):
             oa, ob = a.off, b.off
             fn = lambda x: np.array([x[oa + 2] - x[ob + 2]])
         else:
-            raise SolveError("equal needs two lines or two circles or arcs")
+            raise SolverFault("equal needs two lines or two circles or arcs")
         rows = 1
     elif kind in ("distance", "hdistance", "vdistance"):
         v = float(value)
         if v < 0:
-            raise SolveError("a distance cannot be negative")
+            raise SolverFault("a distance cannot be negative")
         refs = _expand_line(sk, refs)
         _need(refs, 2, kind)
         ea, pa = split_ref(sk, refs[0])
@@ -392,7 +392,7 @@ def build(sk, kind, refs, value, ctx):
         v = math.radians(float(value))
         if len(refs) == 2:
             if abs(float(value)) > 180.0 + 1e-9:
-                raise SolveError("an angle between two lines must be within 180 degrees")
+                raise SolverFault("an angle between two lines must be within 180 degrees")
             a, b = lin(refs[0]), lin(refs[1])
 
             def fn(x):
@@ -403,9 +403,9 @@ def build(sk, kind, refs, value, ctx):
             _need(refs, 1, kind)
             ent, part = split_ref(sk, refs[0])
             if ent.kind != "arc" or part != "whole":
-                raise SolveError("angle needs two lines or an arc")
+                raise SolverFault("angle needs two lines or an arc")
             if not 0.0 < float(value) <= 360.0:
-                raise SolveError("an arc sweep must be within 0 to 360 degrees")
+                raise SolverFault("an arc sweep must be within 0 to 360 degrees")
             o = ent.off
             touch(ent, [o + 3, o + 4])
             fn = lambda x: np.array([_wrap(x[o + 4] - x[o + 3] - v)])
@@ -414,9 +414,9 @@ def build(sk, kind, refs, value, ctx):
         _need(refs, 1, kind)
         ent = crv(refs[0])
         if ent.kind == "ellipse":
-            raise SolveError("%s needs a circle or arc" % kind)
+            raise SolverFault("%s needs a circle or arc" % kind)
         if float(value) <= 0:
-            raise SolveError("%s must be positive" % kind)
+            raise SolverFault("%s must be positive" % kind)
         o = ent.off
         touch(ent, [o + 2])
         k = 1.0 if kind == "radius" else 2.0
@@ -424,6 +424,6 @@ def build(sk, kind, refs, value, ctx):
         fn = lambda x: np.array([k * x[o + 2] - v])
         rows = 1
     else:
-        raise SolveError("unknown constraint kind '%s'" % kind)
+        raise SolverFault("unknown constraint kind '%s'" % kind)
 
     return fn, sorted(set(vars_)), rows, ents

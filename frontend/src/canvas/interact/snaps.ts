@@ -5,7 +5,7 @@ import { centroid, ccwSweep, dist, ellipseAt, ellipseSweep, intersect, lerp, nea
 export const OS = { end: 1, mid: 2, cen: 4, nod: 8, qua: 16, int: 32, ins: 64, per: 128, tan: 256, nea: 512, gcen: 1024, app: 2048, ext: 4096, par: 8192 } as const;
 export type SnapMode = keyof typeof OS;
 
-export interface SnapHit {
+export interface SnapCandidate {
   mode: SnapMode;
   p: Pt;
   handle: Handle | null;
@@ -154,7 +154,7 @@ function pointsOf(g: Geom, push: Push, tol: number): void {
   }
 }
 
-export function findSnaps(env: SnapEnv): SnapHit[] {
+export function findSnaps(env: SnapEnv): SnapCandidate[] {
   const { canvas, cursor, ap, mask } = env;
   if (mask === 0) return [];
   const tol = env.wpp * 0.5;
@@ -163,7 +163,7 @@ export function findSnaps(env: SnapEnv): SnapHit[] {
   let items = canvas.itemsIn(rect).filter((it) => it.geom && (env.hatch || it.kind !== 'hatch'));
   if (items.length > MAX_ITEMS) items = items.slice(0, MAX_ITEMS);
   items.sort((a, b) => boxDist(a.bounds, cursor) - boxDist(b.bounds, cursor));
-  const hits: SnapHit[] = [];
+  const hits: SnapCandidate[] = [];
   const seen = new Set<string>();
   const add = (mode: SnapMode, p: Pt, handle: Handle | null, d: number, prio = 0, deferred = false): void => {
     if (d > ap) return;
@@ -247,18 +247,18 @@ export function findSnaps(env: SnapEnv): SnapHit[] {
   return hits;
 }
 
-export function chooseSnap(hits: SnapHit[]): SnapHit | null {
-  let best: SnapHit | null = null;
+export function chooseSnap(hits: SnapCandidate[]): SnapCandidate | null {
+  let best: SnapCandidate | null = null;
   for (const h of hits) {
     if (!best || h.prio < best.prio || (h.prio === best.prio && h.w < best.w)) best = h;
   }
   return best;
 }
 
-export function cycleList(hits: SnapHit[]): SnapHit[] {
+export function cycleList(hits: SnapCandidate[]): SnapCandidate[] {
   const first = chooseSnap(hits);
   if (!first) return [];
-  const byMode = new Map<SnapMode, SnapHit>();
+  const byMode = new Map<SnapMode, SnapCandidate>();
   for (const h of hits) {
     if (h === first || h.mode === first.mode) continue;
     const cur = byMode.get(h.mode);

@@ -1,5 +1,5 @@
 from .constraints import DIMENSIONAL, GEOMETRIC
-from .errors import SolveError
+from .errors import SolverFault
 from .model import Report, Sketch
 
-__all__ = ["Sketch", "Report", "SolveError", "GEOMETRIC", "DIMENSIONAL"]
+__all__ = ["Sketch", "Report", "SolverFault","GEOMETRIC", "DIMENSIONAL"]

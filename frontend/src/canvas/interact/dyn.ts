@@ -1,4 +1,4 @@
-export interface DynBox { label: string; text: string; live: boolean; active: boolean; locked: boolean }
+export interface InputField { label: string; text: string; live: boolean; active: boolean; locked: boolean }
 
 export interface DynView {
   visible: boolean;
@@ -6,7 +6,7 @@ export interface DynView {
   y: number;
   msg: string;
   at: boolean;
-  boxes: DynBox[];
+  boxes: InputField[];
   arrow: boolean;
   list: { rows: string[]; idx: number } | null;
   badge: boolean;

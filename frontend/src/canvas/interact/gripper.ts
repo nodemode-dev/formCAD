@@ -2,9 +2,9 @@ import { api, ApiError, type GripRequest } from '../../io/api';
 import type { DisplayItem, GripMark, Handle, Pt } from '../types';
 import type { Ctx } from './ctx';
 
-export type GripMode = 'stretch' | 'move' | 'rotate' | 'scale' | 'mirror';
-export const MODES: GripMode[] = ['stretch', 'move', 'rotate', 'scale', 'mirror'];
-const MODE_TEXT: Record<GripMode, string> = {
+export type GripAction = 'stretch' | 'move' | 'rotate' | 'scale' | 'mirror';
+export const MODES: GripAction[] = ['stretch', 'move', 'rotate', 'scale', 'mirror'];
+const MODE_TEXT: Record<GripAction, string> = {
   stretch: '** STRETCH ** Specify stretch point or [Base point/Copy/Undo/eXit]:',
   move: '** MOVE ** Specify move point or [Base point/Copy/Undo/eXit]:',
   rotate: '** ROTATE ** Specify rotation angle or [Base point/Copy/Undo/Reference/eXit]:',
@@ -22,7 +22,7 @@ export interface GripRef { h: Handle; id: string | number; p: Pt; kind: string; 
 
 export interface GripSession {
   grips: GripRef[];
-  mode: GripMode;
+  mode: GripAction;
   option: string | null;
   copies: Pt[];
   drag: boolean;

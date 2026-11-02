@@ -2,6 +2,8 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+Renames (canvas/interact): `SnapHit` is now `SnapCandidate`, `DynBox` is now `InputField`, `GripMode` is now `GripAction`, `PathKind` is now `TrackPathType`; behavior unchanged.
+
 ## Draw integration · _v0.3.0 (src/ui/draw-rail.ts, ui/menu-spec.ts, ui/shell-part1.ts, ui/icons.ts, canvas/build.ts, canvas/types.ts, canvas/interact/gripper.ts, canvas/mount.ts, styles/interact.css, main.ts)
 
 Grips: the interaction layer now uses `items[].grips` from the display list directly; the `GET /grips` lookup, its per item cache and the `dirty` flag in `gripper.ts` were removed. The engine emits the same string ids the `/grip` route reads (`start`, `mid`, `end`, ...). `api.gripSets` stays in `io/api.ts` as an unused client method. Locked-layer objects now show grips and the engine refuses the edit with its message.

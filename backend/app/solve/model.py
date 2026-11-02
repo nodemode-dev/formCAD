@@ -4,7 +4,7 @@ import numpy as np
 
 from . import constraints as K
 from . import numeric as N
-from .errors import SolveError
+from .errors import SolverFault
 
 PARAMS = {"point": 2, "line": 4, "circle": 3, "arc": 5, "ellipse": 5}
 ELLIPSE_ARC = 7
@@ -84,7 +84,7 @@ class Sketch:
     def set_values(self, eid, vals):
         e = self.ents[eid]
         if len(vals) != e.n:
-            raise SolveError("wrong parameter count")
+            raise SolverFault("wrong parameter count")
         self._x[e.off:e.off + e.n] = [float(v) for v in vals]
 
     def set_weight(self, eid, w):
@@ -103,7 +103,7 @@ class Sketch:
         elif kind in K.DIMENSIONAL:
             group = "dimensional"
         else:
-            raise SolveError("unknown constraint kind '%s'" % kind)
+            raise SolverFault("unknown constraint kind '%s'" % kind)
         refs = list(refs)
         fn, vars_, rows, ents = K.build(self, kind, refs, value, ctx)
         if group == "dimensional" and name is None:
@@ -141,7 +141,7 @@ class Sketch:
 
     def remove(self, cid):
         if cid not in self.cons:
-            raise SolveError("unknown constraint")
+            raise SolverFault("unknown constraint")
         del self.cons[cid]
 
     def set_value(self, cid, value):

@@ -1,2 +1,2 @@
-class SolveError(ValueError):
+class SolverFault(ValueError):
     pass

@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## Clean-room renames and closed API docs · _v0.3.0 (app/solve/, app/main.py)
+
+`SolveError` is now `SolverFault` in errors.py, model.py, constraints.py and __init__.py, behaviour unchanged; the old name collided with a type name in the reference application's source. `/docs` and `/openapi.json` sat outside the `/api` prefix the guard covers and listed every route without the token; FastAPI now builds them only when `FORMCAD_API_DOCS=1`. Verified: selfcheck with 8 routers, a rectangle sketch solves, `/docs` and `/openapi.json` answer 404 by default.
+
 ## Draw integration · _v0.3.0 (app/display/state.py, formcad_engine.py, setup/freeze_backend)
 
 Grip ids: the display list no longer builds grips in `display/shapes.py` order. `make_entry` takes `grips_of(entity)` from `app/cmd/grips.py`, so `items[].grips[].id` are the strings the `/grips` and `/grip` routes use (`start`, `mid`, `end`, `center`, `q0`..`q3`, `v0`, `m0`, `f0`, `c0`, `ins`, ...) in that order, and the fast line path emits `start, mid, end` literally. Kinds are `grips_of` kinds (`vertex`, `segmid`, `quadrant`, `insert`, ...). The grip lists built inside `shapes.py` and `extra_d2.py` are now unused by the display route (insert expansion still reads them for children); remove them when those files are next edited. Entities with no `grips_of` entry (a kind it does not know) show no grips, which matches the fact that `/grip` could not edit them.
