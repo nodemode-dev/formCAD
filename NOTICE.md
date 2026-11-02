@@ -8,10 +8,42 @@ This product is licensed under the Apache License 2.0 (see `LICENSE`).
 
 ## Third-party works
 
-No third-party code is included yet. Every dependency, binary, font or asset added later gets a row here before it lands, with its license and where it lives.
+Every dependency, binary, font or asset gets a row here before it lands, with its license and where it lives.
+
+### Adapted from formvis (NodeMode form family)
 
 | Work | License | Where |
 | --- | --- | --- |
+| NodeMode stylized design system: tokens, theme profiles, theme boot, dom-stable helpers, shell icon subset | MIT | `frontend/src/styles/tokens.css`, `frontend/src/ui/themes.ts`, `frontend/index.html`, `frontend/src/ui/dom.ts`, `frontend/src/ui/icons.ts` |
+| formvis shell modules: i18n machinery, command registry, toast, dropdown, number fields, row builders, dialog shell, preferences store, tool registry, shell and dialog styles, splash and reveal, title bar placement, text editing bridge, window state, script suite, engine core layout | Apache-2.0 | `frontend/src/ui/`, `frontend/src/extensions/registry.ts`, `frontend/src/styles/`, `src-tauri/src/`, `setup/`, `backend/app/core/`, `backend/app/services/secrets.py`, `backend/formcad_engine.py` |
+
+### Interface (frontend)
+
+| Work | License | Where |
+| --- | --- | --- |
+| @fontsource/inter 5.3.0, @fontsource/jetbrains-mono 5.3.0 | OFL-1.1 (fonts), MIT (package) | `frontend/package.json`, `frontend/src/styles/fonts.css` |
+| @tauri-apps/api 2.11.1, @tauri-apps/cli 2.11.4 | Apache-2.0 OR MIT | `frontend/package.json` |
+| three 0.186.1 | MIT | `frontend/package.json` |
+| typescript 7.0.2, vite 8.3.5, @types/three 0.186.0 | Apache-2.0, MIT, MIT | build tools, not shipped |
+
+### Engine (backend)
+
+| Work | License | Where |
+| --- | --- | --- |
+| fastapi 0.141.1, keyring 25.7.0, ezdxf 1.4.5 | MIT | `backend/requirements.txt` |
+| uvicorn 0.53.0, httpx 0.28.1, numpy 2.5.4 | BSD-3-Clause | `backend/requirements.txt` |
+| PyInstaller 6.22.3 | GPL-2.0-or-later with bootloader exception | build tool only; the bootloader exception covers the frozen engine |
+
+### Desktop shell
+
+| Work | License | Where |
+| --- | --- | --- |
+| tauri 2, tauri-plugin-shell, tauri-plugin-dialog, tauri-plugin-single-instance, regex, serde, serde_json | MIT OR Apache-2.0 | `src-tauri/Cargo.toml`, exact versions in `src-tauri/Cargo.lock` |
+| objc2, objc2-app-kit, objc2-foundation (macOS) | MIT OR Apache-2.0 OR Zlib | `src-tauri/Cargo.toml` |
+
+### Kernel worker (separate program, never bundled in the app)
+
+The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-binaries` releases, with its own notices and sources. It carries OpenCascade Technology 8.0.1 (LGPL-2.1 with the Open CASCADE exception 1.0) through cadquery-ocp-novtk 8.0.1.1.0 (Apache-2.0), and build123d 0.13.0 (Apache-2.0) with cadquery-ocp-proxy (Apache-2.0), ocp_gordon (Apache-2.0) and ocpsvg (license to be confirmed before the first kernel release). FormCAD runs it as a separate program and does not link to it.
 
 ## Independent implementation
 
