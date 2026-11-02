@@ -1,7 +1,7 @@
 {
   "name": "formcad",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "FormCAD · drafting and modelling in the NodeMode style",
   "license": "Apache-2.0",
   "type": "module",
