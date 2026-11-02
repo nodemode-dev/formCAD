@@ -582,6 +582,10 @@ class CommandRunner:
         if p is not None and p.free_text and not run.frames and run.sel is None:
             self._feed_text(text)
             return
+        whole = text.strip()
+        if p is not None and " " in whole and not run.frames and run.sel is None and any(o.lower() == whole.lower() for o in p.options):
+            self._feed(whole)
+            return
         toks = self._tokens(text.lstrip(" \t")) if text.strip() != "" else [""]
         for i, tok in enumerate(toks):
             if self.run is None:

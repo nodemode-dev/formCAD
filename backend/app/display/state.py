@@ -2,10 +2,10 @@ import json
 import weakref
 from bisect import bisect_right
 
-from app.display import insert, palette, shapes
+from app.display import extra_d2, insert, palette, shapes
 from app.display.resolve import Context
 
-BUILDER_MODULES = (insert, shapes)
+BUILDER_MODULES = (insert, shapes, extra_d2)
 STEP = 1024
 _encode = json.JSONEncoder(separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode
 _states = weakref.WeakKeyDictionary()

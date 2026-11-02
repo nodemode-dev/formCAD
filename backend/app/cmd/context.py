@@ -64,10 +64,10 @@ class Context:
         dt = default_text or (str(default) if default is not None else "")
         return Prompt(msg, ("int",) if integer else ("number",), list(options), default, dt, integer=integer, positive=positive, minimum=minimum, maximum=maximum)
 
-    def angle(self, msg, options=(), default=None, base=None, absolute=True):
+    def angle(self, msg, options=(), default=None, base=None, absolute=True, jig=None):
         dt = self.fa(default) if isinstance(default, (int, float)) and absolute else ("%g" % math.degrees(default) if isinstance(default, (int, float)) else "")
         pts = ("angle", "point") if base is not None else ("angle",)
-        return Prompt(msg, pts, list(options), default, dt, base, absolute_angle=absolute)
+        return Prompt(msg, pts, list(options), default, dt, base, absolute_angle=absolute, jig=jig)
 
     def keyword(self, msg, options, default=None):
         return Prompt(msg, ("keyword",), list(options), default, default or "")

@@ -494,3 +494,6 @@ def entity_from_dict(data: dict) -> Entity:
         ent.raw = {k: v for k, v in rest.items() if k not in BASE_FIELDS}
         return ent
     return cls.from_dict(data)
+
+
+from app.doc import kinds  # noqa: E402,F401

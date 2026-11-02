@@ -90,6 +90,12 @@ def grips_of(e) -> list:
             out = [_g([(b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0], "center", "center")]
     elif isinstance(e, Solid):
         out = [_g(p, "corner", "k%d" % i) for i, p in enumerate(e.corners)]
+    elif e.kind == "wipeout":
+        out = [_g(p, "vertex", "v%d" % i) for i, p in enumerate(e.points)]
+    elif e.kind == "mline":
+        out = [_g(v["p"], "vertex", "v%d" % i) for i, v in enumerate(e.vertices)]
+    elif e.kind == "helix":
+        out = [_g(e.center, "center", "center")]
     return out
 
 
@@ -252,6 +258,10 @@ def stretch(e, gid, to) -> None:
             e.text_moved = True
     elif isinstance(e, Solid):
         e.corners[_idx(gid)] = list(t)
+    elif e.kind == "wipeout":
+        e.points[_idx(gid)] = list(t)
+    elif e.kind == "mline":
+        e.vertices[_idx(gid)]["p"] = [t[0], t[1]]
     else:
         _shift(e, pos, t)
 
@@ -446,6 +456,21 @@ def transform(e, xf) -> None:
             if v:
                 setattr(e, name, P(v))
         e.measurement *= xf.k
+    elif e.kind == "wipeout":
+        e.points = [P(p) for p in e.points]
+    elif e.kind == "mline":
+        for v in e.vertices:
+            v["p"] = _pt2(xf, v["p"])
+        e.scale *= -xf.k if xf.flip else xf.k
+    elif e.kind == "helix":
+        e.center = P(e.center)
+        e.base_radius *= xf.k
+        e.top_radius *= xf.k
+        e.height *= xf.k
+        e.start_angle = geom.norm_angle(xf.ang(e.start_angle))
+        if xf.flip:
+            e.ccw = not e.ccw
+        e.rebuild()
     else:
         raise GripError(DEGENERATE)
 

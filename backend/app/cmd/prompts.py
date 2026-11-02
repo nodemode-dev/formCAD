@@ -77,7 +77,7 @@ def format_prompt(p: Prompt) -> str:
     msg = p.message
     if p.options:
         kw = "/".join(p.options)
-        if msg.endswith("?"):
+        if msg.endswith("?") or p.hint == "bare":
             s = "%s [%s]" % (msg, kw)
         elif not msg:
             s = "[%s]" % kw
@@ -90,7 +90,17 @@ def format_prompt(p: Prompt) -> str:
     return s + ":"
 
 
+def tail_word(keyword: str) -> str:
+    head, _, tail = keyword.rpartition(" ")
+    if head and head.islower() and tail[:1].isupper():
+        return tail
+    return ""
+
+
 def shortcut_of(keyword: str) -> str:
+    tail = tail_word(keyword)
+    if tail:
+        return shortcut_of(tail)
     last = -1
     for i, ch in enumerate(keyword):
         if ch.isupper() or ch.isdigit():
@@ -107,7 +117,7 @@ def match_keyword(options, text: str):
     if not t:
         return None
     for kw in options:
-        if t == kw.lower() or t == shortcut_of(kw):
+        if t == kw.lower() or t == shortcut_of(kw) or t == tail_word(kw).lower():
             return kw
     for kw in options:
         sc = shortcut_of(kw)
@@ -190,7 +200,8 @@ def parse_point(text: str, env: Env):
         vals = [units.parse_distance(p) for p in parts]
         if any(v is None for v in vals):
             return None
-        return [origin[0] + vals[0], origin[1] + vals[1], 0.0]
+        z = origin[2] + vals[2] if len(vals) == 3 and len(origin) > 2 else (vals[2] if len(vals) == 3 else 0.0)
+        return [origin[0] + vals[0], origin[1] + vals[1], z]
     return None
 
 
