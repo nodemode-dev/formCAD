@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FormCAD",
+  "version": "0.2.0",
+  "identifier": "ai.nodemode.formcad",
+  "build": {
+    "frontendDist": "../frontend/dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "splash",
+        "title": "FormCAD",
+        "url": "splash.html",
+        "width": 360,
+        "height": 200,
+        "resizable": false,
+        "decorations": false,
+        "center": true,
+        "transparent": true,
+        "shadow": false,
+        "visible": false
+      }
+    ],
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "GraphicsAndDesign",
+    "shortDescription": "Parametric CAD",
+    "longDescription": "FormCAD is a CAD application in the NodeMode design system: 2D drafting, parts, assemblies, surfaces and drawings, with its own .fcad project files and DXF import and export.",
+    "copyright": "Copyright 2026 nodemode-ai.",
+    "resources": { "engine": "engine" },
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "macOS": {
+      "minimumSystemVersion": "14.0",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.plist"
+    },
+    "fileAssociations": [
+      { "ext": ["fcad"], "name": "FormCAD Project", "description": "FormCAD project", "role": "Editor", "mimeType": "application/x-formcad" },
+      { "ext": ["dxf"], "name": "DXF Drawing", "description": "DXF drawing FormCAD can open", "role": "Viewer" }
+    ],
+    "createUpdaterArtifacts": false
+  }
+}
