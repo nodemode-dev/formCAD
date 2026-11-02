@@ -35,12 +35,13 @@ def _reject_constant(name):
     raise ValueError("non-finite number " + name)
 
 
-def build_manifest(drawing: Drawing, title: str, created: str, modified: str | None = None) -> dict:
+def build_manifest(drawing: Drawing, title: str, created: str, modified: str | None = None, kind: str = "drawing") -> dict:
     h = drawing.header
     return {
         "format": FORMAT,
         "schema": SCHEMA,
         "app": {"name": "FormCAD", "version": __version__},
+        "kind": kind,
         "title": title,
         "units": {"insunits": h.get("INSUNITS", 0), "lunits": h.get("LUNITS", 2), "luprec": h.get("LUPREC", 4), "aunits": h.get("AUNITS", 0), "aprec": h.get("AUPREC", 0), "measurement": h.get("MEASUREMENT", 1)},
         "created": created,
@@ -49,12 +50,12 @@ def build_manifest(drawing: Drawing, title: str, created: str, modified: str | N
     }
 
 
-def encode(drawing: Drawing, title: str, created: str) -> bytes:
+def encode(drawing: Drawing, title: str, created: str, kind: str = "drawing") -> bytes:
     import io
 
     try:
         doc_bytes = json.dumps(drawing.to_dict(), separators=(",", ":"), allow_nan=False).encode("utf-8")
-        man_bytes = json.dumps(build_manifest(drawing, title, created), indent=2, allow_nan=False).encode("utf-8")
+        man_bytes = json.dumps(build_manifest(drawing, title, created, None, kind), indent=2, allow_nan=False).encode("utf-8")
     except ValueError as err:
         raise ContainerError("The drawing holds numbers that cannot be stored: " + str(err), "nonfinite")
     buf = io.BytesIO()
@@ -114,13 +115,13 @@ def atomic_write(dest: str, data: bytes, mode: int | None = None) -> None:
     _fsync_dir(folder)
 
 
-def save(path: str, drawing: Drawing, title: str, created: str, backup: bool = True) -> str:
+def save(path: str, drawing: Drawing, title: str, created: str, backup: bool = True, kind: str = "drawing") -> str:
     if not path:
         raise ContainerError("No file name given.", "nopath")
     dest = os.path.realpath(os.path.expanduser(path))
     if os.path.isdir(dest):
         raise ContainerError("The path is a folder.", "isdir")
-    data = encode(drawing, title, created)
+    data = encode(drawing, title, created, kind)
     try:
         if backup and os.path.isfile(dest) and _complete(dest):
             with open(dest, "rb") as fh:

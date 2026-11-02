@@ -9,7 +9,7 @@ _loaded = False
 
 
 @dataclass
-class CommandSpec:
+class CommandEntry:
     name: str
     fn: Callable
     aliases: tuple = ()
@@ -34,7 +34,7 @@ USER_ALIASES: dict = {}
 
 def command(name: str, aliases=(), group="", label="", description="", menu="", transparent=False, undoable=True, repeatable=True):
     def wrap(fn):
-        spec = CommandSpec(name.lower(), fn, tuple(a.lower() for a in aliases), group, label, description, menu, transparent, undoable, repeatable)
+        spec = CommandEntry(name.lower(), fn, tuple(a.lower() for a in aliases), group, label, description, menu, transparent, undoable, repeatable)
         COMMANDS[spec.name] = spec
         for a in spec.aliases:
             ALIASES[a] = spec.name

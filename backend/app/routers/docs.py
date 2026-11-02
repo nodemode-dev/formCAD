@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.doc.document import CommandFailed
-from app.doc.service import DocError, service
+from app.doc.service import DocumentFault, service
 
 router = APIRouter(tags=["docs"])
 
@@ -42,14 +42,14 @@ class FileBody(BaseModel):
 def _doc(doc_id: str):
     try:
         return service.get(doc_id)
-    except DocError as err:
+    except DocumentFault as err:
         raise HTTPException(err.status, err.message)
 
 
 def _wrap(fn):
     try:
         return fn()
-    except DocError as err:
+    except DocumentFault as err:
         raise HTTPException(err.status, err.message)
     except CommandFailed as err:
         raise HTTPException(409, str(err))

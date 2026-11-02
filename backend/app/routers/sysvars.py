@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app import sysvars
-from app.doc.service import DocError, service
+from app.doc.service import DocumentFault, service
 
 router = APIRouter(tags=["sysvars"])
 
@@ -18,7 +18,7 @@ def _doc(doc_id: Optional[str]):
     if doc_id:
         try:
             return service.get(doc_id)
-        except DocError as err:
+        except DocumentFault as err:
             raise HTTPException(err.status, err.message)
     return service.active()
 

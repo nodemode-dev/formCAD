@@ -4,7 +4,7 @@ import os
 import threading
 import time
 
-from app.doc import container, events
+from app.doc import container, events, templates
 from app.doc.autosave import AutoSaver
 from app.doc.document import Document
 from app.doc.model import Drawing
@@ -14,11 +14,16 @@ EXT = ".fcad"
 MAX_RECENT = 30
 
 
-class DocError(Exception):
+class DocumentFault(Exception):
     def __init__(self, message: str, status: int = 400):
         super().__init__(message)
         self.message = message
         self.status = status
+
+
+def _kind(manifest: dict) -> str:
+    kind = manifest.get("kind")
+    return kind if kind in templates.KINDS else "drawing"
 
 
 def _data_dir():
@@ -64,7 +69,7 @@ class Service:
     def get(self, doc_id: str) -> Document:
         doc = self.docs.get(doc_id)
         if doc is None:
-            raise DocError("No such document.", 404)
+            raise DocumentFault("No such document.", 404)
         self.active_id = doc_id
         return doc
 
@@ -85,22 +90,24 @@ class Service:
         return doc
 
     def new(self, name: str = "", template: str = "") -> Document:
-        tpl = (template or "").lower()
-        if tpl in ("metric", "iso"):
-            metric = True
-        elif tpl in ("imperial", "inch"):
-            metric = False
-        else:
-            metric = bool(sv.session_value("MEASUREINIT"))
+        spec = templates.lookup(template)
+        if template and spec is None:
+            raise DocumentFault("Unknown template " + template + ".")
+        if spec is None:
+            spec = {"kind": "drawing", "metric": bool(sv.session_value("MEASUREINIT")), "prefix": "Drawing"}
+        metric = bool(spec["metric"])
         with self.lock:
             self.counter += 1
-            title = name.strip() or "Drawing%d" % self.counter
-            doc = Document(Drawing(metric), title, "", "drawing", metric)
+            title = name.strip() or "%s%d" % (spec["prefix"], self.counter)
+            drawing = Drawing(metric)
+            if "limits" in spec:
+                templates.apply(drawing, spec)
+            doc = Document(drawing, title, "", spec["kind"], metric)
             return self._register(doc)
 
     def open(self, path: str) -> Document:
         if not path:
-            raise DocError("A path is required.")
+            raise DocumentFault("A path is required.")
         full = os.path.realpath(os.path.expanduser(path))
         with self.lock:
             for d in self.docs.values():
@@ -110,9 +117,9 @@ class Service:
             try:
                 drawing, manifest = container.load(full)
             except container.ContainerError as err:
-                raise DocError(err.message)
+                raise DocumentFault(err.message)
             name = os.path.splitext(os.path.basename(full))[0]
-            doc = Document(drawing, name, full, "drawing", drawing.metric)
+            doc = Document(drawing, name, full, _kind(manifest), drawing.metric)
             doc.created = str(manifest.get("created") or doc.created)
             self._register(doc)
         self.add_recent(full)
@@ -121,17 +128,17 @@ class Service:
     def save(self, doc: Document, path: str = "") -> Document:
         target = (path or doc.path or "").strip()
         if not target:
-            raise DocError("The drawing has no file name yet; give a path.")
+            raise DocumentFault("The drawing has no file name yet; give a path.")
         if os.path.splitext(target)[1] == "":
             target += EXT
         with doc.lock:
             if doc.in_tx():
-                raise DocError("A command is still recording; finish it before saving.", 409)
+                raise DocumentFault("A command is still recording; finish it before saving.", 409)
             doc.undo.end_group()
             try:
-                dest = container.save(target, doc.drawing, doc.name, doc.created, bool(sv.session_value("ISAVEBAK")))
+                dest = container.save(target, doc.drawing, doc.name, doc.created, bool(sv.session_value("ISAVEBAK")), doc.kind)
             except container.ContainerError as err:
-                raise DocError(err.message)
+                raise DocumentFault(err.message)
             doc.mark_saved(dest)
             doc.name = os.path.splitext(os.path.basename(dest))[0]
             self.saver.discard(doc)
@@ -180,14 +187,14 @@ class Service:
     def recovery_open(self, name: str) -> Document:
         path = self.saver.resolve(name)
         if path is None:
-            raise DocError("That recovery file is not available.", 404)
+            raise DocumentFault("That recovery file is not available.", 404)
         try:
             drawing, manifest = container.load(path)
         except container.ContainerError as err:
-            raise DocError(err.message)
+            raise DocumentFault(err.message)
         with self.lock:
-            title = str(manifest.get("title") or "Recovered")
-            doc = Document(drawing, title, "", "drawing", drawing.metric)
+            title =str(manifest.get("title") or "Recovered")
+            doc = Document(drawing, title, "", _kind(manifest), drawing.metric)
             doc.created = str(manifest.get("created") or doc.created)
             doc.saved_state = -1
             doc.dirty_since = time.time()
