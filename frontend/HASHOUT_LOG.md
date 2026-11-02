@@ -1,0 +1,27 @@
+# HASHOUT_LOG · interface (frontend/)
+
+Living record of decisions and removed context for the interface, newest first. Read before editing.
+
+## Exit handshake, keystroke lists and renames · _v0.2.0 (src/ui/exit-guard.ts, shell-part1.ts, titlebar-tools.ts, dropdown.ts, info-dialogs.ts, prefs.ts, three style files)
+
+The desktop shell blocks close and quit and emits `formcad://exit-requested`; `exit-guard.ts` answers it with the existing Unsaved Changes dialog (Apply to All covers several dirty documents), then calls `confirm_exit` with `cancel` true only when the user backed out. No dirty document means no dialog and an immediate exit. The listener is registered before the pending-opens drain because that drain is what lets Rust start asking. The title bar command search is now a fixed pool of 8 slots, the dropdown keeps one keyed row per option and group heading and filters by `hidden`, and the command reference uses `patchList`, so typing changes text, hidden state and order only; `[hidden]` rules were added where `display: flex` overrode the attribute. `SaveFormat` became `FileSaveKind` to stay clear of a reference type name.
+
+## Integration, file dialogs and two flash fixes · _v0.2.0 (src/ui/shell-part1.ts, shell-part2.ts, command-line.ts, file-dialogs.ts, doc-store.ts, prefs.ts, io/api.ts, styles/shell.css, package.json)
+
+Preferences is owned by shell-part2; the fallback `settings` command and its `formcad:open-settings` event were removed. Documents carry `dirty` (boolean) beside `modified` (timestamp); closing and the tab dot read `dirty`. Workspace state is a `data-workspace` attribute on `.cv-app` instead of an event. Events with no listener (`tool-sets`, `hide-palettes`, `palette:layers`) were removed; `formcad:cursor` keeps its status bar listener for the canvas to come. Open and Save As use the Tauri dialog plugin (2.8.4, matching the Rust plugin) with `.fcad` and `.dxf` filters in the desktop app and a typed path in the browser; pending OS opens are drained at start and `formcad://open-paths` is followed. `@tauri-apps/api` is 2.12.4 because `tauri build` refuses a JavaScript API older than the locked Rust crate. Seventeen preference fields that duplicated engine variables were removed with the snap-mode table.
+
+Flash fixes found under 4x throttling: the command-line keyword buttons were created and removed on every prompt; they are now a fixed pool of 16 slots patched in place. The centre title overlapped the 18 menu titles below 2300 px; it now shows only when native menus take the menu row or the window is wide enough.
+
+Verified (Chromium 1440 by 900, CPU 4x, 150 ms latency, 1.6 Mbit/s, cache off): layout shift 0 after ready and after a LINE sequence; `#app` hidden in every frame before ready (0 of 376 and 0 of 388); 3 s idle, 0 node, text or attribute changes in status bar, title bar, command line, tabs and dock; during LINE no element added or removed in those containers except the history strip's rolling rows; zero console errors and zero failed requests.
+
+## Family shell, preferences, command line and dock · _v0.2.0 (index.html, vite.config.ts, src/app.ts, src/main.ts, src/ui/, src/io/, src/styles/)
+
+`app.ts` is the composition root: `mountShell()` builds the shell template once and returns every host element; `onShellMounted` and `onCapabilities` let sections register without editing `startApp`. `shell-part1.ts` registers the title bar, menus, tabs, Home and status bar; `shell-part2.ts` registers Preferences, the palette, the command line and the dock; each is one import in `main.ts`. `onCapabilities` registers at module load so the status bar never shows "Engine offline" before the first answer.
+
+Menu items that are engine commands run `POST /api/docs/{id}/command` and show the engine's answer; nothing in the menus is a dead item. Drafting toggles in the status bar read and write system variables (AUTOSNAP bits 8 and 16 for polar and tracking, OSMODE bit 16384 for running snaps) and follow `sysvar` events; engine variables are the source of truth for drafting options, so the preference store keeps only interface settings. Edit shortcuts are left to a focused text field. The command palette key reads `Shift+Mod+P` because `comboOf` orders modifiers Alt, Shift, Mod.
+
+The dev server injects the token meta by reading the engine's token file and stamps the header on proxied requests; the built interface gets the meta from the engine. Font preloads point at the dev paths and fall back to the CSS imports in the build.
+
+Removed from the formvis carry-over: user skins, favourite themes, the dock-boot script and the remembered-values history; they belong to the image editor.
+
+Verified: typecheck and build pass for each part; the built interface mounts in headless Chrome with no console errors.

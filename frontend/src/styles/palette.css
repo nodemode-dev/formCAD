@@ -1,0 +1,15 @@
+.cv-palette-input { width: 100%; height: var(--ctl-lg); font-size: var(--fs-14); }
+.cv-palette-box { display: flex; flex-direction: column; gap: var(--space-2); }
+.cv-palette-list { display: flex; flex-direction: column; gap: 2px; min-height: calc(12 * (var(--ctl) + 2px)); }
+.cv-palette-row { grid-template-columns: 22px minmax(0, 1fr) auto; width: 100%; border: 0; }
+.cv-palette-row[hidden] { display: none; }
+.cv-palette-icon { display: inline-flex; color: var(--text-muted); }
+.cv-palette-row.is-selected { background: var(--accent-color-dim); color: var(--text-primary); }
+.cv-palette-row.is-selected .cv-palette-icon { color: var(--accent-color); }
+.cv-palette-row.is-on .cv-list-name { color: var(--accent-ink); }
+.cv-palette-row.is-off { opacity: 0.45; cursor: default; }
+.cv-palette-row .cv-list-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.cv-palette-row .cv-list-meta { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-palette-empty { position: absolute; margin: 0; padding: var(--space-4); }
+.cv-palette-box { position: relative; }
+.cv-palette-empty[hidden] { display: none; }

@@ -1,0 +1,213 @@
+import type { DocStore } from './doc-store';
+import { el, isMac, q, setClass, setHidden, setText } from './dom';
+import { HomeFiles, type FilesTab } from './home-files';
+import { icon } from './icons';
+import { toast } from './toast';
+
+export interface HomeDeps {
+  docs: DocStore;
+  autoShow: () => boolean;
+  afterClose: () => boolean;
+  newFromTemplate: (template: string, name: string) => void;
+  openPath: (path: string) => void;
+}
+
+type Page = 'start' | FilesTab;
+
+interface Template { id: string; name: string; meta: string; icon?: string; sheet?: [number, number] }
+
+export const TEMPLATES: readonly Template[] = [
+  { id: 'drawing-mm-a3', name: '2D drawing, mm', meta: 'A3 sheet · 420 x 297 mm', sheet: [420, 297] },
+  { id: 'drawing-inch-ansi-b', name: '2D drawing, inch', meta: 'ANSI B · 17 x 11 in', sheet: [17, 11] },
+  { id: 'part', name: 'Part', meta: 'Solid part model', icon: 'part' },
+  { id: 'assembly', name: 'Assembly', meta: 'Components and joints', icon: 'assembly' },
+  { id: 'drawing-sheet', name: 'Drawing sheet', meta: 'Title block and views', icon: 'drawing' },
+  { id: 'surface', name: 'Surface model', meta: 'Free-form surfaces', icon: 'surface' },
+  { id: 'form', name: 'Form model', meta: 'Direct form modeling', icon: 'cube' },
+  { id: 'graph', name: 'Graph', meta: 'Parametric node graph', icon: 'graph' },
+];
+
+const FORMATS = ['FCAD', 'DXF', 'DWG', 'STEP', 'IGES', '3DM', 'STL', '3MF', 'OBJ', 'SVG'];
+
+const PAGE_TEXT: Record<FilesTab, { title: string; sub: string }> = {
+  recent: { title: 'Recent', sub: 'Drawings and models you opened or saved, newest first.' },
+  projects: { title: 'Projects', sub: 'Everything in the project library folder.' },
+  outputs: { title: 'Outputs', sub: 'Drawings and files you exported, newest first.' },
+};
+
+export class HomeScreen {
+  readonly root = el('<section class="cv-home" aria-label="Home" hidden></section>');
+  private readonly pages = new Map<Page, HomeFiles>();
+  private page: Page = 'start';
+  private forced = false;
+  private lastCount = 0;
+  private hadDocument = false;
+  private readonly back: HTMLElement;
+  private onShown: Array<(shown: boolean) => void> = [];
+
+  constructor(host: HTMLElement, private readonly d: HomeDeps) {
+    const mod = isMac ? '⌘' : 'Ctrl';
+    const navItem = (v: Page, ic: string, label: string): string => `<button class="cv-home-nav-item" type="button" data-v="${v}">${icon(ic, 16)}<span>${label}</span>${v === 'start' ? '' : '<span class="cv-home-count">0</span>'}</button>`;
+    const cmdItem = (cmd: string, ic: string, label: string): string => `<button class="cv-home-nav-item" type="button" data-cmd="${cmd}">${icon(ic, 16)}<span>${label}</span></button>`;
+    const key = (k: string): string => `<kbd class="cv-key">${mod}</kbd><kbd class="cv-key">${k}</kbd>`;
+    const formats = FORMATS.map((f) => `<span class="cv-home-format">${f}</span>`).join('');
+    const tiles = TEMPLATES.map((p, i) => {
+      const art = p.sheet ? `<span class="cv-home-sheet" style="aspect-ratio: ${p.sheet[0]} / ${p.sheet[1]}"></span>` : icon(p.icon ?? 'file', 28);
+      return `<button class="cv-home-size" type="button" data-template="${i}"><span class="cv-home-size-box">${art}</span><span class="cv-home-size-name">${p.name}</span><span class="cv-home-size-meta">${p.meta}</span></button>`;
+    }).join('');
+    const nav = `${navItem('start', 'home', 'Start')}${navItem('recent', 'history', 'Recent')}${navItem('projects', 'folder', 'Projects')}${navItem('outputs', 'download', 'Outputs')}`;
+    const filesPage = (p: FilesTab, extra = ''): string => `<div class="cv-home-page" data-page="${p}" hidden><div class="cv-home-head"><div><h1 class="cv-home-title">${PAGE_TEXT[p].title}</h1><p class="cv-home-sub">${PAGE_TEXT[p].sub}</p></div>${extra}</div><div class="cv-home-slot" data-slot="${p}"></div></div>`;
+    this.root.innerHTML = `<nav class="cv-home-nav" aria-label="Home">
+      <div class="cv-home-brand">FormCAD <span>by NodeMode</span></div>
+      ${nav}
+      <div class="cv-home-nav-sep"></div>
+      <div class="cv-home-nav-title">Create</div>
+      ${cmdItem('new', 'newFile', 'New drawing')}${cmdItem('open', 'folderOpen', 'Open')}${cmdItem('x:import', 'importFile', 'Import')}
+      <div class="cv-home-nav-foot"><button class="cv-home-nav-item cv-home-back" type="button" data-back hidden>${icon('chevronLeft', 16)}<span>Back to drawing</span></button>${cmdItem('settings', 'settings', 'Preferences')}${cmdItem('help', 'info', 'Help')}</div>
+    </nav>
+    <div class="cv-home-main">
+      <div class="cv-home-narrow">${nav}</div>
+      <div class="cv-home-page" data-page="start">
+        <div class="cv-home-head"><div><h1 class="cv-home-title"></h1><p class="cv-home-sub">Open a drawing or a model, or start from a template.</p></div></div>
+        <div class="cv-home-hero">
+          <span class="cv-home-hero-icon">${icon('drawing', 26)}</span>
+          <div class="cv-home-hero-text"><div class="cv-home-hero-title">Start a drawing or open a model</div>
+            <div class="cv-home-hero-sub">Drop a .fcad or .dxf file anywhere in the window to open it. Other formats come in through Import.</div>
+            <div class="cv-home-formats">${formats}</div></div>
+          <div class="cv-home-hero-actions">
+            <button class="cv-home-action is-primary" type="button" data-cmd="new">${icon('newFile', 16)}<span class="cv-home-label">New drawing...</span>${key('N')}</button>
+            <button class="cv-home-action" type="button" data-cmd="open">${icon('folderOpen', 16)}<span class="cv-home-label">Open...</span>${key('O')}</button>
+            <button class="cv-home-action is-ghost" type="button" data-cmd="x:import">${icon('importFile', 16)}<span class="cv-home-label">Import...</span></button>
+          </div>
+        </div>
+        <section class="cv-home-section"><div class="cv-home-section-head"><h2 class="cv-home-section-title">Recent</h2><button class="cv-btn cv-btn-ghost" type="button" data-v="recent">See all</button></div><div class="cv-home-slot" data-slot="start"></div></section>
+        <section class="cv-home-section"><div class="cv-home-section-head"><h2 class="cv-home-section-title">New from template</h2><button class="cv-btn cv-btn-ghost" type="button" data-cmd="new">Blank drawing</button></div><div class="cv-home-sizes">${tiles}</div></section>
+      </div>
+      ${filesPage('recent')}${filesPage('projects', `<div class="cv-home-head-actions"><button class="cv-btn" type="button" data-cmd="settings">${icon('folder', 14)}Library folder...</button></div>`)}${filesPage('outputs')}
+    </div>`;
+    this.back = q(this.root, '[data-back]');
+    const files = { openPath: d.openPath };
+    const count = (v: FilesTab) => (n: number): void => {
+      for (const c of Array.from(this.root.querySelectorAll(`[data-v="${v}"] .cv-home-count`))) setText(c, String(n));
+    };
+    const mount = (slot: Page, f: HomeFiles): void => {
+      q(this.root, `[data-slot="${slot}"]`).appendChild(f.root);
+      this.pages.set(slot, f);
+    };
+    mount('start', new HomeFiles(files, 'recent', { limit: 8, compact: true, onCount: count('recent') }));
+    mount('recent', new HomeFiles(files, 'recent', { onCount: count('recent') }));
+    mount('projects', new HomeFiles(files, 'projects', { onCount: count('projects') }));
+    mount('outputs', new HomeFiles(files, 'outputs', { onCount: count('outputs') }));
+    this.root.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-back]')) { this.forced = false; this.sync(); return; }
+      const v = (target.closest('[data-v]') as HTMLElement | null)?.dataset.v as Page | undefined;
+      if (v) { this.show(v); return; }
+      if (target.closest('[data-cmd]')) return;
+      const at = (target.closest('[data-template]') as HTMLElement | null)?.dataset.template;
+      const tpl = at !== undefined ? TEMPLATES[Number(at)] : undefined;
+      if (tpl) d.newFromTemplate(tpl.id, tpl.name);
+    });
+    host.appendChild(this.root);
+    d.docs.onChange(() => this.sync());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.forced && d.docs.docs.length && !e.defaultPrevented) { this.forced = false; this.sync(); }
+    });
+    this.paint();
+    this.sync();
+  }
+
+  onVisibility(fn: (shown: boolean) => void): void { this.onShown.push(fn); }
+
+  private paint(): void {
+    for (const n of Array.from(this.root.querySelectorAll<HTMLElement>('.cv-home-page'))) setHidden(n, n.dataset.page !== this.page);
+    for (const n of Array.from(this.root.querySelectorAll<HTMLElement>('.cv-home-nav-item[data-v]'))) setClass(n, 'is-active', n.dataset.v === this.page);
+    const h = new Date().getHours();
+    setText(this.root.querySelector('[data-page="start"] .cv-home-title'), h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening');
+  }
+
+  private fill(): void {
+    void this.pages.get(this.page)?.refresh();
+    for (const [p, f] of this.pages) {
+      if (p !== this.page && p !== 'start' && !(p === 'recent' && this.page === 'start')) void f.refresh();
+    }
+    if (this.page !== 'start') void this.pages.get('start')?.refresh();
+  }
+
+  get isShown(): boolean { return !this.root.hidden; }
+
+  show(page?: Page): void {
+    if (page && page !== this.page) {
+      this.page = page;
+      this.paint();
+      if (!this.root.hidden) this.fill();
+    }
+    this.forced = true;
+    this.sync();
+  }
+
+  hide(): void {
+    this.forced = false;
+    this.sync();
+  }
+
+  sync(): void {
+    const n = this.d.docs.docs.length;
+    if (n > this.lastCount) this.forced = false;
+    this.lastCount = n;
+    if (n > 0) this.hadDocument = true;
+    const on = this.forced || (n === 0 && (this.hadDocument ? this.d.afterClose() : this.d.autoShow()));
+    const was = !this.root.hidden;
+    if (on && !was) { this.paint(); this.fill(); }
+    setHidden(this.root, !on);
+    setHidden(this.back, n === 0);
+    if (on !== was) for (const fn of this.onShown) fn(on);
+  }
+}
+
+const OPENABLE = /\.(fcad|dxf)$/i;
+
+export class DropOverlay {
+  private readonly node = el(`<div class="cv-drop" hidden><div class="cv-drop-card">${icon('upload', 28)}<span>Drop a .fcad or .dxf file to open it</span></div></div>`);
+  private depth = 0;
+
+  constructor(host: HTMLElement, private readonly openPath: (path: string) => void) {
+    host.appendChild(this.node);
+    const hasFiles = (e: DragEvent): boolean => !!e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files');
+    window.addEventListener('dragenter', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      this.depth++;
+      setHidden(this.node, false);
+    });
+    window.addEventListener('dragover', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    });
+    window.addEventListener('dragleave', (e) => {
+      if (!hasFiles(e)) return;
+      this.depth = Math.max(0, this.depth - 1);
+      if (!this.depth) setHidden(this.node, true);
+    });
+    window.addEventListener('drop', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      this.depth = 0;
+      setHidden(this.node, true);
+      this.take(Array.from(e.dataTransfer?.files ?? []));
+    });
+  }
+
+  private take(files: File[]): void {
+    for (const f of files) {
+      if (!OPENABLE.test(f.name)) {
+        toast(`${f.name}: only .fcad and .dxf open by drop. Use Import for other formats.`, 'error');
+        continue;
+      }
+      const path = (f as File & { path?: string }).path;
+      if (path) this.openPath(path);
+      else toast(`${f.name}: this window does not share the file location. Use Open and type the path.`, 'error');
+    }
+  }
+}
