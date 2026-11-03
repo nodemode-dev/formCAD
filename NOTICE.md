@@ -22,7 +22,7 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | Work | License | Where |
 | --- | --- | --- |
 | @fontsource/inter 5.3.0, @fontsource/jetbrains-mono 5.3.0 | OFL-1.1 (fonts), MIT (package) | `frontend/package.json`, `frontend/src/styles/fonts.css` |
-| @tauri-apps/api 2.11.1, @tauri-apps/cli 2.11.4 | Apache-2.0 OR MIT | `frontend/package.json` |
+| @tauri-apps/api 2.12.4, @tauri-apps/plugin-dialog 2.8.4, @tauri-apps/cli 2.11.4 | Apache-2.0 OR MIT | `frontend/package.json` |
 | three 0.186.1 | MIT | `frontend/package.json` |
 | three-gpu-pathtracer 0.0.27 | MIT (package `LICENSE`, Copyright 2021 Garrett Johnson; npm metadata agrees); the deprecated WebGL 2 class `WebGLPathTracer` is used, peer range three >= 0.185; progressive and tiled path tracing in the render mode, `frontend/src/render/`. It bundles a spatial denoise filter (`DenoiseMaterial`) adapted from glslSmartDeNoise by Michele Morrone, BSD-2-Clause: Copyright (c) 2018-2019 Michele Morrone, all rights reserved, redistribution and use in source and binary forms with or without modification permitted provided the copyright notice, the conditions and the disclaimer are kept | `frontend/package.json` |
 | three-mesh-bvh 0.9.18 | MIT (package `LICENSE`, Copyright 2018 Garrett Johnson); peer of the path tracer, builds the bounding volume hierarchy | `frontend/package.json` |

@@ -10,6 +10,8 @@ Every data file or table that ships with FormCAD, with where its values come fro
 | Sheet metal bend tables | `backend/app/data/sheetmetal/bend_tables.json` | the file's own source fields; user tables override |
 | Plastic materials and rules | `backend/app/data/plastic/` | the files' own source fields |
 | Fonts | `backend/app/data/fonts/` | licences in `NOTICE.md` |
+| Render appearances and environments | `backend/app/data/render/appearances.json`, `environments.json`, `env/*.hdr` | sources and licences in the `NOTICE.md` rows for render appearances and environments (three CC0 HDRIs; reflectance values from a permissively licensed PBR reference) |
+| CAM post templates | `backend/app/data/cam/posts/*.json` | dialect templates written for FormCAD from the public G-code documentation of the controllers (LinuxCNC and grbl); no vendor tables copied |
 | Toolbox sizes | none ships | generators take user sizes; the library and the CSV importer read the user's own tables; proportion defaults (head 1.5 d, hex across flats 1.6 d, nut 0.8 d, washer 2 d and 0.15 d, a 10 x 26 x 8 bearing) are FormCAD decisions for a generic shape, not a standard |
 | Structural sections, pipe | none ships | user sizes only (inline weld profiles, toolbox section generators) |
 | Emission factors | none ships | the user's own table or CSV; the UK government conversion factors (OGL v3.0, attribution required) may be imported by the user; ICE is not embeddable |
