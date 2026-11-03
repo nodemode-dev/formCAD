@@ -245,7 +245,7 @@ def clean_study(d, raw: dict, base=None) -> dict:
 
 
 def label_of(raw: dict, base, default: str) -> str:
-    name = raw.get("name", (base or {}).get("name"))
+    name = raw.get("name", (base or {}).get("label") or (base or {}).get("name"))
     name = str(name if name not in (None, "") else default).strip()
     if not name or len(name) > MAX_NAME:
         raise SimRecordError("A name is 1 to %d characters." % MAX_NAME)

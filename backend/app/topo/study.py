@@ -128,6 +128,13 @@ def resolve(snap: dict, restrict: bool, overrides: dict = None) -> Setup:
     grid = Grid.fit(fs.lo, fs.hi, h)
     if grid.ne > cap(restrict, "cells") * 4 or grid.ndof > cap(restrict, "unknowns"):
         raise TopoError("The grid would hold %d cells and %d unknowns; the limit is %d unknowns%s. Use a larger cell size." % (grid.ne, grid.ndof, cap(restrict, "unknowns"), " for a macro or an outside agent" if restrict else ""))
+    from app.sim import fem
+    from app.topo import hexfem
+
+    need_mb = hexfem.estimate_bytes(grid.ndof) / 1048576.0
+    free_mb = fem.available_mb()
+    if free_mb is not None and need_mb > 0.7 * free_mb:
+        raise TopoError("The optimisation needs about %.0f MB and only about %.0f MB is free. Use a larger cell size." % (need_mb, free_mb))
     design = G.voxelize_mesh(grid, pos, idx, int(cap(restrict, "triangles")))
     if design.sum() < 8:
         raise TopoError("The body holds fewer than 8 cells at this cell size. Use a smaller cell size.")

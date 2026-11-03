@@ -22,7 +22,9 @@ def pack(grid: Grid, xphys, solid, vm, cls, history: list, meta: dict) -> bytes:
 
 
 def unpack(data: bytes):
-    with np.load(io.BytesIO(data), allow_pickle=False) as z:
+    from app.sim import npz
+
+    with np.load(npz.checked(data), allow_pickle=False) as z:
         arrays = {k: z[k] for k in z.files}
     meta = json.loads(str(arrays.pop("meta")))
     g = meta["grid"]

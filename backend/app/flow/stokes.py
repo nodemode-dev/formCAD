@@ -164,6 +164,11 @@ def solve_flow(mesh, params: dict, check=None, runner=None) -> dict:
     if unknowns > limit:
         raise FlowError("The flow problem has %d unknowns, above the limit of %d. Use a coarser mesh." % (unknowns, limit))
     memory = memory_estimate(unknowns, runner)
+    from app.sim import fem
+
+    free_mb = fem.available_mb()
+    if free_mb is not None and memory / 1048576.0 > 0.7 * free_mb:
+        raise FlowError("The flow solve needs about %.0f MB for a direct solve and only about %.0f MB is free. Use a coarser mesh." % (memory / 1048576.0, free_mb))
     warnings = []
     if not params.get("curved", True):
         warnings.append("The mesh has no mid-edge nodes, so the walls are faceted and the pressure drop of narrow passages reads high.")

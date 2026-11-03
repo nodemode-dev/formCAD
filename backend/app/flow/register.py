@@ -78,7 +78,7 @@ def run_flow(ctx):
     ctx.progress(0.05, "Preparing")
     if which == "own":
         params = {"viscosity": mu, "density": rho, "inlet": names[0], "outlet": names[1], "speed": inlet.get("speed"), "flow": inlet.get("flow"), "curved": bool(ctx.model.curved), "max_unknowns": ctx.limits["dofs"]}
-        out = stokes.solve_flow(mesh, params, check=ctx.check)
+        out = stokes.solve_flow(mesh, params, check=ctx.check, runner=bool(ctx.limits.get("dofs", 1 << 30) <= LOCKED_DOFS))
         summary = out["summary"]
         summary["solver"] = "own"
         summary["counts"] = {"nodes": int(ctx.model.nodes_mm.shape[0]), "elements": int(ctx.model.tets.shape[0]), "dofs": summary["unknowns"]}
@@ -89,7 +89,7 @@ def run_flow(ctx):
     speed = float(inlet["speed"]) if inlet.get("speed") else float(inlet["flow"]) / area_flat
     values = inp["profile"][1] * speed
     ctx.progress(0.1, "Running SU2")
-    res = su2.solve(inp["points"], inp["tets"], inp["markers"], "inlet", "outlet", ["wall"], rho, mu, speed, inp["direction"], profile=(inp["profile"][0], values, inp["direction"]), check=ctx.check, runner=None, extra=ctx.options.get("su2_options"))
+    res = su2.solve(inp["points"], inp["tets"], inp["markers"], "inlet", "outlet", ["wall"], rho, mu, speed, inp["direction"], profile=(inp["profile"][0], values, inp["direction"]), check=ctx.check, runner=bool(ctx.limits.get("dofs", 1 << 30) <= LOCKED_DOFS), extra=ctx.options.get("su2_options"))
     f = res["fields"]
     pressure = f["Pressure"]
     vel = np.stack([f["Velocity_x"], f["Velocity_y"], f["Velocity_z"]], axis=1)
@@ -132,8 +132,6 @@ def element_volumes(basis, mesh):
 
 @flow_error
 def run_cooling(ctx):
-    from skfem import condense  # noqa: F401
-
     started = time.time()
     k0 = ctx.material.get("k")
     if not k0:

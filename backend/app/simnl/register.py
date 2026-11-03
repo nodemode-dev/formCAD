@@ -410,7 +410,8 @@ def run_explicit_event(ctx):
     ramp = num(opts, "ramp_s", 0.0, 0.0)
     alpha_m = num(opts, "damping_alpha", 0.0, 0.0)
     frames = num(opts, "frames", 40, 2, 200, True)
-    max_steps = num(opts, "max_steps", 1000000, 10, 5000000, True)
+    step_cap = 400000 if ctx.limits["dofs"] <= 30000 else 5000000
+    max_steps = num(opts, "max_steps", min(1000000, step_cap), 10, step_cap, True)
     eps_scale = num(opts, "penalty_scale", 1.0, 0.001, 100.0)
     vel = opts.get("velocity") or [0.0, 0.0, 0.0]
     if not isinstance(vel, (list, tuple)) or len(vel) != 3:

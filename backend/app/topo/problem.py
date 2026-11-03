@@ -1,10 +1,6 @@
 import numpy as np
 
-from app.topo import grid as G
-from app.topo.grid import DESIGN, SOLID, VOID, Grid, TopoError
-
-MAX_REGIONS = 64
-MAX_LOADS = 32
+from app.topo.grid import VOID, Grid
 
 
 class Problem:
@@ -26,70 +22,6 @@ class Problem:
         used = np.zeros(self.grid.nn, dtype=bool)
         used[self.grid.element_nodes()[mask].ravel()] = True
         return used
-
-
-def build(grid: Grid, design: np.ndarray, material: dict, preserve=(), obstacles=(), loads=(), supports=(), auto_preserve: bool = True, start=None) -> Problem:
-    if len(preserve) + len(obstacles) > MAX_REGIONS or len(loads) + len(supports) > MAX_LOADS:
-        raise TopoError("Too many regions, loads or supports.")
-    E = float(material.get("E", 0.0))
-    nu = float(material.get("nu", 0.3))
-    if not E > 0:
-        raise TopoError("The material needs a Young's modulus.")
-    cls = np.full(grid.ne, DESIGN, dtype=np.int8)
-    cls[~design] = VOID
-    notes = []
-    for spec in obstacles:
-        m = G.region_mask_elements(grid, spec)
-        if not m.any():
-            notes.append("An obstacle region holds no cell of the grid.")
-        cls[m] = VOID
-    for spec in preserve:
-        m = G.region_mask_elements(grid, spec) & design
-        if not m.any():
-            notes.append("A preserve region holds no cell of the design space.")
-        cls[m] = SOLID
-    force = np.zeros(grid.ndof)
-    fixed = np.zeros(grid.ndof, dtype=bool)
-    touched = np.zeros(grid.nn, dtype=bool)
-    live_nodes = np.zeros(grid.nn, dtype=bool)
-    live_nodes[grid.element_nodes()[cls != VOID].ravel()] = True
-    for spec in supports:
-        reg = spec.get("region") or spec
-        nodes = G.region_mask_nodes(grid, reg) & live_nodes
-        if not nodes.any():
-            raise TopoError("A support holds no node of the design; move it onto the material.")
-        flags = spec.get("fix", [True, True, True])
-        if len(flags) != 3:
-            raise TopoError("A support fixes x, y and z: give three flags.")
-        for c in range(3):
-            if flags[c]:
-                fixed[3 * np.flatnonzero(nodes) + c] = True
-        touched |= nodes
-    for spec in loads:
-        reg = spec.get("region") or spec
-        nodes = G.region_mask_nodes(grid, reg) & live_nodes
-        if not nodes.any():
-            raise TopoError("A load holds no node of the design; move it onto the material.")
-        vec = G.vec3(spec.get("force"), "A load force")
-        share = vec / float(nodes.sum())
-        idx = np.flatnonzero(nodes)
-        for c in range(3):
-            force[3 * idx + c] += share[c]
-        touched |= nodes
-    if not fixed.any():
-        raise TopoError("Add at least one support: nothing holds the design.")
-    if not np.any(force != 0):
-        raise TopoError("Add at least one load: with no load there is nothing to optimise for.")
-    if auto_preserve:
-        en = grid.element_nodes()
-        near = touched[en].any(axis=1) & (cls == DESIGN)
-        cls[near] = SOLID
-        if near.any():
-            notes.append("%d cells next to loads and supports were kept solid." % int(near.sum()))
-    p = Problem(grid, cls, force, fixed, E, nu, float(material.get("rho", 0.0)), float(material.get("yield", 0.0)))
-    p.notes = notes
-    p.start = start
-    return p
 
 
 def reachable(problem: Problem, solid: np.ndarray) -> np.ndarray:

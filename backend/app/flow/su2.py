@@ -9,7 +9,7 @@ import time
 
 import numpy as np
 
-from app.flow.limits import Cancelled, FlowError, cap
+from app.flow.limits import LIMITS, Cancelled, FlowError, cap
 
 SETTINGS_FILE = "flow.json"
 EXE_NAMES = ("SU2_CFD", "SU2_CFD.exe")
@@ -17,6 +17,7 @@ MPI_NAMES = ("mpirun", "mpiexec", "mpiexec.exe", "mpirun.exe")
 MAX_TAIL = 64 * 1024
 MAX_LOG = 256 * 1024 * 1024
 MAX_RANKS = 16
+ENV_KEEP = frozenset(("PATH", "HOME", "LANG", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"))
 TUNABLE = frozenset(("CFL_NUMBER", "ITER", "CONV_NUM_METHOD_FLOW", "MUSCL_FLOW", "SLOPE_LIMITER_FLOW", "INC_NONDIM", "LINEAR_SOLVER_ITER", "JST_SENSOR_COEFF", "CONV_RESIDUAL_MINVAL", "NUM_METHOD_GRAD", "LINEAR_SOLVER_PREC"))
 LABEL = "SU2 (LGPL-2.1), a separate program you install yourself, run as a separate process on straight-sided linear elements."
 
@@ -45,11 +46,15 @@ def save_settings(enabled=None, path=None, mpi=None, ranks=None) -> dict:
         want = str(path).strip()
         if want and os.path.basename(want.replace("\\", "/")) not in EXE_NAMES:
             raise FlowError("The SU2 program must be named SU2_CFD.")
+        if want and not (os.path.isabs(want) and os.path.isfile(want)):
+            raise FlowError("The SU2 program must be given as a full path to an existing file.")
         cur["su2Path"] = want
     if mpi is not None:
         want = str(mpi).strip()
         if want and os.path.basename(want.replace("\\", "/")).lower() not in MPI_NAMES:
             raise FlowError("The MPI launcher must be mpirun or mpiexec.")
+        if want and not (os.path.isabs(want) and os.path.isfile(want)):
+            raise FlowError("The MPI launcher must be given as a full path to an existing file.")
         cur["mpiPath"] = want
     if ranks is not None:
         if not isinstance(ranks, int) or isinstance(ranks, bool) or not 1 <= ranks <= MAX_RANKS:
@@ -161,12 +166,16 @@ def config_text(mesh_file: str, density: float, viscosity: float, speed: float, 
     ]
     if profile_file:
         lines += ["SPECIFIED_INLET_PROFILE= YES", "INLET_FILENAME= %s" % profile_file]
+    if extra and not isinstance(extra, dict):
+        raise FlowError("The SU2 settings are a list of names and values.")
     for key, value in (extra or {}).items():
         if key not in TUNABLE:
             raise FlowError("The SU2 setting %s cannot be changed here. Allowed: %s." % (key, ", ".join(sorted(TUNABLE))))
         text = str(value).strip()
         if not text or len(text) > 80 or any(c in text for c in "\n\r\x00%"):
             raise FlowError("The SU2 setting %s has an invalid value." % key)
+        if key == "ITER" and not (text.isdigit() and 1 <= int(text) <= LIMITS["iterations"][0]):
+            raise FlowError("The SU2 iteration count is a whole number from 1 to %d." % LIMITS["iterations"][0])
         lines = [ln for ln in lines if not ln.startswith(key + "=")] + ["%s= %s" % (key, text)]
     return "\n".join(lines) + "\n"
 
@@ -174,7 +183,7 @@ def config_text(mesh_file: str, density: float, viscosity: float, speed: float, 
 def run_program(args: list, cwd: str, timeout: float, check=None, log_name: str = "su2.log") -> str:
     check = check or (lambda: None)
     log_path = os.path.join(cwd, log_name)
-    env = dict(os.environ)
+    env = {k: v for k, v in os.environ.items() if k in ENV_KEEP or k.startswith(("OMPI_", "PMIX_", "LC_"))}
     with open(log_path, "wb") as log:
         try:
             proc = subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, shell=False, env=env)

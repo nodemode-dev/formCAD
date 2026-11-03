@@ -32,8 +32,9 @@ def keys_of(tri: np.ndarray, n: int) -> np.ndarray:
 
 def build(path: str, groups: dict | None = None) -> Model:
     from skfem import MeshTet, MeshTet2
+    from app.sim import npz
 
-    with np.load(path, allow_pickle=False) as z:
+    with np.load(npz.checked(path), allow_pickle=False) as z:
         nodes = z["nodes"]
         tets = z["tets"]
         tris = z["tris"]

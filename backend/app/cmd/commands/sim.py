@@ -166,6 +166,76 @@ def fixture_exec(ctx, args):
     return fixture_run(ctx, args)
 
 
+def contact_run(ctx, args):
+    raw = dict(args)
+    for side in ("a", "b"):
+        if isinstance(raw.get(side), str):
+            raw[side] = run(parse_select, raw[side])
+    row = run(records.create, ctx.d, "contact", raw)
+    ctx.say("SIMCONTACT: created %s (%s)." % (row["id"], row["type"]))
+    return {"record": row}
+
+
+@command("simcontact", aliases=("studycontact",), group=GROUP, label="Study Contact", description="Add a contact between two sets of faces for a nonlinear study: bonded, frictionless or frictional.", menu="Simulate > Contact")
+def contact_cmd(ctx):
+    k = yield ctx.keyword("Contact type", ["Bonded", "Frictionless", "Frictional"], "Frictionless")
+    if k.kind != "keyword":
+        return
+    raw = {"type": str(k.value).lower()}
+    for side in ("a", "b"):
+        t = yield ctx.text("Faces of side %s (x 200, y 0, z 10, face 3 or all)" % side.upper())
+        if t.kind != "text":
+            return
+        raw[side] = str(t.value)
+    if raw["type"] == "frictional":
+        f = yield ctx.number("Friction coefficient", default=0.2, minimum=0.0)
+        if f.kind != "number":
+            return
+        raw["friction"] = f.value
+    return contact_run(ctx, raw)
+
+
+@executes("simcontact")
+def contact_exec(ctx, args):
+    return contact_run(ctx, args)
+
+
+def control_run(ctx, args):
+    raw = dict(args)
+    if raw.get("maxh") not in (None, "") and "maxh_mm" not in raw:
+        raw["maxh_mm"] = raw.pop("maxh")
+    if isinstance(raw.get("select"), str):
+        raw["select"] = run(parse_select, raw["select"])
+    sid = raw.pop("study", None)
+    row = run(records.create, ctx.d, "mesh_control", raw)
+    ctx.say("SIMCONTROL: created %s (%.3g mm)." % (row["id"], row["maxh_mm"]))
+    if sid:
+        base = records.get(ctx.d, str(sid))
+        if base is None or base.get("kind") != "study":
+            raise CommandError("There is no study %s." % sid)
+        mesh = dict(base.get("mesh") or {})
+        mesh["controls"] = list(mesh.get("controls") or []) + [row["id"]]
+        run(records.update, ctx.d, str(sid), {"mesh": mesh})
+        ctx.say("SIMCONTROL: added to %s." % sid)
+    return {"record": row}
+
+
+@command("simcontrol", aliases=("studymeshcontrol",), group=GROUP, label="Mesh Control", description="Set a finer element size on chosen faces of a study.", menu="Simulate > Mesh Control")
+def control_cmd(ctx):
+    t = yield ctx.text("Faces (x 200, y 0, z 10, face 3 or all)")
+    if t.kind != "text":
+        return
+    h = yield ctx.number("Element size in millimetres", positive=True)
+    if h.kind != "number":
+        return
+    return control_run(ctx, {"select": str(t.value), "maxh_mm": h.value})
+
+
+@executes("simcontrol")
+def control_exec(ctx, args):
+    return control_run(ctx, args)
+
+
 def study_run(ctx, args):
     raw = dict(args)
     sid = raw.pop("id", None) or raw.pop("study", None)

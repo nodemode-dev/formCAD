@@ -9,7 +9,7 @@ import time
 import numpy as np
 
 from app.cmd import barred
-from app.sim import fem, meshio, records, registry
+from app.sim import fem, meshio, npz, records, registry
 from app.sim.fem import SimError
 from app.sim.registry import Cancelled
 from app.solid import blobs, work
@@ -124,7 +124,7 @@ def mesh_step(doc, snap: dict, ctl, restrict: bool) -> dict:
         ctl.step("Exporting the shape", 0.02)
         brep = export_brep(doc, snap["body"], tmp)
         ctl.step("Reading faces", 0.06)
-        faces = mesher.call("faces", {"path": brep}, 60.0)
+        faces = mesher.call("faces", {"path": brep}, 60.0, ctl)
         if faces["solids"] != 1:
             raise SimError("A study needs one solid body; this shape holds %d solids." % faces["solids"])
         mesh_cfg = snap["study"]["mesh"]
@@ -135,7 +135,7 @@ def mesh_step(doc, snap: dict, ctl, restrict: bool) -> dict:
         refine = [{"select": c["select"], "maxh": c["maxh_mm"]} for c in snap["controls"]]
         ctl.step("Meshing", 0.1)
         out = os.path.join(tmp, "mesh.npz")
-        info = mesher.call("mesh", {"path": brep, "out": out, "maxh": h, "refine": refine, "groups": groups_of(snap), "max_elements": lim["elements"], "second_order": True}, 300.0)
+        info = mesher.call("mesh", {"path": brep, "out": out, "maxh": h, "refine": refine, "groups": groups_of(snap), "max_elements": lim["elements"], "second_order": True}, 300.0, ctl)
         for name, ids in info["groups"].items():
             if not ids:
                 raise SimError("The selection of %s matches no face of the part." % name.replace("load:", "load ").replace("fix:", "fixture "))
@@ -246,7 +246,7 @@ def load_result(drawing, result_id: str) -> tuple:
     row = records.get(drawing, result_id, "result")
     if row is None:
         raise SimError("There is no result %s." % result_id)
-    with np.load(io.BytesIO(get_blob(drawing, row["blob"])), allow_pickle=False) as z:
+    with np.load(npz.checked(get_blob(drawing, row["blob"])), allow_pickle=False) as z:
         data = {k: z[k] for k in z.files}
     meta = json.loads(str(data.pop("meta")))
     return row, data, meta

@@ -3,6 +3,7 @@ import time
 import uuid
 
 from app.doc import events
+from app.services import mesher
 from app.services.mesher import MesherError
 from app.sim import study
 from app.sim.fem import SimError
@@ -69,8 +70,8 @@ class Job:
             self.state = "cancelled"
             self.message = str(err)
         except (SimError, SimRecordError, MesherError, SolidError, KeyError, ValueError, MemoryError) as err:
-            self.state = "error"
-            self.message = str(err.args[0]) if isinstance(err, KeyError) and err.args else str(err)
+            self.state = "cancelled" if self.stop.is_set() else "error"
+            self.message = "The study was cancelled." if self.stop.is_set() else str(err.args[0]) if isinstance(err, KeyError) and err.args else str(err)
         except Exception as err:
             self.state = "error"
             self.message = "The study failed (%s)." % err
@@ -123,6 +124,7 @@ def view(job_id: str) -> dict:
 def cancel(job_id: str) -> dict:
     job = get(job_id)
     job.stop.set()
+    mesher.abort(job)
     if job.state in ("queued", "running"):
         job.state = "cancelled"
         job.message = "The study was cancelled."

@@ -16,6 +16,7 @@ EXE = WORKER + (".exe" if os.name == "nt" else "")
 RECORD = Path(__file__).resolve().parents[1] / "data" / "mesher-licence.json"
 RETRY_AFTER = 30.0
 HELLO_TIMEOUT = 60.0
+MAX_DOWNLOAD = 600 << 20
 
 
 class MesherError(RuntimeError):
@@ -61,6 +62,8 @@ def resolve() -> tuple[list[str], str, str] | None:
 
 
 _lock = threading.RLock()
+_call_lock = threading.Lock()
+_owner = None
 _worker = None
 _info: dict | None = None
 _found = None
@@ -104,14 +107,31 @@ def probe(force: bool = False):
         return _info
 
 
-def call(method: str, params: dict | None = None, timeout: float = 120.0):
-    with _lock:
-        if probe() is None or _worker is None:
-            raise MesherError(_message)
+def call(method: str, params: dict | None = None, timeout: float = 120.0, owner=None):
+    global _owner
+    if not _call_lock.acquire(timeout=timeout):
+        raise MesherError("The mesher is busy with another study.")
+    try:
+        with _lock:
+            if probe() is None or _worker is None:
+                raise MesherError(_message)
+            worker = _worker
+            _owner = owner
         try:
-            return _worker.call(method, params, timeout)
+            return worker.call(method, params, timeout)
         except kernel.KernelError as err:
             raise MesherError(str(err))
+    finally:
+        _owner = None
+        _call_lock.release()
+
+
+def abort(owner) -> bool:
+    with _lock:
+        if owner is not None and _owner is owner and _worker is not None and _worker.alive():
+            _worker.process.kill()
+            return True
+    return False
 
 
 def status() -> dict:
@@ -167,6 +187,8 @@ def run_install(rec: dict, release: str, target: str) -> None:
                     for chunk in response.iter_bytes(1 << 20):
                         handle.write(chunk)
                         done += len(chunk)
+                        if done > MAX_DOWNLOAD:
+                            raise OSError("the download is larger than the %d MB a mesher build can be" % (MAX_DOWNLOAD >> 20))
                         if total:
                             _set("Downloading the mesher.", min(0.9, done / total * 0.9))
             _set("Checking every file.", 0.92)

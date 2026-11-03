@@ -1,6 +1,7 @@
 import html
 import io
 import math
+import os
 import time
 
 import numpy as np
@@ -251,6 +252,8 @@ def write(doc, sid: str, path: str, fmt_name: str = "html", title: str | None = 
     f = facts(doc, sid)
     payload = display.show(doc, sid)
     name = title or "Simulation report, study %s" % f["study"]["id"]
+    if not os.path.isabs(os.path.expanduser(str(path or "").strip())):
+        raise SimError("Give the full path of the report file.")
     dest = outputs.checked(path, tuple(FORMATS.values()), FORMATS[kind])
     if not dest.lower().endswith(FORMATS[kind]):
         raise SimError("The file name must end in %s for a %s report." % (FORMATS[kind], kind))

@@ -6,6 +6,7 @@ from importlib import metadata
 
 MAX_ELEMENTS = 400000
 MIN_ELEMENTS_FACTOR = 0.1178
+CONTROL_LAYER_FACTOR = 4.0
 EDGE_SLOTS = ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3))
 OUT = sys.stdout
 
@@ -147,6 +148,7 @@ def mesh(params: dict) -> dict:
     if len(refine) > 64:
         raise ValueError("At most 64 mesh controls are allowed.")
     smallest = maxh
+    controlled = {}
     for item in refine:
         h = float(item.get("maxh", 0))
         if not h > 0:
@@ -154,12 +156,13 @@ def mesh(params: dict) -> dict:
         for i in pick(rows, item.get("select") or {}):
             shape.faces[i].maxh = h
             smallest = min(smallest, h)
+            controlled[i] = min(h, controlled.get(i, h))
     groups = {}
     for name, sel in (params.get("groups") or {}).items():
         groups[str(name)] = pick(rows, sel)
     for i, f in enumerate(shape.faces):
         f.name = "f%d" % i
-    guess = estimate(volume, maxh)
+    guess = estimate(volume, maxh) + sum(CONTROL_LAYER_FACTOR * float(rows[i]["area"]) / (0.433 * h * h) for i, h in controlled.items() if h < maxh)
     if guess > cap * 1.5:
         raise ValueError("The mesh would hold about %d elements, over the limit of %d. Use a larger element size." % (guess, cap))
     geo = type(geo)(shape)
@@ -205,8 +208,11 @@ METHODS = {"hello": hello, "faces": faces, "mesh": mesh}
 
 
 def reply(obj: dict) -> None:
-    OUT.write(json.dumps(obj) + "\n")
-    OUT.flush()
+    try:
+        OUT.write(json.dumps(obj) + "\n")
+        OUT.flush()
+    except BrokenPipeError:
+        os._exit(0)
 
 
 def serve() -> int:
