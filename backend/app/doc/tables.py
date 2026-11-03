@@ -5,7 +5,7 @@ LW_BYLAYER = -1
 LW_BYBLOCK = -2
 LW_DEFAULT = -3
 
-TABLE_NAMES = ("layers", "linetypes", "textstyles", "dimstyles", "mleaderstyles", "tablestyles", "mlinestyles", "blocks", "layouts", "views", "ucs", "vports", "groups", "layerstates", "layerfilters", "scales", "plotstyles", "parameters", "constraints", "sketches", "refgeo", "configs", "materials", "features", "components", "patterns", "asmconfigs", "mates", "graphs", "sheetmetal")
+TABLE_NAMES = ("layers", "linetypes", "textstyles", "dimstyles", "mleaderstyles", "tablestyles", "mlinestyles", "blocks", "layouts", "views", "ucs", "vports", "groups", "layerstates", "layerfilters", "scales", "plotstyles", "parameters", "constraints", "sketches", "refgeo", "configs", "materials", "features", "components", "patterns", "asmconfigs", "mates", "graphs", "sheetmetal", "plastic")
 
 ARROWHEADS = ("closed filled", "closed blank", "closed", "dot", "small dot", "blank dot", "oblique", "architectural tick", "open", "right-angle", "30-degree open", "origin indicator", "origin indicator 2", "small", "filled box", "blank box", "filled datum triangle", "blank datum triangle", "integral", "none")
 

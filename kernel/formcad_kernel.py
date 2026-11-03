@@ -214,6 +214,29 @@ def load_operations() -> None:
         for name in ("sm_base_flange", "sm_edge_flange", "sm_miter_flange", "sm_hem", "sm_jog", "sm_sketched_bend", "sm_bend_relief", "sm_corner_relief", "sm_convert", "sm_analyze", "sm_verify"):
             METHODS.setdefault(name, sheet_unavailable)
     try:
+        import kernel_subd
+
+        METHODS.update(kernel_subd.METHODS)
+    except Exception as err:
+        failure41 = str(err)
+
+        def subd_unavailable(_params):
+            raise RuntimeError("The form conversion operations could not be loaded (%s)." % failure41)
+
+        METHODS.setdefault("subd_brep", subd_unavailable)
+    try:
+        import kernel_plastic
+
+        METHODS.update(kernel_plastic.METHODS)
+    except Exception as err:
+        failure31 = str(err)
+
+        def plastic_unavailable(_params):
+            raise RuntimeError("The plastic part operations could not be loaded (%s)." % failure31)
+
+        for name in ("pl_boss", "pl_rib", "pl_snap_hook", "pl_lip", "pl_groove", "pl_wall", "pl_inspect"):
+            METHODS.setdefault(name, plastic_unavailable)
+    try:
         import kernel_graph
 
         METHODS.update(kernel_graph.METHODS)
@@ -225,6 +248,29 @@ def load_operations() -> None:
 
         for name in ("graph_batch", "graph_preview", "graph_alive"):
             METHODS.setdefault(name, graph_unavailable)
+    try:
+        import kernel_xde
+
+        METHODS.update(kernel_xde.METHODS)
+    except Exception as err:
+        failure25 = str(err)
+
+        def xde_unavailable(_params):
+            raise RuntimeError("The STEP and IGES exchange operations could not be loaded (%s)." % failure25)
+
+        for name in ("xde_read", "xde_write", "pmi_measure", "pmi_anchors", "pmi_features"):
+            METHODS.setdefault(name, xde_unavailable)
+    try:
+        import kernel_meshbrep
+
+        METHODS.update(kernel_meshbrep.METHODS)
+    except Exception as err:
+        failure26 = str(err)
+
+        def meshbrep_unavailable(_params):
+            raise RuntimeError("The mesh to solid operation could not be loaded (%s)." % failure26)
+
+        METHODS.setdefault("mesh_to_brep", meshbrep_unavailable)
 
 
 def reply(payload: dict) -> None:
