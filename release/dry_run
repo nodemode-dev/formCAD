@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/../setup/lib.sh"
+
+kind=kernel
+release=""
+out=""
+freeze=no
+repro=no
+usage() {
+  cat <<'EOF'
+release/dry_run: build the kernel or mesher archive, its record and checksums locally.
+
+  --kind kernel|mesher   which program (default kernel)
+  --out DIR              where to write: absent, empty or an earlier dry run folder (default a new mktemp folder); never inside or above the repo, never the home folder
+  --release R            release number (default: the OpenCascade or Netgen version of the pins)
+  --freeze               run ./formCAD freeze-kernel (or freeze-mesher) when the frozen folder is missing
+  --repro                pack twice and require identical archives
+
+Uses the existing kernel/dist or mesher/dist. Nothing is signed, fetched or published.
+EOF
+}
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --kind) kind="$2"; shift ;;
+    --out) out="$2"; shift ;;
+    --release) release="$2"; shift ;;
+    --freeze) freeze=yes ;;
+    --repro) repro=yes ;;
+    -h|--help) usage; exit 0 ;;
+    *) fc_die "unknown option $1" ;;
+  esac
+  shift
+done
+
+py="$(fc_python)" || fc_die "Python 3.12 or newer is needed"
+tools="$FORMCAD_ROOT/release/formCAD-binaries/tools"
+case "$kind" in
+  kernel) prog=formcad-kernel; tag=occt; record=occt-licence.json; : "${release:=8.0.1}"; venv="$FORMCAD_ROOT/kernel/venv"; src="$FORMCAD_ROOT/kernel/dist/formcad-kernel"; freezer=freeze-kernel; worker="$FORMCAD_ROOT/kernel"/*.py ;;
+  mesher) prog=formcad-mesher; tag=mesher; record=mesher-licence.json; : "${release:=6.2.2608}"; venv="$FORMCAD_ROOT/mesher/venv"; src="$FORMCAD_ROOT/mesher/dist/formcad-mesher"; freezer=freeze-mesher; worker="$FORMCAD_ROOT/mesher"/*.py ;;
+  *) fc_die "kind must be kernel or mesher" ;;
+esac
+
+if [ ! -x "$src/$prog" ] && [ ! -x "$src/$prog.exe" ]; then
+  [ "$freeze" = yes ] || fc_die "$src is missing; run ./formCAD $freezer first or pass --freeze"
+  "$FORMCAD_ROOT/formCAD" "$freezer"
+fi
+
+triple="$("$py" -I -c "
+import platform, sys
+arm = platform.machine().lower() in ('arm64', 'aarch64')
+if sys.platform == 'darwin': print('aarch64-apple-darwin' if arm else 'x86_64-apple-darwin')
+elif sys.platform.startswith('win'): print('x86_64-pc-windows-msvc')
+else: print('x86_64-unknown-linux-gnu')
+")"
+folder="$tag-lgpl-$release-$triple"
+[ "$kind" = mesher ] && folder="mesher-lgpl-$release-$triple"
+
+[ -n "$out" ] || out="$(mktemp -d "${TMPDIR:-/tmp}/formcad-release-dryrun.XXXXXX")"
+out="$("$py" -I -c "import os, sys; print(os.path.realpath(os.path.abspath(sys.argv[1])))" "$out")"
+root="$("$py" -I -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$FORMCAD_ROOT")"
+home="$("$py" -I -c "import os; print(os.path.realpath(os.path.expanduser('~')))")"
+for guard in "$root" "$home" "/"; do
+  case "$guard/" in "$out"/*) fc_die "refusing to write to $out: it is or contains $guard" ;; esac
+done
+case "$out/" in "$root"/*) fc_die "write outside the repository, not to $out" ;; esac
+if [ -e "$out" ] && [ ! -f "$out/.formcad-dryrun" ] && [ -n "$(ls -A "$out" 2>/dev/null)" ]; then
+  fc_die "$out exists and is not an earlier dry run output; give an empty or new folder"
+fi
+rm -rf "$out"
+mkdir -p "$out/stage" "$out/records" "$out/release"
+: > "$out/.formcad-dryrun"
+fc_say "staging $src as $folder"
+cp -a "$src" "$out/stage/$folder"
+
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-315532800}"
+"$py" -I "$tools/stage_notices.py" --kind "$kind" --stage "$out/stage/$folder" --release "$release" --triple "$triple"
+
+vpy="$venv/bin/python"; [ -x "$vpy" ] || vpy="$venv/Scripts/python.exe"
+if [ -x "$vpy" ]; then "$vpy" -I "$FORMCAD_ROOT/release/sbom/make_lock.py" "$out/requirements.lock"; else : > "$out/requirements.lock"; fi
+
+cp "$FORMCAD_ROOT/release/formCAD-binaries/records/$record" "$out/records/$record"
+"$py" -I "$tools/update_record.py" --kind "$kind" --record "$out/records/$record" --triple "$triple" \
+  --stage "$out/stage/$folder" --release "$release" --lock "$out/requirements.lock" \
+  --toolchain "dry run on $(uname -s) $(uname -m), unsigned" --verification "hello handshake of the frozen program"
+
+pack() {
+  "$py" -I "$tools/pack_release.py" pack --kind "$kind" --record "$out/records/$record" --out "$1" \
+    --stage-root "$out/stage" --lock "$out/requirements.lock" --worker-src $worker
+}
+pack "$out/release"
+"$py" -I "$tools/pack_release.py" check --kind "$kind" --record "$out/records/$record" --out "$out/release"
+"$py" -I "$tools/pack_release.py" app-record --kind "$kind" --record "$out/records/$record" --out "$out/app-$record"
+
+if [ "$repro" = yes ]; then
+  pack "$out/release2" >/dev/null
+  a="$(cut -d' ' -f1 "$out/release/SHA256SUMS" | head -n 1)"
+  first="$(grep "$folder" "$out/release/SHA256SUMS" | cut -d' ' -f1)"
+  second="$(grep "$folder" "$out/release2/SHA256SUMS" | cut -d' ' -f1)"
+  [ "$first" = "$second" ] || fc_die "the archive is not reproducible: $first and $second"
+  fc_say "reproducible: two packs gave $first"
+  rm -rf "$out/release2"
+fi
+
+"$py" -I "$FORMCAD_ROOT/release/sbom/formcad_sbom.py" --out "$out/sbom" --component "$kind" --lock "$out/requirements.lock" >/dev/null || fc_die "SBOM generation failed"
+rm -rf "$out/stage"
+fc_say "dry run done in $out"
+cat "$out/release/SHA256SUMS"

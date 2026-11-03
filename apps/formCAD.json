@@ -1,0 +1,55 @@
+{
+  "app": "formCAD",
+  "repository": "nodemode-dev/formCAD",
+  "title": "formCAD",
+  "enabled": true,
+  "release": "draft",
+  "version": {
+    "file": "src-tauri/tauri.conf.json",
+    "pattern": ""
+  },
+  "checks": ["ci.yml"],
+  "platforms": ["macos-arm64", "linux-x64", "windows-x64"],
+  "toolchain": {
+    "node": "22",
+    "python": "3.12",
+    "rust": true
+  },
+  "build": {
+    "mode": "commands",
+    "cli": "formCAD",
+    "windows_shell": "cmd",
+    "macos": "./build_app --no-install $FORMCOMPILER_CONFIG_ARG",
+    "linux": "./build_app --no-install $FORMCOMPILER_CONFIG_ARG",
+    "windows": "call build_app.bat %FORMCOMPILER_CONFIG_ARG%"
+  },
+  "updater": {
+    "tauri": false,
+    "tag_json": false,
+    "files": []
+  },
+  "signing": {
+    "macos": "apple",
+    "windows": "certificate"
+  },
+  "agents": {
+    "skills": ".claude/skills",
+    "mcp": true,
+    "mcp_launch": {
+      "command": "formcad-engine",
+      "args": ["mcp"]
+    }
+  },
+  "catalog": {
+    "id": "formcad",
+    "name": "formCAD",
+    "kind": "cad",
+    "identifier": "ai.nodemode.formcad",
+    "licence": "Apache-2.0",
+    "state": "prelaunch",
+    "project_extensions": [".fcad"],
+    "minimum_os": {
+      "macos": "macOS 14"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+name: sbom
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version for the file names (default is the version in src-tauri/tauri.conf.json)
+        required: false
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the components so licence metadata can be read
+        run: |
+          setup/install_backend
+          setup/install_kernel
+          setup/install_mesher
+      - name: Write one CycloneDX file per component
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          args=()
+          if [ -n "$VERSION" ]; then
+            printf '%s' "$VERSION" | grep -Eq '^[0-9A-Za-z.+-]+$' || { echo "the version has characters that are not allowed" >&2; exit 1; }
+            args+=(--version "$VERSION")
+          fi
+          kernel/venv/bin/python release/sbom/make_lock.py "$RUNNER_TEMP/kernel.lock"
+          python release/sbom/formcad_sbom.py --out sbom --lock "$RUNNER_TEMP/kernel.lock" "${args[@]}"
+      - name: Validate against the CycloneDX 1.6 schema
+        run: |
+          python -m venv "$RUNNER_TEMP/v"
+          "$RUNNER_TEMP/v/bin/pip" install 'jsonschema>=4.21,<5' 'referencing>=0.35,<1'
+          mkdir -p "$RUNNER_TEMP/schema"
+          for f in bom-1.6.schema.json spdx.schema.json jsf-0.82.schema.json; do
+            curl -fsSL -o "$RUNNER_TEMP/schema/$f" "https://raw.githubusercontent.com/CycloneDX/specification/1.6/schema/$f"
+          done
+          "$RUNNER_TEMP/v/bin/python" - "$RUNNER_TEMP/schema" sbom <<'PY'
+          import glob, json, sys
+          from pathlib import Path
+          from jsonschema import Draft7Validator
+          from referencing import Registry, Resource
+          schema_dir, boms = Path(sys.argv[1]), sys.argv[2]
+          registry = Registry()
+          for name in ("spdx.schema.json", "jsf-0.82.schema.json"):
+              body = json.loads((schema_dir / name).read_text())
+              registry = registry.with_resource(body["$id"], Resource.from_contents(body)).with_resource(name, Resource.from_contents(body))
+          validator = Draft7Validator(json.loads((schema_dir / "bom-1.6.schema.json").read_text()), registry=registry)
+          bad = 0
+          for path in sorted(glob.glob(boms + "/*.cdx.json")):
+              errors = list(validator.iter_errors(json.load(open(path))))
+              print(path, len(errors), "schema errors")
+              bad += len(errors)
+          sys.exit(1 if bad else 0)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/*.cdx.json
+          if-no-files-found: error
+          retention-days: 30

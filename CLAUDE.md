@@ -24,6 +24,7 @@ formCAD is a Tauri 2 desktop CAD app: vanilla TypeScript and Vite interface in `
 - `README.md` follows the form family layout (centred logo and badges, What it is, Highlights, Quick Start, Configuration, Architecture, Status, Development, Contributors, Licensing) in the README compression style; keep it that way when editing.
 - `frontend/src/app.ts` is the composition root; shell sections register from `ui/shell-part1.ts` and `ui/shell-part2.ts`; dock panels register with `registerDockPanel`.
 - Read `backend/HASHOUT_LOG.md` and `frontend/HASHOUT_LOG.md` before editing those trees, and log decisions there in the same change.
+- Law 7 exception: `apps/products-row.json` field `alt_of` names products because the formportal data contract (FAM3) requires the field verbatim; it is portal data, never code, identifiers or UI.
 - Behaviour specs come from the clean-room encyclopedia in the planning sidecar, never from another product's code.
 
 ## Commits

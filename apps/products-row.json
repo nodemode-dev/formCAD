@@ -1,0 +1,16 @@
+{
+  "id": "formcad",
+  "name": "formCAD",
+  "alt_of": "SolidWorks, Rhino, Grasshopper",
+  "group": "other",
+  "status": "in-development",
+  "kind": "cad",
+  "summary": "Parametric solids, NURBS surfaces, 2D drafting and visual programming in one app.",
+  "identifier": "ai.nodemode.formcad",
+  "repository": "https://github.com/nodemode-dev/formCAD",
+  "licence": "Apache-2.0",
+  "project_extensions": [".fcad"],
+  "minimum_os": {
+    "macos": "macOS 14"
+  }
+}

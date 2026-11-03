@@ -1,0 +1,30 @@
+name: preflight
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  records:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: nodemode-dev/formCAD
+          path: formCAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Records are well formed and equal to the copies inside the app
+        run: python tools/preflight.py --records records --app-data formCAD/backend/app/data
+      - name: Licence texts are intact
+        run: |
+          sha256sum licences/*
+          grep -q "GNU LESSER GENERAL PUBLIC LICENSE" licences/LGPL-2.1.txt
+          grep -q "Open CASCADE exception" licences/OCCT-EXCEPTION.txt
