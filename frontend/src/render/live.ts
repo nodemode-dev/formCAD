@@ -54,6 +54,12 @@ export class LiveRender {
     this.on = true;
     this.dirty = true;
     this.sceneSig = '';
+    const cube = this.vp.cubeRect();
+    const right = Math.max(1, this.vp.size.w) - cube.x;
+    this.canvas.style.setProperty('--rn-cube-far', `${right}px`);
+    this.canvas.style.setProperty('--rn-cube-near', `${right - cube.size}px`);
+    this.canvas.style.setProperty('--rn-cube-top', `${cube.y}px`);
+    this.canvas.style.setProperty('--rn-cube-bottom', `${cube.y + cube.size}px`);
     this.report('building', '');
     if (!this.raf) this.raf = requestAnimationFrame(() => this.tick());
   }
@@ -62,13 +68,18 @@ export class LiveRender {
     this.on = false;
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
-    setClass(this.canvas, 'is-ready', false);
+    this.reveal(false);
     this.engine?.dispose();
     this.engine = null;
     this.scene?.dispose();
     this.scene = null;
     this.sceneSig = '';
     this.report('off', '');
+  }
+
+  private reveal(on: boolean): void {
+    setClass(this.canvas, 'is-ready', on);
+    this.vp.setCubeOnly(on);
   }
 
   private report(state: LiveStats['state'], message: string): void {
@@ -81,7 +92,7 @@ export class LiveRender {
     const s = this.settings;
     if (!id || !s || this.building) return;
     this.building = true;
-    setClass(this.canvas, 'is-ready', false);
+    this.reveal(false);
     this.report('building', '');
     try {
       const [{ bodies: rows }, { decals }] = await Promise.all([renderBodies(id), fetchDecals(id)]);
@@ -133,7 +144,7 @@ export class LiveRender {
       this.camSig = cs;
       const cam = cameraFrom(spec, Math.max(1, this.vp.size.w) / Math.max(1, this.vp.size.h), this.scene, s.camera.fov);
       this.engine.setCamera(cam, s);
-      setClass(this.canvas, 'is-ready', false);
+      this.reveal(false);
       this.shown = 0;
     }
     if (this.engine.compiling) return;
@@ -145,7 +156,7 @@ export class LiveRender {
       if (n >= 1 && n !== this.shown) {
         this.engine.show();
         this.shown = n;
-        setClass(this.canvas, 'is-ready', true);
+        this.reveal(true);
         this.report('tracing', '');
       }
     } else if (this.stats.state !== 'done') {

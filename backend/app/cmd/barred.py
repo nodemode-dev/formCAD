@@ -16,6 +16,7 @@ def caller(runner=None) -> str:
     return getattr(script, "caller", "") if script is not None else ""
 
 
+VAULT_AGENT_ARGS = ("vault", "author", "force")
 PATH_NAMES = {"path", "paths", "file", "files", "filename", "folder", "dir", "out"}
 
 
@@ -60,6 +61,10 @@ def args_refusal(runner, spec, args) -> str:
     who = caller(runner)
     if not who:
         return ""
+    if who == "agent" and getattr(spec, "group", "") == "vault" and isinstance(args, dict):
+        for key in VAULT_AGENT_ARGS:
+            if args.get(key) not in (None, "", False):
+                return "%s may not use the argument %s as an outside agent; use the FormCAD window." % (spec.name.upper(), key)
     roots = _granted(runner, who)
     for key, value in _path_values(args):
         if not _inside(value, roots):

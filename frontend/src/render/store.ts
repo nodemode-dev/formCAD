@@ -86,6 +86,20 @@ export class RenderStore {
     this.emit();
   }
 
+  async addAppearance(row: Partial<net.Appearance> & { name: string }): Promise<boolean> {
+    try {
+      await net.addAppearance(row);
+      this.library = await net.library();
+      this.error = '';
+      this.emit();
+      return true;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : 'The appearance was refused.';
+      this.emit();
+      return false;
+    }
+  }
+
   async addDecal(d: Partial<net.Decal> & { name: string }): Promise<void> {
     if (!this.docId) return;
     try {

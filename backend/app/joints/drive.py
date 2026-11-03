@@ -6,11 +6,13 @@ from app.mates import joint_eq
 STEP_ANGLE = math.radians(4.0)
 STEP_LENGTH_FRACTION = 0.04
 MAX_SPLIT = 6
+MAX_STEPS = 3000
 
 
 class Driver:
-    def __init__(self, model):
+    def __init__(self, model, check=None):
         self.model = model
+        self.check = check
         self.joints = {m.id: m for m in model.mates if m.kind == "joint" and not m.suppressed}
 
     def measured(self, mid, key) -> float:
@@ -66,10 +68,15 @@ class Driver:
             size = (max_step or {}).get(k)
             if size is None:
                 size = STEP_ANGLE if k[1] in joint_eq.ANGLES else STEP_LENGTH_FRACTION * self.model.L
-            steps = max(steps, int(math.ceil(abs(tv - cur[k]) / size - 1e-9)))
+            need = abs(tv - cur[k]) / (abs(size) or 1e-300)
+            if not math.isfinite(need) or need > MAX_STEPS:
+                raise joint_eq.JointError("That move is too far for one drive; the limit is %d sub-steps. Use a nearer value." % MAX_STEPS)
+            steps = max(steps, int(math.ceil(need - 1e-9)))
         acc = [0.0, 0, 0]
         prev = dict(cur)
         for i in range(1, steps + 1):
+            if self.check is not None:
+                self.check()
             f = i / steps
             nxt = {k: cur[k] + (targets[k] - cur[k]) * f for k in targets}
             if not self.move(prev, nxt, 0, acc, retries):

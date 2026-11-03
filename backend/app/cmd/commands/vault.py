@@ -34,9 +34,19 @@ def bound(ctx) -> dict:
     return run(session.status_of, ctx.doc.id)
 
 
+def scope_doc(ctx, v, did: str) -> None:
+    if not agent_of(ctx):
+        return
+    with v.read() as c:
+        paths = [r[0] for r in c.execute("SELECT path FROM binding WHERE doc=? UNION SELECT path FROM lock WHERE doc=?", (did, did)).fetchall()]
+    if not any(not barred.path_refusal(p, ctx.runner) for p in paths):
+        raise CommandError("That vault document is not bound to a file in a folder granted to this agent.")
+
+
 def doc_id(ctx, args) -> str:
     given = str(args.get("doc") or "").strip()
     if given:
+        scope_doc(ctx, vault_of(args), given)
         return given
     b = bound(ctx)
     if b["bound"]:
@@ -90,6 +100,8 @@ def do_create(ctx, args):
 def do_checkin(ctx, args):
     agent = agent_of(ctx)
     v = vault_of(args)
+    if args.get("doc"):
+        scope_doc(ctx, v, str(args["doc"]).strip())
     path = active_binding_path(ctx, args, agent)
     if not args.get("path") and ctx.doc.path:
         run(session.save_doc, ctx.doc)
@@ -334,7 +346,12 @@ def do_pin(ctx, args):
 
 
 def do_verify(ctx, args):
-    out = run(maint.verify, vault_of(args), str(args.get("doc") or ""), str(args.get("version") or ""), bool(args.get("deep", False)))
+    v = vault_of(args)
+    if agent_of(ctx):
+        if not args.get("doc"):
+            raise CommandError("Give doc (the vault document id) to verify.")
+        scope_doc(ctx, v, str(args["doc"]).strip())
+    out = run(maint.verify, v, str(args.get("doc") or ""), str(args.get("version") or ""), bool(args.get("deep", False)))
     out["message"] = "%d version(s) checked, %d reopen byte-identical, %d problem(s)." % (out["versions"], out["identical"], len(out["bad"]))
     return out
 

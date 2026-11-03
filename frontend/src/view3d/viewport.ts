@@ -65,6 +65,7 @@ export class Viewport3D {
   private pickRaf = 0;
   private isActive = false;
   private interacting = false;
+  private cubeOnly = false;
   private pointer: { x: number; y: number } | null = null;
   private down: { x: number; y: number; t: number; button: number; cube: boolean } | null = null;
   private hover: Target = { snap: null, edge: null, face: null };
@@ -602,6 +603,16 @@ export class Viewport3D {
     this.invalidate();
   }
 
+  setCubeOnly(on: boolean): void {
+    if (this.cubeOnly === on) return;
+    this.cubeOnly = on;
+    this.invalidate();
+  }
+
+  cubeRect(): { x: number; y: number; size: number } {
+    return this.cube.rect(this.w);
+  }
+
   zoomExtents(animate: boolean): void {
     const { min, max } = this.bounds();
     this.rig.fitBox(min, max, animate);
@@ -700,7 +711,8 @@ export class Viewport3D {
     this.key.position.copy(cam.position).addScaledVector(up, d * 0.5).addScaledVector(right, -d * 0.35);
     this.key.target.position.copy(this.rig.target);
     this.renderer.setViewport(0, 0, this.w, this.h);
-    this.renderer.render(this.scene, cam);
+    if (this.cubeOnly) this.renderer.clear();
+    else this.renderer.render(this.scene, cam);
     this.cube.render(this.renderer, this.rig.direction(), this.w, this.h);
     this.drawOverlay();
     this.frames++;

@@ -447,7 +447,7 @@ export function motionPanel(): DockPanel {
         const cc = curContact();
         if (cc) { cAll.set(cc.all); cTouch.set(cc.touch); }
         for (const c of [cAll, cTouch, pA, pB]) setDisabled(c.input as HTMLInputElement, !cc);
-        const comps = asm.tree.map((n) => [n.cid, `${n.cid} · ${n.label}`] as const);
+        const comps = asm.tree.filter((n) => !n.index).map((n) => [n.cid, `${n.cid} · ${n.label}`] as const);
         fillSel(pA, comps);
         fillSel(pB, comps);
         patchList(pairList, (cc?.pairs ?? []).map((p, i) => ({ p, i })), {
@@ -491,7 +491,7 @@ export function motionPanel(): DockPanel {
           update: (row, p) => { setText(q(row, '.u8-row-name'), `${jname(p.joint)} · ${t(COORD_LABEL[p.coord] ?? p.coord)}`); },
         });
 
-        checkRows(freeList, asm.tree.map((n) => [n.cid, `${n.cid} · ${n.label}`] as const), (id) => (freeSet.has(id)), (id, v) => { if (v) freeSet.add(id); else freeSet.delete(id); });
+        checkRows(freeList, comps, (id) => (freeSet.has(id)), (id, v) => { if (v) freeSet.add(id); else freeSet.delete(id); });
         checkRows(dSets, sets.map((c) => [c.id, c.name] as const), (id) => dynSets.has(id), (id, v) => { if (v) dynSets.add(id); else dynSets.delete(id); });
         const dy = joints.motion.dynamics;
         if (dy) {

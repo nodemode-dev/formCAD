@@ -1,10 +1,15 @@
 import json
 import re
+import xml.etree.ElementTree as ET
 
 from app.vault import history
 from app.vault.base import MAX_ANCHOR, MAX_BODY, MAX_COMMENTS, MAX_MARKUP, VaultError, author as me_author, clean_text, hexed, now
 from app.vault.store import Vault
 
+SVG_TAGS = {"svg", "g", "path", "line", "polyline", "polygon", "circle", "ellipse", "rect"}
+SVG_ATTRS = {"xmlns", "viewBox", "width", "height", "d", "points", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "opacity", "transform", "class"}
+SVG_VALUE_BAD = re.compile(r"url\s*\(|javascript:|data:|https?:|file:|<|&", re.I)
+ET.register_namespace("", "http://www.w3.org/2000/svg")
 UNSAFE_SVG = re.compile(r"<\s*script|<\s*foreignObject|<\s*iframe|<\s*object|<\s*embed|<!ENTITY|\son[a-z]+\s*=|javascript:|data:text/html|(?:xlink:)?href\s*=\s*[\"']\s*(?:https?:|//|file:)", re.I)
 
 
@@ -13,9 +18,23 @@ def clean_svg(text: str) -> bytes:
     if len(s.encode("utf-8")) > MAX_MARKUP:
         raise VaultError("The markup is larger than %d KB." % (MAX_MARKUP // 1024))
     head = s[:400].lower()
-    if "<svg" not in head or UNSAFE_SVG.search(s):
+    if "<svg" not in head or UNSAFE_SVG.search(s) or "<!doctype" in s.lower():
         raise VaultError("The markup must be plain SVG without scripts, event handlers or links.")
-    return s.encode("utf-8")
+    try:
+        root = ET.fromstring(s)
+    except (ET.ParseError, RecursionError):
+        raise VaultError("The markup is not valid SVG.")
+    if root.tag.split("}")[-1] != "svg":
+        raise VaultError("The markup must start with an svg element.")
+    for node in root.iter():
+        if not isinstance(node.tag, str) or node.tag.split("}")[-1] not in SVG_TAGS:
+            raise VaultError("The markup may hold only svg, g, path, line, polyline, polygon, circle, ellipse and rect elements.")
+        node.text = None
+        node.tail = None
+        for name, value in node.attrib.items():
+            if name.split("}")[-1] not in SVG_ATTRS or SVG_VALUE_BAD.search(value):
+                raise VaultError("The markup uses the attribute %s, which is not allowed." % name.split("}")[-1])
+    return ET.tostring(root, encoding="unicode").encode("utf-8")
 
 
 def _rec(r, attached=None, note: str = "") -> dict:

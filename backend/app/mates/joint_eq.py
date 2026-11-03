@@ -16,6 +16,8 @@ ROWS = {
     "pinslot": [1, 2, 3, 4], "planar": [2, 3, 4], "ball": [0, 1, 2],
 }
 ANGLES = ("rx", "ry", "rz")
+MAX_ANGLE = 36000.0
+MAX_LENGTH = 1.0e6
 ALIASES = {"fixed": "rigid", "hinge": "revolute", "pin": "revolute", "prismatic": "slider", "pin-slot": "pinslot", "pin_slot": "pinslot", "ballsocket": "ball", "spherical": "ball"}
 NAMES = {"rx": "x rotation", "ry": "y rotation", "rz": "rotation", "tx": "x travel", "ty": "y travel", "tz": "travel"}
 

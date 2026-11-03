@@ -85,6 +85,15 @@ export function renderPanel(api: PanelApi): DockPanel {
       const clear = button('Use the material', () => void doAssign(null));
       sApp.body.append(list, picker.el, prov.el, buttons(assign, clear));
 
+      const sNew = section('New appearance');
+      const nName = el<HTMLInputElement>('<input class="cv-input" type="text" maxlength="80" spellcheck="false" autocomplete="off" aria-label="Appearance name">');
+      const nColor = colorInput(() => undefined);
+      nColor.value = '#9a9ca0';
+      const nMetal = numberCtl('Metallic (0 to 1)', 0);
+      const nRough = numberCtl('Roughness (0 to 1)', 0.5);
+      const nAdd = button('Add to the library', () => void addAppearance(), 'primary');
+      sNew.body.append(labelled('Name', nName), labelled('Colour', nColor), nMetal.el, nRough.el, buttons(nAdd));
+
       const sDec = section('Decals');
       const dList = el('<div class="u8-list rn-decals is-scroll" role="listbox" aria-label="Decals"></div>');
       const dKind = selectCtl('Kind', [['color', 'Colour patch'], ['image', 'Image']], () => syncDecalForm());
@@ -122,11 +131,12 @@ export function renderPanel(api: PanelApi): DockPanel {
       const tFrames = numberCtl('Turntable frames', 36);
       const tSweep = numberCtl('Turntable sweep (degrees)', 360);
       const tPrev = button('Preview turntable', () => { if (api.turntable.on) api.turntable.stop(); else api.turntable.start(8, tSweep.get() ?? 360); syncTurn(); });
+      tPrev.classList.add('rn-turn');
       const tRender = button('Render turntable...', () => { api.turntableFrames(Math.round(tFrames.get() ?? 36), tSweep.get() ?? 360); api.dialog.show('turntable'); });
       sOut.body.append(buttons(imgBtn), tFrames.el, tSweep.el, buttons(tPrev, tRender));
 
       const err = el('<p class="u8-note rn-error" role="alert"></p>');
-      body.append(sView.root, sEnv.root, sApp.root, sDec.root, sQ.root, sOut.root, err);
+      body.append(sView.root, sEnv.root, sApp.root, sNew.root, sDec.root, sQ.root, sOut.root, err);
 
       function syncTurn(): void { setText(tPrev, api.turntable.on ? t('Stop preview') : t('Preview turntable')); }
       function syncDecalForm(): void {
@@ -145,6 +155,16 @@ export function renderPanel(api: PanelApi): DockPanel {
         if (!keys.length) { toast(t('Select a body in the list first.'), 'error'); return; }
         await renderStore.assign(keys, name && name !== '' ? name : null);
         api.live()?.invalidateScene();
+      }
+
+      async function addAppearance(): Promise<void> {
+        const name = nName.value.trim();
+        if (!name) { toast(t('Give the appearance a name first.'), 'error'); return; }
+        const ok = await renderStore.addAppearance({ name, base_color: nColor.value, metallic: nMetal.get() ?? 0, roughness: nRough.get() ?? 0.5, category: 'other' });
+        if (!ok) return;
+        setValue(picker.input as HTMLSelectElement, name);
+        nName.value = '';
+        paintProv();
       }
 
       function paintProv(): void {

@@ -100,6 +100,7 @@ export interface JobSpec {
 }
 
 export const library = (): Promise<Library> => req('GET', '/api/render/library');
+export const addAppearance = (row: Partial<Appearance> & { name: string }): Promise<Appearance> => req('POST', '/api/render/library', row);
 export const environments = (): Promise<EnvListing> => req('GET', '/api/render/environments');
 export const limits = (): Promise<Limits> => req('GET', '/api/render/limits');
 export const envBytes = (id: string, res: string): Promise<ArrayBuffer | null> => buffer(`/api/render/environments/${encodeURIComponent(id)}/${encodeURIComponent(res)}`);

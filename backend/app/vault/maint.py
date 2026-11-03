@@ -73,6 +73,28 @@ def _chunk_ids(v: Vault, c, h: bytes) -> list:
     return [bytes.fromhex(x) for x in json.loads(v.get(c, h, False))["chunks"]]
 
 
+def _loose_files(v: Vault, c) -> list:
+    known = {bytes(r[0]).hex() for r in c.execute("SELECT hash FROM object WHERE blob IS NULL").fetchall()}
+    root = os.path.join(v.folder, "objects")
+    out = []
+    if os.path.realpath(root) != root:
+        return out
+    for base, _dirs, names in os.walk(root):
+        rel = os.path.relpath(base, root).split(os.sep)
+        for n in names:
+            full = os.path.join(base, n)
+            if os.path.islink(full):
+                continue
+            if "".join(rel) + n not in known:
+                try:
+                    out.append((full, os.path.getsize(full)))
+                except OSError:
+                    pass
+        if len(out) > 1000000:
+            break
+    return out
+
+
 def gc(v: Vault, dry_run: bool = True, grace_days: int = 30) -> dict:
     grace = max(0, min(int(grace_days if grace_days is not None else 30), 3650))
     with v.write() as c:
@@ -103,10 +125,16 @@ def gc(v: Vault, dry_run: bool = True, grace_days: int = 30) -> dict:
             live_objects.add(bytes(r[0]))
         dead_objects = [(bytes(r["hash"]), r["stored"], r["path"]) for r in c.execute("SELECT hash, stored, path FROM object").fetchall() if bytes(r["hash"]) not in live_objects]
         dead_trees = [bytes(r[0]) for r in c.execute("SELECT DISTINCT hash FROM tree").fetchall() if bytes(r[0]) not in live_trees]
-        freed = sum(x[1] for x in dead_objects)
-        out = {"dry_run": dry_run, "grace_days": grace, "versions_dropped": len(drop), "objects_dropped": len(dead_objects), "trees_dropped": len(dead_trees), "bytes_freed": freed, "kept_versions": len(keep)}
+        loose = _loose_files(v, c)
+        freed = sum(x[1] for x in dead_objects) + sum(x[1] for x in loose)
+        out = {"dry_run": dry_run, "grace_days": grace, "versions_dropped": len(drop), "objects_dropped": len(dead_objects), "trees_dropped": len(dead_trees), "loose_files": len(loose), "bytes_freed": freed, "kept_versions": len(keep)}
         if dry_run:
             return out
+        for p, _s in loose:
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
         for h in drop:
             c.execute("DELETE FROM parent WHERE version=?", (h,))
             c.execute("DELETE FROM extref WHERE version=?", (h,))
@@ -117,7 +145,7 @@ def gc(v: Vault, dry_run: bool = True, grace_days: int = 30) -> dict:
             c.execute("DELETE FROM object WHERE hash=?", (h,))
             if path:
                 try:
-                    os.unlink(os.path.join(v.folder, path))
+                    os.unlink(v._object_file(h))
                 except OSError:
                     pass
         v.audit(c, "vault", "", "", None, "gc", out)

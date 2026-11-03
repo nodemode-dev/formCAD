@@ -125,22 +125,36 @@ def find_browser() -> str:
     raise JobError("No Chromium-based browser was found for the headless path. Install one, or set its path in render.json in the data folder as {\"browser\": \"...\"}, or set FORMCAD_CHROMIUM.")
 
 
+ALLOWED_ARGS = {"--use-gl", "--use-angle", "--use-gpu", "--disable-gpu", "--enable-features", "--disable-features", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"}
+
+
+def _allowed(a) -> bool:
+    return isinstance(a, str) and len(a) < 200 and a.split("=", 1)[0] in ALLOWED_ARGS
+
+
 def extra_args() -> list:
     raw = os.environ.get("FORMCAD_CHROMIUM_ARGS", "")
-    out = [a for a in raw.split() if a.startswith("--")][:16]
+    out = [a for a in raw.split() if _allowed(a)][:16]
     if out:
         return out
     try:
         listed = json.loads((config.data_dir() / "render.json").read_text(encoding="utf-8")).get("args", [])
     except (OSError, ValueError, AttributeError):
         return []
-    return [a for a in listed if isinstance(a, str) and a.startswith("--") and len(a) < 200][:16] if isinstance(listed, list) else []
+    return [a for a in listed if _allowed(a)][:16] if isinstance(listed, list) else []
 
 
 def _origin(base_url: str, origin: str) -> str:
     use = origin or base_url
     parts = urlsplit(use)
-    if parts.scheme not in ("http", "https") or (parts.hostname or "") not in guard.LOOPBACK:
+    host = parts.hostname or ""
+    plain = host if ":" not in host else "[%s]" % host
+    try:
+        port = parts.port
+    except ValueError:
+        port = -1
+    exact = plain + (":%d" % port if port else "")
+    if parts.scheme not in ("http", "https") or host not in guard.LOOPBACK or port == -1 or parts.netloc != exact or "\\" in use or parts.path not in ("", "/") or parts.query or parts.fragment:
         raise JobError("The render page must be served from this computer.")
     return "%s://%s" % (parts.scheme, parts.netloc)
 
@@ -160,6 +174,7 @@ def _launch(job: Job, base_url: str, origin: str) -> None:
     try:
         job.proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, close_fds=True)
     except OSError as err:
+        _reap(job)
         raise JobError("The browser could not be started (%s)." % err.strerror)
     job.state = "running"
     job.started = time.time()

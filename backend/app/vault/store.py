@@ -144,12 +144,18 @@ class Vault:
         payload = row["blob"]
         if payload is None:
             try:
-                with open(os.path.join(self.folder, row["path"]), "rb") as fh:
+                with open(self._object_file(h), "rb") as fh:
                     payload = fh.read()
             except OSError as err:
-                raise VaultError("The vault cannot read object %s: %s" % (h.hex()[:12], err), 500)
+                raise VaultError("The vault cannot read object %s: %s" % (h.hex()[:12], err.strerror or "unreadable"), 500)
         try:
-            data = zlib.decompress(payload) if row["codec"] == "zlib" else bytes(payload)
+            if row["codec"] == "zlib":
+                inflater = zlib.decompressobj()
+                data = inflater.decompress(payload, row["size"] + 1)
+                if inflater.unconsumed_tail:
+                    raise zlib.error("larger than recorded")
+            else:
+                data = bytes(payload)
         except zlib.error:
             raise VaultError("Object %s is damaged." % h.hex()[:12], 500)
         if check and (len(data) != row["size"] or digest(data) != h):

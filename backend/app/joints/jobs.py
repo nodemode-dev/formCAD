@@ -2,6 +2,8 @@ import threading
 import time
 import uuid
 
+from app.solid.work import SolidError
+
 MAX_KEPT = 8
 PROGRESS_GAP = 0.15
 JOBS: dict = {}
@@ -99,7 +101,7 @@ def start(doc, kind: str, study: str, prepare, wait: bool = False) -> Job:
             job.result = job.result or {"frames": len(job.frames), "cancelled": True, "stopped": None, "plots": [], "contacts": []}
         except Exception as err:
             job.state = "failed"
-            job.message = str(err) if isinstance(err, ValueError) else "%s: %s" % (type(err).__name__, err)
+            job.message = str(err) if isinstance(err, (ValueError, SolidError)) else "%s: %s" % (type(err).__name__, err)
         job.finished = time.time()
         job.progress["elapsed"] = round(time.monotonic() - job.started, 3)
         job.progress["fraction"] = 1.0 if job.state == "done" else job.progress.get("fraction", 0.0)

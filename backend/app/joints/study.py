@@ -48,7 +48,7 @@ def clean_tracks(d, tracks, caps) -> list:
             ease = str(k.get("ease") or "linear")
             if ease not in J.EASES:
                 raise J.MotionError("The ease is %s." % ", ".join(J.EASES))
-            cleaned.append({"t": J.number(k.get("t"), "A key time", 0.0, caps["duration"]), "v": J.number(k.get("v"), "A key value"), "ease": ease})
+            cleaned.append({"t": J.number(k.get("t"), "A key time", 0.0, caps["duration"]), "v": J.number(k.get("v"), "A key value", -(joint_eq.MAX_ANGLE if coord in joint_eq.ANGLES else joint_eq.MAX_LENGTH), joint_eq.MAX_ANGLE if coord in joint_eq.ANGLES else joint_eq.MAX_LENGTH), "ease": ease})
         cleaned.sort(key=lambda k: k["t"])
         for a, b in zip(cleaned, cleaned[1:]):
             if b["t"] - a["t"] < 1e-9:
@@ -194,6 +194,7 @@ def execute(job, ctx) -> dict:
     model, drv, tracks, n, dur = ctx["model"], ctx["drv"], ctx["tracks"], ctx["n"], ctx["dur"]
     prober, mode, names, free = ctx["prober"], ctx["mode"], ctx["names"], ctx["free"]
     st = ctx["study"]
+    drv.check = job.check
     wanted = {(p["joint"], p["coord"]) for p in st.get("plots") or []}
     stride = int(st["contact"].get("stride") or 0) or max(1, n // CHECK_TARGET)
     stride = max(stride, int(math.ceil(n / max(1, ctx["caps"]["checks"]))))

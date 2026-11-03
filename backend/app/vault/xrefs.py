@@ -10,7 +10,7 @@ def scan(doc_raw: bytes) -> list:
         return []
     try:
         doc = json.loads(doc_raw)
-    except ValueError:
+    except (ValueError, RecursionError):
         return []
     tables = doc.get("tables") if isinstance(doc, dict) else None
     if not isinstance(tables, dict):

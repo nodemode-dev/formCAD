@@ -43,6 +43,8 @@ def build(raw: bytes) -> EMap:
         raise VaultError("document.json is larger than the merge limit.")
     try:
         doc = json.loads(raw)
+    except RecursionError:
+        raise VaultError("document.json is nested too deeply.")
     except ValueError as err:
         raise VaultError("document.json is not valid JSON: %s" % err)
     if not isinstance(doc, dict):

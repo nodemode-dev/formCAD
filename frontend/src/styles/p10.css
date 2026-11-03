@@ -54,7 +54,7 @@
 .xw-formbar .v3-seg { display: inline-flex; align-items: center; gap: var(--space-1); white-space: nowrap; }
 .xw-formbar .v3-seg:disabled { opacity: 0.4; }
 
-.xw-job { display: grid; gap: var(--space-1); height: 46px; margin-top: var(--space-1); }
+.xw-job { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-1); height: 46px; margin-top: var(--space-1); }
 .xw-job.is-idle { visibility: hidden; }
 .xw-job-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); height: 26px; font-size: var(--fs-11); color: var(--text-secondary); }
 .xw-job-phase { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

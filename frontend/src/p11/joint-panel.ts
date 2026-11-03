@@ -338,7 +338,7 @@ export function jointPanel(): DockPanel {
             setText(q(row, '.u8-row-sub'), l.name);
             const a = joints.joint(l.first.joint)?.name ?? String(l.first.joint);
             const b = joints.joint(l.second.joint)?.name ?? String(l.second.joint);
-            const txt = `${a}.${l.first.coord} → ${b}.${l.second.coord} × ${fmt(l.reverse ? -l.ratio : l.ratio, 4)}`;
+            const txt = `${a}.${l.first.coord} ${t('to')} ${b}.${l.second.coord} × ${fmt(l.reverse ? -l.ratio : l.ratio, 4)}`;
             const n = q(row, '.u8-row-name');
             setText(n, txt);
             if (n.title !== txt) n.title = txt;

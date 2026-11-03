@@ -2,6 +2,7 @@
 .an1-stage[hidden] { display: none; }
 .an1-stage-canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
 .an1-shots { height: 156px; min-height: 156px; max-height: 156px; }
+.an1-shots .u8-badge { min-width: 6ch; text-align: center; }
 .an1-track { display: flex; gap: 2px; height: 34px; padding: 2px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--bg-primary); overflow: hidden; }
 .an1-block { flex: 1 1 0; min-width: 0; padding: 0 var(--space-1); border: 1px solid var(--line-3); border-radius: var(--radius-xs); background: var(--surface-2); color: var(--text-secondary); font: inherit; font-size: var(--fs-11); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 .an1-block:hover { background: var(--bg-hover); }

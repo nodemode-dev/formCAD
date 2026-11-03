@@ -26,6 +26,8 @@ MAX_LOG = 5000
 MAX_CONFLICTS = 5000
 MAX_ENTITIES = 400000
 MAX_DOCJSON = 256 * 1024 * 1024
+MAX_CONTAINERS = 6000000
+AGENT_CONTAINERS = 1500000
 MAX_DEPTH = 12
 INLINE = 128 * 1024
 CHUNK_FROM = 1024 * 1024
@@ -45,6 +47,15 @@ def now() -> int:
 
 def digest(data: bytes) -> bytes:
     return blake3(data).digest()
+
+
+def bound_json(raw: bytes, agent: bool = False) -> None:
+    if len(raw) > MAX_DOCJSON:
+        raise VaultError("document.json is larger than the %d MB limit." % (MAX_DOCJSON // (1024 * 1024)))
+    limit = AGENT_CONTAINERS if agent else MAX_CONTAINERS
+    n = raw.count(b"{") + raw.count(b"[")
+    if n > limit:
+        raise VaultError("document.json holds %d nested records, more than the limit of %d." % (n, limit))
 
 
 def hexed(raw) -> str:

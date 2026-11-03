@@ -422,19 +422,30 @@ def drive_joint(doc, jid, coord, value=None, values=None, start=None, end=None, 
         raise S.MateRefused("%s is suppressed or has a suppressed component." % rec["name"])
     key = coord_key(rec, str(coord))
     drv = Driver(model)
+    reach = joint_eq.MAX_ANGLE if key in joint_eq.ANGLES else joint_eq.MAX_LENGTH
+
+    def within(v) -> float:
+        out = float(v)
+        if not math.isfinite(out) or abs(out) > reach:
+            raise S.MateRefused("A value for %s must be a number between %g and %g." % (key, -reach, reach))
+        return out
+
     if values is not None:
-        targets = [float(v) for v in values]
+        if len(values) > 5000:
+            raise S.MateRefused("A drive takes at most 5000 samples.")
+        targets = [within(v) for v in values]
     elif start is not None and end is not None:
         n = int(count or 2)
         if n < 2:
             raise S.MateRefused("A sweep needs at least 2 samples.")
-        targets = [float(start) + (float(end) - float(start)) * i / (n - 1) for i in range(n)]
+        if n > 5000:
+            raise S.MateRefused("A drive takes at most 5000 samples.")
+        a, z = within(start), within(end)
+        targets = [a + (z - a) * i / (n - 1) for i in range(n)]
     elif value is not None:
-        targets = [float(value)]
+        targets = [within(value)]
     else:
         raise S.MateRefused("Give a value, a list of values or start, end and count.")
-    if len(targets) > 5000:
-        raise S.MateRefused("A drive takes at most 5000 samples.")
     step = None if not max_step else {(m.id, key): joint_eq.to_internal(key, float(max_step))}
     t0 = time.perf_counter()
     start_snap = model.net.snapshot()

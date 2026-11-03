@@ -136,7 +136,7 @@ export class RenderScene {
     for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * lift, p.getY(i) + n.getY(i) * lift, p.getZ(i) + n.getZ(i) * lift);
     p.needsUpdate = true;
     const mat = new THREE.MeshPhysicalMaterial({ color: d.color, roughness: d.roughness, metalness: 0, transparent: d.opacity < 1 || d.kind === 'image', opacity: d.opacity, alphaTest: d.kind === 'image' ? 0.02 : 0 });
-    if (d.kind === 'image' && d.image) {
+    if (d.kind === 'image' && d.image && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(d.image)) {
       const img = new Image();
       img.src = d.image;
       const tex = new THREE.Texture(img);

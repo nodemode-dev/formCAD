@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -17,11 +18,20 @@ SHIPPED_DIR = DATA / "env"
 RESOLUTIONS = ("1k", "2k", "4k")
 ID = re.compile(r"^[a-z0-9_]{1,80}$")
 TIMEOUT = 60
+DEADLINE = 600
 _lock = threading.Lock()
 
 
 class EnvironmentError_(ValueError):
     pass
+
+
+class HostCheck(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parts = urllib.parse.urlsplit(newurl)
+        if parts.scheme != "https" or (parts.hostname or "") not in (catalogue_file().get("download_hosts") or []):
+            raise urllib.error.URLError("The download was redirected to an address that is not an allowed host.")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def downloaded_dir() -> Path:
@@ -114,11 +124,14 @@ def download(eid: str, res: str) -> dict:
         total = 0
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "FormCAD environment download"})
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp, os.fdopen(fd, "wb") as fh:
+            began = time.monotonic()
+            with urllib.request.build_opener(HostCheck).open(req, timeout=TIMEOUT) as resp, os.fdopen(fd, "wb") as fh:
                 while True:
                     chunk = resp.read(262144)
                     if not chunk:
                         break
+                    if time.monotonic() - began > DEADLINE:
+                        raise EnvironmentError_("The download took longer than %d seconds; stopped." % DEADLINE)
                     total += len(chunk)
                     if total > want or total > cap:
                         raise EnvironmentError_("The download is larger than the catalogue says; stopped.")

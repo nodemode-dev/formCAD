@@ -150,7 +150,7 @@ export function vaultPanel(): DockPanel {
         const r = await guard(() => req<DiffRec>('GET', vurl(`/diff?a=${vstore.compare}&b=${vstore.selected}&limit=200`)));
         if (!r) return;
         const sum = (r as unknown as { summary?: Record<string, number> }).summary ?? {};
-        setText(diffNote, `${vstore.compare.slice(0, 7)} → ${vstore.selected.slice(0, 7)} · ${sum.added ?? 0} ${t('added')} · ${sum.removed ?? 0} ${t('removed')} · ${sum.changed ?? 0} ${t('changed')} · ${sum.reordered ?? 0} ${t('reordered')}`);
+        setText(diffNote, `${vstore.compare.slice(0, 7)} ${t('to')} ${vstore.selected.slice(0, 7)} · ${sum.added ?? 0} ${t('added')} · ${sum.removed ?? 0} ${t('removed')} · ${sum.changed ?? 0} ${t('changed')} · ${sum.reordered ?? 0} ${t('reordered')}`);
         const items = ((r as unknown as { items?: Array<{ entity: string; name: string; change: string; fields: unknown[] }> }).items ?? []);
         patchList(diffList, items, {
           key: (i) => `${i.change}${i.entity}`,
@@ -390,7 +390,7 @@ export function vaultPanel(): DockPanel {
         setHidden(cempty, !!m);
         const merged = m?.merged ?? {};
         mState.set(m ? [
-          `${m.status} · ${m.branch} ← ${m.theirs.slice(0, 7)}`,
+          `${m.status} · ${m.branch} ${t('from')} ${m.theirs.slice(0, 7)}`,
           `${m.conflicts.length} ${t('conflicts')} · ${m.unresolved} ${t('unresolved')}`,
           `${t('auto-merged')}: ${Object.entries(merged).filter(([, v]) => Number(v) > 0).map(([k, v]) => `${v} ${k.replace(/_/g, ' ')}`).join(', ') || '-'}`,
         ] : [t('No merge in progress.'), '', ''], false);
@@ -462,7 +462,7 @@ export function vaultPanel(): DockPanel {
           },
           update: (row, o) => {
             const c = o.c;
-            setText(q(row, '.p11-com-n'), c.parent === null ? String(o.i + 1) : '↳');
+            setText(q(row, '.p11-com-n'), c.parent === null ? String(o.i + 1) : t('Re'));
             setText(q(row, '.p11-com-who'), `${c.author} · ${isoTime(c.ts)}`);
             const st = q(row, '.p11-com-state');
             setText(st, c.status);

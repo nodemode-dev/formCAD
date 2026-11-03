@@ -3,7 +3,7 @@ import json
 import os
 
 from app.vault import cdc, history, members as M, xrefs
-from app.vault.base import AGENT_CONTAINER, AGENT_UNPACKED, FORMAT, MAX_CONTAINER, MAX_MESSAGE, MAX_UNPACKED, MAX_VERSIONS, VaultError, author as me_author, clean_text, digest, file_digests, hexed, machine as me_machine, now, ref_name
+from app.vault.base import AGENT_CONTAINER, AGENT_UNPACKED, FORMAT, bound_json, MAX_CONTAINER, MAX_MESSAGE, MAX_UNPACKED, MAX_VERSIONS, VaultError, author as me_author, clean_text, digest, file_digests, hexed, machine as me_machine, now, ref_name
 from app.vault.store import Vault
 
 STATE_BLOCKS = {"review": "in review", "released": "released", "obsolete": "obsolete"}
@@ -48,6 +48,7 @@ def prepare(data: bytes, agent: bool = False) -> Prepared:
     p.kind = str(man.get("kind") or "drawing")
     p.title = str(man.get("title") or "")
     p.doc_raw = by["document.json"].data
+    bound_json(p.doc_raw, agent)
     p.container = digest(data)
     p.sha256 = hashlib.sha256(data).hexdigest()
     p.size = len(data)

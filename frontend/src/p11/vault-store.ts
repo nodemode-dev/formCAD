@@ -107,7 +107,9 @@ class VaultStore {
 
   async history(): Promise<void> {
     if (!this.docId) { this.nodes = []; this.heads = []; this.total = 0; this.lanes = 1; this.merge = null; return; }
-    const g = await req<{ nodes: VVersion[]; heads: Array<{ name: string; version: string }>; total: number; lanes: number }>('GET', this.base(`/docs/${this.docId}/graph?limit=200`)).catch(() => null);
+    const doc = this.docId;
+    const g = await req<{ nodes: VVersion[]; heads: Array<{ name: string; version: string }>; total: number; lanes: number }>('GET', this.base(`/docs/${doc}/graph?limit=200`)).catch(() => null);
+    if (doc !== this.docId) return;
     if (g) { this.nodes = g.nodes; this.heads = g.heads; this.total = g.total; this.lanes = g.lanes; }
     if (!this.node(this.selected)) this.selected = this.nodes[0]?.id ?? '';
     if (this.compare && !this.node(this.compare)) this.compare = '';
@@ -116,6 +118,7 @@ class VaultStore {
 
   async side(): Promise<void> {
     if (!this.docId) { this.comments = []; this.whereUsed = []; this.uses = []; this.audit = []; return; }
+    const doc = this.docId;
     const pick = this.node(this.selected) ? this.selected : '';
     const sel = pick ? `version=${pick}&` : '';
     const [c, w, u, a] = await Promise.all([
@@ -124,6 +127,7 @@ class VaultStore {
       req<unknown>('GET', this.base(`/docs/${this.docId}/uses${pick ? `?version=${pick}` : ''}`)).catch(() => null),
       req<unknown>('GET', this.base(`/audit?doc=${this.docId}&limit=30`)).catch(() => null),
     ]);
+    if (doc !== this.docId) return;
     this.comments = c ? arr<Comment>(c, 'comments') : [];
     this.whereUsed = w ? arr<unknown>(w, 'used_by').concat(arr<unknown>(w, 'items'), arr<unknown>(w, 'whereused')) : [];
     this.uses = u ? arr<unknown>(u, 'uses').concat(arr<unknown>(u, 'items')) : [];

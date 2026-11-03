@@ -224,7 +224,8 @@ const assembly = (): MenuItem[] => section('Assembly', () => [
   'u8-asm-insert', E('Insert Component (typed)', 'asminsert'), SEP,
   'u8-asm-panel', 'u8-mates-panel', 'u8-explode-panel', 'u8-check-panel', 'u8-bom-panel', SEP,
   'p11-joints-panel', 'p11-motion-panel', 'p11-joint-symbols', 'p11-run-study', SEP,
-  'u8-asm-solve', 'u8-asm-drag',
+  'u8-asm-solve', 'u8-asm-drag', SEP,
+  E('Pin to Vault (typed)', 'vaultpin'),
 ]);
 
 const drawing = (): MenuItem[] => section('Drawing', () => [

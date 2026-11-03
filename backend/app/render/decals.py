@@ -81,7 +81,11 @@ def listing(d) -> list:
     t = d.tables.get(TABLE)
     if t is None:
         return []
-    return [copy.deepcopy(r) for r in t.values() if str(r.get("name", "")).startswith(PREFIX)]
+    out = [copy.deepcopy(r) for r in t.values() if str(r.get("name", "")).startswith(PREFIX)]
+    for r in out:
+        if not (isinstance(r.get("image"), str) and DATA_URL.match(r["image"])):
+            r["image"] = ""
+    return out
 
 
 def add(d, name: str, rec: dict) -> dict:
