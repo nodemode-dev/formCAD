@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## U15, v0.12.0 Manufacture workspace (p12/*, styles/p12.css, io/events.ts, ui/icons.ts, ui/menu-spec.ts, main.ts, index.html)
+
+Panels are built once; op parameter forms are built once per operation kind from the engine registry and hidden or shown, lists and fixed-height boxes reserve space, so no step shifted layout. Toolpaths and the layer preview never rebuild on playback: `setDrawRange` on `LineSegments`, instance count and in-place matrix writes on the solid `InstancedMesh` (windowed to 120000 beads). Layer pack counts are element counts (vertices, segments), not scalars. The resolved WCS comes from op `state.summary.wcs` (one engine edit in `cam/gen.py`) because setups store the unresolved origin. Process records have no name in the engine view. Simulation player and machine view were written to the CAM2 spec and not driven (routes not mounted). Nest cut-path arcs draw as chords.
+
 ## I12 integration, v0.11.0 (p11/motion-panel.ts, p11/vault-store.ts, p11/vault-panel.ts, p11/joint-panel.ts, render/live.ts, render/panel.ts, render/net.ts, render/store.ts, render/scene.ts, view3d/viewport.ts, styles/render.css, styles/an1.css, styles/p10.css, ui/menu-spec.ts, render.html)
 
 Pattern instances broke the motion panel lists. `asm.tree` lists every pattern instance, and instances of one pattern share a component id, so the "parts that may fall" list and the pair selects of the motion panel were fed duplicate keys. `patchList` keys nodes by `data-key`, so the extra nodes were never matched, never removed and were moved on every paint: with an assembly that has a pattern open in another tab, every joint event removed and re-added 12 options and 6 rows (852 nodes on a dynamics cancel, layout shift 0.057). The panel now lists first instances only (`!n.index`, the same test `asm.ts` uses for world matrices). After the change the same 27 step run shows 0 removed and 0 added except where a row is really added or deleted, and the dynamics steps shift below 3e-4.

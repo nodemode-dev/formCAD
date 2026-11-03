@@ -12,12 +12,16 @@ export interface MeshJobEvent { type: 'meshjob'; id: string; command: string; st
 
 export interface MotionEvent { type: 'motion'; id: string; job: string; kind: string; state: string; phase: 'start' | 'progress' | 'end'; progress?: { fraction?: number; t?: number; frames?: number; steps?: number; elapsed?: number }; [key: string]: unknown }
 
-export type EngineEvent = DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent | GraphEvent | MeshJobEvent | MotionEvent;
+export interface CamEvent { type: 'cam'; id: string; job?: string; state?: string; phase?: string; reason?: string; progress?: number | { fraction?: number; [key: string]: unknown }; [key: string]: unknown }
+
+export interface AdditiveEvent { type: 'additivejob'; id: string; command?: string; state?: string; phase?: string; progress?: number; message?: string; [key: string]: unknown }
+
+export type EngineEvent = DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent | GraphEvent | MeshJobEvent | MotionEvent | CamEvent | AdditiveEvent;
 export type EventType = EngineEvent['type'];
 export type EventOf<T extends EventType> = Extract<EngineEvent, { type: T }>;
 export type LinkState = 'idle' | 'connecting' | 'open' | 'closed';
 
-const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job', 'graph', 'meshjob', 'motion']);
+const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job', 'graph', 'meshjob', 'motion', 'cam', 'additivejob']);
 const BACKOFF_MIN = 500;
 const BACKOFF_MAX = 10000;
 
