@@ -26,11 +26,16 @@ export const TYPE_ICON: Record<string, string> = {
   bend_relief: 'smRelief',
   corner_relief: 'smRelief',
   convert_sheet: 'smConvert',
+  plastic_boss: 'plBoss',
+  plastic_rib: 'plRib',
+  snap_hook: 'plSnap',
+  plastic_lip: 'plLip',
+  plastic_groove: 'plGroove',
 };
 
 export const iconFor = (type: string): string => TYPE_ICON[type] ?? 'part';
 
-export interface CreateEntry { type: string; label: string; cmd: string; group: 'shape' | 'dressup' | 'pattern' | 'sheet' }
+export interface CreateEntry { type: string; label: string; cmd: string; group: 'shape' | 'dressup' | 'pattern' | 'sheet' | 'plastic' }
 
 export const CREATE: CreateEntry[] = [
   { type: 'extrude', label: 'Extrude', cmd: 'pt-extrude', group: 'shape' },
@@ -59,4 +64,9 @@ export const CREATE: CreateEntry[] = [
   { type: 'bend_relief', label: 'Bend Relief', cmd: 'sm-relief', group: 'sheet' },
   { type: 'corner_relief', label: 'Corner Relief', cmd: 'sm-corner', group: 'sheet' },
   { type: 'convert_sheet', label: 'Convert to Sheet Metal', cmd: 'sm-convert', group: 'sheet' },
+  { type: 'plastic_boss', label: 'Plastic Boss', cmd: 'pl-boss', group: 'plastic' },
+  { type: 'plastic_rib', label: 'Plastic Rib', cmd: 'pl-rib', group: 'plastic' },
+  { type: 'snap_hook', label: 'Snap Fit Hook', cmd: 'pl-snap', group: 'plastic' },
+  { type: 'plastic_lip', label: 'Lip', cmd: 'pl-lip', group: 'plastic' },
+  { type: 'plastic_groove', label: 'Groove', cmd: 'pl-groove', group: 'plastic' },
 ];

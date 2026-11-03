@@ -1,4 +1,5 @@
 import { onShellMounted } from '../../app';
+import { exportWithOptions, importWithOptions } from '../../p10/interchange';
 import { registerInterceptor } from '../dialogs/intercept';
 import { docStore } from '../doc-store';
 import { pickExportPath, pickImportPath, pickPlotPath } from '../file-dialogs';
@@ -45,6 +46,7 @@ async function exportCommand(): Promise<void> {
   if (!path) return;
   const kind = ext(path);
   if (kind === 'pdf' || kind === 'png' || kind === 'svg') { await plotFile(id, path, kind); return; }
+  if (await exportWithOptions(path)) return;
   try {
     const r = await trackWork(`${t('Export')} ${tail(path)}`, () => out.exportFile(id, path));
     tellNotes(`${t('Exported')} ${tail(path)}.`, r.notes);
@@ -65,6 +67,7 @@ async function importCommand(): Promise<void> {
   if (!id) return;
   const path = await pickImportPath();
   if (!path) return;
+  if (await importWithOptions(path)) return;
   try {
     const r = await trackWork(`${t('Import')} ${tail(path)}`, () => out.importFile(id, path));
     const n = r.added.objects;

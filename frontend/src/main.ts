@@ -18,5 +18,6 @@ import './u8/register';
 import './draw/register';
 import './graph/register';
 import './graphx/register';
+import './p10/register';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });

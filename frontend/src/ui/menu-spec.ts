@@ -167,7 +167,8 @@ const partMenu = (): MenuItem[] => section('Part', () => [
   'pt-extrude', 'pt-extrude-cut', 'pt-revolve', 'pt-revolve-cut', 'pt-sweep', 'pt-sweep-cut', 'pt-loft', 'pt-loft-cut', 'pt-boundary', 'pt-rib', 'pt-hole', SEP,
   'pt-fillet', 'pt-chamfer', 'pt-shell', 'pt-draft', 'pt-pattern', 'pt-mirror', SEP,
   S('Sheet Metal', 'sm-base', 'sm-convert', SEP, 'sm-edge', 'sm-miter', 'sm-hem', 'sm-jog', 'sm-sketched', SEP, 'sm-relief', 'sm-corner', SEP,
-    'sm-flat', 'sm-flat-export', SEP, 'sm-rule', 'sm-tables', 'sm-cutlist'), SEP,
+    'sm-flat', 'sm-flat-export', SEP, 'sm-rule', 'sm-tables', 'sm-cutlist'),
+  S('Plastic', 'pl-boss', 'pl-rib', 'pl-snap', 'pl-lip', 'pl-groove', SEP, 'pl-panel', E('Plastic Checks', 'plasticcheck'), E('Wall Thickness Map', 'wallthickness')), SEP,
   'pt-edit', 'pt-rebuild', 'pt-force-rebuild', 'pt-roll-end', SEP,
   'pt-design-table', 'pt-materials', 'pt-mass',
 ]);
@@ -179,7 +180,7 @@ const model = (): MenuItem[] => section('Model', () => [
   S('Combine', E('Union', 'solidunion'), E('Subtract', 'solidsubtract'), E('Intersect', 'solidintersect')),
   S('Primitives', E('Box', 'box'), E('Cylinder', 'cylinder'), E('Sphere', 'sphere'), E('Cone', 'cone'), E('Torus', 'torus')),
   SEP, E('Move Face', 'moveface'), E('Offset Face', 'offsetface'), E('Delete Face', 'deleteface'), SEP,
-  E('Measure Body', 'massprop', 'body'), E('Section Analysis', 'sectionanalysis'), 'install-kernel',
+  E('Measure Body', 'massprop', 'body'), E('Section Analysis', 'sectionanalysis'), 'p10-pmi-panel', 'install-kernel',
 ]);
 
 const curve = (): MenuItem[] => section('Curve', () => [
@@ -201,11 +202,22 @@ const surface = (): MenuItem[] => section('Surface', () => [
   'u8-analysis-open', 'u8-analysis-off', 'u8-snap3d',
 ]);
 
+const formMenu = (): MenuItem[] => section('Form', () => [
+  'fm-panel', 'fm-edit', SEP,
+  S('New Form', 'fm-box', 'fm-cylinder', 'fm-sphere', 'fm-quadball', 'fm-torus', 'fm-plane'),
+  E('Form From Extruded Profile', 'subdextrude'), E('Form From Revolved Profile', 'subdrevolve'), SEP,
+  'fm-move', 'fm-rotate', 'fm-scale', SEP,
+  E('Insert Edge', 'subdinsertedge'), E('Subdivide Face', 'subddivideface'), E('Delete Form Elements', 'subddelete'), E('Bridge', 'subdbridge'), E('Fill Hole', 'subdfillhole'), SEP,
+  E('Crease', 'subdcrease'), E('Uncrease', 'subduncrease'), E('Form Symmetry', 'subdsymmetry'), E('Form Display', 'subddisplay'), SEP,
+  E('Form Report', 'subdinfo'), 'fm-convert',
+]);
+
 const meshMenu = (): MenuItem[] => section('Mesh', () => [
   E('Mesh From Solid', 'meshfromsolid'), SEP,
   E('Weld', 'meshweld'), E('Unify Normals', 'meshunify'), E('Fill Holes', 'meshfill'), SEP,
   'u8-mesh-naked', 'u8-mesh-naked-off', E('Count Naked Edges', 'meshnaked'), E('Mesh Report', 'meshreport'), SEP,
-  'u8-mesh-import', 'u8-mesh-export', E('3DM File Info', 'info3dm'),
+  'u8-mesh-import', 'u8-mesh-export', E('3DM File Info', 'info3dm'), SEP,
+  'p10-mesh-panel',
 ]);
 
 const assembly = (): MenuItem[] => section('Assembly', () => [
@@ -280,6 +292,7 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Model', items: model },
     { label: 'Curve', items: curve },
     { label: 'Surface', items: surface },
+    { label: 'Form', items: formMenu },
     { label: 'Mesh', items: meshMenu },
     { label: 'Assembly', items: assembly },
     { label: 'Drawing', items: drawing },

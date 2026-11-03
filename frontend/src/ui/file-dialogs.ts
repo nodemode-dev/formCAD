@@ -14,11 +14,17 @@ const DM3: FileKind = { name: '3DM model', extensions: ['3dm'] };
 const STL: FileKind = { name: 'STL mesh', extensions: ['stl'] };
 const OBJ: FileKind = { name: 'OBJ mesh', extensions: ['obj'] };
 
-export const MESH_KINDS: FileKind[] = [{ name: 'Mesh and model files', extensions: ['3dm', 'stl', 'obj'] }, DM3, STL, OBJ];
+const STEP: FileKind = { name: 'STEP model', extensions: ['step', 'stp'] };
+const IGES: FileKind = { name: 'IGES model', extensions: ['iges', 'igs'] };
+const MF3: FileKind = { name: '3MF model', extensions: ['3mf'] };
+const GLTF: FileKind = { name: 'glTF model', extensions: ['glb', 'gltf'] };
+const PLY: FileKind = { name: 'PLY mesh', extensions: ['ply'] };
+
+export const MESH_KINDS: FileKind[] = [{ name: 'Mesh and model files', extensions: ['3dm', 'stl', 'obj', 'ply', '3mf'] }, DM3, STL, OBJ, PLY, MF3];
 export const OPEN_KINDS: FileKind[] = [{ name: 'All drawings', extensions: ['fcad', 'dxf', 'dwg', 'dwt', 'svg', 'svgz', '3dm', 'stl', 'obj'] }, FCAD, DXF, DWG, DWT, SVG, DM3, STL, OBJ];
 export const SAVE_KINDS: FileKind[] = [FCAD, DXF, DWG, DWT, DM3];
-export const EXPORT_KINDS: FileKind[] = [DXF, DWG, DWT, SVG, PNG, PDF, DM3, STL, OBJ];
-export const IMPORT_KINDS: FileKind[] = [{ name: 'All importable files', extensions: ['dxf', 'dwg', 'svg', 'svgz', '3dm', 'stl', 'obj'] }, DXF, DWG, SVG, DM3, STL, OBJ];
+export const EXPORT_KINDS: FileKind[] = [DXF, DWG, DWT, SVG, PNG, PDF, DM3, STL, OBJ, STEP, IGES, MF3, GLTF, PLY];
+export const IMPORT_KINDS: FileKind[] = [{ name: 'All importable files', extensions: ['dxf', 'dwg', 'svg', 'svgz', '3dm', 'stl', 'obj', 'step', 'stp', 'iges', 'igs', '3mf', 'glb', 'gltf', 'ply'] }, DXF, DWG, SVG, DM3, STL, OBJ, STEP, IGES, MF3, GLTF, PLY];
 export const PLOT_KINDS: Record<string, FileKind> = { pdf: PDF, png: PNG, svg: { name: 'SVG image', extensions: ['svg'] } };
 
 const native = (): boolean => '__TAURI_INTERNALS__' in window;
