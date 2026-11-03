@@ -7,6 +7,7 @@ import type { Json, Rec } from './sim-store';
 export const LOAD_TYPES: Array<[string, string]> = [
   ['force', 'Force'], ['pressure', 'Pressure'], ['traction', 'Traction'], ['gravity', 'Gravity'], ['heat_flux', 'Heat flux'],
   ['convection', 'Convection'], ['heat_load', 'Heat load'], ['temperature_field', 'Temperature field'], ['reference_load', 'Reference load for buckling'],
+  ['flow_inlet', 'Flow inlet'], ['flow_outlet', 'Flow outlet'], ['injection_gate', 'Injection gate'],
 ];
 export const FIXTURE_TYPES: Array<[string, string]> = [['fixed', 'Fixed'], ['roller', 'Roller'], ['symmetry', 'Symmetry'], ['displacement', 'Prescribed displacement'], ['temperature', 'Temperature']];
 export const CONTACT_TYPES: Array<[string, string]> = [['bonded', 'Bonded'], ['frictionless', 'Frictionless'], ['frictional', 'Frictional']];
@@ -28,6 +29,13 @@ export const LOAD_SPECS: Record<string, FieldSpec[]> = {
   heat_load: [{ name: 'value', type: 'number', label: 'Heat in the body', unit: 'W', default: 10 }],
   temperature_field: [{ name: 'value', type: 'number', label: 'Uniform temperature', unit: 'K', default: 343.15, min: 0 }],
   reference_load: [{ name: 'value', type: 'number', label: 'Reference force', unit: 'N', default: 1 }, ...dir()],
+  flow_inlet: [
+    { name: 'by', type: 'choice', label: 'Give the inlet as', choices: [['speed', 'Mean speed'], ['flow', 'Volume flow']], default: 'speed' },
+    { name: 'speed', type: 'number', label: 'Mean speed', unit: 'm/s', default: 0.05, min: 0 },
+    { name: 'flow_lpm', type: 'number', label: 'Volume flow', unit: 'L/min', default: 1, min: 0 },
+  ],
+  flow_outlet: [{ name: 'value', type: 'number', label: 'Outlet pressure', unit: 'Pa', default: 0 }],
+  injection_gate: [],
 };
 
 export const FIXTURE_SPECS: Record<string, FieldSpec[]> = {
@@ -87,6 +95,8 @@ export function loadToForm(r: Rec): Json {
   if (type === 'pressure') o.value = nz(r.value) === null ? null : rd((r.value as number) / 1e6);
   else if (type === 'traction') { const v = Array.isArray(r.vector) ? r.vector as number[] : [0, 0, 0]; o.tx = rd((v[0] ?? 0) / 1e6); o.ty = rd((v[1] ?? 0) / 1e6); o.tz = rd((v[2] ?? 0) / 1e6); }
   else if (type === 'convection') { o.h = r.h ?? null; o.t_inf = r.t_inf ?? null; }
+  else if (type === 'flow_inlet') { o.by = nz(r.flow) !== null ? 'flow' : 'speed'; o.speed = nz(r.speed) ?? 0.05; o.flow_lpm = nz(r.flow) === null ? 1 : rd((r.flow as number) * 6e4); }
+  else if (type === 'injection_gate') o.value = null;
   else o.value = r.value ?? null;
   return o;
 }
@@ -97,6 +107,8 @@ export function loadFromForm(type: string, v: Json): Json {
   if (type === 'pressure') out.value = rd(Number(v.value ?? 0) * 1e6);
   else if (type === 'traction') out.vector = [Number(v.tx ?? 0) * 1e6, Number(v.ty ?? 0) * 1e6, Number(v.tz ?? 0) * 1e6];
   else if (type === 'convection') { out.h = v.h; out.t_inf = v.t_inf; }
+  else if (type === 'flow_inlet') { const byFlow = v.by === 'flow'; out.speed = byFlow ? null : v.speed; out.flow = byFlow ? rd(Number(v.flow_lpm ?? 0) / 6e4) : null; }
+  else if (type === 'injection_gate') return out;
   else out.value = v.value;
   if (['force', 'gravity', 'reference_load'].includes(type)) out.direction = d;
   return out;
@@ -189,6 +201,7 @@ export function optionSpecs(raw: unknown): FieldSpec[] {
   const add = (name: string, o: unknown): void => {
     const d = (o && typeof o === 'object' && !Array.isArray(o) ? o : { default: o }) as Json;
     const def = d.default;
+    if (typeof d.type === 'string' && ['list', 'object', 'vector'].includes(d.type)) return;
     const declared = typeof d.type === 'string' ? TYPE_MAP[d.type] : undefined;
     const whole = typeof def === 'number' && Number.isInteger(def) && (d.min === undefined || Number.isInteger(d.min));
     const type = d.choices ? 'choice' : declared ?? (typeof def === 'boolean' ? 'bool' : whole ? 'int' : typeof def === 'number' ? 'number' : 'text');

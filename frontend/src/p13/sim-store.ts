@@ -59,7 +59,7 @@ class SimStore {
   private timer = 0;
   private poll = 0;
   private busy = false;
-  private again = false;
+  private inflight: Promise<void> = Promise.resolve();
   private seq = 0;
   private libDoc = '';
   readonly overviewSeen: { raw: Json | null } = { raw: null };
@@ -75,13 +75,32 @@ class SimStore {
   ids(rec: Rec | undefined, key: string): string[] { const v = rec?.[key]; return Array.isArray(v) ? v.map(String) : []; }
   get running(): boolean { return !!this.job && ACTIVE.has(this.job.state); }
 
+  switchDoc(): void {
+    this.records = new Map();
+    this.studyId = '';
+    this.recId = '';
+    this.job = null;
+    this.results.clear();
+    this.meshInfo.clear();
+    this.library = [];
+    this.libDoc = '';
+    this.layer?.clear();
+    this.emit();
+    this.schedule(0);
+  }
+
   schedule(delay = 120): void {
     if (this.timer) return;
     this.timer = window.setTimeout(() => { this.timer = 0; void this.refresh(); }, delay);
   }
 
-  async refresh(): Promise<void> {
-    if (this.busy) { this.again = true; return; }
+  refresh(): Promise<void> {
+    if (this.busy) return this.inflight.then(() => this.refresh());
+    this.inflight = this.fetchAll();
+    return this.inflight;
+  }
+
+  private async fetchAll(): Promise<void> {
     if (!this.docId()) { this.records.clear(); this.studyId = ''; this.recId = ''; this.loaded = false; this.emit(); return; }
     this.busy = true;
     const seq = ++this.seq;
@@ -107,7 +126,6 @@ class SimStore {
     } finally {
       this.busy = false;
       this.emit();
-      if (this.again) { this.again = false; this.schedule(0); }
     }
   }
 
@@ -234,7 +252,7 @@ class SimStore {
       if (this.topo(studyId)) {
         const sum = asObj(r.summary) ?? {};
         const hist = asObj(r.history);
-        this.results.set(studyId, { result: { fields: [{ name: 'stress', unit: 'MPa', location: 'voxel', components: 1, modes: 0 }], summary: { ...sum, iterations_logged: Array.isArray(hist?.rows) ? (hist?.rows as unknown[]).length : 0 } } });
+        this.results.set(studyId, { result: { fields: [{ name: 'stress', unit: 'MPa', location: 'node', components: 1, modes: 0 }], summary: { ...sum, iterations_logged: Array.isArray(hist?.rows) ? (hist?.rows as unknown[]).length : 0 } }, history: Array.isArray(hist?.rows) ? hist?.rows : [] });
         return this.results.get(studyId) ?? null;
       }
       this.results.set(studyId, r);
@@ -274,5 +292,11 @@ class SimStore {
 export const sim = new SimStore();
 
 events.on('doc', (e) => { if (e.id === docStore.activeId) sim.schedule(); });
+let seenDoc = docStore.activeId;
+docStore.onChange(() => {
+  if (docStore.activeId === seenDoc) return;
+  seenDoc = docStore.activeId;
+  sim.switchDoc();
+});
 events.on('simjob', (e) => { sim.onEvent(e as Json); });
 events.on('topojob', (e) => { sim.onEvent(e as Json); });

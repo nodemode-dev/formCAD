@@ -8,7 +8,7 @@ export { fillSelect, mini } from '../p12/kit';
 export type { ReportBox, Bar } from '../p11/kit';
 
 const FOLD_KEY = 'formCAD.p13.folds';
-const OPEN_FIRST = new Set(['Studies', 'Selected item', 'Mesh and run', 'Plot', 'Probes']);
+const OPEN_FIRST = new Set(['Studies', 'Selected item', 'Mesh and run', 'Study options', 'Plot', 'Probes', 'Duct loss', 'Study history']);
 
 function folds(): Record<string, boolean> {
   try { const v: unknown = JSON.parse(stored(FOLD_KEY) ?? '{}'); return v && typeof v === 'object' ? v as Record<string, boolean> : {}; } catch { return {}; }

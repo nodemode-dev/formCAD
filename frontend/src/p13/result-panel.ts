@@ -8,12 +8,15 @@ import { toast } from '../ui/toast';
 import { button, buttons, checkCtl, selectCtl } from '../u8/ui';
 import { view3d } from '../view3d/mount';
 import { fieldForm } from '../p12/fields';
+import { lastCmdError, runCmd } from '../p10/kit';
+import { chart } from './chart';
 import { fillSelect, reportBox, section, SI } from './kit';
+import { curvesOf, summaryLines, type Curve } from './summary';
 import { rampCss } from './result-layer';
 import { sim, type DisplayPayload, type Json, type Probe, type ResultField } from './sim-store';
 
 const RAMPS: Array<[string, string]> = [['sequential', 'Sequential'], ['diverging', 'Diverging'], ['deviation', 'Green to red'], ['wall', 'Red to blue']];
-const FIELD_LABEL: Record<string, string> = { disp: 'Displacement', disp_mag: 'Displacement size', vm: 'Von Mises stress', s1: 'Maximum principal stress', reaction: 'Reaction force', mode_shape: 'Mode shape', temperature: 'Temperature', flux_mag: 'Heat flux size', frequency: 'Frequency', load_factor: 'Load factor' };
+const FIELD_LABEL: Record<string, string> = { disp: 'Displacement', disp_mag: 'Displacement size', vm: 'Von Mises stress', s1: 'Maximum principal stress', reaction: 'Reaction force', mode_shape: 'Mode shape', temperature: 'Temperature', flux_mag: 'Heat flux size', frequency: 'Frequency', load_factor: 'Load factor', pressure: 'Pressure', speed: 'Speed', velocity: 'Velocity', arrival_time: 'Fill arrival time', fill_pressure: 'Fill pressure at 98 percent', thickness: 'Wall thickness', plastic_strain: 'Equivalent plastic strain', contact_force: 'Contact force', life_repeats: 'Life in repeats', damage: 'Damage per repeat', log10_life_cycles: 'Log10 of life in cycles', stress: 'Von Mises stress of the outcome' };
 
 export const resultState: { data: DisplayPayload | null; probes: Probe[]; study: string; field: string; mode: number } = { data: null, probes: [], study: '', field: '', mode: 0 };
 
@@ -68,15 +71,37 @@ export function resultPanel(): DockPanel {
       sProbe.body.append(probeOn.el, probeList, probeEmpty, buttons(button('Clear probes', () => { resultState.probes = []; paintProbes(); })));
 
       const sSum = section('Summary');
-      const summary = reportBox(10);
+      const summary = reportBox(16);
       sSum.body.append(summary.el);
+
+      const sHist = section('Study history');
+      const curveSel = selectCtl('Curve', [['', '-']]);
+      const plot = chart();
+      sHist.body.append(curveSel.el, plot.el);
+
+      const sApply = section('Apply to the document');
+      const applyForm = fieldForm([
+        { name: 'name', type: 'text', label: 'Body name', default: 'Optimised shape' },
+        { name: 'smooth', type: 'int', label: 'Smoothing passes', default: 8, min: 0, max: 50 },
+        { name: 'sigma', type: 'number', label: 'Smoothing strength', default: 0.6, min: 0, max: 5 },
+        { name: 'max_triangles', type: 'int', label: 'Most triangles', default: 20000, min: 100 },
+        { name: 'to_solid', type: 'bool', label: 'Also make a solid body', default: false },
+      ], () => undefined);
+      applyForm.set({});
+      const applyNote = el('<p class="u8-note sm-apply-note"></p>');
+      const applyBtn = button('Apply the outcome', () => { void applyOutcome(); }, 'primary');
+      (applyBtn as HTMLButtonElement).disabled = true;
+      const applyMsg = reportBox(2);
+      sApply.body.append(applyNote, applyForm.el, buttons(applyBtn), applyMsg.el);
 
       const sRep = section('Report');
       const repMsg = reportBox(2);
       sRep.body.append(buttons(button('Report as HTML...', () => { void report('html'); }), button('Report as PDF...', () => { void report('pdf'); })), repMsg.el);
 
-      live.append(sPlot.root, sSec.root, sProbe.root, sSum.root, sRep.root);
+      live.append(sPlot.root, sSec.root, sProbe.root, sSum.root, sHist.root, sRep.root, sApply.root);
 
+      let curves: Curve[] = [];
+      let topo = false;
       let fields: ResultField[] = [];
       let modes: Array<{ index: number; frequency_hz?: number; load_factor?: number }> = [];
       let loadedFor = '';
@@ -92,6 +117,7 @@ export function resultPanel(): DockPanel {
         const my = ++ticket;
         const d = await sim.display(s.id, { field: fieldSel.get(), mode: Number(modeSel.get() || 0), ramp: rampSel.get(), scale: 'auto' });
         if (!d || my !== ticket) return;
+        if (d.unit === 'Pa' && Math.max(Math.abs(d.min), Math.abs(d.max)) < 1e4) { d.display_unit = 'Pa'; d.display_factor = 1; }
         resultState.data = d;
         resultState.study = s.id;
         resultState.field = fieldSel.get();
@@ -193,6 +219,7 @@ export function resultPanel(): DockPanel {
           else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o as Json)) if (k !== 'point' && k !== 'inside') walk(v, pre ? `${pre}.${k}` : k);
         };
         walk(r, '');
+        if (!values.length) values.push([t('values'), t('not given for this study type')]);
         resultState.probes = [...resultState.probes, { point: at, values }].slice(-16);
         paintProbes();
       }
@@ -221,6 +248,19 @@ export function resultPanel(): DockPanel {
         if (r) { repMsg.set([`${t('Report written')}: ${String(r.path ?? path)}`]); toast(t('Report written'), 'info'); } else repMsg.set([t('The report could not be written.')], true);
       }
 
+      function plotCurve(): void { plot.set(curves.find((c) => c.id === curveSel.get()) ?? curves[0] ?? null); }
+      curveSel.input.addEventListener('change', plotCurve);
+
+      async function applyOutcome(): Promise<void> {
+        const s = sim.study();
+        if (!s || !topo) return;
+        const v = applyForm.read();
+        const args: Json = { study: s.id, name: String(v.name || 'Optimised shape'), smooth: v.smooth ?? 8, sigma: v.sigma ?? 0.6, max_triangles: v.max_triangles ?? 20000, to_solid: v.to_solid === true };
+        applyMsg.set([t('Applying...')]);
+        const r = await runCmd('TOPOAPPLY', args);
+        if (r) { applyMsg.set([`${t('Applied')}: ${String(args.name)}`, ...summaryLines(r as Json, 1)]); toast(t('The optimised shape was added to the document.'), 'info'); } else applyMsg.set([lastCmdError() || t('The outcome could not be applied.')], true);
+      }
+
       function paintFields(): void {
         const s = sim.study();
         const have = !!s && !!s.result;
@@ -234,21 +274,19 @@ export function resultPanel(): DockPanel {
           const r = (whole?.result ?? null) as Json | null;
           if (!r || loadedFor !== key) return;
           fields = (Array.isArray(r.fields) ? r.fields : []) as ResultField[];
-          const rows = fields.map((f) => [f.name, fieldLabel(f)] as [string, string]);
+          const drawn = fields.filter((f) => !f.location || f.location === 'node');
+          const rows = drawn.map((f) => [f.name, fieldLabel(f)] as [string, string]);
           fillSelect(fieldSel.input as HTMLSelectElement, rows);
           const sm = (r.summary ?? {}) as Json;
-          const flat: Array<[string, string]> = [];
-          const walk = (o: unknown, pre: string): void => {
-            if (typeof o === 'number') flat.push([pre, SI(o, '')]);
-            else if (typeof o === 'string') flat.push([pre, o]);
-            else if (Array.isArray(o)) flat.push([pre, o.map((x) => (typeof x === 'number' ? SI(x, '') : String(x))).join(' ')]);
-            else if (o && typeof o === 'object') for (const [k, v] of Object.entries(o as Json)) walk(v, pre ? `${pre} ${k}` : k);
-          };
-          walk(sm, '');
-          const lines = flat.slice(0, 10).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`);
-          summary.set(lines);
-          const mf = fields.find((f) => (f.modes ?? 0) > 0);
-          const first = fields.find((f) => f.name === 'vm') ?? fields.find((f) => f.name === 'temperature') ?? fields.find((f) => f.name === 'disp_mag') ?? fields[0];
+          summary.set(summaryLines(sm, 16));
+          curves = curvesOf(sm, whole?.history);
+          fillSelect(curveSel.input as HTMLSelectElement, curves.length ? curves.map((c) => [c.id, t(c.label)] as [string, string]) : [['', '-']]);
+          plotCurve();
+          topo = sim.topo(s.id);
+          (applyBtn as HTMLButtonElement).disabled = !topo;
+          setText(applyNote, topo ? t('Adds the optimised shape to the document as a mesh body, or as a solid when you ask for one.') : t('Only topology studies can be applied to the document.'));
+          const mf = drawn.find((f) => (f.modes ?? 0) > 0);
+          const first = ['vm', 'temperature', 'pressure', 'arrival_time', 'log10_life_cycles', 'disp_mag'].map((n) => drawn.find((f) => f.name === n)).find((f) => !!f) ?? drawn[0];
           if (first && !fieldSel.get()) fieldSel.set(first.name);
           if (first) fieldSel.set(first.name);
           const n = mf?.modes ?? 0;

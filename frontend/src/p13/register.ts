@@ -4,6 +4,7 @@ import { docStore } from '../ui/doc-store';
 import { registerDockPanel } from '../ui/dock';
 import { onView3d } from '../view3d/mount';
 import type { Viewport3D } from '../view3d/viewport';
+import { calcPanel } from './calc-panel';
 import { resultPanel, resultState } from './result-panel';
 import { ResultLayer } from './result-layer';
 import { sim } from './sim-store';
@@ -26,10 +27,12 @@ onView3d((c) => { if (c.vp) attach(c.vp); });
 
 registerDockPanel(studyPanel());
 registerDockPanel(resultPanel());
+registerDockPanel(calcPanel());
 
 commands.add(
   { id: 'p13-study-panel', label: 'Simulation Studies', group: 'Window', run: () => reveal('sim'), enabled: has },
   { id: 'p13-result-panel', label: 'Simulation Results', group: 'Window', run: () => reveal('simresult'), enabled: has },
+  { id: 'p13-calc-panel', label: 'Flow and Design Calculators', group: 'Window', run: () => reveal('simcalc') },
   { id: 'p13-mesh', label: 'Generate Study Mesh', group: 'Simulate', run: () => { const s = sim.study(); if (s) void sim.mesh(s.id); }, enabled: () => has() && !!sim.study() && !sim.running },
   { id: 'p13-solve', label: 'Solve Study', group: 'Simulate', run: () => { const s = sim.study(); if (s) void sim.run(s.id); }, enabled: () => has() && !!sim.study() && !sim.running },
   { id: 'p13-cancel', label: 'Cancel Solve', group: 'Simulate', run: () => { void sim.cancel(); }, enabled: () => sim.running },

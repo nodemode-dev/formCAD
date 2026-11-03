@@ -8,10 +8,11 @@ import { view3d } from '../view3d/mount';
 import { fieldForm, type FieldForm } from '../p12/fields';
 import {
   CONTACT_SPECS, CONTACT_TYPES, CONTROL_SPECS, FIXTURE_SPECS, FIXTURE_TYPES, LOAD_SPECS, LOAD_TYPES, MATERIAL_SPECS,
-  fixtureFromForm, fixtureToForm, loadFromForm, loadToForm, materialFromForm, materialToForm, optionSpecs, selectorEditor,
+  fixtureFromForm, fixtureToForm, loadFromForm, loadToForm, materialFromForm, materialToForm, selectorEditor,
   type SelectorEditor,
 } from './forms';
 import { fillSelect, progressBar, reportBox, section } from './kit';
+import { optionForm, type OptionForm } from './options';
 import { sim, type Json, type Rec } from './sim-store';
 
 const KIND_BADGE: Record<string, string> = { study: 'ST', material: 'MA', load: 'LD', fixture: 'FX', contact: 'CT', mesh_control: 'MS' };
@@ -78,26 +79,37 @@ export function studyPanel(): DockPanel {
       const sRun = section('Mesh and run');
       const meshBox = reportBox(3);
       const showMesh = checkCtl('Show the mesh in the view', false, () => { void paintMesh(); });
+      const sOpts = section('Study options');
       const optsHost = el('<div class="sm-opts"></div>');
+      sOpts.body.append(optsHost);
       const bar = progressBar();
       const runBox = reportBox(4);
       const meshBtn = button('Generate mesh', () => { void doMesh(); });
       const runBtn = button('Solve', () => { void doRun(); }, 'primary');
-      sRun.body.append(meshBox.el, showMesh.el, buttons(meshBtn), optsHost, buttons(runBtn), bar.el, runBox.el);
+      sRun.body.append(meshBox.el, showMesh.el, buttons(meshBtn), buttons(runBtn), bar.el, runBox.el);
       bar.onCancel(() => { void sim.cancel(); });
 
-      live.append(sTree.root, sAdd.root, sEdit.root, sRun.root);
+      live.append(sTree.root, sAdd.root, sEdit.root, sRun.root, sOpts.root);
 
       const panes = new Map<string, { root: HTMLElement; load(r: Rec): void }>();
       const sigs = new Map<string, string>();
       let activePane = '';
       let debounce = 0;
       let lastMesh = '';
-      const optForms = new Map<string, FieldForm>();
+      const optForms = new Map<string, OptionForm>();
+      const optSigs = new Map<string, string>();
 
+      let pendingId = '';
+      let pendingN = 0;
       const later = (id: string, fn: () => Json | null): void => {
         window.clearTimeout(debounce);
-        debounce = window.setTimeout(() => { const f = fn(); if (f) void sim.update(id, f); }, 350);
+        pendingId = id;
+        const n = ++pendingN;
+        debounce = window.setTimeout(() => {
+          const f = fn();
+          const done = (): void => { if (n === pendingN) { pendingId = ''; sim.schedule(0); } };
+          if (!f) done(); else void sim.update(id, f).then(done);
+        }, 350);
       };
 
       function pane(key: string, make: () => { root: HTMLElement; load(r: Rec): void }): { root: HTMLElement; load(r: Rec): void } {
@@ -175,7 +187,8 @@ export function studyPanel(): DockPanel {
           let cur = '';
           const specs = kind === 'load' ? LOAD_SPECS[type] ?? [] : kind === 'fixture' ? FIXTURE_SPECS[type] ?? [] : kind === 'contact' ? CONTACT_SPECS : kind === 'mesh_control' ? CONTROL_SPECS : [];
           const nameForm = fieldForm([{ name: 'name', type: 'text', label: 'Name' }], () => push());
-          const f = fieldForm(specs, () => push());
+          const f = fieldForm(specs, () => { vis(); push(); });
+          const vis = (): void => { if (type === 'flow_inlet') f.show(new Set(['by', f.read().by === 'flow' ? 'flow_lpm' : 'speed'])); };
           const editors: Record<string, SelectorEditor> = {};
           const slots = kind === 'contact' ? [['a', 'First side'], ['b', 'Second side']] : [['select', 'Faces']];
           const selHost = el('<div class="sm-sels"></div>');
@@ -206,6 +219,7 @@ export function studyPanel(): DockPanel {
               else if (kind === 'contact') f.set({ friction: r.friction ?? 0.2 });
               else f.set({ maxh_mm: r.maxh_mm ?? null });
               if (kind === 'contact') f.show(type === 'frictional' ? null : new Set());
+              vis();
               for (const [k, e] of Object.entries(editors)) e.set(r[k]);
             },
           };
@@ -228,7 +242,7 @@ export function studyPanel(): DockPanel {
         const key = rec.kind === 'study' ? 'study' : rec.kind === 'material' ? 'material' : `${rec.kind}:${String(rec.type ?? '')}`;
         const p = rec.kind === 'study' ? studyPane() : rec.kind === 'material' ? materialPane() : recordPane(rec.kind, String(rec.type ?? ''));
         const sig = `${rec.id}:${JSON.stringify(rec)}`;
-        if (sigs.get(key) !== sig) { sigs.set(key, sig); p.load(rec); }
+        if (sigs.get(key) !== sig && pendingId !== rec.id) { sigs.set(key, sig); p.load(rec); }
         showPane(key);
       }
 
@@ -322,14 +336,19 @@ export function studyPanel(): DockPanel {
         const st = s ? sim.solver(String(s.type)) : undefined;
         const key = s ? String(s.type) : '';
         if (s && st && !optForms.has(key)) {
-          const specs = optionSpecs(st.options);
-          const form = fieldForm(specs, () => undefined);
-          form.set({});
+          const form = optionForm(key, st.options);
+          form.load({});
           form.el.hidden = true;
           optForms.set(key, form);
           optsHost.appendChild(form.el);
         }
         for (const [k, f] of optForms) f.el.hidden = k !== key;
+        const cur = optForms.get(key);
+        if (s && cur) {
+          cur.refresh?.(sim.of('contact'));
+          const sig = `${s.id}:${JSON.stringify(s.options ?? {})}`;
+          if (optSigs.get(key) !== sig) { optSigs.set(key, sig); cur.load((s.options ?? {}) as Json); }
+        }
         const j = sim.job;
         const mine = !!j && !!s && j.study === s.id;
         bar.set(mine ? j.progress : 0, mine ? `${j.phase || t('Solving')} · ${Math.round(j.progress * 100)} %` : '', mine && sim.running);
@@ -403,9 +422,10 @@ export function studyPanel(): DockPanel {
         if (!s) { toast(t('Make a study first.'), 'error'); return; }
         const rec = await sim.create(kind, fields);
         if (!rec) return;
+        const cur = sim.study(s.id) ?? s;
         const key = LINK_KEY[kind];
-        if (key) await sim.update(s.id, { [key]: [...sim.ids(s, key), rec.id] });
-        else if (kind === 'mesh_control') { const m = (s.mesh ?? {}) as Json; await sim.update(s.id, { mesh: { ...m, controls: [...(Array.isArray(m.controls) ? m.controls as string[] : []), rec.id] } }); }
+        if (key) await sim.update(s.id, { [key]: [...sim.ids(cur, key), rec.id] });
+        else if (kind === 'mesh_control') { const m = (cur.mesh ?? {}) as Json; await sim.update(s.id, { mesh: { ...m, controls: [...(Array.isArray(m.controls) ? m.controls as string[] : []), rec.id] } }); }
         else if (kind === 'material') await sim.update(s.id, { material: rec.id });
         sim.select(s.id, rec.id);
       }
@@ -460,8 +480,8 @@ export function studyPanel(): DockPanel {
         const s = sim.study();
         if (!s) return;
         const f = optForms.get(String(s.type));
-        const options = f ? Object.fromEntries(Object.entries(f.read()).filter(([, v]) => v !== null && v !== '')) : {};
-        if (Object.keys(options).length) await sim.update(s.id, { options });
+        const options = f ? f.read() : {};
+        if (JSON.stringify(options) !== JSON.stringify(s.options ?? {})) { if (!(await sim.update(s.id, { options }))) return; }
         await sim.run(s.id);
       }
 

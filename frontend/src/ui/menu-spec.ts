@@ -234,7 +234,7 @@ const manufacture = (): MenuItem[] => section('Manufacture', () => [
 ]);
 
 const simulate = (): MenuItem[] => section('Simulate', () => [
-  'p13-study-panel', 'p13-result-panel', SEP,
+  'p13-study-panel', 'p13-result-panel', 'p13-calc-panel', SEP,
   'p13-mesh', 'p13-solve', 'p13-cancel', SEP,
   'p13-show-result',
 ]);
