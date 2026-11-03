@@ -1,0 +1,567 @@
+{
+  "app": {
+    "name": "formCAD"
+  },
+  "created": "2026-11-03T03:44:01Z",
+  "extensions": {},
+  "format": "formcad.graph",
+  "groups": [],
+  "libraries": [],
+  "meta": {
+    "author": "",
+    "description": "",
+    "license": "",
+    "name": "Plate with bolt holes"
+  },
+  "min_reader": "1.0.0",
+  "name": "Plate with bolt holes",
+  "nodes": [
+    {
+      "enabled": true,
+      "guid": "d9b03c73-2dda-5396-9dc2-c3ed4eefaa84",
+      "id": "box",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Plate",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_31fcebac",
+            "name": "plane"
+          },
+          {
+            "access": "item",
+            "id": "p_a3d1a166",
+            "name": "x",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  100.0
+                ]
+              },
+              "type": "number"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_5b82545b",
+            "name": "y",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  60.0
+                ]
+              },
+              "type": "number"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_5e269b3b",
+            "name": "z",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  20.0
+                ]
+              },
+              "type": "number"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_25d443fd",
+            "name": "centred"
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_c165f6e6",
+            "name": "box"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "brep.box",
+      "type_name": "Box",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "c7a6c608-20b4-5308-9699-66126867afa9",
+      "id": "hole",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Hole",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_3db45cc4",
+            "name": "plane",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  {
+                    "origin": [
+                      70,
+                      30,
+                      -5
+                    ],
+                    "x": [
+                      1,
+                      0,
+                      0
+                    ],
+                    "y": [
+                      0,
+                      1,
+                      0
+                    ]
+                  }
+                ]
+              },
+              "type": "plane"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_65f566ec",
+            "name": "radius",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  4.0
+                ]
+              },
+              "type": "number"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_61e1d32e",
+            "name": "height",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  30.0
+                ]
+              },
+              "type": "number"
+            }
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_364f17db",
+            "name": "cylinder"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "brep.cylinder",
+      "type_name": "Cylinder",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "530251ab-8295-54a3-a22f-5017e36b25e9",
+      "id": "ring",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Ring of holes",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_6b8697a6",
+            "name": "geometry"
+          },
+          {
+            "access": "item",
+            "id": "p_7624bc89",
+            "name": "plane",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  {
+                    "origin": [
+                      50,
+                      30,
+                      0
+                    ],
+                    "x": [
+                      1,
+                      0,
+                      0
+                    ],
+                    "y": [
+                      0,
+                      1,
+                      0
+                    ]
+                  }
+                ]
+              },
+              "type": "plane"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_248352be",
+            "name": "count",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  4
+                ]
+              },
+              "type": "integer"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_60ea9f59",
+            "name": "angle"
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_73cb3881",
+            "name": "geometry"
+          },
+          {
+            "access": "item",
+            "id": "p_814036ab",
+            "name": "transforms"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "transform.array_polar",
+      "type_name": "Polar Array",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "38069131-d228-5449-a3fa-9faa06453244",
+      "id": "cut",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Cut holes",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "list",
+            "id": "p_a1f7dc8f",
+            "name": "a"
+          },
+          {
+            "access": "list",
+            "id": "p_3182a169",
+            "name": "b"
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_209bf8ca",
+            "name": "result"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "brep.difference",
+      "type_name": "Boolean Difference",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "2243a4db-90b9-5671-a5df-7fddfa0e7e5e",
+      "id": "tag",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Tag",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_078b4849",
+            "name": "geometry"
+          },
+          {
+            "access": "item",
+            "id": "p_8b8f24c2",
+            "name": "name",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  "Plate"
+                ]
+              },
+              "type": "text"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_247731bb",
+            "name": "layer",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  "Plates"
+                ]
+              },
+              "type": "text"
+            }
+          },
+          {
+            "access": "item",
+            "id": "p_29732660",
+            "name": "colour",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  "#3a7bd5"
+                ]
+              },
+              "type": "colour"
+            }
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_d544758d",
+            "name": "geometry"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "attr.set",
+      "type_name": "Set Attributes",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "f0fdb248-c5f9-5ebd-8633-81183af53492",
+      "id": "mass",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Mass",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_d8cde2bc",
+            "name": "brep"
+          },
+          {
+            "access": "item",
+            "id": "p_075b51b5",
+            "name": "density"
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_c863b5b9",
+            "name": "volume"
+          },
+          {
+            "access": "item",
+            "id": "p_e4a51e47",
+            "name": "area"
+          },
+          {
+            "access": "item",
+            "id": "p_9f202473",
+            "name": "centroid"
+          },
+          {
+            "access": "item",
+            "id": "p_2ec703cf",
+            "name": "mass"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "brep.mass",
+      "type_name": "Volume And Mass",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "0392d569-94de-5223-bf56-69b3dce57e58",
+      "id": "sec",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Mid section",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_de609e37",
+            "name": "brep"
+          },
+          {
+            "access": "item",
+            "id": "p_e8960a0f",
+            "name": "plane",
+            "persistent": {
+              "tree": {
+                "{0}": [
+                  {
+                    "origin": [
+                      0,
+                      0,
+                      10
+                    ],
+                    "x": [
+                      1,
+                      0,
+                      0
+                    ],
+                    "y": [
+                      0,
+                      1,
+                      0
+                    ]
+                  }
+                ]
+              },
+              "type": "plane"
+            }
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_dbb5adc2",
+            "name": "curves"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "intersect.brep_plane",
+      "type_name": "Solid Section By Plane",
+      "x": 0.0,
+      "y": 0.0
+    },
+    {
+      "enabled": true,
+      "guid": "2522170c-3386-585a-a74d-7ee7cd2e0c13",
+      "id": "secl",
+      "library": "",
+      "matching": "longest",
+      "nickname": "Section length",
+      "node_version": 1,
+      "ports": {
+        "in": [
+          {
+            "access": "item",
+            "id": "p_729211c1",
+            "name": "curve"
+          }
+        ],
+        "out": [
+          {
+            "access": "item",
+            "id": "p_5651f002",
+            "name": "length"
+          }
+        ]
+      },
+      "preview": true,
+      "settings": {},
+      "type": "curve.length",
+      "type_name": "Curve Length",
+      "x": 0.0,
+      "y": 0.0
+    }
+  ],
+  "notes": [],
+  "settings": {
+    "enabled": true,
+    "seed": 0,
+    "time_budget": 60.0,
+    "tolerance": 0.001,
+    "units": "mm"
+  },
+  "version": "1.0.0",
+  "view": {
+    "origin": [
+      0,
+      0
+    ],
+    "zoom": 1.0
+  },
+  "wires": [
+    {
+      "from": "p_c165f6e6",
+      "id": "w_3a5d894c",
+      "order": 0,
+      "to": "p_a1f7dc8f"
+    },
+    {
+      "from": "p_364f17db",
+      "id": "w_2589a2ba",
+      "order": 0,
+      "to": "p_6b8697a6"
+    },
+    {
+      "from": "p_73cb3881",
+      "id": "w_835d9aad",
+      "order": 0,
+      "to": "p_3182a169"
+    },
+    {
+      "from": "p_209bf8ca",
+      "id": "w_3e38146f",
+      "order": 0,
+      "to": "p_078b4849"
+    },
+    {
+      "from": "p_209bf8ca",
+      "id": "w_352529a8",
+      "order": 0,
+      "to": "p_d8cde2bc"
+    },
+    {
+      "from": "p_209bf8ca",
+      "id": "w_8dd6e8b0",
+      "order": 0,
+      "to": "p_de609e37"
+    },
+    {
+      "from": "p_dbb5adc2",
+      "id": "w_77991918",
+      "order": 0,
+      "to": "p_729211c1"
+    }
+  ]
+}
