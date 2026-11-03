@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "formcad"
-version = "0.16.0"
+version = "0.16.1"
 dependencies = [
  "objc2",
  "objc2-app-kit",
