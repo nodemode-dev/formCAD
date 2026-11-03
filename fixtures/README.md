@@ -295,3 +295,55 @@ CAM2 fixture (Phase 32 exit), millimetres. A 100 by 80 by 15 mm block with a con
 ## cam/sheet-set/
 
 CAM3 fixture (Phase 32 exit), millimetres. `sheet-set.fcad` holds a sheet metal channel (flat pattern) and five closed outlines (a plate, an L, a disc, a slot bar, a gusset) with nest `N1` (31 part instances on 500 by 400 mm sheets, kerf 1.5, gap 2, margin 5, two sheets) and cutting processes `P1` laser, `P2` plasma, `P3` waterjet. The six files `sheet-set-{laser,plasma,waterjet}-{1,2}` are the cutting code of the two sheets through the posts `cut_grbl_laser`, `cut_linuxcnc_plasma` and `cut_linuxcnc_waterjet`.
+
+## sim/cantilever.fcad
+
+FE1 fixture (Phase 34 exit), millimetres. One solid box, 200 by 10 by 10 mm (body handle 256), and three studies on it with their stored results: `S1` linear static (100 N total on the face x = 200 acting along -z, face x = 0 fixed), `S2` modal (four modes), `S3` buckling (reference load 1 N along -x on the face x = 200). Material `M1` is steel typed in by hand from the R25 benchmark definition (E 200 GPa, nu 0.3, rho 7850 kg/m3, k 50 W/m/K, alpha 12e-6 1/K), its source field names the definition; `M2` is the cited library aluminium 6061-T6 and is not used by a study. Mesh controls: element size 5 mm, second-order tetrahedra, 762 elements and 5265 unknowns. Run through the engine: tip deflection 1.5951 mm against 1.6000 mm (-0.30 percent), first frequency 204.22 Hz against 203.85 Hz (+0.18 percent), buckling load 10298.7 N against 10280.8 N (+0.17 percent). Reopened, every study is `solved`, the results display and probe, and the reports write.
+
+## sim/nonlinear.fcad
+
+FE2 fixture (Phase 35 exit, nonlinear), millimetres. One solid box, 200 by 10 by 10 mm, with steel typed in by hand (no source, the benchmark definition) and four studies with stored results: `S1` nonlinear static with J2 plasticity, a 300 N tip bend (max displacement 5.343 mm, max von Mises 252.5 MPa, maximum plastic strain 0.00125 over 13 percent of the elements, 19 Newton iterations), `S2` nonlinear static with a rigid stop at the tip (elastic model, max displacement 0.8007 mm, 32 iterations), `S3` explicit dynamic axial impact on a rigid wall (581 steps of 2.24e-7 s, contact impulse 0.3116 N s against 0.3140 N s, peak force 4265 N), `S4` fatigue on the linear static stress (minimum life 1.38e8 repeats, Goodman). No S-N data ships with the program, so the S-N curve of `S4` is typed in. Reopened, all four studies are `solved`, display their stress field, and a fresh run of each gives the same numbers.
+
+## sim/topo-bracket.fcad
+
+TO1 fixture (Phase 35 exit, topology), millimetres. An L bracket (wall 12 by 18 by 42, arm 60 by 18 by 12, one solid body), aluminium 6061-T6 from the library (yield 276 MPa), 700 N down on the arm end face, fixed wall back, and topology study `S1` with its stored result: remove 55 percent of the mass, stress limit 85 MPa, mirror plane y, a preserved boss cylinder, 3000 target cells (grid 20 by 6 by 14, cell 3 mm), 100 iterations. Result: mass 0.05240 to 0.02358 kg (55.0 percent removed), peak von Mises 53.6 to 80.9 MPa, within the limit; a smoothed closed mesh body (outcome of TOPOAPPLY, 4920 triangles) is stored in the file. Reopened, the result displays and a fresh TOPORUN gives the same numbers.
+
+## sim/pipe.fcad
+
+CF1 fixture (Phase 36 exit, flow), millimetres. A straight round passage, diameter 10 mm and length 100 mm, with a flow inlet (0.05 m/s) on one end and a zero pressure outlet on the other; fluid typed in (water, density 1000, viscosity 0.001 Pa s, no table ships). Study `S1` is type `flow` on formCAD's own Stokes solver (second-order curved tetrahedra at 2.5 mm, 1701 elements, 11443 unknowns, Reynolds number 501). Run through the engine on a fresh start: pressure drop 1.5996 Pa against the Hagen-Poiseuille 1.6002 Pa (-0.04 percent, the exit asks 5 percent), 3.7 s. Reopened, the result displays and a re-run gives the same number.
+
+## route/harness.fcad
+
+RT1 fixture (Phase 39 exit, harness), millimetres. An assembly of four components (`Chassis A` and `Chassis B` 300 mm apart, `Sensor`, `Bracket`; part files `chassis.fcad`, `sensor.fcad`, `bracket.fcad` are copies of the assembly fixtures) carrying a harness: connectors J1 (10 pins), J2 (8) and J3 (3, the sensor), clips K1 and K2 on the bracket, a splice SP1 and a waypoint, three segments, nine 20 AWG wires and one shielded 2-core cable. Routed and flattened to the layout `Formboard` (A2) with a wire list, from-to, connector pin and segment table. Pin counts differ from the contract text (8, 6, 3) because nine wires and a two-core cable need more pins on the chassis connectors.
+
+## ecad/board-schematic.fcad
+
+EL1 fixture (Phase 38, schematic side; the board layout and outputs are EL2 and EL3), millimetres, document kind `ecad`. A 555-style LED blinker on one sheet: timer U1 (generic 8-pin timer symbol, footprint `SOIC-8`), power connector J1 (`HDR-1x02`) and output header J2 (`HDR-1x03`), resistors R1 to R3 (`CHIP-0603`), capacitors C1 and C2 (`CHIP-0805`, `CHIP-0603`), bulk capacitor C3 (`RADIAL-D5_P2.5`) and LED D1 (`CHIP-0805`). Ten components and seven nets (`+5V`, `GND`, `CTRL`, `DIS`, `LED_A`, `OUT`, `TIMING`), built through the engine (39 part, wire, label, junction and power operations) with ERC clean (0 errors, 0 warnings) and the same netlist after save and reopen.
+
+## route/piping.fcad
+
+RT2 fixture (Phase 39 exit, pipes and tubing), millimetres, an assembly with two components (`Chassis A` at the origin, `Chassis B` moved to x = 400; part file `chassis.fcad` beside it). Spec `S1` (12 x 1 tube, minimum radius factor 1.5, springback 1.5 degrees, all user-entered examples). Run `R1` is a bent tube from an anchor on Chassis A to an anchor on Chassis B through four interior points, centreline radius 24: developed length 568.045 mm, four bends, bender rows (length, rotation, angle) 66.0 / 0 / 90, 72.0 / 180 / 90, 72.0 / 90 / 90, 32.0 / 197.53 / 90 and a tail of 175.25 (with Chassis B at x = 300 the last rotation is 213.69; the table is recomputed from the anchors). Run `R2` is a fitted pipe run with a flange on end A, a tee on the first segment, an elbow and a reducer on the second. The bodies of both runs (straights, bends, fittings) are generated into the assembly; elbow volume matches the torus section formula and the flange and reducer match their closed forms.
+
+## route/schematic.fcad
+
+RT2 fixture (Phase 39 exit, electrical schematic), millimetres, a drawing with two sheets laid out side by side at a 500 mm pitch. Sheet 1 mirrors `harness.fcad`: connectors J1 (10), J2 (8), J3 (3) and splice SP1 as a junction, eleven wires named W1 to W9, CB1-1 and CB1-2 as in the harness; the comparison against the harness by wire name finds 11 matches and no differences. Sheet 2 is a small control circuit (supply, fuse, push button, normally closed contact, relay coil, hold contact, lamp, motor, earth) with ten wires. 14 electrical nodes get one number each by FormCAD's scheme (template `{prefix}{sheet}-{seq:02}`, for example `W1-07` for the splice node shared by W7, W8 and W9). The 2D entities (249: frames, symbols, orthogonal wires, number labels) are tagged by xdata and replaced when the schematic is drawn again.
+
+## ecad/board.fcad
+
+EL2 fixture (Phase 38, board side; EL3 adds outputs and the enclosure link), millimetres, document kind `ecad`. The `board-schematic.fcad` design laid out and routed: a 45 x 32 mm two-layer board with 2 mm corner radii and four 3.2 mm mounting holes, the ten parts synced from the netlist (27 pads, auto placed), a GND pour on the bottom layer with thermal reliefs, net classes giving `+5V` and `GND` 0.4 mm tracks, the rest at the profile width. The generic profile (0.16 mm clearance and width, 0.7 / 0.3 mm vias, 0.2 mm ring) is the rule set. Autorouted by the engine: 7 of 7 nets, 139 track segments, 9 vias, no rip-ups needed, about 5 s; DRC reports 0 errors and 0 warnings, the same after save and reopen, and the board also passes the JLCPCB, PCBWay and OSH Park profiles.
+
+## ecad/board-linked.fcad and ecad/enclosure.fcad
+
+EL3 fixtures (Phase 38 outputs and links), millimetres. `enclosure.fcad` is a part: a 45 by 32 mm block with 2 mm corner radius, 12 mm tall, with four 3.2 mm through holes at the board's mounting holes (sketches `Shell` and `Posts`, features `Shell block` and `Screw holes`). `board-linked.fcad` is a copy of `board.fcad` with the header value `ECAD_LINK` set to the relative path `enclosure.fcad` and synced once: the outline was pulled from the highest upward face (28 points at 0.02 mm tolerance), the four holes matched the board's own mounting holes, and DRC reports 0 errors and 0 warnings. Scaling the enclosure sketch marks the link stale; syncing again moves the outline (checked at 1.25 and 1.2 times, undo and redo exact). Exports from it: 9 Gerber layers (35 apertures, 114 flashes, 1191 draws, 2 regions), two Excellon files (16 plated hits in 3 tools, 4 unplated hits), an IDF board and library, and a board STEP of two bodies.
+
+## mold/part.fcad
+
+MD1 fixture (Phase 40 mold tools), millimetres. A 40 mm disc, 16 mm tall, drafted 1.5 degrees each way from the mid plane (two extrusions), with two through holes (8 and 6 mm at the parting plane, drafted 1.5 degrees). Settings: pull +Z, minimum draft 0.5 degrees, shrinkage 0.5 percent multiply. The stored split: parting height 0, 3 silhouette wires, 2 shut-off discs, bodies Mold core, Mold cavity, Parting surface, Shut-off surfaces, Part with shrinkage. Volume check (block 160740.835, core 70948.231, cavity 70948.231, scaled part 18844.373, residual 3e-11, overlap 0). Reopened, the record and bodies are present and a fresh split gives the same numbers.
+
+## toolbox/assembly.fcad
+
+TB1 fixture (Phase 41 toolbox), millimetres. Assembly of a fixed 80 by 40 by 10 base plate and a 6 mm cover plate (parts in `toolbox/parts/`, three mates), clamped by two toolbox sets inserted from entered sizes (`toolbox/toolbox/`): flat washer 6.4 x 12.8 x 0.96, socket head cap screw M6 x 25 and hex nut M6 each, every one concentric to its hole and seated by a coincident or distance mate. Eight components, 0 interferences over 28 pairs, six free fastener spins. Sizes are the user's entries, not a standard's table.
+
+## weld/frame.fcad
+
+WM1 fixture (Phase 40 weldments), millimetres. A 1000 by 600 by 800 table frame: four rails (a sketch tube profile) mitered at the top, four legs butted under the rails, two cross members butted to legs, one diagonal flat bar coped at one end and butted at the other, four foot plates and two gussets, plus a cut list table in the drawing. Cut list: 11 members in 6 rows, rails 1040 and 640 at 45 and 45, legs 780, cross members 760, brace 953.75 at 36.87 and 36.87.

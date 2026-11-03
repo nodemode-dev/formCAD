@@ -225,6 +225,17 @@ def load_operations() -> None:
         for name in ("sm_base_flange", "sm_edge_flange", "sm_miter_flange", "sm_hem", "sm_jog", "sm_sketched_bend", "sm_bend_relief", "sm_corner_relief", "sm_convert", "sm_analyze", "sm_verify"):
             METHODS.setdefault(name, sheet_unavailable)
     try:
+        import kernel_weld
+
+        METHODS.update(kernel_weld.METHODS)
+    except Exception as err:
+        failure12 = str(err)
+
+        def weld_unavailable(_params):
+            raise RuntimeError("The weldment operations could not be loaded (%s)." % failure12)
+
+        METHODS.setdefault("weld_frame", weld_unavailable)
+    try:
         import kernel_subd
 
         METHODS.update(kernel_subd.METHODS)
@@ -247,6 +258,18 @@ def load_operations() -> None:
 
         for name in ("pl_boss", "pl_rib", "pl_snap_hook", "pl_lip", "pl_groove", "pl_wall", "pl_inspect"):
             METHODS.setdefault(name, plastic_unavailable)
+    try:
+        import kernel_mold
+
+        METHODS.update(kernel_mold.METHODS)
+    except Exception as err:
+        failure40 = str(err)
+
+        def mold_unavailable(_params):
+            raise RuntimeError("The mold operations could not be loaded (%s)." % failure40)
+
+        for name in ("md_analyze", "md_parting", "md_shrink", "md_block", "md_split"):
+            METHODS.setdefault(name, mold_unavailable)
     try:
         import kernel_graph
 
@@ -282,6 +305,18 @@ def load_operations() -> None:
             raise RuntimeError("The mesh to solid operation could not be loaded (%s)." % failure26)
 
         METHODS.setdefault("mesh_to_brep", meshbrep_unavailable)
+    try:
+        import kernel_board
+
+        METHODS.update(kernel_board.METHODS)
+    except Exception as err:
+        failure38 = str(err)
+
+        def board_unavailable(_params):
+            raise RuntimeError("The board body operations could not be loaded (%s)." % failure38)
+
+        for name in ("ecad_board_body", "ecad_face_outline", "ecad_face_list"):
+            METHODS.setdefault(name, board_unavailable)
 
 
 def reply(payload: dict) -> None:

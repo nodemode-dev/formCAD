@@ -4,8 +4,8 @@ from app.core import guard
 
 MACRO_GROUPS = {"draw", "modify", "format", "annotate", "annotation", "constraints", "inquiry", "block", "layout", "solids", "edit", "view", "tools", "script", "settings", "extra"}
 MACRO_NAMES = {"purge", "-purge", "audit"}
-MACRO_BARRED = {"aliasedit", "reinit", "dsettings", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings", "motionsettings", "graph", "camexport", "camnestexport", "vaultcreate", "vaultcheckin", "vaultcheckout", "vaultundo", "vaultlog", "vaultbranch", "vaulttag", "vaultdiff", "vaultmerge", "vaultlock", "vaultstate", "vaultrevise", "vaultwhereused", "vaultcomment", "vaultpin", "vaultverify", "vaultgc"}
-AGENT_BARRED = {"vaultcreate", "vaultstate", "vaultrevise", "vaultgc", "vaultlock", "vaultpin", "pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings", "motionsettings", "graph"}
+MACRO_BARRED = {"aliasedit", "reinit", "dsettings", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings", "motionsettings", "graph", "gerberexport", "drillexport", "idfexport", "boardstep", "ecadsync", "ecadpush", "camexport","camnestexport", "pipeexport", "schemexport", "simreport", "toolboxinsert", "toolboximport", "inspectionexport", "vaultcreate", "vaultcheckin", "vaultcheckout", "vaultundo", "vaultlog", "vaultbranch", "vaulttag", "vaultdiff", "vaultmerge", "vaultlock", "vaultstate", "vaultrevise", "vaultwhereused", "vaultcomment", "vaultpin", "vaultverify", "vaultgc"}
+AGENT_BARRED = {"vaultcreate", "vaultstate", "vaultrevise", "vaultgc", "vaultlock", "vaultpin", "pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings", "motionsettings", "graph", "gerberexport", "drillexport", "idfexport", "boardstep", "ecadsync", "ecadpush"}
 
 
 def caller(runner=None) -> str:
