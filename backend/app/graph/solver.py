@@ -40,6 +40,25 @@ class SolveContext:
         self.tol = float(graph.settings.get("tolerance", 0.001) or 0.001)
         self.seed = int(graph.settings.get("seed", 0) or 0)
         self.settings: dict = {}
+        self.total = 0
+        self.produced = 0
+
+    def spend(self, n: int = 1) -> None:
+        self.produced += n
+        if self.produced > sdk.MAX_NODE_ITEMS:
+            raise sdk.NodeError("The node would make more than %d items; reduce its counts or its inputs." % sdk.MAX_NODE_ITEMS, "TOO_MANY_ITEMS")
+
+    def reserve(self, n: int) -> None:
+        if self.total + self.produced + n > sdk.MAX_TOTAL_ITEMS:
+            raise sdk.NodeError("The graph would hold more than %d items in all; reduce the counts upstream." % sdk.MAX_TOTAL_ITEMS, "TOO_MANY_ITEMS")
+
+    def account(self, outs: dict) -> None:
+        count = sum(t.item_count for t in outs.values())
+        if count > sdk.MAX_NODE_ITEMS:
+            raise sdk.NodeError("The node made %d items; the limit for one node is %d." % (count, sdk.MAX_NODE_ITEMS), "TOO_MANY_ITEMS")
+        if self.total + count > sdk.MAX_TOTAL_ITEMS:
+            raise sdk.NodeError("The graph would hold more than %d items in all; reduce the counts upstream." % sdk.MAX_TOTAL_ITEMS, "TOO_MANY_ITEMS")
+        self.total += count
 
     def cancelled(self) -> bool:
         if self.graph.abort.is_set():
@@ -154,6 +173,7 @@ def run_node(ctx, n) -> tuple:
     ctx.settings = copy.deepcopy(n.settings)
     ctx.messages = []
     ctx.call_index = 0
+    ctx.produced = 0
     ctx.deadline = time.monotonic() + float(ctx.graph.settings.get("time_budget", NODE_BUDGET) or NODE_BUDGET)
     out_mods = [dict(p.mods) for p in n.outs]
     if nt.run is not None and not nt.placeholder:
@@ -185,6 +205,7 @@ def run_node(ctx, n) -> tuple:
     def fn(*args):
         ctx.check()
         ctx.call_index += 1
+        ctx.spend()
         try:
             out = nt.solve(ctx, *args)
         except sdk.NodeWarning as w:
@@ -192,6 +213,8 @@ def run_node(ctx, n) -> tuple:
             if w.has_result:
                 return out_shape(w.result, nouts)
             return match.NULLED
+        if nt.multi:
+            ctx.spend(sum(len(v) for v in (out if nouts > 1 and isinstance(out, (tuple, list)) else (out,)) if isinstance(v, (list, tuple))))
         return out_shape(out, nouts)
 
     try:
@@ -253,6 +276,7 @@ def solve(g, doc=None, expire_all: bool = False, cancel=None, on_node=None, inpu
         held, order = loops.plan(g, order)
     rep.order = list(order)
     ctx = SolveContext(g, doc, cancel, kernel, inputs)
+    ctx.total = sum(t.item_count for n in g.nodes.values() if n.state == "computed" for t in n.outputs.values())
     g.solving = True
     try:
         for nid in order:
@@ -282,6 +306,7 @@ def solve(g, doc=None, expire_all: bool = False, cancel=None, on_node=None, inpu
                 if n.missing:
                     raise sdk.NodeError("The node type %s is not installed. Its data and wires are kept." % n.type, "MISSING_NODE")
                 outs, msgs = run_node(ctx, n)
+                ctx.account(outs)
             except sdk.Aborted:
                 with g.lock:
                     if n.epoch == epoch:

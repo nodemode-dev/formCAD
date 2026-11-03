@@ -953,7 +953,8 @@ export class GraphCanvas implements WidgetHost {
   groupSelection(): void {
     if (this.selNodes.size === 0) return;
     const ids = [...this.selNodes];
-    const colour = ops.GROUP_COLOURS[(this.data.rec?.groups.length ?? 0) % ops.GROUP_COLOURS.length];
+    const palette = ops.groupColours();
+    const colour = palette[(this.data.rec?.groups.length ?? 0) % Math.max(1, palette.length)] ?? '';
     this.data.apply((r) => ops.groupNodes(r, ids, t('Group'), colour));
   }
 

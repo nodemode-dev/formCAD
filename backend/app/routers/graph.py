@@ -67,7 +67,7 @@ def _fail(err):
     raise HTTPException(400, str(err.args[0]) if isinstance(err, KeyError) and err.args else str(err))
 
 
-FAILURES = (store.StoreError, model.GraphError, edits.EditError, KeyError, ValueError, T.TreeError)
+FAILURES = (store.StoreError, model.GraphError, edits.EditError, KeyError, ValueError, T.TreeError, TypeError, OverflowError, RecursionError)
 
 
 def _edit(doc_id: str, label: str, fn):

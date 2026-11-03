@@ -15,9 +15,9 @@ def unary(type_id, guid, name, nick, fn, text, group="Structure"):
     add(type_id, guid, name, nick, CAT, group, [whole("The data tree.")], [P("tree", "any", TREE, None, "T", "The changed tree.")], run=run, description=text)
 
 
-unary("tree.graft", "0998b520-47fe-4e14-b124-221b70e1b08c", "Graft Tree", "Graft", T.graft, "Puts every item in a branch of its own, one level deeper; empty branches vanish.")
+unary("tree.graft", "0998b520-47fe-4e14-b124-221b70e1b08c", "Branch Per Item", "PerItem", T.graft, "Puts every item in a branch of its own, one level deeper; empty branches vanish.")
 unary("tree.simplify", "bedd2e4a-3785-446c-af29-2929f8e4526e", "Simplify Tree", "Simp", T.simplify, "Removes the leading path numbers shared by every branch, keeping at least one.")
-unary("tree.flip", "5db8b5ab-2f9f-4c02-92e7-b26e8630380e", "Flip Matrix", "Flip", T.flip, "Swaps branches and items: the items at the same index of every branch form a new branch; short branches are padded with nulls.")
+unary("tree.flip", "5db8b5ab-2f9f-4c02-92e7-b26e8630380e", "Transpose Tree", "Transp", T.flip, "Swaps branches and items: the items at the same index of every branch form a new branch; short branches are padded with nulls.")
 
 
 def flatten_run(ctx, trees):
@@ -60,7 +60,7 @@ def mapper_run(ctx, trees):
     return {"tree": out}
 
 
-add("tree.path_mapper", "1c46db52-4902-4d84-859d-043f74a60d0a", "Path Mapper", "Map", CAT, "Structure", [whole("The data tree."), P("mapping", "text", TREE, "{A}(i) -> {A}(i)", "M", "Source pattern, arrow, target pattern, like {A;B}(i) -> {A;i}(B); presets flatten, graft, renumber and reverse.")], [P("tree", "any", TREE, None, "T", "The remapped tree.")], run=mapper_run, description="Rewrites the path and index of every item by a pattern with names and arithmetic.")
+add("tree.path_mapper", "1c46db52-4902-4d84-859d-043f74a60d0a", "Rewrite Paths", "Rewrite", CAT, "Structure", [whole("The data tree."), P("mapping", "text", TREE, "{A}(i) -> {A}(i)", "M", "Source pattern, arrow, target pattern, like {A;B}(i) -> {A;i}(B); presets flatten, graft, renumber and reverse.")], [P("tree", "any", TREE, None, "T", "The remapped tree.")], run=mapper_run, description="Rewrites the path and index of every item by a pattern with names and arithmetic.")
 
 
 def entwine_run(ctx, trees):
@@ -78,7 +78,7 @@ def entwine_run(ctx, trees):
     return {"tree": out}
 
 
-add("tree.entwine", "6e719bce-2a65-40d4-9955-640f69d6da9f", "Entwine", "Entw", CAT, "Combine", [P(n, "any", TREE, None, n.upper(), "Input %s." % n.upper(), True) for n in ("a", "b", "c", "d")], [P("tree", "any", TREE, None, "T", "Each single branch input as branch {k}; each multi branch input below {k}.")], run=entwine_run, description="Combines up to four inputs into one tree: the input number becomes the first path number.")
+add("tree.entwine", "6e719bce-2a65-40d4-9955-640f69d6da9f", "Interleave Trees", "Interl", CAT, "Combine", [P(n, "any", TREE, None, n.upper(), "Input %s." % n.upper(), True) for n in ("a", "b", "c", "d")], [P("tree", "any", TREE, None, "T", "Each single branch input as branch {k}; each multi branch input below {k}.")], run=entwine_run, description="Combines up to four inputs into one tree: the input number becomes the first path number.")
 
 
 def merge_run(ctx, trees):

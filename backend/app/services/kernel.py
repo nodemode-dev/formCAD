@@ -185,6 +185,7 @@ def probe(force: bool = False) -> dict | None:
     with _lock:
         if _worker is not None and _info is not None and _worker.alive() and not force:
             return _info
+        died = _worker is not None
         _drop()
         if not force and _failed_at and time.monotonic() - _failed_at < RETRY_AFTER:
             return None
@@ -194,13 +195,18 @@ def probe(force: bool = False) -> dict | None:
             _failed_at = time.monotonic()
             return None
         worker = None
-        try:
-            worker = Worker(_found[0])
-            info = worker.call("hello", timeout=HELLO_TIMEOUT)
-        except (OSError, KernelError) as err:
-            if worker is not None:
-                worker.stop()
-            _message = str(err)
+        info = None
+        for attempt in range(2 if died else 1):
+            try:
+                worker = Worker(_found[0])
+                info = worker.call("hello", timeout=HELLO_TIMEOUT)
+                break
+            except (OSError, KernelError) as err:
+                if worker is not None:
+                    worker.stop()
+                worker = None
+                _message = str(err)
+        if info is None:
             _failed_at = time.monotonic()
             return None
         _worker, _info, _failed_at = worker, info, 0.0

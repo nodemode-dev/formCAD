@@ -17,6 +17,13 @@ class Skip(Exception):
     pass
 
 
+def counted(value, cap: int = 100000, least: int = 1) -> int:
+    n = int(value)
+    if n < least or n > cap:
+        raise Skip("The count must be from %d to %d." % (least, cap))
+    return n
+
+
 def guid(type_id: str) -> str:
     return str(uuid.uuid5(NAMESPACE, type_id))
 

@@ -563,7 +563,7 @@ def decode(obj):
         return Arc3(_plane(obj["plane"]), float(obj["r"]), float(obj["a0"]), float(obj["a1"]))
     if t == "Transform":
         return Transform(tuple(obj["v"]))
-    return Shape(str(obj["kind"]), str(obj["sid"]), tuple(obj["bbox"]) if obj.get("bbox") else None)
+    raise ValueError3("a file cannot carry kernel shapes")
 
 
 def to_wire(value, kind: str):
@@ -608,7 +608,7 @@ def from_wire(obj, kind: str):
     if kind == "transform":
         return Transform(tuple(obj))
     if isinstance(obj, dict) and "handle" in obj:
-        return Shape(str(obj.get("type", kind)), str(obj["handle"]), tuple(obj["bbox"]) if obj.get("bbox") else None)
+        raise ValueError3("a file cannot carry kernel shapes")
     return decode(obj)
 
 

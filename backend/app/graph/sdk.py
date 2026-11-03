@@ -5,6 +5,9 @@ from typing import Any, Callable, Optional
 
 KINDS = ("any", "number", "integer", "boolean", "text", "point", "vector", "plane", "domain", "colour", "curve", "surface", "brep", "mesh", "geometry", "transform", "docref")
 ACCESS = ("item", "list", "tree")
+MAX_NODE_ITEMS = 2000000
+MAX_TOTAL_ITEMS = 5000000
+MAX_COUNT = 1000000
 MATCHING = ("longest", "shortest", "cross")
 LEVELS = ("blank", "remark", "warning", "error")
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$|^[a-z0-9][a-z0-9_.-]*/[A-Za-z0-9_.-]+$")

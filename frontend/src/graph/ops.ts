@@ -2,7 +2,12 @@ import type { CatalogueEntry, GraphRecord, GroupRecord, ModKey, NodeRecord, Port
 
 export const uid = (prefix: string): string => `${prefix}_${Math.random().toString(16).slice(2, 10)}`;
 
-export const GROUP_COLOURS = ['#f97316', '#22c55e', '#38bdf8', '#a78bfa', '#f472b6', '#fbbf24'];
+const GROUP_TOKENS = ['--accent-color', '--ok', '--canvas-axis-z', '--sm-bend-up', '--warn', '--danger'];
+
+export function groupColours(): string[] {
+  const style = getComputedStyle(document.documentElement);
+  return GROUP_TOKENS.map((t) => style.getPropertyValue(t).trim()).filter((v) => /^#[0-9a-f]{6}$/i.test(v));
+}
 
 export function makeNode(entry: CatalogueEntry, x: number, y: number): NodeRecord {
   return {

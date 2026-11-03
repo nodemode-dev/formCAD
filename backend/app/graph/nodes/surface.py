@@ -1,4 +1,4 @@
-from app.graph.geo import Skip, curve_or_shape, guid, make_shape, plist, pt, shape_spec, shapes_of, simple_node, vec
+from app.graph.geo import Skip, counted, curve_or_shape, guid, make_shape, plist, pt, shape_spec, shapes_of, simple_node, vec
 from app.graph.sdk import Port
 from app.graph.values import Point3, Vector3
 
@@ -79,7 +79,7 @@ simple_node(
     "surface.divide", "Divide Surface", "DivS", "Analysis",
     [Port("surface", "surface"), Port("u", "integer", default=10, min=1), Port("v", "integer", default=10, min=1)],
     [Port("points", "point"), Port("normals", "vector")],
-    lambda surface, u, v: {"op": "srf_divide", "surface": shape_spec(surface), "u": int(u), "v": int(v)},
+    lambda surface, u, v: {"op": "srf_divide", "surface": shape_spec(surface), "u": counted(u, 1000), "v": counted(v, 1000)},
     lambda args, r: ([[pt(q) for q in row] for row in r["points"]], [[vec(q) for q in row] for row in r["normals"]]),
     category=CAT, multi=True, rows=("points", "normals"), description="Grid of points and normals; one branch per row along u.",
 )

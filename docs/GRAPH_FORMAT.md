@@ -55,7 +55,15 @@ Nothing volatile is stored: no computed data, no node state, no messages.
 - A file with a newer major version, or a `min_reader` above the reader, is readable but locked: it can be solved, listed and exported byte for byte, and every edit is refused with the message that it was written by a newer version.
 - Older majors are migrated by a chain of pure functions when one exists (none yet).
 - A node whose type is not installed loads as a placeholder: it keeps its ports, persistent data, settings, unknown fields and wires, reports Error `MISSING_NODE`, outputs nothing, and is written back unchanged. Installing the library later replaces the placeholder with the real node on the next solve; ports are matched by name.
-- A wire that would close a loop (or join a node to itself) is disabled on load with a note in `problems`, and the nodes it touches report Error `CYCLE`. The editor refuses such a wire with the names of the nodes in the loop.
+- A wire that would close a loop (or join a node to itself) is disabled on load with a note in `problems`, and the nodes it touches report Error `CYCLE`. The editor refuses such a wire with the names of the nodes in the loop. A whole definition is checked in one topological pass, so loading time grows with nodes plus wires.
+
+## Limits
+
+- A graph holds at most 5000 nodes and 20000 wires. Import, `PUT`, the headless run, `POST /api/graph/run` and the MCP `formcad_graph_run` tool refuse a definition above either number with a message naming the count and the limit; the editor refuses to add past them.
+- A field of the wrong JSON type (a text where a number is read, a list where an object is read) is refused as a malformed graph, never accepted halfway.
+- One solve may hold at most 5,000,000 items in all cached output trees and 2,000,000 produced by one node; the node that crosses a limit fails with `TOO_MANY_ITEMS` and the rest of the graph keeps its results. Series, range and random refuse a count above 1,000,000, divide nodes above 100,000 (surfaces 1000 per direction), and linear and polar arrays above 10,000.
+- `timeout_s` of a headless run is capped at 60 seconds for macros and agents; the window may ask for up to an hour.
+- The optimizer takes a population of at most 2000 and at most 10000 generations.
 
 ## Table `graphs` and undo
 

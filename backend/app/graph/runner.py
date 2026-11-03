@@ -13,9 +13,10 @@ from app.graph import values as gv
 SCHEMA = "formcad.graph-io/1"
 OUTPUT = "io.output"
 NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-MAX_NODES = 5000
+MAX_NODES = model.MAX_NODES
 DEFAULT_TIMEOUT = 60.0
 MAX_TIMEOUT = 3600.0
+AGENT_TIMEOUT = 60.0
 MAX_FILE = 32 * 1024 * 1024
 SLOTS = threading.BoundedSemaphore(2)
 EXIT_OK, EXIT_ERRORS, EXIT_USAGE, EXIT_MISSING, EXIT_TIMEOUT, EXIT_CANCELLED = 0, 1, 2, 3, 4, 5
@@ -110,10 +111,8 @@ def load_graph(defn: dict):
         raise RunError("A graph is a JSON object.", "schema")
     try:
         g = model.Graph.from_definition(copy.deepcopy(defn))
-    except model.GraphError as err:
-        raise RunError(str(err), "schema")
-    if len(g.nodes) > MAX_NODES:
-        raise RunError("The graph has %d nodes; the limit is %d." % (len(g.nodes), MAX_NODES), "schema")
+    except (model.GraphError, TypeError, ValueError, OverflowError, RecursionError) as err:
+        raise RunError(str(err) if isinstance(err, model.GraphError) else "The graph holds a value of the wrong type or nests too deeply.", "schema")
     g.id = g.id or "run"
     return g
 
@@ -280,7 +279,9 @@ def messages_of(g) -> list:
 
 
 def solve_private(g, doc=None, inputs=None, seed=None, timeout: float = DEFAULT_TIMEOUT, cancel=None):
-    timeout = max(0.1, min(float(timeout or DEFAULT_TIMEOUT), MAX_TIMEOUT))
+    from app.core import guard
+
+    timeout = max(0.1, min(float(timeout or DEFAULT_TIMEOUT), AGENT_TIMEOUT if guard.CALLER.get() else MAX_TIMEOUT))
     end = time.monotonic() + timeout
     state = {"timed_out": False, "cancelled": False}
 
@@ -323,10 +324,15 @@ def collect(g, rep, started: float, strict: bool = False) -> dict:
 
 def run(defn: dict, inputs=None, doc=None, seed=None, timeout: float = DEFAULT_TIMEOUT, cancel=None, strict: bool = False, keep=None) -> dict:
     g = load_graph(defn)
-    apply_inputs(g, inputs or {})
-    t0 = time.monotonic()
-    rep = solve_private(g, doc, dict(inputs or {}), seed, timeout, cancel)
-    result = collect(g, rep, t0, strict)
+    try:
+        apply_inputs(g, inputs or {})
+        t0 = time.monotonic()
+        rep = solve_private(g, doc, dict(inputs or {}), seed, timeout, cancel)
+        result = collect(g, rep, t0, strict)
+    except RunError:
+        raise
+    except (T.TreeError, TypeError, ValueError, OverflowError, RecursionError) as err:
+        raise RunError("The graph holds data that cannot be read: %s" % err, "schema")
     if keep is not None:
         keep.append(g)
     return result

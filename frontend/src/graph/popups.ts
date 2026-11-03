@@ -1,6 +1,6 @@
 import { el, q, setClass, setHidden, setText } from '../ui/dom';
 import { t } from '../ui/i18n';
-import { GROUP_COLOURS } from './ops';
+import { groupColours } from './ops';
 import type { ModKey, PortMods } from './types';
 
 const MOD_ROWS: Array<[ModKey, string]> = [
@@ -96,7 +96,7 @@ export class ContextMenu {
       this.buttons.push(b);
     }
     this.sw = el('<div class="gx-swatches" hidden></div>');
-    for (const c of GROUP_COLOURS) {
+    for (const c of groupColours()) {
       const b = el<HTMLButtonElement>('<button class="gx-sw" type="button"></button>');
       b.style.background = c;
       b.dataset.colour = c;

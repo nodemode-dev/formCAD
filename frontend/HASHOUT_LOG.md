@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## I10, v0.9.0 audit fixes (graph/ops.ts, graph/popups.ts, graph/canvas.ts)
+
+Finding 11. `GROUP_COLOURS` (six raw hex values) became `groupColours()` in `graph/ops.ts`, which reads six colour tokens (`--accent-color`, `--ok`, `--canvas-axis-z`, `--sm-bend-up`, `--warn`, `--danger`) from the root with `getComputedStyle` and keeps the ones that resolve to `#rrggbb`. The group menu swatches and `groupSelection` use it. A group's colour is still stored in the file as the resolved hex, so a graph keeps its colours when the theme changes; the swatches are read once when the menu is built. The token set drops the violet and pink of the old list. Typecheck and build pass; not re-driven in Chromium.
+
 ## I9 integration, v0.9.0 (view3d/viewport.ts, sheet/draw-flat.ts, graphx/preview-layer.ts, graphx/optimizer.ts, graphx/bake-dialog.ts, graph/canvas.ts, styles/graph.css)
 
 Flat pattern picks: the picker's body list and snap list are empty while `bodiesHidden`, so face, edge and snap picks no longer land on the folded bodies behind the flat (scan of 80 points over the flat: no hit; the same scan with the flat off hits a face).

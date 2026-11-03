@@ -2,7 +2,7 @@ import copy
 import threading
 import uuid
 from datetime import datetime, timezone
-from graphlib import CycleError, TopologicalSorter
+from graphlib import TopologicalSorter
 
 from app.graph import registry, sdk
 
@@ -13,6 +13,8 @@ MOD_KEYS = ("reverse", "flatten", "graft", "simplify", "invert", "principal")
 STATES = ("blank", "collecting", "computing", "computed", "failed", "skipped")
 LEVEL_RANK = {"blank": 0, "remark": 1, "warning": 2, "error": 3}
 DEFAULT_SETTINGS = {"seed": 0, "tolerance": 0.001, "units": "mm", "time_budget": 60.0, "enabled": True}
+MAX_NODES = 5000
+MAX_WIRES = 20000
 
 
 class GraphError(ValueError):
@@ -174,6 +176,24 @@ class Group:
         return out
 
 
+def walk(adj: dict, start: str, goal: str):
+    parent = {start: None}
+    stack = [start]
+    while stack:
+        cur = stack.pop()
+        if cur == goal:
+            path = []
+            while cur is not None:
+                path.append(cur)
+                cur = parent[cur]
+            return path[::-1]
+        for nxt in adj.get(cur, ()):
+            if nxt not in parent:
+                parent[nxt] = cur
+                stack.append(nxt)
+    return None
+
+
 def reconcile_ports(node: Node, saved: dict, problems: list) -> None:
     nt = node.ntype
     saved_in = {p.get("name"): p for p in (saved.get("in") or []) if isinstance(p, dict)}
@@ -222,6 +242,8 @@ def node_from_dict(raw: dict, problems: list) -> Node:
     n.matching = raw.get("matching") if raw.get("matching") in sdk.MATCHING else "longest"
     n.x = float(raw.get("x", 0.0) or 0.0)
     n.y = float(raw.get("y", 0.0) or 0.0)
+    if not (abs(n.x) < 1e12 and abs(n.y) < 1e12):
+        raise GraphError("A node position is not a usable number.")
     n.settings = copy.deepcopy(raw.get("settings")) if isinstance(raw.get("settings"), dict) else {}
     n.extra = {k: copy.deepcopy(v) for k, v in raw.items() if k not in NODE_KNOWN}
     n.bind_type()
@@ -273,8 +295,19 @@ class Graph:
         fmt = defn.get("format", FORMAT)
         if fmt != FORMAT:
             raise GraphError("This is not a formCAD graph (format %r)." % (fmt,))
+        for key, cap, what in (("nodes", MAX_NODES, "nodes"), ("wires", MAX_WIRES, "wires")):
+            rows = defn.get(key)
+            if rows is not None and not isinstance(rows, list):
+                raise GraphError("The %s of a graph are a list." % what)
+            if rows is not None and len(rows) > cap:
+                raise GraphError("The graph has %d %s; the limit is %d." % (len(rows), what, cap))
         g = cls(gid or str(defn.get("id") or ""), str(defn.get("name") or ""))
-        g.load(defn)
+        try:
+            g.load(defn)
+        except GraphError:
+            raise
+        except (TypeError, ValueError, AttributeError, KeyError, OverflowError, RecursionError):
+            raise GraphError("A field of the graph has a value of the wrong type.")
         return g
 
     def load(self, defn: dict) -> None:
@@ -321,15 +354,48 @@ class Graph:
             if w.id in self.wires:
                 w.id = new_id("w")
             self.wires[w.id] = w
-            if self.ports[src][0].id == self.ports[dst][0].id or self.cycle_through(w, ignore=w.id):
-                w.disabled = True
-                self.problems.append("Wire %s would close a loop and is disabled." % w.id)
-                for nid in {self.ports[src][0].id, self.ports[dst][0].id}:
-                    self.nodes[nid].messages = [{"level": "error", "text": "A wire into this node closes a loop and is disabled.", "code": "CYCLE", "port": ""}]
+        self.settle_loops()
         for raw in defn.get("groups") or []:
             if isinstance(raw, dict):
                 g = Group(str(raw.get("id") or new_id("g")), str(raw.get("name") or ""), str(raw.get("colour") or "#8a8f98"), [m for m in raw.get("members") or [] if m in self.nodes], {k: copy.deepcopy(v) for k, v in raw.items() if k not in ("id", "name", "colour", "members")})
                 self.groups[g.id] = g
+
+    def close_wire(self, w: Wire) -> None:
+        w.disabled = True
+        self.problems.append("Wire %s would close a loop and is disabled." % w.id)
+        for nid in {self.ports[w.src][0].id, self.ports[w.dst][0].id}:
+            self.nodes[nid].messages = [{"level": "error", "text": "A wire into this node closes a loop and is disabled.", "code": "CYCLE", "port": ""}]
+
+    def settle_loops(self) -> None:
+        pairs, indeg, live = {}, {nid: 0 for nid in self.nodes}, []
+        for w in self.wires.values():
+            a, b = self.ports[w.src][0].id, self.ports[w.dst][0].id
+            if a == b:
+                self.close_wire(w)
+                continue
+            live.append((w, a, b))
+            if b not in pairs.setdefault(a, set()):
+                pairs[a].add(b)
+                indeg[b] += 1
+        ready = [nid for nid, d in indeg.items() if d == 0]
+        seen = 0
+        while ready:
+            nid = ready.pop()
+            seen += 1
+            for b in pairs.get(nid, ()):
+                indeg[b] -= 1
+                if indeg[b] == 0:
+                    ready.append(b)
+        if seen == len(self.nodes):
+            return
+        stuck = {nid for nid, d in indeg.items() if d > 0}
+        accepted = {}
+        for w, a, b in live:
+            if a in stuck and b in stuck:
+                if walk(accepted, b, a) is not None:
+                    self.close_wire(w)
+                else:
+                    accepted.setdefault(a, set()).add(b)
 
     def rebind_types(self) -> list:
         changed = []
@@ -370,35 +436,31 @@ class Graph:
         out["meta"]["name"] = self.name
         return out
 
-    def edges(self, extra_wire=None, ignore=None) -> dict:
-        preds = {nid: [] for nid in self.nodes}
+    def edges(self) -> dict:
+        preds = {nid: {} for nid in self.nodes}
         for w in self.wires.values():
-            if w.disabled or w.id == ignore:
+            if w.disabled:
                 continue
-            a, b = self.ports[w.src][0].id, self.ports[w.dst][0].id
-            if a not in preds[b]:
-                preds[b].append(a)
-        if extra_wire is not None:
-            a, b = self.ports[extra_wire.src][0].id, self.ports[extra_wire.dst][0].id
-            if a not in preds[b]:
-                preds[b].append(a)
+            preds[self.ports[w.dst][0].id][self.ports[w.src][0].id] = True
         return preds
 
-    def cycle_through(self, wire: Wire, ignore=None):
-        preds = self.edges(extra_wire=wire, ignore=ignore)
-        sorter = TopologicalSorter(preds)
-        try:
-            sorter.prepare()
-        except CycleError as err:
-            return list(err.args[1])
-        return None
+    def successors(self) -> dict:
+        succ = {}
+        for w in self.wires.values():
+            if not w.disabled:
+                succ.setdefault(self.ports[w.src][0].id, {})[self.ports[w.dst][0].id] = True
+        return succ
+
+    def cycle_through(self, src_node: str, dst_node: str):
+        return walk(self.successors(), dst_node, src_node)
 
     def order(self) -> list:
         sorter = TopologicalSorter(self.edges())
         sorter.prepare()
+        pos = {nid: i for i, nid in enumerate(self.nodes)}
         out = []
         while sorter.is_active():
-            ready = sorted(sorter.get_ready(), key=lambda nid: list(self.nodes).index(nid))
+            ready = sorted(sorter.get_ready(), key=pos.__getitem__)
             for nid in ready:
                 out.append(nid)
                 sorter.done(nid)
@@ -409,21 +471,18 @@ class Graph:
         ws.sort(key=lambda w: w.order)
         return [w.src for w in ws]
 
-    def downstream(self, node_id: str) -> list:
-        succ = {}
-        for w in self.wires.values():
-            if w.disabled:
-                continue
-            succ.setdefault(self.ports[w.src][0].id, set()).add(self.ports[w.dst][0].id)
-        seen = []
+    def downstream(self, node_id: str, succ=None) -> list:
+        succ = self.successors() if succ is None else succ
+        pos = {nid: i for i, nid in enumerate(self.nodes)}
+        seen = {}
         stack = [node_id]
         while stack:
             cur = stack.pop()
-            for nxt in sorted(succ.get(cur, ()), key=lambda k: list(self.nodes).index(k)):
+            for nxt in sorted(succ.get(cur, ()), key=pos.__getitem__):
                 if nxt not in seen and nxt != node_id:
-                    seen.append(nxt)
+                    seen[nxt] = True
                     stack.append(nxt)
-        return seen
+        return list(seen)
 
     def expire(self, node_id: str) -> list:
         out = []
@@ -474,8 +533,10 @@ class Graph:
         for w in self.wires.values():
             if w.src == src and w.dst == dst:
                 raise GraphRefused("Those two ports are already joined.", "duplicate")
+        if len(self.wires) >= MAX_WIRES:
+            raise GraphRefused("A graph holds at most %d wires." % MAX_WIRES, "limit")
         w = Wire(wid or new_id("w"), src, dst, 0)
-        cycle = self.cycle_through(w)
+        cycle = self.cycle_through(sn.id, dn.id)
         if cycle:
             raise GraphRefused("That wire would make a loop: %s." % self.explain_cycle(cycle), "cycle", cycle)
         existing = [x for x in self.wires.values() if x.dst == dst]
@@ -499,6 +560,8 @@ class Graph:
         nt = registry.get(type_id)
         if nt is None:
             raise GraphRefused("There is no node type %s." % type_id, "notype")
+        if len(self.nodes) >= MAX_NODES:
+            raise GraphRefused("A graph holds at most %d nodes." % MAX_NODES, "limit")
         raw = {"id": nid or new_id("n"), "type": nt.id, "guid": nt.guid, "x": x, "y": y}
         if settings:
             raw["settings"] = settings
@@ -558,14 +621,18 @@ class Graph:
                 n.state, n.messages, n.outputs = "blank", [], {}
                 expired.append(nid)
         seen = set(expired)
-        for nid in list(expired):
-            for d in self.downstream(nid):
+        succ = self.successors()
+        stack = list(expired)
+        while stack:
+            cur = stack.pop()
+            for d in succ.get(cur, ()):
                 if d not in seen:
                     seen.add(d)
                     dn = self.nodes[d]
                     dn.epoch += 1
                     dn.state, dn.messages, dn.outputs = "blank", [], {}
                     expired.append(d)
+                    stack.append(d)
         for nid, n in self.nodes.items():
             if nid in keep and n.state == "blank":
                 n.state = "blank"

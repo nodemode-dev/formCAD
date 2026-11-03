@@ -190,6 +190,7 @@ def make_range(ctx, d, steps):
         raise NodeWarning("The range needs at least one step.", "RANGE_STEPS", "steps")
     if steps > 1000000:
         raise NodeWarning("The range is limited to one million steps.", "RANGE_STEPS", "steps")
+    ctx.reserve(steps)
     return [d.t0 + (d.t1 - d.t0) * i / steps for i in range(steps + 1)]
 
 
@@ -201,6 +202,7 @@ def series(ctx, start, step, count):
         raise NodeWarning("The count cannot be negative.", "SERIES_COUNT", "count")
     if count > 1000000:
         raise NodeWarning("The series is limited to one million numbers.", "SERIES_COUNT", "count")
+    ctx.reserve(count)
     return [start + step * i for i in range(count)]
 
 
@@ -210,6 +212,7 @@ add("math.series", "f2f32425-2b3f-4338-b0cc-dd8cc5b94a40", "Series", "Series", C
 def make_random(ctx, count, d, seed, whole):
     if count < 0 or count > 1000000:
         raise NodeWarning("The count must be from 0 to one million.", "RANDOM_COUNT", "count")
+    ctx.reserve(count)
     d = d or Domain(0.0, 1.0)
     rng = random.Random(int(seed))
     out = []
@@ -245,5 +248,5 @@ def mass(fn, start):
     return run
 
 
-add("math.mass_addition", "dfa64fc0-5eea-4bdd-8ecd-b63b7efdaaa4", "Mass Addition", "Sum", CAT, "Operators", [P("values", NUM, "tree", None, "V", "The numbers; each branch is added on its own.")], [P("result", NUM, "tree", None, "R", "The total of each branch."), P("partial", NUM, "tree", None, "P", "The running totals of each branch.")], run=mass(lambda a, b: a + b, 0.0), description="Adds all numbers of a branch.")
-add("math.mass_multiplication", "4cf3dace-da84-46bc-a25a-a93f02d21d6e", "Mass Multiplication", "Prod", CAT, "Operators", [P("values", NUM, "tree", None, "V", "The numbers; each branch is multiplied on its own.")], [P("result", NUM, "tree", None, "R", "The product of each branch."), P("partial", NUM, "tree", None, "P", "The running products of each branch.")], run=mass(lambda a, b: a * b, 1.0), description="Multiplies all numbers of a branch.")
+add("math.mass_addition", "dfa64fc0-5eea-4bdd-8ecd-b63b7efdaaa4", "Sum Of Numbers", "Sum", CAT, "Operators", [P("values", NUM, "tree", None, "V", "The numbers; each branch is added on its own.")], [P("result", NUM, "tree", None, "R", "The total of each branch."), P("partial", NUM, "tree", None, "P", "The running totals of each branch.")], run=mass(lambda a, b: a + b, 0.0), description="Adds all numbers of a branch.")
+add("math.mass_multiplication", "4cf3dace-da84-46bc-a25a-a93f02d21d6e", "Product Of Numbers", "Prod", CAT, "Operators", [P("values", NUM, "tree", None, "V", "The numbers; each branch is multiplied on its own.")], [P("result", NUM, "tree", None, "R", "The product of each branch."), P("partial", NUM, "tree", None, "P", "The running products of each branch.")], run=mass(lambda a, b: a * b, 1.0), description="Multiplies all numbers of a branch.")

@@ -179,7 +179,6 @@ def table_lookup(table, thickness, radius, theta):
 
 
 def resolve_bend(rule, theta, r=None, t=None, override=None):
-    """rule keys: thickness_mm, inner_radius_mm, bend_method, k_factor, ba_mm, bd_mm, table, table_out_of_range, backup_k. theta is the deflection in radians."""
     rule = dict(rule or {})
     if override:
         rule.update({k: v for k, v in override.items() if v is not None})

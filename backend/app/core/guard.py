@@ -90,7 +90,7 @@ def _macro_route_ok(path: str, method: str = "") -> bool:
     if len(parts) >= 3 and parts[:2] == ["api", "docs"]:
         if parts[2] in MACRO_DENIED_FIRST:
             return False
-        if method.upper() in ("PUT", "POST", "PATCH", "DELETE") and any(p in MACRO_DENIED_WRITE for p in parts[3:]) and parts[-1] not in MACRO_WRITE_OK:
+        if method.upper() in ("PUT", "POST", "PATCH", "DELETE") and any(p in MACRO_DENIED_WRITE for p in parts[3:]) and not (len(parts) == 6 and parts[3] == "graphs" and parts[5] in MACRO_WRITE_OK):
             return False
         return not any(p in MACRO_DENIED_LATER for p in parts[3:])
     return True

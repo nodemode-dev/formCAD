@@ -1,6 +1,6 @@
 import math
 
-from app.graph.geo import Skip, curve_or_shape, curve_spec, guid, make_shape, pt, plane_spec, plist, shapes_of, simple_node, vec
+from app.graph.geo import Skip, counted, curve_or_shape, curve_spec, guid, make_shape, pt, plane_spec, plist, shapes_of, simple_node, vec
 from app.graph.sdk import NodeType, NodeWarning, Port, register
 from app.graph.values import Arc3, Circle3, Line3, PlaneF, Point3, Polyline3, ValueError3
 
@@ -119,7 +119,7 @@ simple_node(
     "curve.divide_count", "Divide Curve By Count", "Div", "Division",
     [Port("curve", "curve"), Port("count", "integer", default=10, min=1)],
     [Port("points", "point"), Port("tangents", "vector"), Port("t", "number", description="Fraction of the length, 0 to 1")],
-    lambda curve, count: {"op": "divide", "curve": curve_or_shape(curve), "count": int(count)},
+    lambda curve, count: {"op": "divide", "curve": curve_or_shape(curve), "count": counted(count)},
     lambda args, r: divided(r),
     category=CAT, multi=True, description="Points at equal distances along a curve, with tangents.",
 )

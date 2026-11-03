@@ -15,6 +15,8 @@ DIRECTIONS = ("minimise", "maximise")
 MAX_KEPT = 12
 MAX_GENES = 64
 HARD_BUDGET = 1000000
+MAX_POPULATION = 2000
+MAX_GENERATIONS = 10000
 PROGRESS_GAP = 0.15
 JOBS: dict = {}
 ORDER: list = []
@@ -121,8 +123,8 @@ class Run:
             raise OptimizeError("The method is evolution or annealing.")
         self.method = method
         n = len(self.genes)
-        self.population = max(int(spec.get("population") or 15 * n), 5)
-        self.generations = max(1, int(spec.get("generations") or 100))
+        self.population = max(min(int(spec.get("population") or 15 * n), MAX_POPULATION), 5)
+        self.generations = max(1, min(int(spec.get("generations") or 100), MAX_GENERATIONS))
         self.budget = max(1, min(int(spec.get("budget") or HARD_BUDGET), HARD_BUDGET))
         self.seed = int(spec.get("seed") or 0)
         self.time_limit = float(spec.get("time_limit") or 0.0)
