@@ -29,6 +29,10 @@ class RefBody(BaseModel):
     ref: dict[str, Any]
 
 
+class SyncBody(BaseModel):
+    ref: Optional[dict[str, Any]] = None
+
+
 class PushBody(BaseModel):
     doc: Optional[str] = None
     plane_z: float = 0.0
@@ -127,7 +131,7 @@ def link_delete(doc_id: str) -> dict:
 
 
 @router.post("/{doc_id}/ecad/link/sync")
-def link_sync(doc_id: str, body: Optional[RefBody] = None) -> dict:
+def link_sync(doc_id: str, body: Optional[SyncBody] = None) -> dict:
     return run(doc_id, lambda d: link.sync_from_part(d, body.ref if body else None), True)
 
 

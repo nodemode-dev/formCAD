@@ -5,8 +5,8 @@ class SchemError(ValueError):
     pass
 
 
-WINDOW = {"devices": 5000, "wires": 20000, "sheets": 200, "rows": 50000, "entities": 100000}
-AGENT = {"devices": 800, "wires": 3000, "sheets": 30, "rows": 8000, "entities": 20000}
+WINDOW = {"devices": 5000, "wires": 20000, "sheets": 200, "rows": 50000, "entities": 100000, "pins": 500}
+AGENT = {"devices": 800, "wires": 3000, "sheets": 30, "rows": 8000, "entities": 20000, "pins": 128}
 
 
 def limited() -> bool:

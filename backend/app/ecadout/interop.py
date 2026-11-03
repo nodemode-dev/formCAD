@@ -6,7 +6,7 @@ from app.ecadout import files, kicad
 from app.ecadout import view as V
 from app.pcb import store as PS
 
-OFF = "KiCad file interop is off. Turn it on in the electronics settings first."
+OFF = "Board file interop (.kicad_pcb format) is off. Turn it on in the electronics settings first."
 MAX_IMPORT_TRACKS = 20000
 MAX_IMPORT_VIAS = 4000
 

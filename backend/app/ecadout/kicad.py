@@ -7,6 +7,8 @@ from app.ecadout import view as V
 MAX_BYTES = 8 * 1024 * 1024
 MAX_NODES = 600000
 MAX_DEPTH = 64
+MAX_EDGE = 4000
+ESCAPE = re.compile(r"\\(.)", re.S)
 TOKEN = re.compile(r'\s*(\(|\)|"(?:[^"\\]|\\.)*"|[^\s()"]+)')
 
 
@@ -34,7 +36,7 @@ def parse(text: str):
             done = stack.pop()
             stack[-1].append(done)
         elif tok.startswith('"'):
-            stack[-1].append(bytes(tok[1:-1], "utf-8").decode("unicode_escape", errors="replace") if "\\" in tok else tok[1:-1])
+            stack[-1].append(ESCAPE.sub(lambda e: {"n": "\n", "t": "\t"}.get(e.group(1), e.group(1)), tok[1:-1]) if "\\" in tok else tok[1:-1])
         else:
             stack[-1].append(tok)
     if len(stack) != 1:
@@ -127,9 +129,18 @@ def xy(node):
 
 
 def read_board(text: str) -> dict:
+    try:
+        return read_tree(text)
+    except (TypeError, IndexError, ValueError, OverflowError, AttributeError) as err:
+        if isinstance(err, KicadError):
+            raise
+        raise KicadError("The board file is malformed: a node is missing or holds a bad value.")
+
+
+def read_tree(text: str) -> dict:
     root = parse(text)
     if not root or not isinstance(root[0], list) or not root[0] or root[0][0] != "kicad_pcb":
-        raise KicadError("This is not a KiCad board file.")
+        raise KicadError("This is not a board file in the .kicad_pcb format.")
     pcb = root[0]
     nets = {0: ""}
     for nd in find(pcb, "net"):
@@ -157,6 +168,8 @@ def read_board(text: str) -> dict:
             pts = [xy(p) for p in find(first(nd, "pts"), "xy")]
             for i in range(len(pts)):
                 segs.append(("line", pts[i], pts[(i + 1) % len(pts)]))
+    if len(segs) > MAX_EDGE:
+        raise KicadError("The board edge has %d segments; the limit is %d." % (len(segs), MAX_EDGE))
     tracks = []
     for nd in find(pcb, "segment"):
         tracks.append({"net": nets.get(int(num(first(nd, "net")[1])), ""), "layer": first(nd, "layer")[1], "width": num(first(nd, "width")[1]), "a": list(xy(first(nd, "start"))), "b": list(xy(first(nd, "end")))})
@@ -179,6 +192,24 @@ def chain(segs):
         return (s[1], s[-1])
 
     used = [False] * len(pool)
+    index = {}
+    for j, s in enumerate(pool):
+        for end, flag in ((ends(s)[0], False), (ends(s)[1], True)):
+            index.setdefault((round(end[0] / eps), round(end[1] / eps)), []).append((j, flag))
+
+    def find_next(cur):
+        kx, ky = round(cur[0] / eps), round(cur[1] / eps)
+        best = None
+        for gx in (kx - 1, kx, kx + 1):
+            for gy in (ky - 1, ky, ky + 1):
+                for j, flag in index.get((gx, gy), ()):
+                    if used[j]:
+                        continue
+                    e = ends(pool[j])[1 if flag else 0]
+                    if math.hypot(e[0] - cur[0], e[1] - cur[1]) <= eps and (best is None or (j, flag) < (best[0], best[2])):
+                        best = (j, pool[j], flag)
+        return best
+
     for i0 in range(len(pool)):
         if used[i0]:
             continue
@@ -189,17 +220,7 @@ def chain(segs):
         guard = 0
         while math.hypot(cur[0] - start[0], cur[1] - start[1]) > eps and guard < len(pool) + 2:
             guard += 1
-            hit = None
-            for j, s in enumerate(pool):
-                if used[j]:
-                    continue
-                a, b = ends(s)
-                if math.hypot(a[0] - cur[0], a[1] - cur[1]) <= eps:
-                    hit = (j, s, False)
-                    break
-                if math.hypot(b[0] - cur[0], b[1] - cur[1]) <= eps:
-                    hit = (j, s, True)
-                    break
+            hit = find_next(cur)
             if hit is None:
                 raise KicadError("The board edge is not a closed loop.")
             used[hit[0]] = True

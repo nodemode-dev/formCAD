@@ -116,6 +116,10 @@ def clean_device(d, raw: dict, base=None) -> dict:
     pin_count = row.get("pin_count")
     if pin_count is not None and not 1 <= int(pin_count) <= 200:
         raise SchemError("A connector has 1 to 200 pins.")
+    if isinstance(row.get("pins"), (list, tuple)):
+        room(len(row["pins"]), "pins", "Pins on one device")
+    if pin_count is not None:
+        room(int(pin_count), "pins", "Pins on one device")
     default_pins, _draw = symbols.build(kind, pin_count)
     pins = clean_pins(row["pins"]) if row.get("pins") else default_pins
     if kind == "block" and not pins:

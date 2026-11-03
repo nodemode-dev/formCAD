@@ -39,7 +39,7 @@ class Router:
         if not 0.02 <= self.pitch <= 1.0:
             raise jobs.PcbError("The routing grid pitch is between 0.02 and 1 mm.")
         self.via_cost = float(opts.get("via_cost", 2.5))
-        self.passes = int(opts.get("passes", 6))
+        self.passes = max(1, min(int(opts.get("passes", 6)), 20))
         self.margin = self.pitch * 0.25
         self.max_expand = min(int(opts.get("max_expansions") or jobs.cap("expansions", runner)), jobs.cap("expansions", runner))
         self.max_rips = min(int(opts.get("max_rips") or 60), jobs.cap("rips", runner))

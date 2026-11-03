@@ -44,6 +44,10 @@ def board_view(doc, options=None) -> dict:
     raw = fromboard.view_of(h, Z.fill_all(h))
     raw["name"] = (d.header.get("ECAD") or {}).get("name") or getattr(doc, "name", "") or "board"
     opts = {**link_header(d)["export"], **{k: v for k, v in (options or {}).items() if v is not None}}
+    for key, label in (("mask_margin", "mask"), ("paste_margin", "paste")):
+        val = opts[key]
+        if isinstance(val, bool) or not isinstance(val, (int, float)) or not -1.0 <= val <= 1.0:
+            raise V.OutputError("The %s margin is a number between -1 and 1 mm." % label)
     raw["mask_margin"] = opts["mask_margin"]
     raw["paste_margin"] = opts["paste_margin"]
     raw["tent_vias"] = bool(opts["tent_vias"])

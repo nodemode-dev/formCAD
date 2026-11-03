@@ -112,8 +112,15 @@ def circle_poly(cx, cy, r, n=24):
 def self_intersects(poly) -> bool:
     e = poly_edges(poly)
     n = len(e)
+    if n < 4:
+        return False
+    box = np.array([[min(p[0][0], p[1][0]), max(p[0][0], p[1][0]), min(p[0][1], p[1][1]), max(p[0][1], p[1][1])] for p in e])
     for i in range(n):
-        for j in range(i + 2, n):
+        later = np.arange(i + 2, n)
+        if later.size == 0:
+            continue
+        near = (box[later, 0] <= box[i, 1] + EPS) & (box[later, 1] >= box[i, 0] - EPS) & (box[later, 2] <= box[i, 3] + EPS) & (box[later, 3] >= box[i, 2] - EPS)
+        for j in later[near].tolist():
             if i == 0 and j == n - 1:
                 continue
             if seg_seg(e[i][0], e[i][1], e[j][0], e[j][1]) <= 0.0:

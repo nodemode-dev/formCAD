@@ -4,6 +4,7 @@ import json
 import math
 import os
 
+from app.cmd import barred
 from app.doc.entities import LwPolyline
 from app.doc.service import DocumentFault, service
 from app.ecadout import files
@@ -20,6 +21,17 @@ MAX_HOLES_FROM_FACE = 64
 SKETCH = "BoardOutline"
 
 
+def confined_path(full: str, base) -> str:
+    real = os.path.realpath(full)
+    for d in list(service.docs.values()):
+        if d.path and os.path.realpath(d.path) == real:
+            return real
+    root = os.path.realpath(os.path.dirname(os.path.abspath(base.path))) if base is not None and getattr(base, "path", "") else ""
+    if barred.caller() or not root or os.path.commonpath([root, real]) != root:
+        raise V.OutputError("The part file must be open already or sit inside the board's folder (checked after following links).")
+    return real
+
+
 def part_document(doc_id: str, base=None):
     text = str(doc_id)
     try:
@@ -27,8 +39,9 @@ def part_document(doc_id: str, base=None):
             full = os.path.expanduser(text)
             if not os.path.isabs(full) and base is not None and getattr(base, "path", ""):
                 full = os.path.join(os.path.dirname(os.path.abspath(base.path)), full)
+            full = confined_path(full, base)
             if not os.path.isfile(full):
-                raise V.OutputError("The part file %s does not exist." % text)
+                raise V.OutputError("The part file %s does not exist." % os.path.basename(text))
             got = service.open(full)
         else:
             got = service.get(text)
