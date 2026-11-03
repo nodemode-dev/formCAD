@@ -6,6 +6,10 @@ from app.cutting.shapes import CutError
 
 MAX_DXF_BYTES = 30 * 1024 * 1024
 MAX_ENTITIES = 200000
+MAX_RAW_LOOPS = 2000
+MAX_TOTAL_POINTS = 400000
+MAX_LOOP_POINTS = 20000
+MAX_RADIUS = 100000
 
 
 def parts_from_raw(raw_loops, name, qty=1, qty_by_handle=None):
@@ -89,6 +93,7 @@ def from_dxf(path, qty=1):
         raise CutError("The DXF file could not be read: %s" % err)
     raw = []
     n = 0
+    total = 0
     for e in doc.modelspace():
         t = e.dxftype()
         n += 1
@@ -96,13 +101,21 @@ def from_dxf(path, qty=1):
             raise CutError("The file has more than %d entities." % MAX_ENTITIES)
         if t == "LWPOLYLINE" and e.closed:
             verts = [{"p": (p[0], p[1]), "bulge": p[4]} for p in e.get_points("xyseb")]
+            if len(verts) > MAX_LOOP_POINTS:
+                raise CutError("A polyline in the file has more than %d vertices." % MAX_LOOP_POINTS)
             pts = lw_points(verts, True)
             if len(pts) >= 3:
                 raw.append({"pts": pts, "circle": None})
+                total += len(pts)
         elif t == "CIRCLE":
             c = [float(e.dxf.center.x), float(e.dxf.center.y)]
             r = float(e.dxf.radius)
+            if not 0 < r <= MAX_RADIUS:
+                raise CutError("A circle in the file has a radius outside 0 to %d mm." % MAX_RADIUS)
             raw.append({"pts": S.circle_points(c, r), "circle": {"c": c, "r": r}})
+            total += len(raw[-1]["pts"])
+        if len(raw) > MAX_RAW_LOOPS or total > MAX_TOTAL_POINTS:
+            raise CutError("The file has more than %d closed shapes or %d profile points." % (MAX_RAW_LOOPS, MAX_TOTAL_POINTS))
     if not raw:
         raise CutError("The file has no closed polylines or circles.")
     return parts_from_raw(raw, os.path.splitext(os.path.basename(full))[0], qty)

@@ -190,5 +190,20 @@ def tool_pose(doc_id: str, jid: str, n: int) -> dict:
     if p is None:
         return {"tip": None}
     if isinstance(p, dict):
-        return {"tip": p["tip"], "axis": p["axis"], "op": p["op"]}
-    return {"tip": p[0], "axis": [0, 0, 1], "op": p[1], "move": p[2]}
+        out = {"tip": p["tip"], "axis": p["axis"], "op": p["op"]}
+    else:
+        out = {"tip": p[0], "axis": [0, 0, 1], "op": p[1], "move": p[2]}
+    tools = st.get("tools") or []
+    if 0 <= out["op"] < len(tools):
+        rec = tools[out["op"]]
+        from app.cam.tools import Tool
+
+        stick = float(rec.get("stickout") or 0.0)
+        cut = [list(map(float, q)) for q in Tool(rec).profile()]
+        if stick > cut[-1][1] and rec.get("shank_diameter"):
+            cut.append([float(rec["shank_diameter"]) / 2.0, cut[-1][1]])
+            cut.append([float(rec["shank_diameter"]) / 2.0, stick])
+        out["profile"] = cut
+        hp = (rec.get("holder") or {}).get("profile") or []
+        out["holder"] = [[float(r), float(z) + stick] for r, z in hp] if hp and stick > 0 else []
+    return out

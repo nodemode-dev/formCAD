@@ -6,9 +6,9 @@ from pydantic import BaseModel
 
 from app.cam import export as cam_export
 from app.cam import gen, model, post, store
-from app.cam import hook as _hook  # noqa: F401
+from app.cam import hook as _hook
 from app.cam.limits import CamError
-from app.cam.ops import cut_ops, live_ops, probe_ops, turn_ops  # noqa: F401
+from app.cam.ops import cut_ops, live_ops, probe_ops, turn_ops
 from app.core import outputs
 from app.cutting import jobs as njobs
 from app.cutting import process as PR
@@ -112,7 +112,9 @@ def _read(doc_id: str, fn):
 
 
 def _view(rec: dict) -> dict:
-    return {k: v for k, v in rec.items() if k not in ("name",)}
+    out = {k: v for k, v in rec.items() if k not in ("name", "label")}
+    out["name"] = rec.get("label") or str(rec.get("kind_of", "")).capitalize()
+    return out
 
 
 @router.get("/cam/processes/blank")

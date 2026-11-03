@@ -5,7 +5,8 @@ from app.cam import export as cam_export
 from app.cam import limits as cam_limits
 from app.cam import post
 from app.cam import toolpath as T
-from app.core import outputs
+from app.cmd import barred
+from app.core import guard, outputs
 from app.cutting import layout, nest as N, records, shapes as S, sources
 from app.cutting import plan as P
 from app.cutting import process as PR
@@ -28,7 +29,10 @@ def build_parts(d, body: dict) -> list:
     fo = body.get("from_outlines")
     if fo is not None:
         specs.extend(sources.from_entities(d, (fo or {}).get("layer"), int((fo or {}).get("qty", 1)), (fo or {}).get("qty_by_handle")))
+    who = guard.CALLER.get()
     for x in body.get("dxf") or []:
+        if who and not barred._inside(x.get("path"), barred._granted(None, who)):
+            raise CutError("The DXF file is outside the folders granted to this %s." % ("macro" if who == "macro" else "agent"))
         specs.extend(sources.from_dxf(x["path"], int(x.get("qty", 1))))
     if not specs:
         raise CutError("Give parts, from_flat, from_outlines or dxf files.")
@@ -63,7 +67,7 @@ def nest_record(parts, body, result) -> dict:
 
 def summary(rec) -> dict:
     r = rec["result"]
-    return {"id": rec["id"], "sheet_count": r["sheet_count"], "utilization": r["utilization"], "cut_length": r["cut_length"], "placed": r["placed"], "unplaced": r["unplaced"], "verify": r["verify"], "passes": r["passes"], "seconds": r["seconds"], "stamp": rec["stamp"], "sheets": [{"index": s["index"], "width": s["width"], "height": s["height"], "parts": len(s["placements"]), "utilization": s["utilization"], "cut_length": s["cut_length"], "extent": s["extent"]} for s in r["sheets"]]}
+    return {"id": rec["id"], "sheet_count": r["sheet_count"], "utilization": r["utilization"], "cut_length": r["cut_length"], "placed": r["placed"], "unplaced": r["unplaced"], "verify": r["verify"], "passes": r["passes"], "seconds": r["seconds"], "timed_out": bool(r.get("timed_out")), "stamp": rec["stamp"], "sheets": [{"index": s["index"], "width": s["width"], "height": s["height"], "parts": len(s["placements"]), "utilization": s["utilization"], "cut_length": s["cut_length"], "extent": s["extent"]} for s in r["sheets"]]}
 
 
 def process_for(d, ref) -> dict:

@@ -8,6 +8,7 @@ import { additivePanel, previewView } from './additive-panel';
 import { camPanel } from './cam-panel';
 import { cam } from './cam-store';
 import { LayerPreview } from './layer-preview';
+import { lathePanel } from './lathe-panel';
 import { nestPanel } from './nest-panel';
 import { SimLayer } from './sim-layer';
 import { simPanel, simView } from './sim-panel';
@@ -42,6 +43,7 @@ registerDockPanel(camPanel());
 registerDockPanel(toolPanel());
 registerDockPanel(simPanel());
 registerDockPanel(nestPanel());
+registerDockPanel(lathePanel());
 registerDockPanel(additivePanel());
 
 commands.add(
@@ -49,6 +51,7 @@ commands.add(
   { id: 'p12-tool-panel', label: 'Tool Library', group: 'Window', run: () => reveal('camtools'), enabled: has },
   { id: 'p12-sim-panel', label: 'Simulation Panel', group: 'Window', run: () => reveal('camsim'), enabled: has },
   { id: 'p12-nest-panel', label: 'Nesting and Cutting', group: 'Window', run: () => reveal('camnest'), enabled: has },
+  { id: 'p12-turn-panel', label: 'Turning and Probing Panel', group: 'Window', run: () => reveal('camturn'), enabled: has },
   { id: 'p12-print-panel', label: 'Print Preparation', group: 'Window', run: () => reveal('additive'), enabled: has },
   { id: 'p12-toolpaths', label: 'Toolpaths', group: 'View', run: () => { cam.layer?.setShown(!(cam.layer?.shown ?? true)); }, checked: () => cam.layer?.shown ?? true, enabled: has },
   { id: 'p12-sim-stock', label: 'Simulated Stock', group: 'View', run: () => { simView.layer?.setShown(!(simView.layer?.shown ?? false)); }, checked: () => simView.layer?.shown ?? false, enabled: has },

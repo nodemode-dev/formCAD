@@ -157,6 +157,7 @@ def start(doc, body: dict, wait=False) -> SimJob:
             job.result = out["result"]
             job.result["setup"] = sid
             job.state_data = out["state"]
+            job.state_data["tools"] = [o["tool"] for o in inp["ops"]]
             job.state = "done"
             job.progress = 1.0
         except Cancelled:

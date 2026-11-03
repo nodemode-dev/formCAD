@@ -74,9 +74,10 @@ def run(inp: dict, cancel=None, progress=None, phase=None) -> dict:
     inside = None
     if rings and len(rings) and inp["stock"].get("kind") in ("cylinder", "tube"):
         inside = lambda X, Y: ring_mask(rings, X, Y)
+    cells = max(int(math.ceil((bmax[0] - bmin[0]) / cell)), 1) * max(int(math.ceil((bmax[1] - bmin[1]) / cell)), 1)
+    if cells > inp["limits"]["sim_cells"]:
+        raise CamError("The simulation grid has %d cells, more than the limit of %d; use a larger cell." % (cells, inp["limits"]["sim_cells"]))
     dx = DexelStock(bmin, bmax, cell, inside)
-    if dx.nx * dx.ny > inp["limits"]["sim_cells"]:
-        raise CamError("The simulation grid has %d cells, more than the limit of %d; use a larger cell." % (dx.nx * dx.ny, inp["limits"]["sim_cells"]))
     warnings = []
     if phase:
         phase("design")

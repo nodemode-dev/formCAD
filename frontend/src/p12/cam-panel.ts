@@ -73,6 +73,12 @@ const GEOM_ROWS: Record<string, string[]> = {
   section: ['kind', 'z', 'part'], removal: ['kind', 'z', 'margin'], points: ['kind', 'z', 'points'], model_holes: ['kind', 'z', 'min_diameter', 'max_diameter'],
 };
 
+function modelSize(): number[] {
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (const v of view3d()?.vp?.bodyViews.values() ?? []) for (let i = 0; i < 3; i++) { lo[i] = Math.min(lo[i], v.min[i]); hi[i] = Math.max(hi[i], v.max[i]); }
+  return [0, 1, 2].map((i) => (Number.isFinite(lo[i]) && hi[i] > lo[i] ? Math.round((hi[i] - lo[i]) * 10) / 10 : 100));
+}
+
 const hint = (s: string): void => { document.dispatchEvent(new CustomEvent('formcad:hint', { detail: s })); };
 
 function getPath(o: Json, path: string): unknown {
@@ -189,6 +195,7 @@ export function camPanel(): DockPanel {
 
       const sPost = section('Post and export');
       const postSel = selectCtl('Post', []);
+      let postFor = '';
       const pre = el('<pre class="cm-pre" tabindex="0" aria-label="Post output"></pre>');
       const postMsg = reportBox(3);
       const outName = el<HTMLInputElement>('<input class="cv-input cm-path" type="text" spellcheck="false" aria-label="Output file">');
@@ -212,6 +219,20 @@ export function camPanel(): DockPanel {
         if (!s) return;
         const top = name.split('.')[0];
         const body: Json = {};
+        if (name === 'stock.kind') {
+          const next: Json = JSON.parse(JSON.stringify(s.stock ?? {})) as Json;
+          next.kind = value;
+          const [dx, dy, dz] = modelSize();
+          const dims = Array.isArray(next.dims) ? next.dims as number[] : [];
+          if (value === 'box' && !(dims.length === 3 && dims.every((v) => v > 0))) next.dims = [dx, dy, dz];
+          if (value === 'cylinder' || value === 'tube') {
+            if (!(Number(next.diameter) > 0)) next.diameter = Math.max(dx, dy);
+            if (!(Number(next.length) > 0)) next.length = dz;
+          }
+          if (value === 'tube' && !(Number(next.inner) > 0)) next.inner = Math.round(Number(next.diameter) * 50) / 100;
+          await cam.put('PUT', `/setups/${encodeURIComponent(s.id)}`, { stock: next });
+          return;
+        }
         if (name === 'label' || name === 'machine') body[name] = value;
         else {
           const copy: Json = JSON.parse(JSON.stringify((s as unknown as Json)[top] ?? {})) as Json;
@@ -406,6 +427,13 @@ export function camPanel(): DockPanel {
         fillSelect(kindSel.input as HTMLSelectElement, types.map((r) => [r.kind, `${r.group.toUpperCase()} · ${r.label}`] as [string, string]));
         fillSelect(toolSel.input as HTMLSelectElement, [['', t('Pick on the operation')], ...cam.docTools.map((tl) => [String(tl.number), `T${tl.number} ${toolName(tl)}`] as [string, string])]);
         fillSelect(postSel.input as HTMLSelectElement, cam.posts.map((p) => [p.id, p.name] as [string, string]));
+        const cur = selSetup();
+        const key = cur ? `${cur.id}:${cur.machine}:${cam.posts.length}` : '';
+        if (key !== postFor) {
+          postFor = key;
+          const want = ({ mill3: 'linuxcnc', mill5: 'linuxcnc_5axis', lathe: 'lathe_linuxcnc', laser: 'cut_grbl_laser' } as Record<string, string>)[cur?.machine ?? ''];
+          if (want && cam.posts.some((p) => p.id === want)) setValue(postSel.input as HTMLSelectElement, want);
+        }
         void ops;
       };
 

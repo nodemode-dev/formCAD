@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.cam import export, feeds, gen, jobs, limits, model, post, registry, store, tools
-from app.cam import hook as _hook  # noqa: F401
+from app.cam import hook as _hook
 from app.cam.limits import CamError
 from app.doc.document import CommandFailed
 from app.doc.service import DocumentFault, service

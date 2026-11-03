@@ -274,7 +274,7 @@ def plan_sheet(parts, process, order_mode="part", bounds=None, home=(0.0, 0.0), 
     if nloops > MAX_LOOPS_PLAN:
         raise CutError("%d profile loops is more than the limit of %d." % (nloops, MAX_LOOPS_PLAN))
     half = kerf / 2.0
-    regions = [material_regions(p, half * 0.5) for p in parts]
+    regions = [material_regions(p, max(0.0, half - 0.03)) for p in parts]
     contours = []
     warnings = []
     for pi, p in enumerate(parts):

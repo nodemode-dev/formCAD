@@ -1,3 +1,4 @@
+import contextvars
 import threading
 import time
 import uuid
@@ -106,7 +107,8 @@ def start(doc, ops: list, wait: bool = False) -> Job:
         job.progress["elapsed"] = round(time.monotonic() - job.started, 3)
         publish(job, "end")
 
-    job.thread = threading.Thread(target=body, name="cam-%s" % job.id, daemon=True)
+    scope = contextvars.copy_context()
+    job.thread = threading.Thread(target=lambda: scope.run(body), name="cam-%s" % job.id, daemon=True)
     job.thread.start()
     if wait:
         job.thread.join()

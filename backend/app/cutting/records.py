@@ -28,6 +28,7 @@ def get_process(d, pid: str) -> dict:
 def process_view(rec: dict) -> dict:
     out = {k: copy.deepcopy(v) for k, v in rec.items() if k in PR.BASE}
     out["kind"] = rec["kind_of"]
+    out["name"] = rec.get("label") or str(rec.get("kind_of", "")).capitalize()
     return out
 
 
@@ -37,7 +38,7 @@ def add_process(d, raw: dict) -> dict:
     clean = PR.clean(raw)
     pid = model.next_id(d, "process", "P")
     rec = dict(clean)
-    rec.update({"name": "process:%s" % pid, "id": pid, "kind_of": clean["kind"], "kind": "process"})
+    rec.update({"name": "process:%s" % pid, "label": clean["name"], "id": pid, "kind_of": clean["kind"], "kind": "process"})
     d.table_set(model.TABLE, rec)
     return rec
 
@@ -46,10 +47,12 @@ def update_process(d, pid: str, raw: dict) -> dict:
     cur = get_process(d, pid)
     base = process_view(cur)
     for k, v in (raw or {}).items():
+        if k in ("id", "kind_of", "label") or (k == "kind" and v == "process"):
+            continue
         base[k] = v
     clean = PR.clean(base)
     rec = dict(clean)
-    rec.update({"name": cur["name"], "id": pid, "kind_of": clean["kind"], "kind": "process"})
+    rec.update({"name": cur["name"], "label": clean["name"], "id": pid, "kind_of": clean["kind"], "kind": "process"})
     d.table_set(model.TABLE, rec)
     bump_ops(d, process=pid)
     return rec

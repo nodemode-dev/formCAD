@@ -31,6 +31,12 @@
 .cm-row-c { grid-template-columns: 26px minmax(0, 1fr) auto; cursor: pointer; }
 .cm-row-i { grid-template-columns: 34px minmax(0, 1fr) auto; }
 .cm-fixrow { grid-template-columns: 34px minmax(0, 1fr) auto; }
+.cm-playbtn { min-width: 64px; }
+.cm-probeforms { display: grid; }
+.cm-probeforms > .cm-fields { grid-area: 1 / 1; }
+.cm-probeforms > .is-away { visibility: hidden; }
+.cm-assign { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr); }
+.cm-assign .cv-input { min-width: 0; }
 .cm-row-o .u8-badge, .cm-row-s .u8-badge, .cm-row-t .u8-badge, .cm-row-i .u8-badge { min-width: 44px; text-align: center; }
 .cm-row-o .u8-acts .u8-mini { min-width: 22px; }
 .cm-fields { display: grid; gap: var(--space-1); align-content: start; }

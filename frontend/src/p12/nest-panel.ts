@@ -16,8 +16,9 @@ interface Process extends Json { id: string; kind: string; kind_of?: string }
 interface Plan { sheets: Array<{ sheet: number; parts: number; moves: number; stats: Json; warnings: string[]; time: unknown; toolpath: unknown[] }> }
 
 const NS = 'http://www.w3.org/2000/svg';
-const procLabel = (p: Process): string => `${p.id} · ${t(String(p.kind_of ?? p.kind))}`;
+const procLabel = (p: Process): string => `${p.id} · ${String(p.name ?? '') || t(String(p.kind_of ?? p.kind))}`;
 const PROC_SPECS: FieldSpec[] = [
+  { name: 'name', type: 'text', label: 'Name' },
   { name: 'kerf', type: 'number', label: 'Kerf width', unit: 'mm' },
   { name: 'feed', type: 'number', label: 'Cutting feed', unit: 'mm/min' },
   { name: 'pierce_feed', type: 'number', label: 'Pierce feed', unit: 'mm/min' },
@@ -117,6 +118,23 @@ export function nestPanel(): DockPanel {
         button('Save process', () => { void saveProc(); }),
         button('Delete process', () => { const p = proc(); if (p) void guard(() => req('DELETE', docCam(`/processes/${encodeURIComponent(p.id)}`))).then(() => { nestState.proc = ''; void load(); }); }),
       ), pnote, pform.el);
+      const kerfForm = fieldForm([
+        { name: 'amps', type: 'number', label: 'Plasma current', unit: 'A', min: 1, max: 1000 },
+        { name: 'tube', type: 'number', label: 'Mixing tube diameter', unit: 'mm', min: 0.1, max: 10 },
+      ], () => undefined);
+      kerfForm.set({ amps: 45, tube: 0.76 });
+      const kerfOut = reportBox(2);
+      sProc.body.append(kerfForm.el, buttons(button('Plasma kerf from current', () => { void kerfFrom('plasma'); }), button('Waterjet kerf from tube', () => { void kerfFrom('waterjet'); })), kerfOut.el);
+
+      async function kerfFrom(kind: 'plasma' | 'waterjet'): Promise<void> {
+        const v = kerfForm.read();
+        const r = await guard(() => req<Json>('POST', '/api/cam/processes/kerf', kind === 'plasma' ? { kind, amps: v.amps } : { kind, tube: v.tube }));
+        if (!r) return;
+        const k = Number(r.kerf);
+        const p = proc();
+        if (p) { setp(p as Json, 'kerf', k); pdirty = true; setText(pnote, t('Unsaved changes.')); pform.set({ ...Object.fromEntries(PROC_SPECS.map((s) => [s.name, getp(p, s.name)])) }); }
+        kerfOut.set([`${t('Kerf')} ${fixed(k, 4)} mm`, String(r.source ?? '')]);
+      }
 
       const sCode = section('Cut code');
       const procSel = selectCtl('Process', []);
@@ -186,6 +204,13 @@ export function nestPanel(): DockPanel {
         if (res.id) nestState.nest = String(res.id);
         nestState.sheet = 1;
         await load();
+        const left = Array.isArray(res.unplaced) ? res.unplaced.length : Number(res.unplaced ?? 0);
+        report.set([
+          `${res.sheet_count ?? '?'} ${t('sheets')} · ${t('Utilisation')} ${fixed(Number(res.utilization ?? 0) * 100, 4)} %`,
+          `${t('Not placed')}: ${left}`,
+          `${fixed(Number(res.seconds ?? 0), 3)} s · ${res.passes ?? '?'} ${t('passes')}`,
+          res.timed_out ? t('The time budget ran out; some parts were left unplaced.') : '',
+        ], left > 0 || !!res.timed_out);
       }
 
       async function shapes(): Promise<void> {
@@ -237,7 +262,7 @@ export function nestPanel(): DockPanel {
         planReport.set([
           `${t('Sheets planned')}: ${r.sheets.length} · ${t('moves')} ${s0.moves}`,
           `${t('Cut length')} ${fixed(Number(st.cut_length ?? st.cut ?? 0), 5)} mm · ${t('pierces')} ${String(st.pierces ?? '-')}`,
-          `${t('Time')} ${secs(Number((s0.time as Json | number)?.valueOf() as number) || Number(((s0.time as Json) ?? {}).total_s ?? ((s0.time as Json) ?? {}).time_s ?? 0))}`,
+          `${t('Time')} ${secs(Number((s0.time as Json | number)?.valueOf() as number) || Number(((s0.time as Json) ?? {}).trapezoid_s ?? ((s0.time as Json) ?? {}).total_s ?? ((s0.time as Json) ?? {}).time_s ?? 0))}`,
           ...warn.slice(0, 1),
         ], warn.length > 0);
         let rap = '', cut = '';

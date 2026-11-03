@@ -159,7 +159,7 @@ def parallel(surf, cu, bounds, angle, step, tol, stl, bottom, rings=None, zigzag
     passes = []
     for k, L in enumerate(lines):
         rs = runs_of(L, bottom)
-        want_rev = (not climb) if not zigzag else ((not climb) != (k % 2 == 1))
+        want_rev = climb if not zigzag else (climb != (k % 2 == 1))
         for r in rs:
             if len(r) < 2:
                 continue
@@ -183,7 +183,7 @@ def waterline(surf, cu, zs, bounds, grid, tol, stl, cancel=None, progress=None, 
             q = contours.simplify2(q, tol * 0.5, closed)
             if len(q) < 3:
                 continue
-            if not climb:
+            if climb:
                 q = q[::-1]
             level.append((np.column_stack([q, np.full(len(q), z)]), closed))
         out.append((z, level))
@@ -255,7 +255,7 @@ def scallop(surf, cu, bounds, step, grid, tol, stl, bottom, mask_fn=None, cancel
                 continue
             q = np.vstack([pts, pts[:1]]) if closed else pts
             q = contours.simplify2(q, tol * 0.5, closed)
-            if not climb:
+            if climb:
                 q = q[::-1]
             z = drop_points(surf, cu, stl, q)
             ok = np.isfinite(z)

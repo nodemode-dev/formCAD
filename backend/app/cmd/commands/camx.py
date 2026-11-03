@@ -1,3 +1,5 @@
+import json
+
 from app.cam.limits import CamError
 from app.cmd import barred
 from app.cmd.context import CommandError
@@ -5,8 +7,11 @@ from app.cmd.registry import COMMANDS, command, executes
 from app.core import outputs
 from app.cutting import records, service
 from app.cutting.shapes import CutError
+from app.probing import cycles as probe_cycles
+from app.turning import millturn
+from app.turning import profile as turn_profile
 
-FAILURES = (CamError, CutError, outputs.OutputRefused, ValueError, KeyError)
+FAILURES = (CamError, CutError, outputs.OutputRefused, ValueError, KeyError, TypeError)
 
 
 def run(fn, *args, **kwargs):
@@ -74,3 +79,78 @@ def camnestexport_exec(ctx, args):
     if not args.get("path"):
         raise CommandError("Give path, the file to write.")
     return run(service.export, ctx.d, "FORMCAD", str(args.get("nest") or "N1"), args.get("process") or "P1", str(args.get("post") or "cut_grbl_laser"), str(args["path"]), args.get("sheet"), str(args.get("order") or "part"), (0.0, 0.0), args.get("options"))
+
+
+def turn_profile_now(args):
+    spec = args.get("profile")
+    if isinstance(spec, str):
+        spec = json.loads(spec)
+    if not isinstance(spec, dict):
+        raise CommandError("Give profile, an object with a pts list of z and d points.")
+    prof = run(turn_profile.build, spec)
+    pts = prof["pts"]
+    return {"points": len(pts), "monotonic": turn_profile.check_direction(prof), "max_diameter": 2 * max(r for _, r in pts), "length": pts[0][0] - pts[-1][0]}
+
+
+@command("camturnprofile", group="solids", label="Check Turning Profile", description="Check a turning profile given as z and diameter points and report its length and largest diameter.", menu="Manufacture > Check Turning Profile", undoable=False)
+def camturnprofile_cmd(ctx):
+    t = yield ctx.text("Enter the profile as text, for example {\"units\": \"diameter\", \"pts\": [{\"z\": 0, \"d\": 20}, {\"z\": -30, \"d\": 20}]}")
+    if t.kind != "text":
+        return
+    try:
+        out = turn_profile_now({"profile": str(t.value)})
+    except json.JSONDecodeError:
+        raise CommandError("The profile text is not valid JSON.")
+    ctx.say("CAMTURNPROFILE: %d points, length %g mm, largest diameter %g mm." % (out["points"], out["length"], out["max_diameter"]))
+    return out
+
+
+@executes("camturnprofile")
+def camturnprofile_exec(ctx, args):
+    try:
+        return turn_profile_now(dict(args))
+    except json.JSONDecodeError:
+        raise CommandError("The profile text is not valid JSON.")
+
+
+def probe_now(args):
+    kind = str(args.get("kind") or "")
+    built = run(probe_cycles.build, kind, args.get("params") or {})
+    return {"kind": kind, "moves": len(built["moves"]), "outputs": sorted(built["outputs"])}
+
+
+@command("camprobe", group="solids", label="Probing Cycle", description="Build a probing cycle and report its moves and the parameters it stores.", menu="Manufacture > Probing Cycle", undoable=False)
+def camprobe_cmd(ctx):
+    k = yield ctx.keyword("Cycle [surface/edge/bore/boss/width/corner/skew]", list(probe_cycles.KINDS), "surface")
+    if k.kind != "keyword":
+        return
+    out = probe_now({"kind": str(k.value).lower()})
+    ctx.say("CAMPROBE: %s cycle, %d moves." % (out["kind"], out["moves"]))
+    return out
+
+
+@executes("camprobe")
+def camprobe_exec(ctx, args):
+    return probe_now(dict(args))
+
+
+def machine_now(ctx, args):
+    raw = dict(args)
+    mid = raw.pop("id", None)
+    rec = run(millturn.put_machine, ctx.d, None if mid in (None, "", "new") else str(mid), raw)
+    return {"id": rec["id"], "name": rec["label"]}
+
+
+@command("cammachine", group="solids", label="Mill-Turn Machine", description="Add a mill-turn machine record.", menu="Manufacture > Mill-Turn Machine")
+def cammachine_cmd(ctx):
+    t = yield ctx.text("Machine name", "Mill-turn")
+    if t.kind != "text":
+        return
+    out = machine_now(ctx, {"name": str(t.value)})
+    ctx.say("CAMMACHINE: machine %s added." % out["id"])
+    return out
+
+
+@executes("cammachine")
+def cammachine_exec(ctx, args):
+    return machine_now(ctx, args)

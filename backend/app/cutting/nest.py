@@ -15,10 +15,16 @@ MAX_SECONDS = 300.0
 MAX_SECONDS_AGENT = 30.0
 MAX_ROTATIONS = 36
 NEST_TOL = 0.04
+MAX_PIECES = 14
+MAX_DECIMATE = 3.0
 TOUCH = 1
 
 
 class Cancelled(Exception):
+    pass
+
+
+class TimeUp(Exception):
     pass
 
 
@@ -30,16 +36,22 @@ def _rot_part(part, rot, c, tol):
     outer = part["loops"][0]["pts"]
     pts = S.transform(outer, rot, 0.0, 0.0)
     x0, y0, x1, y1 = S.bbox(pts)
-    real = S.decimate([(x - x0, y - y0) for x, y in pts], tol * 0.75)
-    infl = S.offset([real], c / 2.0 + tol)
-    if not infl:
-        raise CutError("Part %s collapsed while adding the clearance." % part["name"])
-    q = max(infl, key=lambda p: abs(S.area(p)))
-    q = S.orient(q, True)
+    base = [(x - x0, y - y0) for x, y in pts]
+    dtol = tol * 0.75
+    while True:
+        real = S.decimate(base, dtol)
+        infl = S.offset([real], c / 2.0 + tol + (dtol - tol * 0.75))
+        if not infl:
+            raise CutError("Part %s collapsed while adding the clearance." % part["name"])
+        q = max(infl, key=lambda p: abs(S.area(p)))
+        q = S.orient(q, True)
+        neg = [(-x, -y) for x, y in q]
+        neg = S.orient(neg, True)
+        pieces = S.convex_parts(neg)
+        if len(pieces) <= MAX_PIECES or dtol >= MAX_DECIMATE:
+            break
+        dtol *= 2.0
     qx0, qy0, qx1, qy1 = S.bbox(q)
-    neg = [(-x, -y) for x, y in q]
-    neg = S.orient(neg, True)
-    pieces = S.convex_parts(neg)
     pos = S.convex_parts(q)
     return {"rot": rot, "shift": (x0, y0), "real": real, "q": q, "qb": (qx0, qy0, qx1, qy1), "pieces": [_ints(p) for p in pieces], "qi": _ints(q), "pos": [_ints(p) for p in pos], "w": x1 - x0, "h": y1 - y0}
 
@@ -52,6 +64,7 @@ class Nester:
         self.margin = float(margin)
         self.deadline = deadline
         self.hard = None
+        self.timed_out = False
         self.cancel = cancel
         self.defects = defects or []
         self.rots = {}
@@ -66,6 +79,10 @@ class Nester:
         k = (ti, r)
         v = self.rots.get(k)
         if v is None:
+            if self.hard and time.time() > self.hard:
+                raise TimeUp()
+            if self.cancel:
+                self.cancel()
             v = _rot_part(self.parts[ti], r, self.c, NEST_TOL)
             self.rots[k] = v
         return v
@@ -96,7 +113,7 @@ class Nester:
         best = None
         for r in order_rots:
             if self.hard and time.time() > self.hard:
-                raise Cancelled()
+                raise TimeUp()
             R = self.rot(ti, r)
             qx1 = R["qb"][2]
             xlo = self.margin
@@ -112,6 +129,8 @@ class Nester:
             clip.AddPath(rect, pc.PT_SUBJECT, True)
             rb = (rect[0][0], rect[0][1], rect[2][0], rect[2][1])
             for item in sheet["items"]:
+                if self.hard and time.time() > self.hard:
+                    raise TimeUp()
                 res, bb = self.nfp_of(ti, r, item["ti"], item["rot"])
                 if not res:
                     continue
@@ -152,10 +171,20 @@ class Nester:
         return out
 
     def run(self, order, rot_order_fn):
-        sheets = []
+        st = {"sheets": [], "unplaced": [], "i": 0}
+        try:
+            self.run_inner(order, rot_order_fn, st)
+        except TimeUp:
+            self.timed_out = True
+            st["unplaced"].extend(order[st["i"] :])
+        return st["sheets"], st["unplaced"]
+
+    def run_inner(self, order, rot_order_fn, st):
+        sheets = st["sheets"]
         specs = list(self.sheets)
-        unplaced = []
-        for inst in order:
+        unplaced = st["unplaced"]
+        for idx, inst in enumerate(order):
+            st["i"] = idx
             ti = inst["ti"]
             if self.cancel:
                 self.cancel()
@@ -283,7 +312,8 @@ def nest(parts_in, sheets, clearance=0.0, kerf=0.0, margin=5.0, seconds=20.0, re
     for pi, (order, rot_fn) in enumerate(plans):
         if pi > 0 and time.time() > deadline:
             break
-        nester.hard = None if pi == 0 else deadline + 2.0
+        nester.hard = deadline
+        nester.timed_out = False
         try:
             sh, un = attempt(order, rot_fn)
         except Cancelled:
@@ -293,11 +323,13 @@ def nest(parts_in, sheets, clearance=0.0, kerf=0.0, margin=5.0, seconds=20.0, re
         tried += 1
         ob = objective(sh, un, nester)
         if best is None or ob < best[0]:
-            best = (ob, sh, un)
+            best = (ob, sh, un, nester.timed_out)
         if progress:
             progress(min(0.98, (pi + 1) / len(plans)), "Nesting pass %d of %d: %d sheets" % (pi + 1, len(plans), len(best[1])))
-    ob, sh, un = best
-    return finish(nester, parts, sheet_specs, sh, un, clearance, kerf, margin, tried, time.time() - t0, seed)
+    ob, sh, un, timed = best
+    out = finish(nester, parts, sheet_specs, sh, un, clearance, kerf, margin, tried, time.time() - t0, seed)
+    out["timed_out"] = timed
+    return out
 
 
 def finish(nester, parts, specs, sheets, unplaced, clearance, kerf, margin, tried, elapsed, seed):

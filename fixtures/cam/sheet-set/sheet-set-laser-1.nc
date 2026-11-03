@@ -1,4 +1,4 @@
-(channel)
+(sheet-set)
 (Laser mode needs $32=1 on the controller)
 G21 G90 G17 G94 G40
 M5

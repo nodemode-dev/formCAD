@@ -7,7 +7,7 @@ import { button, buttons, checkCtl } from '../u8/ui';
 import { view3d } from '../view3d/mount';
 import { cam, frac, labelOf } from './cam-store';
 import { fieldForm } from './fields';
-import { b64f32, b64u8, docCam, fillSelect, fixed, guard, progressBar, reportBox, req, secs, section, text, type Json } from './kit';
+import { b64f32, b64u8, camUrl, docCam, fillSelect, fixed, guard, progressBar, reportBox, req, secs, section, text, type Json } from './kit';
 import type { SimLayer } from './sim-layer';
 
 export const simView: { layer: SimLayer | null } = { layer: null };
@@ -20,11 +20,12 @@ interface SimResult {
   per_op?: Array<{ op: string; removed_mm3: number; time_s: number; min_distance_mm?: number }>; grid?: { nx: number; ny: number; cell: number; origin: number[] }; snapshots?: number; warnings?: string[];
 }
 interface Snap { nx?: number; ny?: number; cell?: number; origin?: number[]; top?: string; bottom?: string; gouge?: string; mode?: string; points?: string; count?: number }
-interface Pose { tip: number[]; axis: number[]; profile: number[][]; holder: number[][]; abc: number[] | null; move: number }
+interface Pose { tip: number[] | null; axis: number[]; profile?: number[][]; holder?: number[][]; abc?: number[] | null; move?: number; op: number }
 
 const KIND_TEXT: Record<string, string> = { holder_stock: 'Holder hits stock', holder_fixture: 'Holder hits fixture', shank_stock: 'Shank hits stock', travel: 'Out of travel', rapid_in_stock: 'Rapid in stock', flute_length: 'Past the flute length' };
 
-export const simState: { job: string; result: SimResult | null; frame: number; frames: number; playing: boolean; setup: string } = { job: '', result: null, frame: 0, frames: 0, playing: false, setup: '' };
+export const simState: { job: string; result: SimResult | null; frame: number; frames: number; playing: boolean; setup: string; machine: string } = { job: '', result: null, frame: 0, frames: 0, playing: false, setup: '', machine: '' };
+let lastAc = { a: 0, c: 0 };
 
 export function simPanel(): DockPanel {
   return {
@@ -70,9 +71,13 @@ export function simPanel(): DockPanel {
       setText(q(row, '.cm-sl-label'), t('Step'));
       row.append(slider, out);
       const playBtn = button('Play', () => toggle());
+      playBtn.classList.add('cm-playbtn');
       const showStock = checkCtl('Show the stock', true, () => { simView.layer?.setShown(showStock.get()); });
       const hideModel = checkCtl('Hide the model', false, () => { view3d()?.vp?.setBodiesHidden(hideModel.get()); });
-      sPlay.body.append(row, buttons(button('Start', () => { void go(0); }), button('Back', () => { void go(simState.frame - 1); }), playBtn, button('Next', () => { void go(simState.frame + 1); }), button('End', () => { void go(simState.frames); })), showStock.el, hideModel.el);
+      const showMachine = checkCtl('Show the machine table and head', true, () => { simView.layer?.setMachineShown(showMachine.get()); });
+      const joints = el('<p class="u8-note cm-joints"></p>');
+      setText(joints, '-');
+      sPlay.body.append(row, buttons(button('Start', () => { void go(0); }), button('Back', () => { void go(simState.frame - 1); }), playBtn, button('Next', () => { void go(simState.frame + 1); }), button('End', () => { void go(simState.frames); })), showStock.el, hideModel.el, showMachine.el, joints);
 
       live.append(sRun.root, sIssues.root, sPlay.root);
 
@@ -95,6 +100,9 @@ export function simPanel(): DockPanel {
         if (!first) return;
         simState.job = String(first.job ?? '');
         simState.setup = s.id;
+        simState.machine = body.machine ? String(body.machine) : '';
+        lastAc = { a: 0, c: 0 };
+        simView.layer?.reset();
         bar.onCancel(() => { void req('POST', `${jobBase()}/cancel`).catch(() => undefined); });
         bar.set(0, `${t('Simulating')} · 0 %`, true);
         let res: Json | null = null;
@@ -167,6 +175,31 @@ export function simPanel(): DockPanel {
         return p;
       }
 
+      const shapes = new Map<string, { radius: number; thickness: number; headR: number; headL: number }>();
+
+      async function loadMachine(layer: SimLayer, id: string, s: Snap): Promise<void> {
+        let shape = shapes.get(id);
+        if (!shape) {
+          const rec = await req<{ table?: { radius?: number; thickness?: number }; head?: { radius?: number; length?: number } }>('GET', camUrl(`/machines/${encodeURIComponent(id)}`)).catch(() => null);
+          shape = { radius: rec?.table?.radius ?? 150, thickness: rec?.table?.thickness ?? 40, headR: rec?.head?.radius ?? 60, headL: rec?.head?.length ?? 120 };
+          shapes.set(id, shape);
+        }
+        let low = Infinity;
+        if (s.points) { const xyz = b64f32(s.points); for (let i = 2; i < xyz.length; i += 3) if (xyz[i] < low) low = xyz[i]; }
+        else if (s.bottom) { for (const v of b64f32(s.bottom)) if (Number.isFinite(v) && v < low) low = v; }
+        layer.setMachine(id, shape, Number.isFinite(low) ? low : 0);
+        layer.setMachineShown(showMachine.get());
+      }
+
+      async function jointText(p: Pose, my: number): Promise<void> {
+        const r = await req<{ solutions: Array<{ x: number; y: number; z: number; a: number; c: number; ok?: boolean; reason?: string }> }>('POST', camUrl(`/machines/${encodeURIComponent(simState.machine)}/solve`), { points: [{ p: p.tip, k: p.axis }], previous: lastAc }).catch(() => null);
+        const sol = r?.solutions?.[0];
+        if (!sol || my !== seq) return;
+        if (sol.ok === false) { setText(joints, sol.reason ?? '-'); return; }
+        lastAc = { a: sol.a, c: sol.c };
+        setText(joints, `A ${fixed(sol.a, 2)}  C ${fixed(sol.c, 2)}  X ${fixed(sol.x, 2)}  Y ${fixed(sol.y, 2)}  Z ${fixed(sol.z, 2)}`);
+      }
+
       async function go(n: number): Promise<void> {
         const layer = simView.layer;
         if (!layer || !simState.job) return;
@@ -193,9 +226,14 @@ export function simPanel(): DockPanel {
           const mask = s.gouge ? b64u8(s.gouge) : null;
           layer.show(top, mask && mask.length ? mask : null);
         }
-        if (p) {
-          if (k === 0 || !layer.hasTool) layer.setTool(p.profile, p.holder);
+        if (p && Array.isArray(p.tip) && p.tip.length === 3) {
+          if (p.profile && (!layer.hasTool || layer.toolOp !== p.op)) { layer.setTool(p.profile, p.holder ?? null); layer.toolOp = p.op; }
           layer.poseTool(p.tip, p.axis);
+          if (simState.machine) {
+            if (layer.machineId !== simState.machine) await loadMachine(layer, simState.machine, s);
+            layer.poseMachine(p.tip, p.axis, p.holder?.[0]?.[1] ?? p.profile?.[p.profile.length - 1]?.[1] ?? 0);
+            void jointText(p, my);
+          }
         }
         simState.frame = k;
         slider.value = String(k);

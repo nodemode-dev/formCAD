@@ -1,4 +1,4 @@
-(channel)
+(sheet-set)
 G21 G90 G17 G40 G94
 (Setup S2 Sheet 2 of nest N1)
 G54

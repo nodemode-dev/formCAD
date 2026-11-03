@@ -192,6 +192,9 @@ def arc_run(pts, i, tol, max_radius=1500.0):
         cr = v[:-1, 0] * v[1:, 1] - v[:-1, 1] * v[1:, 0]
         if np.any(cr * turn < -1e-9):
             break
+        ln = np.hypot(v[:, 0], v[:, 1])
+        if np.any(ln > 2.0 * c[2]) or float((c[2] - np.sqrt(np.maximum(c[2] * c[2] - (ln / 2.0) ** 2, 0.0))).max()) > tol:
+            break
         best = (j, c, 1 if turn > 0 else -1)
         j += 1
     return best

@@ -96,11 +96,13 @@ def validate(spec: dict) -> dict:
             raise PostError("Axis letters are single letters.")
     out["axes"] = axes
     codes = spec.get("wcs_codes") or ["G54", "G55", "G56", "G57", "G58", "G59", "G59.1", "G59.2", "G59.3"]
-    if not isinstance(codes, list) or not all(isinstance(c, str) and len(c) < 12 for c in codes):
-        raise PostError("WCS codes are a list of short strings.")
+    if not isinstance(codes, list) or not all(isinstance(c, str) and re.fullmatch(r"[A-Za-z0-9. ]{1,11}", c) for c in codes):
+        raise PostError("WCS codes are a list of short codes of letters, digits and points.")
     out["wcs_codes"] = codes
     uc = spec.get("units_codes") or {"mm": "G21", "in": "G20"}
     out["units_codes"] = {"mm": str(uc.get("mm", "G21")), "in": str(uc.get("in", "G20"))}
+    if not all(re.fullmatch(r"[A-Za-z0-9. ]{1,11}", c) for c in out["units_codes"].values()):
+        raise PostError("Unit codes are short codes of letters, digits and points.")
     tpl = spec.get("templates")
     if not isinstance(tpl, dict):
         raise PostError("A post needs templates.")
@@ -247,7 +249,7 @@ class Writer:
         self.n = 0
         self.nstep = int(options.get("line_step", 10))
         self.numbers = bool(options.get("line_numbers", self.caps["line_numbers"]))
-        self.base = {"program": str(options.get("program") or "FORMCAD")[:60], "date": str(options.get("date") or ""), "units": self.units, "units_code": spec["units_codes"][self.units]}
+        self.base = {"program": clean_text(str(options.get("program") or "FORMCAD"))[:60], "date": clean_text(str(options.get("date") or ""))[:40], "units": self.units, "units_code": spec["units_codes"][self.units]}
 
     def fmt(self, v: float, arc: bool = False) -> str:
         dec = self.spec["number"]["arc_decimals"] if arc else self.spec["number"]["decimals"]
@@ -295,6 +297,14 @@ class Writer:
     def reset_modal(self) -> None:
         self.last = {}
         self.last_f = None
+
+
+def whole(v, default) -> int:
+    try:
+        n = int(v)
+    except (TypeError, ValueError):
+        return int(default)
+    return n if 0 <= n <= 9999 else int(default)
 
 
 def clean_text(text: str) -> str:
@@ -479,7 +489,7 @@ def generate(items: list, post_id: str, options=None) -> dict:
                 if comments:
                     w.put("comment", {"text": clean_text("T%d %s" % (m[1], m[3]))})
                 if caps["tool_change"] or "tool_change" in w.tpl:
-                    w.put("tool_change", {"tool": m[1], "name": clean_text(m[3]), "h": tool_rec.get("length_offset", m[1]), "d": tool_rec.get("diameter_offset", m[1]), "rpm": "%g" % m[2]})
+                    w.put("tool_change", {"tool": m[1], "name": clean_text(m[3]), "h": whole(tool_rec.get("length_offset"), m[1]), "d": whole(tool_rec.get("diameter_offset"), m[1]), "rpm": "%g" % m[2]})
                 last_tool = m[1]
                 w.reset_modal()
             elif kind == "spindle":

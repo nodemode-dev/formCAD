@@ -139,7 +139,7 @@ export function toolPanel(): DockPanel {
         if (!docStore.current()) { toast(t('Open a document first.'), 'info'); return; }
         if (isNew || !draft.id) { await save(); }
         if (!draft.id) return;
-        const r = await cam.put('POST', '/tools', { id: draft.id });
+        const r = await cam.put('POST', '/tools', { library_id: draft.id });
         if (r !== null) msg.set([`${t('Tool')} ${draft.number} ${t('added to this document.')}`]);
       }
 

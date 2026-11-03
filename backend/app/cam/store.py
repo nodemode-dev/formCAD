@@ -138,6 +138,8 @@ def delete_setup(d, sid: str) -> list:
 def import_tool(d, source: dict) -> dict:
     if source.get("library_id"):
         rec = tools.find(str(source["library_id"]))
+    elif not source.get("tool"):
+        raise CamError("Give library_id, the library tool to import, or tool, a tool record.")
     else:
         rec = tools.clean(source.get("tool") or {}, keep_id=False)
     if source.get("number") is not None:
@@ -201,7 +203,7 @@ def clean_heights(v) -> dict:
 
 
 def clean_geometry(v) -> dict:
-    if not v:
+    if not v or (isinstance(v, dict) and set(v) == {"kind"} and v["kind"] == "model"):
         return {}
     if not isinstance(v, dict) or v.get("kind") not in GEOMETRY_KINDS:
         raise CamError("Geometry kind must be one of %s." % ", ".join(GEOMETRY_KINDS))

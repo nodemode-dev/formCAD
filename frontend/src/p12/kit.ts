@@ -10,7 +10,7 @@ export { reportBox, progressBar, num, fixed } from '../p11/kit';
 export type { Json, ReportBox, Bar } from '../p11/kit';
 
 const FOLD_KEY = 'formCAD.p12.folds';
-const OPEN_FIRST = new Set(['Setups', 'Operations', 'Tool library', 'Simulation', 'Post and export', 'Plates', 'Slicer profile', 'Layer preview', 'Parts and sheets', 'Nest result', 'Slice and export']);
+const OPEN_FIRST = new Set(['Setups', 'Operations', 'Tool library', 'Simulation', 'Post and export', 'Plates', 'Slicer profile', 'Layer preview', 'Parts and sheets', 'Nest result', 'Slice and export', 'Turning profile', 'Mill-turn machine', 'Setup modes']);
 
 function folds(): Record<string, boolean> {
   try { const v: unknown = JSON.parse(stored(FOLD_KEY) ?? '{}'); return v && typeof v === 'object' ? v as Record<string, boolean> : {}; } catch { return {}; }

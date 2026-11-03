@@ -229,7 +229,7 @@ const assembly = (): MenuItem[] => section('Assembly', () => [
 ]);
 
 const manufacture = (): MenuItem[] => section('Manufacture', () => [
-  'p12-cam-panel', 'p12-tool-panel', 'p12-sim-panel', 'p12-nest-panel', 'p12-print-panel', SEP,
+  'p12-cam-panel', 'p12-tool-panel', 'p12-sim-panel', 'p12-nest-panel', 'p12-turn-panel', 'p12-print-panel', SEP,
   'p12-toolpaths', 'p12-sim-stock', 'p12-layers',
 ]);
 

@@ -6,6 +6,7 @@ SCALE = 1000.0
 FLATTEN_TOL = 0.01
 MAX_POINTS = 20000
 MAX_LOOPS = 2000
+MAX_CONVEX_INPUT = 300
 
 
 class CutError(ValueError):
@@ -211,6 +212,8 @@ def make_loop(pts, circle=None, outer=True):
 
 
 def group_loops(raw_loops):
+    if len(raw_loops) > MAX_LOOPS:
+        raise CutError("%d closed shapes is more than the limit of %d." % (len(raw_loops), MAX_LOOPS))
     items = []
     for lp in raw_loops:
         pts = lp["pts"]
@@ -386,6 +389,8 @@ def triangulate(pts):
 def convex_parts(pts):
     if convex(pts):
         return [list(pts)]
+    if len(pts) > MAX_CONVEX_INPUT:
+        raise CutError("An outline of %d vertices is too complex to split for nesting; at most %d are supported. Simplify the outline." % (len(pts), MAX_CONVEX_INPUT))
     tris = triangulate(pts)
     pieces = [list(t) for t in tris]
 
@@ -393,30 +398,27 @@ def convex_parts(pts):
         P = [pts[i] for i in poly]
         return convex(P)
 
-    merged = True
-    while merged:
-        merged = False
-        for i in range(len(pieces)):
-            for j in range(i + 1, len(pieces)):
-                A, B = pieces[i], pieces[j]
-                shared = None
-                for ai in range(len(A)):
-                    u, v = A[ai], A[(ai + 1) % len(A)]
-                    for bi in range(len(B)):
-                        if B[bi] == v and B[(bi + 1) % len(B)] == u:
-                            shared = (ai, bi)
-                            break
-                    if shared:
+    i = 0
+    while i < len(pieces):
+        j = i + 1
+        while j < len(pieces):
+            A, B = pieces[i], pieces[j]
+            shared = None
+            for ai in range(len(A)):
+                u, v = A[ai], A[(ai + 1) % len(A)]
+                for bi in range(len(B)):
+                    if B[bi] == v and B[(bi + 1) % len(B)] == u:
+                        shared = (ai, bi)
                         break
-                if not shared:
-                    continue
+                if shared:
+                    break
+            if shared:
                 ai, bi = shared
                 new = [A[(ai + 1 + k) % len(A)] for k in range(len(A))] + [B[(bi + 2 + k) % len(B)] for k in range(len(B) - 2)]
                 if len(set(new)) == len(new) and ccw_convex(new):
                     pieces[i] = new
                     del pieces[j]
-                    merged = True
-                    break
-            if merged:
-                break
+                    continue
+            j += 1
+        i += 1
     return [[pts[k] for k in p] for p in pieces]

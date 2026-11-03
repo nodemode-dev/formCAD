@@ -5,6 +5,7 @@ import type { Viewport3D } from '../view3d/viewport';
 import { wcsMatrix, type Wcs } from './toolpath-layer';
 
 export interface GridInfo { nx: number; ny: number; cell: number; origin: number[] }
+export interface MachineShape { radius: number; thickness: number; headR: number; headL: number }
 
 const CLEAR = '#9ca3af';
 const GOUGE = '#ef4444';
@@ -38,6 +39,7 @@ export class SimLayer implements ViewLayer {
   private clear = new THREE.Color(CLEAR);
   private gouge = new THREE.Color(GOUGE);
   patched = 0;
+  toolOp = -1;
 
   constructor(private readonly vp: Viewport3D) {
     this.group.add(this.wcsGroup);
@@ -115,12 +117,14 @@ export class SimLayer implements ViewLayer {
     const p = this.pos.array as Float32Array, c = this.col.array as Float32Array, nr = this.nor.array as Float32Array;
     const span = this.zmax - this.zmin;
     const lo = this.zmin;
-    for (let k = 0; k < nx * ny; k++) {
-      let z = top[k];
-      if (!Number.isFinite(z)) z = lo;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const k = j * nx + i;
+      const s = i * ny + j;
+      let z = top[s];
+      if (!Number.isFinite(z) || z < lo) z = lo;
       p[k * 3 + 2] = z;
       const shade = 0.55 + 0.45 * Math.max(0, Math.min(1, (z - lo) / span));
-      if (gouge && gouge[k]) { c[k * 3] = this.gouge.r; c[k * 3 + 1] = this.gouge.g; c[k * 3 + 2] = this.gouge.b; }
+      if (gouge && gouge[s]) { c[k * 3] = this.gouge.r; c[k * 3 + 1] = this.gouge.g; c[k * 3 + 2] = this.gouge.b; }
       else { c[k * 3] = this.clear.r * shade; c[k * 3 + 1] = this.clear.g * shade; c[k * 3 + 2] = this.clear.b * shade; }
     }
     for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
@@ -150,6 +154,49 @@ export class SimLayer implements ViewLayer {
     const q = new THREE.Quaternion().setFromUnitVectors(z, a);
     m.compose(new THREE.Vector3(tip[0], tip[1], tip[2]), q, new THREE.Vector3(1, 1, 1));
     for (const mesh of [this.tool, this.holder]) if (mesh) { mesh.matrix.copy(m); mesh.visible = true; }
+    this.vp.invalidate();
+  }
+
+  private table: THREE.Mesh | null = null;
+  private head: THREE.Mesh | null = null;
+  machineId = '';
+  machineOn = true;
+
+  setMachine(id: string, shape: MachineShape | null, tableTop: number): void {
+    for (const m of [this.table, this.head]) if (m) { this.wcsGroup.remove(m); m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
+    this.table = null; this.head = null;
+    this.machineId = shape ? id : '';
+    if (!shape) { this.vp.invalidate(); return; }
+    const mat = (c: string, o: number): THREE.MeshLambertMaterial => new THREE.MeshLambertMaterial({ color: c, transparent: true, opacity: o, side: THREE.DoubleSide });
+    const tg = new THREE.CylinderGeometry(shape.radius, shape.radius, shape.thickness, 40);
+    tg.rotateX(Math.PI / 2);
+    tg.translate(0, 0, tableTop - shape.thickness / 2);
+    this.table = new THREE.Mesh(tg, mat(HOLDERC, 0.28));
+    const hg = new THREE.CylinderGeometry(shape.headR, shape.headR, shape.headL, 28);
+    hg.rotateX(Math.PI / 2);
+    hg.translate(0, 0, shape.headL / 2);
+    this.head = new THREE.Mesh(hg, mat(HOLDERC, 0.4));
+    this.head.matrixAutoUpdate = false;
+    this.head.frustumCulled = false;
+    this.head.visible = false;
+    this.table.visible = this.machineOn;
+    this.wcsGroup.add(this.table, this.head);
+    this.vp.invalidate();
+  }
+
+  poseMachine(tip: number[], axis: number[] | null, stick: number): void {
+    if (!this.head) return;
+    const z = new THREE.Vector3(0, 0, 1);
+    const a = axis && axis.length === 3 ? new THREE.Vector3(axis[0], axis[1], axis[2]).normalize() : z;
+    const base = new THREE.Vector3(tip[0], tip[1], tip[2]).addScaledVector(a, stick);
+    this.head.matrix.compose(base, new THREE.Quaternion().setFromUnitVectors(z, a), new THREE.Vector3(1, 1, 1));
+    this.head.visible = this.machineOn;
+    this.vp.invalidate();
+  }
+
+  setMachineShown(on: boolean): void {
+    this.machineOn = on;
+    for (const m of [this.table, this.head]) if (m) m.visible = on && (m !== this.head || this.hasTool);
     this.vp.invalidate();
   }
 
@@ -185,6 +232,8 @@ export class SimLayer implements ViewLayer {
   reset(): void {
     this.dropStock();
     this.setTool(null, null);
+    this.setMachine('', null, 0);
+    this.toolOp = -1;
     if (this.box) { this.wcsGroup.remove(this.box); this.box.geometry.dispose(); (this.box.material as THREE.Material).dispose(); this.box = null; }
     this.group.visible = false;
     this.vp.invalidate();

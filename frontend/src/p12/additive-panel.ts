@@ -165,6 +165,7 @@ export function additivePanel(): DockPanel {
           hi.input.value = String(v); applyRange();
         }, 60);
       });
+      playBtn.classList.add('cm-playbtn');
       sPrev.body.append(showPrev.el, modeSel.el, lo.row, hi.row, info.el, buttons(playBtn, button('Load preview', () => { void loadPreview(); })), showTravel.el, showSupport.el, hideModel.el, legend);
 
       live.append(sPlates.root, sProf.root, sOrient.root, sSlice.root, sPrev.root);
