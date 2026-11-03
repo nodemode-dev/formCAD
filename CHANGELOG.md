@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.8.0 · 2026-11-03
+
+- Analysis in the 3D view: zebra stripes, Gaussian and mean curvature, draft angle against a pull direction, deviation between surfaces or from points, and curvature combs, each with a colour scale you can edit.
+- A gumball for moving, rotating and scaling with typed values, a pivot you can relocate and align, and 3D object snaps.
+- 3DM files: open and save through the kernel, with curves and untrimmed surfaces kept exactly; trimmed faces are written as a surface plus its trim curves with a warning that STEP keeps them better.
+- Meshes: from solids or files, weld, unify normals, fill holes, show naked edges; STL and OBJ read and write.
+- Assemblies: components from part files or embedded parts, sub-assemblies, missing and changed file handling that never takes a change silently, patterns that follow part features, configurations and a bill of materials with fixed find numbers.
+- Mates: thirteen kinds with degrees of freedom shown per component and an explanation when mates conflict; drive or drag a mechanism, exploded views with steps, interference and clearance checks.
+- Drawings from 3D on the layout sheets: projected views in first or third angle, auxiliary, section, detail, broken and cropped views that update with the model; dimensions that follow the model, model items, centre marks, section hatching, geometric tolerance frames and datums drawn from FormCAD's own symbols, balloons, a BOM table and a title block filled from the document.
+- Splitting and copying bodies now stay through a rebuild; curve drag previews come from the engine.
+
 ## 0.7.0 · 2026-11-02
 
 - A new app icon on the desktop app, the browser tab and the splash, and a README in the form family layout.
