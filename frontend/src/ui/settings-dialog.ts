@@ -13,6 +13,7 @@ import {
 } from './prefs';
 import { dwgRows } from './output/dwg-prefs';
 import { macroRows, mcpRows, pluginRows } from './auto/automation-prefs';
+import { pluginNodeRows } from '../graphx/plugin-nodes';
 import { sysvars } from './sysvar-store';
 import { DEFAULT_ACCENT, DEFAULT_THEME, STORAGE_KEY, THEMES, readChoice, setAccent, setIntensity, setTheme, themeSwatchesHtml } from './themes';
 import { toast } from './toast';
@@ -352,6 +353,7 @@ export class SettingsDialog extends Dialog {
     add('Plugins',
       grp('Registered tools', this.toolList, nt('Tools added by plugins appear here and in the tool rail.')),
       grp('Installed plugins', ...pluginRows((fn) => this.syncs.push(fn))),
+      grp('Graph node types from plugins', ...pluginNodeRows((fn) => this.syncs.push(fn))),
       grp('Python macros', ...macroRows((fn) => this.syncs.push(fn))));
 
     const address = pathRow('MCP address', () => { void this.copy(`${location.origin}/mcp`); });
