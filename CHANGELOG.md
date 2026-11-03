@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.12.0 · 2026-11-03
+
+- A Manufacture workspace: setups with stock and work coordinates, a tool library of your own, feeds and speeds, and operations that regenerate when the model changes.
+- Milling: face, pocket, contour with leads, adaptive clearing, drilling cycles, rest machining, and 3D parallel, waterline, scallop and adaptive roughing; NC output through post templates for LinuxCNC and grbl with a cycle time.
+- Stock removal simulation with gouge marks, 3+2 indexing and simultaneous 5-axis on a table-table machine with collision checks.
+- Turning, mill-turn setups, probing cycles, and laser, plasma, waterjet and router cutting with kerf, leads, pierce points and cut order; parts and flat patterns nested onto sheets.
+- 3D printing: FormCAD's own slicer with perimeters, rectilinear, grid and gyroid infill, skins, supports, bridges, retraction and Marlin G-code, an orientation study, build plate arrangement, 3MF plates and a layer-by-layer preview; metal printing gets orientation, block supports and warnings.
+
 ## 0.11.0 · 2026-11-03
 
 - Joints in assemblies: rigid, revolute, slider, cylindrical, pin-slot, planar and ball, with limits, as-built joints, joint links and drives.

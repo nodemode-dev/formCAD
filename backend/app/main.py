@@ -67,6 +67,10 @@ ROUTERS = [
     ("app.routers.graph", "/api"),
     ("app.routers.graphrun", "/api"),
     ("app.routers.render", "/api"),
+    ("app.routers.cam", "/api"),
+    ("app.routers.camx", "/api"),
+    ("app.routers.cam3d", "/api"),
+    ("app.routers.additive", "/api/docs"),
     ("app.routers.automation", "/api/automation"),
     ("app.routers.mcp", ""),
 ]
