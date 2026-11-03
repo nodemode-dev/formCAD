@@ -11,7 +11,7 @@ def resource_dir() -> str:
 
 def selfcheck() -> int:
     info = {"python": sys.version.split()[0]}
-    for name in ("fastapi", "uvicorn", "numpy", "scipy.optimize", "ezdxf", "keyring", "httpx", "uharfbuzz", "manifold3d", "fast_simplification", "blake3", "sqlite3", "mujoco"):
+    for name in ("fastapi", "uvicorn", "numpy", "scipy.optimize", "ezdxf", "keyring", "httpx", "uharfbuzz", "manifold3d", "fast_simplification", "blake3", "sqlite3", "mujoco", "pyclipper", "scipy.ndimage"):
         try:
             module = __import__(name)
             info[name] = getattr(module, "__version__", "ok")

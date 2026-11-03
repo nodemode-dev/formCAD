@@ -9,5 +9,6 @@ fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT
 uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Apache-2.0, bundles HarfBuzz under the MIT licence
 manifold3d==3.5.4   # mesh booleans, sections and manifold checks; Apache-2.0
 fast-simplification==0.2.0   # quadric mesh reduction; MIT
+pyclipper==1.4.0   # polygon offsetting and clipping for machining toolpaths; MIT wrapper over Clipper 6.4.2 (Boost-1.0)
 blake3==1.0.11   # content hashes of the local vault; CC0-1.0 OR Apache-2.0
 mujoco==3.17.0; platform_machine == "arm64"   # joint dynamics and contact; Apache-2.0, the wheel exists for Apple silicon only
