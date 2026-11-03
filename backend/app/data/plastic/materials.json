@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "note": "Every value carries the key of a source in sources. Wall ranges are a moulding service bureau table in inches converted with 25.4; resin supplier guides read for this release gave no per resin range. A null value means no source was readable and the user decides.",
+  "sources": {
+    "PRO": "Protolabs, Injection Molding Wall Thickness Guidelines, https://www.protolabs.com/resources/design-tips/improving-part-design-with-uniform-wall-thickness/ (recommended wall thickness table, inches converted at 25.4 mm per inch)",
+    "COV": "Bayer MaterialScience (Covestro), Part and Mold Design, mirror copy https://kompozit.org.tr/wp-content/uploads/2021/11/A_Design_Guide_Part_and_Mold_Design_Engi.pdf (rib thickness table, amorphous and crystalline wall variation)",
+    "BAY": "Bayer MaterialScience, Snap-Fit Joints for Plastics, https://fab.cba.mit.edu/classes/S62.12/people/vernelle.noel/Plastic_Snap_fit_design.pdf (Table 2 permissible short-term strain at 23 C; amorphous materials up to about 70 percent of yield strain, page 11)",
+    "SPA": "Tim Spahr (Ticona/Celanese), Snap-Fits for Assembly and Disassembly, https://www.gotstogo.com/misc/engineering_info/Snap_Fitsres72dpi.PDF (general permissible strain about 6 percent unfilled and 1.5 percent filled)",
+    "INE": "INEOS Styrolution, Terluran GP-22 product page, https://www.ineos-styrolution.com/Product/Terluran_Terluran-GP-22_SKU300600120827.html (tensile strain at yield 2.6 percent, 23 C, ISO 527; one general purpose ABS grade, not every ABS)"
+  },
+  "materials": [
+    {
+      "id": "abs", "name": "ABS", "class": "amorphous", "class_source": "COV",
+      "wall_min": {"value": 1.143, "source": "PRO"}, "wall_max": {"value": 3.556, "source": "PRO"},
+      "wall_variation_pct": {"value": 25.0, "source": "COV"},
+      "rib_ratio_min": {"value": 0.4, "source": "COV"}, "rib_ratio_max": {"value": 0.6, "source": "COV"},
+      "yield_strain_pct": {"value": 2.6, "source": "INE"},
+      "snap_strain_pct": {"value": 1.82, "source": "BAY", "basis": "0.7 x 2.6 percent yield strain (INE), the amorphous rule of BAY page 11; derived, not a supplier table entry"}
+    },
+    {
+      "id": "pc", "name": "Polycarbonate (PC)", "class": "amorphous", "class_source": "COV",
+      "wall_min": {"value": 1.016, "source": "PRO"}, "wall_max": {"value": 3.81, "source": "PRO"},
+      "wall_variation_pct": {"value": 25.0, "source": "COV"},
+      "rib_ratio_min": {"value": 0.5, "source": "COV"}, "rib_ratio_max": {"value": 0.66, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 4.0, "source": "BAY", "basis": "Table 2, unreinforced PC"}
+    },
+    {
+      "id": "pc_abs", "name": "PC/ABS blend", "class": "amorphous", "class_source": "COV",
+      "wall_min": {"value": null, "source": null}, "wall_max": {"value": null, "source": null},
+      "wall_variation_pct": {"value": 25.0, "source": "COV"},
+      "rib_ratio_min": {"value": 0.5, "source": "COV"}, "rib_ratio_max": {"value": 0.66, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 2.5, "source": "BAY", "basis": "Table 2, unreinforced PC/ABS blend"}
+    },
+    {
+      "id": "nylon", "name": "Nylon, unfilled", "class": "semicrystalline", "class_source": "COV",
+      "wall_min": {"value": 0.762, "source": "PRO"}, "wall_max": {"value": 2.921, "source": "PRO"},
+      "wall_variation_pct": {"value": 12.5, "source": "COV", "basis": "about half of 25 percent for unfilled crystalline resins"},
+      "rib_ratio_min": {"value": 0.3, "source": "COV"}, "rib_ratio_max": {"value": 0.4, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 6.0, "source": "SPA", "basis": "general guidance for unfilled materials, not specific to nylon"}
+    },
+    {
+      "id": "nylon_gf", "name": "Nylon, glass filled", "class": "filled_semicrystalline", "class_source": "COV",
+      "wall_min": {"value": null, "source": null}, "wall_max": {"value": null, "source": null},
+      "wall_variation_pct": {"value": 25.0, "source": "COV"},
+      "rib_ratio_min": {"value": 0.33, "source": "COV"}, "rib_ratio_max": {"value": 0.5, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 1.5, "source": "SPA", "basis": "general guidance for filled materials"}
+    },
+    {
+      "id": "pbt", "name": "PBT, unfilled", "class": "semicrystalline", "class_source": "COV",
+      "wall_min": {"value": 0.635, "source": "PRO", "basis": "the polyester row"}, "wall_max": {"value": 3.175, "source": "PRO", "basis": "the polyester row"},
+      "wall_variation_pct": {"value": 12.5, "source": "COV", "basis": "about half of 25 percent for unfilled crystalline resins"},
+      "rib_ratio_min": {"value": 0.3, "source": "COV"}, "rib_ratio_max": {"value": 0.4, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 6.0, "source": "SPA", "basis": "general guidance for unfilled materials, not specific to PBT"}
+    },
+    {
+      "id": "pbt_gf", "name": "PBT, glass filled", "class": "filled_semicrystalline", "class_source": "COV",
+      "wall_min": {"value": null, "source": null}, "wall_max": {"value": null, "source": null},
+      "wall_variation_pct": {"value": 25.0, "source": "COV"},
+      "rib_ratio_min": {"value": 0.33, "source": "COV"}, "rib_ratio_max": {"value": 0.5, "source": "COV"},
+      "yield_strain_pct": {"value": null, "source": null},
+      "snap_strain_pct": {"value": 1.5, "source": "SPA", "basis": "general guidance for filled materials"}
+    },
+    {"id": "pp", "name": "Polypropylene (PP)", "class": null, "wall_min": {"value": 0.635, "source": "PRO"}, "wall_max": {"value": 3.81, "source": "PRO"}},
+    {"id": "pe", "name": "Polyethylene (PE)", "class": null, "wall_min": {"value": 0.762, "source": "PRO"}, "wall_max": {"value": 5.08, "source": "PRO"}},
+    {"id": "acetal", "name": "Acetal (POM)", "class": null, "wall_min": {"value": 0.762, "source": "PRO"}, "wall_max": {"value": 3.048, "source": "PRO"}},
+    {"id": "acrylic", "name": "Acrylic (PMMA)", "class": null, "wall_min": {"value": 0.635, "source": "PRO"}, "wall_max": {"value": 12.7, "source": "PRO"}},
+    {"id": "lcp", "name": "Liquid crystal polymer (LCP)", "class": null, "wall_min": {"value": 0.762, "source": "PRO"}, "wall_max": {"value": 3.048, "source": "PRO"}},
+    {"id": "pps", "name": "Polyphenylene sulfide (PPS)", "class": null, "wall_min": {"value": 0.508, "source": "PRO"}, "wall_max": {"value": 4.572, "source": "PRO"}},
+    {"id": "ps", "name": "Polystyrene (PS)", "class": null, "wall_min": {"value": 0.889, "source": "PRO"}, "wall_max": {"value": 3.81, "source": "PRO"}},
+    {"id": "polyurethane", "name": "Polyurethane (PU)", "class": null, "wall_min": {"value": 2.032, "source": "PRO"}, "wall_max": {"value": 19.05, "source": "PRO"}},
+    {"id": "long_fibre", "name": "Long fibre reinforced", "class": null, "wall_min": {"value": 1.905, "source": "PRO"}, "wall_max": {"value": 25.4, "source": "PRO"}}
+  ]
+}

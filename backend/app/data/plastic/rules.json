@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "note": "Generic starting values of the plastic rule. kind cited means the value is printed in the source; derived means it is chosen inside a printed range or between printed values and basis says how. Lengths are millimetres, angles degrees. These are starting proportions from public design guides, not a supplier guarantee; the rule is editable per part.",
+  "sources": {
+    "PRO": "Protolabs, Injection Molding Wall Thickness Guidelines, https://www.protolabs.com/resources/design-tips/improving-part-design-with-uniform-wall-thickness/",
+    "COV": "Bayer MaterialScience (Covestro), Part and Mold Design, mirror copy https://kompozit.org.tr/wp-content/uploads/2021/11/A_Design_Guide_Part_and_Mold_Design_Engi.pdf",
+    "DUP": "DuPont, Engineering Polymers General Design Principles, https://www.delrin.com/wp-content/uploads/2024/02/DESIGN-PRINCIPLES-1.pdf",
+    "BAS": "BASF, Ultradur (PBT) Product Brochure, https://download.basf.com/p1/8a8081c57fd4b609017fdf6cfd252296/en/Ultradur%3Csup%3E%C2%AE%3Csup%3E_Product_Brochure_Brochure_English.pdf?view=",
+    "BAY": "Bayer MaterialScience, Snap-Fit Joints for Plastics, https://fab.cba.mit.edu/classes/S62.12/people/vernelle.noel/Plastic_Snap_fit_design.pdf",
+    "SPA": "Tim Spahr (Ticona/Celanese), Snap-Fits for Assembly and Disassembly, https://www.gotstogo.com/misc/engineering_info/Snap_Fitsres72dpi.PDF",
+    "DUK": "Dukane, Guide to Ultrasonic Plastics Assembly, https://documents.dukane.com/DesignGuides/Guide%20To%20US%20Plastic%20Assembly.pdf",
+    "CJN": "Covestro, Joining Techniques Design Guide, https://solutions.covestro.com/-/media/covestro/solution-center/brands/downloads/imported/1556890495.pdf"
+  },
+  "values": {
+    "wall_variation_pct": {"value": 25.0, "kind": "cited", "source": "COV", "basis": "allowable variation of the nominal wall for low shrink amorphous or filled resins; about half for unfilled crystalline resins"},
+    "adjacent_ratio_min": {"value": 0.4, "kind": "cited", "source": "PRO", "basis": "walls no less than 40 to 60 percent of adjacent walls; the 40 percent end is used"},
+    "min_draft": {"value": 0.5, "kind": "cited", "source": "COV", "basis": "minimum 0.5 degree per side for most materials; DUP allows 0 to 0.25 degree for some unfilled engineering resins and BAS asks 1 degree, the stricter COV value is used"},
+    "recommended_draft": {"value": 1.0, "kind": "cited", "source": "COV", "basis": "1 degree where possible; BAS: at least 1 degree per side for problem free demoulding"},
+    "texture_draft_per_mm": {"value": 39.37, "kind": "cited", "source": "COV", "basis": "1 degree extra per 0.001 in (0.0254 mm) of texture depth; DUP agrees with 1 degree per 0.025 mm"},
+    "rib_ratio_min": {"value": 0.4, "kind": "cited", "source": "PRO", "basis": "rib and boss walls at 40 to 60 percent of the adjacent wall; the material table overrides"},
+    "rib_ratio_max": {"value": 0.6, "kind": "cited", "source": "PRO", "basis": "as above"},
+    "rib_height_max_ratio": {"value": 3.0, "kind": "cited", "source": "COV", "basis": "rib height generally at most 3 times the rib base thickness; DUP asks a buckling check above 5 times"},
+    "rib_spacing_min_ratio": {"value": 2.0, "kind": "cited", "source": "COV", "basis": "short rib spacing at least 2 times the wall"},
+    "rib_base_fillet_ratio": {"value": 0.25, "kind": "derived", "source": "COV", "basis": "between 0.125 of the rib thickness (COV) and 0.5 of the rib thickness (DUP)"},
+    "boss_od_ratio": {"value": 2.2, "kind": "derived", "source": "COV", "basis": "outside diameter 2.0 to 2.4 times the screw outside diameter (COV); middle of the range"},
+    "boss_od_ratio_insert": {"value": 2.5, "kind": "derived", "source": "DUP", "basis": "boss outside diameter 2 to 3 times the hole diameter (DUP); middle of the range for inserts"},
+    "boss_height_max_ratio": {"value": 5.0, "kind": "cited", "source": "COV", "basis": "bosses taller than 5 times their outside diameter need special attention"},
+    "boss_base_fillet": {"value": 0.381, "kind": "cited", "source": "COV", "basis": "boss base fillet about 0.015 in"},
+    "corner_radius_ratio_min": {"value": 0.2, "kind": "derived", "source": "COV", "basis": "radius to thickness about 0.15 is a compromise and stress concentration rises sharply below about 0.2"},
+    "corner_radius_min": {"value": 0.5, "kind": "cited", "source": "DUP", "basis": "minimum corner radius 0.5 mm"},
+    "snap_repeat_factor": {"value": 0.6, "kind": "cited", "source": "BAY", "basis": "use about 60 percent of the permissible strain for frequent separation and rejoining; SPA gives the same 0.6"},
+    "snap_root_radius_min": {"value": 0.508, "kind": "cited", "source": "SPA", "basis": "root fillet at least 0.020 in; BAY gives 0.015 in (0.381 mm) as the least"},
+    "snap_friction": {"value": 0.6, "kind": "derived", "source": "BAY", "basis": "the friction coefficient of the worked example of BAY (mu 0.6); a value for one material pair, edit it for yours"},
+    "lip_width_ratio": {"value": 0.3333, "kind": "cited", "source": "DUK", "basis": "tongue width W/3 for a tongue and groove joint, W the wall"},
+    "lip_height_ratio": {"value": 0.3333, "kind": "cited", "source": "DUK", "basis": "tongue height W/3"},
+    "groove_extra_width": {"value": 0.15, "kind": "derived", "source": "DUK", "basis": "groove width = tongue width + 0.004 to 0.008 in (0.10 to 0.20 mm); middle"},
+    "groove_extra_depth": {"value": 0.2, "kind": "derived", "source": "DUK", "basis": "groove depth = tongue height minus 0.005 to 0.010 in (0.13 to 0.25 mm) for a welded joint, so a welded groove is 0.2 mm shallower; an unwelded closure uses 0.2 mm deeper"},
+    "lip_clearance": {"value": 0.1, "kind": "cited", "source": "DUK", "basis": "clearance per side 0.002 to 0.004 in (0.05 to 0.10 mm); the larger end"},
+    "lip_draft": {"value": 3.0, "kind": "cited", "source": "CJN", "basis": "groove sidewall angle 3 to 5 degrees; the smaller end"},
+    "lip_min_wall": {"value": 1.5, "kind": "derived", "source": "DUK", "basis": "a tongue W/3 wide needs a wall of at least 1.5 mm to be 0.5 mm wide; a design limit of this rule, not a printed minimum"},
+    "welded_min_wall": {"value": 3.048, "kind": "cited", "source": "DUK", "basis": "minimum wall 0.120 in for a tongue and groove welded joint"}
+  }
+}

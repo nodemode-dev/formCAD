@@ -13,8 +13,9 @@ DEFAULTS = {
     "draft": {"kind": "zones", "stops": [[0.0, "#c53030"], [0.5, "#38a169"], [1.0, "#2b6cb0"]], "min": -90.0, "max": 90.0, "center": 0.0, "symmetric": False, "limits": [-3.0, 3.0]},
     "deviation": {"kind": "gradient", "stops": [[0.0, "#2f855a"], [0.5, "#d69e2e"], [1.0, "#c53030"]], "min": 0.0, "max": None, "center": None, "symmetric": False},
     "zebra": {"kind": "bands", "stops": [[0.0, "#141414"], [1.0, "#f4f4f4"]], "min": None, "max": None, "center": None, "symmetric": False},
+    "wall": {"kind": "gradient", "stops": [[0.0, "#c53030"], [0.3, "#d69e2e"], [0.6, "#38a169"], [1.0, "#2b6cb0"]], "min": None, "max": None, "center": None, "symmetric": False},
 }
-MODE_RAMP = {"zebra": "zebra", "isophote": "zebra", "curvature": "diverging", "draft": "draft", "deviation": "deviation"}
+MODE_RAMP = {"zebra": "zebra", "isophote": "zebra", "curvature": "diverging", "draft": "draft", "deviation": "deviation", "wall": "wall"}
 CURVATURE_RAMP = {"gaussian": "diverging", "mean": "diverging", "max": "diverging", "min": "diverging", "absolute": "sequential", "rms": "sequential"}
 
 

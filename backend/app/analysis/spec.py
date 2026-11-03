@@ -2,8 +2,8 @@ import math
 
 from app.analysis import fields, ramps
 
-MODES = ("zebra", "isophote", "curvature", "draft", "deviation")
-LABELS = {"zebra": "Zebra stripes", "isophote": "Isophotes", "curvature": "Surface curvature", "draft": "Draft angle", "deviation": "Surface deviation"}
+MODES = ("zebra", "isophote", "curvature", "draft", "deviation", "wall")
+LABELS = {"zebra": "Zebra stripes", "isophote": "Isophotes", "curvature": "Surface curvature", "draft": "Draft angle", "deviation": "Surface deviation", "wall": "Wall thickness"}
 
 
 class SpecError(ValueError):
@@ -76,8 +76,20 @@ def normalise(d, spec: dict) -> dict:
             if lo >= hi:
                 raise SpecError("The lower draft limit must be below the upper limit.")
             out["limits"] = [lo, hi]
+    elif mode == "wall":
+        from app.plastic import wall as wall_mod
+
+        method = str(spec.get("method", "ray")).lower()
+        if method not in ("ray", "sphere"):
+            raise SpecError("Choose the wall thickness method: ray or sphere.")
+        out["method"] = method
+        out["max_vertices"] = wall_mod.vertex_limit(method, None if spec.get("max_vertices") is None else number(spec.get("max_vertices"), "The vertex limit", 100, 500000))
+        out["low"] = None if spec.get("low") is None else number(spec.get("low"), "The low limit", 0.0)
+        out["high"] = None if spec.get("high") is None else number(spec.get("high"), "The high limit", 0.0)
+        if out["low"] is not None and out["high"] is not None and out["low"] >= out["high"]:
+            raise SpecError("The low wall limit must be below the high limit.")
     else:
-        dev = spec.get("deviation") if isinstance(spec.get("deviation"), dict) else spec
+        dev =spec.get("deviation") if isinstance(spec.get("deviation"), dict) else spec
         out["source"] = handle_list(dev.get("source"), "source")
         out["target"] = dev.get("target")
         if out["target"] is None:

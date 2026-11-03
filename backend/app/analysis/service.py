@@ -19,7 +19,7 @@ HEADER = 64
 RECORD = 32
 DATA_MAGIC = 0x54444146
 MEDIA_TYPE = "application/vnd.formcad.analysis"
-MODE_CODE = {"zebra": 1, "isophote": 2, "curvature": 3, "draft": 4, "deviation": 5}
+MODE_CODE = {"zebra": 1, "isophote": 2, "curvature": 3, "draft": 4, "deviation": 5, "wall": 6}
 CACHE_LIMIT = 24
 UNDEFINED = "#8a8a8a"
 _cache: OrderedDict = OrderedDict()
@@ -168,6 +168,12 @@ def compute_full(doc, spec: dict, detail: float = 1.0) -> tuple:
         if mode == "deviation":
             values, unit = deviation_values(doc, spec, bodies, detail)
             bodies = [b for b in bodies if b.handle in values]
+        elif mode == "wall":
+            from app.plastic import wall as wall_mod
+
+            values, unit = wall_mod.wall_values(doc, spec, bodies, detail)
+            lo_w, hi_w = wall_mod.limits(d, spec, scale)
+            ramp = {**ramp, "min": ramp.get("min") if ramp.get("min") is not None else lo_w, "max": ramp.get("max") if ramp.get("max") is not None else hi_w}
         else:
             for b in bodies:
                 pos, data = shape_data(d, b, detail, mode == "curvature")
