@@ -169,7 +169,7 @@ export function matesPanel(drag: () => { enabled: boolean; set(on: boolean): voi
           const bodyId = f ? f.body : e ? e.body : -1;
           const comp = bodyId >= 0 ? asm.componentOfBody(bodyId) : '';
           if (!comp) return;
-          refs[i] = f ? { comp, face: f.face } : { comp, edge: (e as { edge: number }).edge };
+          refs[i] = f ? { comp, face: Math.max(0, f.face - 1) } : { comp, edge: Math.max(0, (e as { edge: number }).edge - 1) };
           refRead[i].set(`${comp} · ${f ? `${t('face')} ${f.face}` : `${t('edge')} ${(e as { edge: number }).edge}`}`);
           setPick(-1);
         };
