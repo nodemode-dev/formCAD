@@ -191,6 +191,17 @@ def load_operations() -> None:
         for name in ("asm_interference", "asm_blocking"):
             METHODS.setdefault(name, assembly_unavailable)
     try:
+        import kernel_proxy
+
+        METHODS.update(kernel_proxy.METHODS)
+    except Exception as err:
+        failure_proxy = str(err)
+
+        def proxy_unavailable(_params):
+            raise RuntimeError("The collision proxy operation could not be loaded (%s)." % failure_proxy)
+
+        METHODS.setdefault("asm_proxy", proxy_unavailable)
+    try:
         import kernel_unfold
 
         METHODS.update(kernel_unfold.METHODS)

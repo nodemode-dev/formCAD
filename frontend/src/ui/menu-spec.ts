@@ -71,7 +71,7 @@ const view = (): MenuItem[] => section('View', () => [
     E('New Viewports...', 'vports'), E('Named Viewports...', 'vports', 'named'), E('Polygonal Viewport', 'mview', 'polygonal')),
   S('Attribute Display', E('Normal', 'attdisp', 'normal'), E('On', 'attdisp', 'on'), E('Off', 'attdisp', 'off')),
   S('Show Annotative Objects', E('All Scales', 'annoallvisible', 'all'), E('Current Scale Only', 'annoallvisible', 'current')),
-  SEP, S('3D View', ...V3_MENU), SEP, 'toggle-viewcube', 'toggle-ucs-icon', SEP,
+  SEP, S('3D View', ...V3_MENU), S('Render', 'rn-toggle', 'rn-panel', SEP, 'rn-image', 'rn-turntable'), SEP, 'toggle-viewcube', 'toggle-ucs-icon', SEP,
   S('Interface Theme', 'theme-system', 'theme-light', 'theme-dark'),
   S('Accessibility', E('Show System Cursor', 'systemcursor'), S('Animation Effects', 'anim-system', 'anim-on', 'anim-off')),
   SEP, 'custom-title-bar', 'menus-in-window',
@@ -223,6 +223,7 @@ const meshMenu = (): MenuItem[] => section('Mesh', () => [
 const assembly = (): MenuItem[] => section('Assembly', () => [
   'u8-asm-insert', E('Insert Component (typed)', 'asminsert'), SEP,
   'u8-asm-panel', 'u8-mates-panel', 'u8-explode-panel', 'u8-check-panel', 'u8-bom-panel', SEP,
+  'p11-joints-panel', 'p11-motion-panel', 'p11-joint-symbols', 'p11-run-study', SEP,
   'u8-asm-solve', 'u8-asm-drag',
 ]);
 
@@ -269,7 +270,7 @@ const windowMenu = (): MenuItem[] => section('Window', () => [
   'win-toolbar', 'win-filetabs', 'win-statusbar', 'win-cmdline', 'win-cmdhistory', 'win-menubar', SEP,
   'win-hide-palettes', 'win-reset-palettes', 'win-reset-layout', SEP,
   S('Workspace', ...WORKSPACES.map((w) => `workspace-${w.id}`)),
-  'home', E('Layer Manager...', 'layer', 'manager'), E('Blocks', 'blocks'), E('Parameters Manager', 'parameters'), 'jobs',
+  'home', E('Layer Manager...', 'layer', 'manager'), E('Blocks', 'blocks'), E('Parameters Manager', 'parameters'), 'jobs', 'p11-vault-panel',
 ]);
 
 const help = (): MenuItem[] => section('Help', () => [

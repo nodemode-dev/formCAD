@@ -243,6 +243,9 @@ export const ICONS: Record<string, string> = {
   blockEdit: s('<rect x="3.5" y="5" width="12" height="12" rx="1.2"/><path d="M14 20l6-6 1.8 1.8-6 6H14z"/>'),
   perspective: s('<path d="M3.5 5.5l17 3.5v6l-17 3.5z"/><path d="M3.5 5.5l5 3.8v5.4l-5 3.8"/><path d="M8.5 9.3l12-.3M8.5 14.7l12 .3"/>'),
   parallel: s('<rect x="4" y="6" width="12" height="12" rx="1"/><path d="M4 6l4-2.5h12L16 6M20 3.5V15.5L16 18"/>'),
+  storyboard: s('<rect x="3" y="5" width="18" height="11" rx="1.6"/><path d="M10 8.5v4.5l4-2.25z" fill="currentColor"/><path d="M3 19.5h7M13 19.5h8"/>'),
+  playTri: s('<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>'),
+  stopSq: s('<rect x="6.5" y="6.5" width="11" height="11" rx="1.4" fill="currentColor"/>'),
   ftExtrudeCut: s('<path d="M4 15l8 4.5 8-4.5V9.5l-8 4.5-8-4.5z"/><path d="M12 14v5.5M4 9.5L12 5l8 4.5" stroke-dasharray="2 1.8"/><path d="M9 3.5h6"/>'),
   ftRevolveCut: s('<path d="M12 3.5v17" stroke-dasharray="2 1.8"/><path d="M12 6.5c4 0 7 2.5 7 5.5s-3 5.5-7 5.5"/><path d="M5 9.5l4 2.5-4 2.5"/>'),
   ftShell: s('<rect x="4" y="5" width="16" height="14" rx="1.5"/><rect x="8" y="9" width="8" height="6" rx=".8" stroke-dasharray="2 1.6"/>'),
@@ -328,6 +331,7 @@ export const ICONS: Record<string, string> = {
   gcPanel: s('<rect x="3.500" y="4.500" width="17" height="15" rx="1.500"/><path d="M7 9h10M7 12h10M7 15h6"/>'),
   pmiDim: s('<path d="M4 18V7M20 18V7"/><path d="M4 12h16"/><path d="M7 9.500L4 12l3 2.500M17 9.500L20 12l-3 2.500"/>'),
   pmiTol: s('<rect x="3.500" y="8" width="17" height="8" rx="1"/><path d="M9 8v8M15 8v8"/><path d="M5.500 12h1.500"/>'),
+  rnRender: s('<circle cx="12" cy="12" r="8.500"/><path d="M12 3.500v17M3.500 12h17"/><path d="M6 6.500c3 2.500 9 2.500 12 0M6 17.500c3-2.500 9-2.500 12 0"/>'),
   pmiDatum: s('<rect x="5" y="5" width="14" height="14" rx="1.500"/><path d="M9 16l3-8 3 8M10 13.500h4"/>'),
   formCage: s('<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'),
   formMove: s('<path d="M12 3.500v17M3.500 12h17"/><path d="M9.500 6L12 3.500 14.500 6M9.500 18l2.500 2.500 2.500-2.500M6 9.500L3.500 12 6 14.500M18 9.500l2.500 2.500-2.500 2.500"/>'),
@@ -351,6 +355,10 @@ export const ICONS: Record<string, string> = {
   plastic: s('<path d="M4 18V9l4-3h8l4 3v9z"/><path d="M8 18v-5h8v5"/><circle cx="12" cy="9.500" r="1.200"/>'),
   plasticCheck: s('<path d="M4 18V9l4-3h8l4 3v9z"/><path d="M8.500 12.500l2.500 2.500 4.500-5"/>'),
   meshTools: s('<path d="M4 17l5-11 5 6 6-7"/><path d="M4 17h16"/><path d="M9 6l5 6-5 5"/><circle cx="4" cy="17" r="1.200"/><circle cx="9" cy="6" r="1.200"/><circle cx="14" cy="12" r="1.200"/><circle cx="20" cy="5" r="1.200"/>'),
+  joint: s('<circle cx="12" cy="12" r="2.500"/><path d="M12 3.500v6M12 14.500v6"/><path d="M6.500 7.500A7 7 0 0 0 5 12M17.500 16.500A7 7 0 0 0 19 12"/>'),
+  motion: s('<circle cx="6" cy="17" r="2"/><circle cx="18" cy="7" r="2"/><path d="M8 17h5a3 3 0 0 0 3-3v-1"/><path d="M13.500 5.500L16 7l-2.500 1.500"/><path d="M4 21h16"/>'),
+  vault: s('<rect x="3.500" y="4.500" width="17" height="15" rx="2"/><circle cx="12" cy="12" r="3.200"/><path d="M12 8.800V12l2 1.500"/><path d="M7 19.500v1.500M17 19.500v1.500"/>'),
+  merge: s('<circle cx="6" cy="5.500" r="2"/><circle cx="6" cy="18.500" r="2"/><circle cx="18" cy="14" r="2"/><path d="M6 7.500v9"/><path d="M6 12c0-3 6-1 10 0.500"/>'),
 };
 
 export function icon(name: string, size = 16): string {

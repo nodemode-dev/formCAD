@@ -19,5 +19,8 @@ import './draw/register';
 import './graph/register';
 import './graphx/register';
 import './p10/register';
+import './p11/register';
+import './an1/register';
+import './render/register';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });
