@@ -7,7 +7,7 @@
 <p align="center"><b>The CAD studio of the form family: 2D drafting, parametric parts, NURBS surfaces & automation in one open desktop app.</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.7.0-f97316" alt="version v0.7.0" />
+  <img src="https://img.shields.io/badge/version-v0.8.0-f97316" alt="version v0.8.0" />
   <img src="https://img.shields.io/badge/Node.js-20.19%2B-339933?logo=nodedotjs&logoColor=white" alt="Node.js 20.19+" />
   <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white" alt="Python 3.12+" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-555555" alt="license Apache-2.0" />
