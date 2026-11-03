@@ -474,6 +474,7 @@ class Rebuilder:
             res = self.keep_piece(res, step)
             e = self.carry(hsh, prev) if res.get("passthrough") else self.accept(rec, ft, step, res, prev, hsh)
             e.extras = self.extras_of(call, res, step)
+            step.entry = e
             if ft.finish is not None:
                 ft.finish(step, res)
             e.warnings = list(step.warnings) + [w.get("message", str(w)) if isinstance(w, dict) else str(w) for w in res.get("warnings") or []]

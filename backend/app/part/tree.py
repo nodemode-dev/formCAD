@@ -5,6 +5,7 @@ from app.param import store as S
 from app.param import units as U
 from app.part import features_bodies, features_core, features_shapes, names, rebuild, registry, store
 from app.part.registry import PartError
+from app.sheetmetal import features as sheet_features
 from app.solid import work
 
 MAX_FEATURES = 5000

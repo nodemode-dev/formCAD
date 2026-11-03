@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "units": "mm",
+  "notice": "Empty on purpose. The research (R20 section 7) found no freely licensed multi-material K-factor, bend allowance or bend deduction table, and the published shop tables bundle an effective radius with each K, so none is copied here. Add your own tables in the document (SMTABLE) or in a copy of this file; every value you add should name its source. Gauge tables follow the same rule: no gauge is shipped without a cited source.",
+  "tables": [],
+  "gauges": [],
+  "builtin": [
+    {
+      "id": "air-forming-ratio",
+      "name": "Air forming K by radius to thickness ratio",
+      "mode": "k",
+      "axis": "ratio",
+      "formula": "K = (4 - pi) / pi + R / T * ((0.5 - (4 - pi) / pi) / 3), capped at 0.5 from R / T = 3",
+      "source": {
+        "citation": "S. Benson, Calculating k-factors for the press brake, The Fabricator, 2023-08-24",
+        "url": "https://thefabricator.com/thefabricator/article/bending/calculating-k-factors-for-the-press-brake",
+        "note": "A formula, not a table. The article's text puts the cap at about 4T while its multiplier reaches 0.5 at R/T = 3; the cap is taken at 3, which also matches a university course table and a manufacturer guide (R20 section 1)."
+      }
+    }
+  ]
+}
