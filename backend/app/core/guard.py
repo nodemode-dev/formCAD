@@ -81,7 +81,8 @@ CALLER = contextvars.ContextVar("formcad_caller", default="")
 FILES = contextvars.ContextVar("formcad_files", default=())
 MACRO_DENIED_FIRST = {"open", "recovery", "autosave", "3dm"}
 MACRO_DENIED_LATER = {"save", "saveas", "plot", "macro", "export", "xrefs", "import", "materiallib", "assembly", "matesettings", "docprops"}
-MACRO_DENIED_WRITE = {"drawann"}
+MACRO_DENIED_WRITE = {"drawann", "graphs"}
+MACRO_WRITE_OK = {"solve", "cancel"}
 
 
 def _macro_route_ok(path: str, method: str = "") -> bool:
@@ -89,7 +90,7 @@ def _macro_route_ok(path: str, method: str = "") -> bool:
     if len(parts) >= 3 and parts[:2] == ["api", "docs"]:
         if parts[2] in MACRO_DENIED_FIRST:
             return False
-        if method.upper() in ("PUT", "POST", "PATCH", "DELETE") and any(p in MACRO_DENIED_WRITE for p in parts[3:]):
+        if method.upper() in ("PUT", "POST", "PATCH", "DELETE") and any(p in MACRO_DENIED_WRITE for p in parts[3:]) and parts[-1] not in MACRO_WRITE_OK:
             return False
         return not any(p in MACRO_DENIED_LATER for p in parts[3:])
     return True
