@@ -1,0 +1,28 @@
+.p15-panel { gap: var(--space-2); }
+.p15-tab { display: grid; gap: var(--space-1); }
+.p15-th { display: grid; grid-template-columns: var(--p15-cols); gap: var(--space-1); padding: 0 var(--space-2); color: var(--text-muted); font-size: var(--fs-11); font-weight: 600; }
+.p15-th > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p15-body { height: var(--p15-h); min-height: var(--p15-h); max-height: var(--p15-h); }
+.p15-row { grid-template-columns: var(--p15-cols); cursor: pointer; flex: none; }
+.p15-c { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-r { text-align: right; font-family: var(--font-mono); }
+.p15-row[data-tone="fail"], .p15-row[data-tone="undercut"] { color: var(--danger-text); }
+.p15-row[data-tone="partial"], .p15-row[data-tone="steep"] { color: var(--warn); }
+.p15-row[data-tone="pass"] { color: var(--ok); }
+.p15-empty { height: 18px; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.p15-msg { min-height: 18px; margin: 0; }
+.p15-msg.is-bad { color: var(--danger-text); }
+.p15-vec { display: grid; gap: var(--space-1); }
+.p15-vec-f .cv-field, .p15-sizes .cv-field { grid-template-columns: 1fr; row-gap: 2px; }
+.p15-vec-f .cv-field > span, .p15-sizes .cv-field > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p15-vec-l { color: var(--text-muted); font-size: var(--fs-11); }
+.p15-vec-f { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-1); }
+.p15-row2 { display: flex; flex-wrap: wrap; gap: var(--space-1); min-height: 24px; }
+.p15-axes { min-height: 26px; }
+.p15-sizes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-1); min-height: 2 * 28px; align-content: start; }
+.p15-sizes > [hidden] { display: none; }
+.p15-legend { min-height: 20px; gap: var(--space-3); font-size: var(--fs-12); color: var(--text-secondary); }
+.p15-key::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: var(--space-1); border-radius: 2px; background: var(--accent-color); }
+.p15-key.is-steep::before { background: var(--warn); }
+.p15-key.is-undercut::before { background: var(--danger); }
+.p15-live [hidden] { display: none; }
