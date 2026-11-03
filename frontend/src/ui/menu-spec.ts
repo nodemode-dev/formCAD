@@ -137,7 +137,7 @@ const modify = (): MenuItem[] => section('Modify', () => [
     S('External Reference', E('Bind...', 'xbind')),
     S('Multileader', E('Add Leader', 'mleaderedit.add'), E('Remove Leader', 'mleaderedit.remove'), E('Align', 'mleaderalign'), E('Collect', 'mleadercollect'))),
   S('Clip', E('Viewport', 'vpclip')),
-  S('3D Operations', E('Align', 'align')),
+  S('3D Operations', E('Align', 'align'), 'u8-gumball', 'u8-gumball-reset'),
   S('Solid Editing', E('Union', 'union'), E('Subtract', 'subtract'), E('Intersect', 'intersect')),
   S('Annotative Object Scale', E('Add Current Scale', 'aiobjectscaleadd'), E('Delete Current Scale', 'aiobjectscaleremove'), E('Add/Delete Scales...', 'objectscale'),
     E('Synchronize Multiple-scale Positions', 'annoreset')),
@@ -195,21 +195,31 @@ const surface = (): MenuItem[] => section('Surface', () => [
   S('Edge Treatment', E('Fillet Edge', 'filletedge'), E('Chamfer Edge', 'chamferedge'), E('Blend Edge', 'blendedge')),
   S('Boolean', E('Boolean with Diagnostics', 'boolop'), E('Check Boolean', 'boolcheck'), 'u7-diag-open'), SEP,
   E('Seam Continuity', 'seamcheck'), 'u7-seams-sel', E('Naked Edges', 'nakededges'), E('Surface Report', 'surfreport'), 'u7-clear-analysis', SEP,
-  E('Model Tolerance...', 'modeltol'), 'u7-tol-open',
+  E('Model Tolerance...', 'modeltol'), 'u7-tol-open', SEP,
+  'u8-analysis-open', 'u8-analysis-off', 'u8-snap3d',
+]);
+
+const meshMenu = (): MenuItem[] => section('Mesh', () => [
+  E('Mesh From Solid', 'meshfromsolid'), SEP,
+  E('Weld', 'meshweld'), E('Unify Normals', 'meshunify'), E('Fill Holes', 'meshfill'), SEP,
+  'u8-mesh-naked', 'u8-mesh-naked-off', E('Count Naked Edges', 'meshnaked'), E('Mesh Report', 'meshreport'), SEP,
+  'u8-mesh-import', 'u8-mesh-export', E('3DM File Info', 'info3dm'),
 ]);
 
 const assembly = (): MenuItem[] => section('Assembly', () => [
-  E('Insert Component...', 'asminsert'), E('New Component', 'asmnew'), SEP,
-  S('Joint', E('Rigid', 'asmjoint', 'rigid'), E('Revolute', 'asmjoint', 'revolute'), E('Slider', 'asmjoint', 'slider'), E('Cylindrical', 'asmjoint', 'cylindrical'), E('Ball', 'asmjoint', 'ball')),
-  E('Mate', 'asmmate'), E('Ground', 'asmground'), E('Component Pattern', 'asmpattern'), SEP,
-  E('Interference Check', 'asminterference'), E('Motion Study', 'asmmotion'), E('Exploded View', 'asmexplode'), E('Bill of Materials', 'asmbom'),
+  'u8-asm-insert', E('Insert Component (typed)', 'asminsert'), SEP,
+  'u8-asm-panel', 'u8-mates-panel', 'u8-explode-panel', 'u8-check-panel', 'u8-bom-panel', SEP,
+  'u8-asm-solve', 'u8-asm-drag',
 ]);
 
 const drawing = (): MenuItem[] => section('Drawing', () => [
-  E('New Sheet', 'sheetnew'), E('Sheet Setup...', 'sheetsetup'), E('Title Block...', 'titleblock'), SEP,
-  E('Base View', 'viewbase'), E('Projected View', 'viewproj'), E('Section View', 'viewsection'), E('Detail View', 'viewdetail'),
-  E('Auxiliary View', 'viewaux'), E('Break View', 'viewbreak'), E('Update Views', 'viewupdate'), SEP,
-  E('Balloon', 'balloon'), E('Parts List', 'partslist'), E('Surface Finish Symbol', 'finishsymbol'), E('Weld Symbol', 'weldsymbol'), E('Datum Feature', 'datum'),
+  E('New Sheet', 'layout', 'new'), E('Page Setup Manager...', 'pagesetup'), 'dw-titleblock', SEP,
+  S('Base View', 'dw-base-front', 'dw-base-back', 'dw-base-left', 'dw-base-right', 'dw-base-top', 'dw-base-bottom', SEP, 'dw-base-iso', 'dw-base-iso2', 'dw-base-iso3', 'dw-base-iso4'),
+  'dw-section', 'dw-detail', 'dw-aux', 'dw-break', 'dw-crop', SEP,
+  'dw-update', 'dw-update-all', 'dw-update-one', 'dw-delete', S('Projection Angle', 'dw-proj-third', 'dw-proj-first'), SEP,
+  'dw-dim', 'dw-frame', 'dw-frame-edit', 'dw-datum', 'dw-finish', SEP,
+  'dw-balloon', 'dw-autoballoon', 'dw-bom', 'dw-bom-update', 'dw-centermarks', 'dw-hatch', SEP,
+  'dw-settings', 'dw-panel-views', 'dw-panel-props',
 ]);
 
 const graph = (): MenuItem[] => section('Graph', () => [
@@ -267,6 +277,7 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Model', items: model },
     { label: 'Curve', items: curve },
     { label: 'Surface', items: surface },
+    { label: 'Mesh', items: meshMenu },
     { label: 'Assembly', items: assembly },
     { label: 'Drawing', items: drawing },
     { label: 'Graph', items: graph },

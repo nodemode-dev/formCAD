@@ -2,6 +2,44 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## I8 round 2 (u8/asm-panels.ts, u8/analysis-panel.ts, styles/u8.css)
+
+Text glyph icons (audit 23) are inline SVG from `ui/icons.ts`: the sub-assembly mark is a `chevronRight` in a fixed span that only toggles visibility (no layout change), and the reload, move earlier, move later and delete actions use `refresh`, `chevronUp`, `chevronDown` and `close` through `act('@name', ...)`; the ramp stop remove button uses `close`.
+
+## I8 integration, turn 8, v0.8.0 (u8/analysis-colors.ts, u8/asm-panels.ts, view3d/viewport.ts, view3d/body-view.ts)
+
+The painted-body material clips: `clipping: true` with the three clipping chunks in both shaders, and the viewport hands the live section planes to the paint material on every section change and every `setPaint` (`clipPaint`). `applySection` now also calls `invalidate`; before, the section only showed on the next unrelated redraw. Zebra stripes travel as the unit vector of the angle (cos, sin, two floats per vertex) and the fragment takes `atan`, so the plus and minus 180 degree wrap interpolates on the circle; the attribute is `vec2` for every analysis and `BodyView.setPaint` sets its item size from the array length (other modes still send one float, the second component reads zero). The conflict explainer threw `items is not iterable` for an engine refusal without `fixes` (the sub-assembly pick message); the list now defaults to empty. Driven in Chromium with real picks: Face level, Pick first on the base top, Pick second on a pin top, distance 70 added, a second distance 95 refused with the explainer and its two Remove buttons; a free component and the crank of the mechanism with its input mate removed dragged with the mouse and committed.
+
+Reserved space (styles/u8.css, u8/analysis-panel.ts): the analysis Settings section takes `.u8-params` min-height 241px so switching modes (which hides and shows fields) shifts nothing below it; `.u8-stops` reserves 110px for the ramp stop rows and `.u8-list` 106px for the mate list, so a mate row or stop arriving moves nothing. Throttled (CPU 4x, 150 ms, 1.6 Mbit/s) layout shift after ready, analysis colours, view place and view update measure 0; the mate add measures 0 counted (the conflict explainer opening under a click is excluded as input-driven).
+
+## Drawings from 3D, v0.8.0 (draw/*, styles/draw.css, canvas/interact/menu-extra.ts, canvas/interact/menus.ts, ui/layout-tabs.ts, ui/menu-spec.ts, ui/icons.ts, main.ts, index.html)
+
+Everything registers from `draw/register.ts`. The engine owns every view, edge class, hatch, dimension link and glyph; the interface reads `/drawviews` (and `?cache=true` for picking), sends `/drawviews` writes or the programmatic `viewdim`, `gdtframe`, `gdtedit`, `datumsym`, `balloon`, `autoballoon`, `bomtable`, `bomupdate`, `centermarks`, `sectionhatch`, `finishmark`, `titleblock` forms, and draws no geometry of its own except tool feedback.
+
+Tools. `ToolHost` catches pointer events on the canvas host in the capture phase while a tool is armed (left button only; move, wheel and middle button still reach the canvas, so panning keeps working) and keeps one window level key listener registered at module load so Escape, Enter and Backspace reach the tool before the canvas controller. A click is a press and release within 5 px; a longer move is a drag, so the detail circle and the break band work both as click, click and as press and drag. The feedback layer is one SVG plus one tag container created at mount; ghost shapes, the selection frame and the five handles are fixed nodes whose attributes are patched, view tags go through `patchList`. Option controls of each tool (section kind and flip, detail scale, break line and gap, dimension kind and direction, finish value) are created once and only hidden or shown, so the tool bar never rebuilds.
+
+Placement. A base view is placed with its centre at the click (the engine centres a view on its `position` because `origin` is the model centre). Projected views are made by dragging from the selected view past its edge: the side is taken from the drop point, mapped to `rel` by the sheet's projection angle (first angle swaps top with bottom and left with right, the same rule as `placement` in the engine) and the engine places the new view in its own arrangement. The move handle sends `position`; the engine applies the alignment constraint of a projected view. Section lines, detail circles, breaks and crop outlines are converted from sheet units to the parent's local millimetres with the one linear map `local = (paper - position) * unit_mm / scale` the DR1 record states; edge picks for auxiliary views and dimensions use the cached curves and DR2's edge ids (`p<pid>` or `<class>.<index>`).
+
+Out of date. A view with `state.status` stale shows an amber badge on its tag and an update button on its list row; error views show a red badge with the engine message. `auto` views rebuild in the engine and only their geometry changes.
+
+Annotation. Editors are Dialogs built once on first use (the glyph list is fetched once, options built once). The frame editor shows a plain text preview of the compartments, never a symbol, and the wording is "geometric tolerance frame"; nothing claims a standard. The annotation settings and document properties dialogs are thin forms over the DR2 routes. Weld symbols are not offered (engine gap).
+
+Shared edits: `ui/layout-tabs.ts` context menu gained two rows (Add Base View, Update Drawing Views) and waits for the layout switch before running the command; the canvas idle menu takes entries from `canvas/interact/menu-extra.ts` (one Drawing submenu while in a layout); the Drawing menu in `ui/menu-spec.ts` is rebuilt from `dw-*` commands.
+
+## Gumball, surface analysis, mesh menu, assemblies, v0.8.0 (u8/*, styles/u8.css, view3d/viewport.ts, view3d/body-view.ts, ui/menu-spec.ts, ui/file-dialogs.ts, ui/icons.ts, main.ts)
+
+All of it registers from `u8/register.ts`; the interface computes nothing and renders engine results.
+
+Gumball. `u8/gumball.ts` is a ViewLayer drawn from `GET /gumball` (origin, axes, alignment). Capture-phase pointer handlers on `vp.host` pre-empt the orbit rig only when a handle is hit. A drag sends the engine preview matrix and the result is applied as a group pose on the selected BodyViews, then cleared after `view3d().refresh()`; a click without movement opens the typed value box. Ctrl-drag relocates, alignment is world, construction plane or object, all engine side.
+
+Analysis colours. A per-body paint material replaces the shared per-colour material inside `BodyView.apply`, so painting never touches shared materials. Values come from the engine binary arrays (`application/vnd.formcad.analysis`); the ramp is a DataTexture and stripes sample by band index so zebra stays crisp. NaN becomes a sentinel and draws the engine undefined colour. Curvature combs and naked edges are engine polylines drawn on the overlay. Section clipping is not applied to painted bodies.
+
+Assemblies. `u8/asm.ts` holds the tree, status, explode list and component world matrices, refreshed by a debounced poll on doc events. Pose previews (mate drive, component drag, explode) are group matrices set through `vp.setPoses` as a delta new * inverse(old world), so nothing is rebuilt while moving. The 409 refusal object `detail` is kept by `u8/net.ts` and rendered by the conflict explainer with one remove button per fix. All lists use `patchList`; rows are built once and patched.
+
+Engine fix made here: `routers/interchange.py` `save_as` routed `.3dm`, `.stl`, `.obj` into the native save and refused them; they now write a copy through `files.write_any` (the document keeps its name and path), matching the file dialog.
+
+Known gaps: engine snap candidates are display only apart from gumball relocate; drag of a fully constrained component returns no poses by design; mate picking has no preview.
+
 ## Integration fixes, v0.7.0 (part/register.ts, part/feature-editor.ts, part/api.ts, view3d/mount.ts, view3d/nurbs-ui.ts)
 
 Cold boot 3D entry. Root cause of the intermittent late entry: the controller's idle `create()` could run before the document list arrived, the viewport constructor asked for a grid through `docOrFail`, which threw, and `create` latched `failed = 'No drawing is open'` for the session, so every later `enter` returned at once. The asks now reject (the grid already catches) instead of throwing, `docOrFail` is gone and nothing latches on a missing document. The retry U6 added is removed; auto entry runs from the tree change, from controller creation and once at registration, so it no longer depends on event order. Measured before: 3 failures in 8, 1 in 8, 3 in 8 cold boots; after: 0 in 28.

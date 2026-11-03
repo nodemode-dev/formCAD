@@ -2,6 +2,7 @@ import { onShellMounted } from '../app';
 import { drawingCanvas } from '../canvas/mount';
 import { api } from '../io/api';
 import { cad, type LayoutRow } from '../io/api-cad';
+import { commands } from './commands';
 import { confirmAction, promptName } from './dialogs';
 import { sendCommand } from './dialogs/engine';
 import { interceptCommand } from './dialogs/intercept';
@@ -106,7 +107,8 @@ class LayoutTabs {
       ['new', 'New Layout', true], ['template', 'From Template...', true], ['sep', '', true],
       ['delete', 'Delete Layout', !model], ['rename', 'Rename Layout', !model], ['copy', 'Copy Layout', !model],
       ['left', 'Move Left', !model], ['right', 'Move Right', !model], ['sep', '', true],
-      ['pagesetup', 'Page Setup Manager...', true], ['plot', 'Print...', true],
+      ['pagesetup', 'Page Setup Manager...', true], ['plot', 'Print...', true], ['sep', '', true],
+      ['dwbase', 'Add Base View', !model], ['dwupdate', 'Update Drawing Views', !model],
     ];
     const root = this.menuPop.root;
     if (root.children.length !== items.length) {
@@ -149,7 +151,10 @@ class LayoutTabs {
     else if (m === 'copy') await layoutState.action({ action: 'copy', name: tab });
     else if (m === 'left' && at > 0) await layoutState.action({ action: 'move', name: tab, index: at - 1 });
     else if (m === 'right' && at >= 0 && at < rows.length - 1) await layoutState.action({ action: 'move', name: tab, index: at + 1 });
-    else if (m === 'pagesetup' || m === 'plot') {
+    else if (m === 'dwbase' || m === 'dwupdate') {
+      if (await layoutState.go(tab)) for (let i = 0; i < 40 && layoutState.layout !== tab; i++) await new Promise((r) => { setTimeout(r, 50); });
+      if (layoutState.layout === tab) commands.run(m === 'dwbase' ? 'dw-base-front' : 'dw-update');
+    } else if (m === 'pagesetup' || m === 'plot') {
       if (!(await layoutState.go(tab))) return;
       if (!interceptCommand(m)) sendCommand(m);
     }

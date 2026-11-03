@@ -30,6 +30,7 @@ interface Seam {
   anchor: Vec3;
   line: Line2;
   state: SeamState;
+  bodies: number[];
 }
 
 interface Colors { ok: string; warn: string; danger: string }
@@ -64,7 +65,7 @@ export class AnalysisLayer implements ViewLayer {
     return [...this.seams.values()].map((s) => ({ key: s.key, level: seamLevel(s.report), state: s.state }));
   }
 
-  setSeam(r: SeamReport, scale: number): void {
+  setSeam(r: SeamReport, scale: number, bodies: number[] = []): void {
     const hair = (r.hair ?? []).map((h) => h.p.map((c) => c / scale) as Vec3);
     if (hair.length < 2) return;
     const anchor = hair[hair.length >> 1];
@@ -75,9 +76,10 @@ export class AnalysisLayer implements ViewLayer {
       const line = new Line2(new LineGeometry(), this.mats[state]);
       line.frustumCulled = false;
       this.group.add(line);
-      s = { key, report: r, anchor, line, state };
+      s = { key, report: r, anchor, line, state, bodies };
       this.seams.set(key, s);
     }
+    s.bodies = bodies;
     s.report = r;
     s.anchor = anchor;
     s.state = state;
@@ -86,6 +88,19 @@ export class AnalysisLayer implements ViewLayer {
     s.line.geometry = new LineGeometry();
     s.line.geometry.setPositions(hair.flat());
     this.redraw();
+  }
+
+  clearSeamsOf(changed: number[]): void {
+    const hit = new Set(changed);
+    let any = false;
+    for (const [key, s] of this.seams) {
+      if (s.bodies.length && !s.bodies.some((b) => hit.has(b))) continue;
+      this.group.remove(s.line);
+      s.line.geometry.dispose();
+      this.seams.delete(key);
+      any = true;
+    }
+    if (any) this.redraw();
   }
 
   clearSeams(): void {

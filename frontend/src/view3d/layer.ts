@@ -11,5 +11,6 @@ export interface ViewLayer {
   draw?(g: CanvasRenderingContext2D, project: Projector, ink: InkColors, pal: Palette): void;
   palette?(pal: Palette): void;
   resolution?(w: number, h: number): void;
+  sceneChanged?(): void;
   dispose(): void;
 }

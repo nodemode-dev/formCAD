@@ -55,16 +55,23 @@ async function fetchScene(id: string, since: number, hold = ''): Promise<ArrayBu
   }
 }
 
-function sceneSig(bodies: Map<number, BodyData>): string {
-  const rows: string[] = [];
+function sceneRows(bodies: Map<number, BodyData>): Map<number, string> {
+  const rows = new Map<number, string>();
   for (const b of bodies.values()) {
     const p = b.positions;
     const step = Math.max(3, Math.floor(p.length / 96 / 3) * 3);
     let sum = 0;
     for (let i = 0; i < p.length; i += step) sum += p[i] * 1.31 + p[i + 1] * 2.17 + p[i + 2] * 3.07;
-    rows.push(`${b.id}:${p.length}:${b.indices.length}:${sum.toFixed(6)}`);
+    rows.set(b.id, `${p.length}:${b.indices.length}:${sum.toFixed(6)}`);
   }
-  return rows.sort().join('|');
+  return rows;
+}
+
+function changedBodies(before: Map<number, string>, after: Map<number, string>): number[] {
+  const out: number[] = [];
+  for (const [id, sig] of after) if (before.get(id) !== sig) out.push(id);
+  for (const id of before.keys()) if (!after.has(id)) out.push(id);
+  return out;
 }
 
 const hint = (text: string): void => { document.dispatchEvent(new CustomEvent('formcad:hint', { detail: text })); };
@@ -352,12 +359,13 @@ export class View3dController {
         if (docStore.activeId !== id) break;
         if (buf) {
           const parsed = parseScene(buf);
-          const before = sceneSig(this.cache);
+          const before = sceneRows(this.cache);
           if (!parsed.delta || !same) this.cache.clear();
           for (const r of parsed.removed) this.cache.delete(r);
           for (const h of parsed.hidden) this.cache.delete(h);
           for (const b of parsed.bodies) this.cache.set(b.id, b);
-          if (before && before !== sceneSig(this.cache)) document.dispatchEvent(new CustomEvent('formcad:scene-touched', { detail: { doc: id } }));
+          const changed = before.size ? changedBodies(before, sceneRows(this.cache)) : [];
+          if (changed.length) document.dispatchEvent(new CustomEvent('formcad:scene-touched', { detail: { doc: id, ids: changed } }));
           this.cacheDoc = id;
           this.cacheRev = parsed.rev;
         } else {

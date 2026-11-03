@@ -10,10 +10,15 @@ const SVG: FileKind = { name: 'SVG image', extensions: ['svg', 'svgz'] };
 const PNG: FileKind = { name: 'PNG image', extensions: ['png'] };
 const PDF: FileKind = { name: 'PDF document', extensions: ['pdf'] };
 
-export const OPEN_KINDS: FileKind[] = [{ name: 'All drawings', extensions: ['fcad', 'dxf', 'dwg', 'dwt', 'svg', 'svgz'] }, FCAD, DXF, DWG, DWT, SVG];
-export const SAVE_KINDS: FileKind[] = [FCAD, DXF, DWG, DWT];
-export const EXPORT_KINDS: FileKind[] = [DXF, DWG, DWT, SVG, PNG, PDF];
-export const IMPORT_KINDS: FileKind[] = [{ name: 'All importable files', extensions: ['dxf', 'dwg', 'svg', 'svgz'] }, DXF, DWG, SVG];
+const DM3: FileKind = { name: '3DM model', extensions: ['3dm'] };
+const STL: FileKind = { name: 'STL mesh', extensions: ['stl'] };
+const OBJ: FileKind = { name: 'OBJ mesh', extensions: ['obj'] };
+
+export const MESH_KINDS: FileKind[] = [{ name: 'Mesh and model files', extensions: ['3dm', 'stl', 'obj'] }, DM3, STL, OBJ];
+export const OPEN_KINDS: FileKind[] = [{ name: 'All drawings', extensions: ['fcad', 'dxf', 'dwg', 'dwt', 'svg', 'svgz', '3dm', 'stl', 'obj'] }, FCAD, DXF, DWG, DWT, SVG, DM3, STL, OBJ];
+export const SAVE_KINDS: FileKind[] = [FCAD, DXF, DWG, DWT, DM3];
+export const EXPORT_KINDS: FileKind[] = [DXF, DWG, DWT, SVG, PNG, PDF, DM3, STL, OBJ];
+export const IMPORT_KINDS: FileKind[] = [{ name: 'All importable files', extensions: ['dxf', 'dwg', 'svg', 'svgz', '3dm', 'stl', 'obj'] }, DXF, DWG, SVG, DM3, STL, OBJ];
 export const PLOT_KINDS: Record<string, FileKind> = { pdf: PDF, png: PNG, svg: { name: 'SVG image', extensions: ['svg'] } };
 
 const native = (): boolean => '__TAURI_INTERNALS__' in window;

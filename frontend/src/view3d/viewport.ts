@@ -395,6 +395,29 @@ export class Viewport3D {
 
   get size(): { w: number; h: number } { return { w: this.w, h: this.h }; }
 
+  get bodyViews(): ReadonlyMap<number, BodyView> { return this.views; }
+
+  private paintMat: THREE.Material | null = null;
+
+  private clipPaint(planes: THREE.Plane[]): void {
+    if (!this.paintMat) return;
+    this.paintMat.clippingPlanes = planes.length ? planes : null;
+    this.paintMat.needsUpdate = true;
+  }
+
+  setPaint(map: Map<number, Float32Array | null>, mat: THREE.Material | null): void {
+    this.paintMat = mat;
+    this.clipPaint(this.kit.clip);
+    for (const [id, vals] of map) this.views.get(id)?.setPaint(vals, mat);
+    this.applyAll();
+    this.invalidate();
+  }
+
+  setPoses(map: Map<number, THREE.Matrix4 | null> | null): void {
+    for (const [id, v] of this.views) v.setPose(map?.get(id) ?? null);
+    this.invalidate();
+  }
+
   fitLayers(): void {
     this.updateBounds();
     this.zoomExtents(false);
@@ -484,9 +507,11 @@ export class Viewport3D {
       planes.push(new THREE.Plane().setFromNormalAndCoplanarPoint(n, o));
     }
     this.kit.applyClip(planes);
+    this.clipPaint(planes);
     this.selHL.setClip(planes);
     this.hoverHL.setClip(planes);
     this.applyAll();
+    this.invalidate();
   }
 
   setScene(model: SceneModel, keepView: boolean): void {
@@ -512,6 +537,7 @@ export class Viewport3D {
     this.hoverHL.refresh();
     this.syncHighlights();
     if (!keepView) this.zoomExtents(false);
+    for (const l of this.layers) l.sceneChanged?.();
     this.invalidate();
   }
 

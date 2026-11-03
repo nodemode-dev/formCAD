@@ -17,6 +17,7 @@ export class BodyView {
   private faceTris: Map<number, number[]> | null = null;
   private edgeSegs: Map<number, [number, number]> | null = null;
   private readonly lineGeometry = new LineSegmentsGeometry();
+  private paint: THREE.Material | null = null;
 
   constructor(readonly data: BodyData) {
     this.geometry.setAttribute('position', new THREE.BufferAttribute(data.positions, 3));
@@ -59,7 +60,7 @@ export class BodyView {
   apply(kit: ModeKit, mode: DisplayMode): void {
     const mat = kit.face(mode, this.data.color || DEFAULT_BODY_COLOR);
     this.mesh.visible = FACE_VISIBLE[mode];
-    if (mat) this.mesh.material = mat;
+    if (mat) this.mesh.material = this.paint && FACE_VISIBLE[mode] ? this.paint : mat;
     this.lines.visible = EDGES_VISIBLE[mode] && this.data.edges.segEdge.length > 0;
     this.lines.material = kit.edge(mode);
     const tech = mode === 'technical';
@@ -67,6 +68,26 @@ export class BodyView {
     if (tech) this.outline.material = kit.outline();
     this.mesh.renderOrder = mode === 'ghosted' || mode === 'xray' ? 1 : 0;
     this.lines.renderOrder = mode === 'ghosted' || mode === 'xray' ? 2 : 1;
+  }
+
+  get vertexCount(): number { return this.data.positions.length / 3; }
+
+  setPaint(values: Float32Array | null, mat: THREE.Material | null): void {
+    if (values && mat) {
+      this.geometry.setAttribute('aval', new THREE.BufferAttribute(values, values.length / this.vertexCount));
+      this.paint = mat;
+    } else {
+      this.geometry.deleteAttribute('aval');
+      this.paint = null;
+    }
+  }
+
+  get painted(): boolean { return this.paint !== null; }
+
+  setPose(m: THREE.Matrix4 | null): void {
+    this.group.matrixAutoUpdate = m === null;
+    if (m) this.group.matrix.copy(m); else this.group.matrix.identity();
+    this.group.matrixWorldNeedsUpdate = true;
   }
 
   trianglesOf(face: number): number[] {

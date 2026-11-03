@@ -161,7 +161,7 @@ export class DocStore {
     const path = await pickSavePath(doc.path ?? `${doc.name.replace(/\.fcad$/i, '')}.fcad`);
     if (!path) return false;
     try {
-      const foreign = /\.(dxf|dwg|dwt)$/i.test(path.trim());
+      const foreign = /\.(dxf|dwg|dwt|3dm)$/i.test(path.trim());
       const saved = foreign ? await trackWork(`Save ${path.split(/[\\/]/).pop() ?? path}`, () => outputApi.saveAs(doc.id, path)) : await api.saveDoc(doc.id, path);
       this.upsert(saved, false);
       void this.refreshRecent();

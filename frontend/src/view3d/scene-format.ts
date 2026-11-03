@@ -60,9 +60,11 @@ export function parseScene(buf: ArrayBuffer, verify = true): ParsedScene {
   if (verify && crc32(new Uint8Array(buf, head)) !== u(12)) throw new SceneFormatError('The 3D data fails its checksum.');
   if (tableAt + rows * RECORD > buf.byteLength || removedAt + removedCount * 4 > buf.byteLength || metaAt + metaLen > buf.byteLength) throw new SceneFormatError('The 3D data tables are outside the buffer.');
   let names = new Map<number, string>();
+  let owners = new Map<number, { component: string; instance: string }>();
   try {
-    const meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, metaAt, metaLen))) as { bodies?: Array<{ handle: number; name?: string }> };
+    const meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, metaAt, metaLen))) as { bodies?: Array<{ handle: number; name?: string; component?: string; instance?: string }> };
     names = new Map((meta.bodies ?? []).map((b) => [b.handle, b.name ?? '']));
+    owners = new Map((meta.bodies ?? []).filter((b) => b.component).map((b) => [b.handle, { component: b.component ?? '', instance: b.instance ?? '' }]));
   } catch {
     names = new Map();
   }
@@ -124,6 +126,8 @@ export function parseScene(buf: ArrayBuffer, verify = true): ParsedScene {
       positions, normals, indices, triFace,
       edges: { positions: segPos, segEdge },
       snaps,
+      component: owners.get(handle)?.component,
+      instance: owners.get(handle)?.instance,
     });
   }
   return { rev, delta, removed, bodies, hidden, mmPerUnit: mm };

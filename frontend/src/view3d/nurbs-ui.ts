@@ -56,8 +56,8 @@ function paintNaked(s: DiagState): void {
 
 diag.onChange(paintNaked);
 
-function showSeam(r: SeamReport): void {
-  analysis?.setSeam(r, mmPerUnit);
+function showSeam(r: SeamReport, owners: number[] = []): void {
+  analysis?.setSeam(r, mmPerUnit, [...owners, ...(r.bodies ?? [])]);
 }
 
 async function absorb(doc: string, output: string[]): Promise<void> {
@@ -105,8 +105,8 @@ for (const name of ['formcad:command-state', 'formcad:cmdline-applied']) {
 }
 
 document.addEventListener('formcad:scene-touched', (e) => {
-  const d = (e as CustomEvent<{ doc: string }>).detail;
-  if (d.doc === docStore.activeId && analysis && analysis.seamCount > 0) analysis.clearSeams();
+  const d = (e as CustomEvent<{ doc: string; ids?: number[] }>).detail;
+  if (d.doc === docStore.activeId && analysis && analysis.seamCount > 0) analysis.clearSeamsOf(d.ids ?? []);
 });
 
 let lastDoc: string | null = null;
@@ -127,14 +127,15 @@ async function seamsOfSelection(): Promise<void> {
   const handles = new Set<number>([...selection.handles, ...(view3d()?.vp?.sel.bodies ?? [])]);
   if (!handles.size) { toast('Select a blend or match surface first.', 'info'); return; }
   try {
-    const res = await call<{ mm_per_unit: number; bodies: Array<{ handle: number; name: string; source: { report?: { seams?: Record<string, SeamReport>; seam?: SeamReport } } | null }> }>('GET', `/api/docs/${encodeURIComponent(id)}/solids`);
+    const res = await call<{ mm_per_unit: number; bodies: Array<{ handle: number; name: string; source: { seams?: number[]; report?: { seams?: Record<string, SeamReport>; seam?: SeamReport } } | null }> }>('GET', `/api/docs/${encodeURIComponent(id)}/solids`);
     mmPerUnit = res.mm_per_unit || 1;
     let n = 0;
     for (const b of res.bodies) {
       if (!handles.has(b.handle)) continue;
       const rep = b.source?.report;
-      for (const s of Object.values(rep?.seams ?? {})) { if (s && s.hair) { showSeam(s); n++; } }
-      if (rep?.seam?.hair) { showSeam(rep.seam); n++; }
+      const owners = [b.handle, ...(Array.isArray(b.source?.seams) ? b.source.seams : [])];
+      for (const s of Object.values(rep?.seams ?? {})) { if (s && s.hair) { showSeam(s, owners); n++; } }
+      if (rep?.seam?.hair) { showSeam(rep.seam, owners); n++; }
     }
     if (!n) toast('The selected surfaces carry no stored seam report. Run SEAMCHECK on two edges.', 'info');
     else void view3d()?.with3d(() => undefined);

@@ -11,7 +11,7 @@ import type { Palette } from './kit';
 import { readPalette } from './kit';
 import type { ViewLayer } from './layer';
 import type { InkColors } from './overlay';
-import { fetchCurves, type CurveRow } from './nurbs-api';
+import { fetchCurves, previewCurve, type CurveRow } from './nurbs-api';
 import type { Vec3 } from './types';
 import type { Viewport3D } from './viewport';
 
@@ -41,47 +41,7 @@ interface Drag {
 const HIT = 9;
 const rgb = (c: THREE.Color): string => `#${c.getHexString()}`;
 
-function expandKnots(row: CurveRow): number[] {
-  const out: number[] = [];
-  row.knots.forEach((k, i) => { for (let m = 0; m < row.mults[i]; m++) out.push(k); });
-  return out;
-}
-
-function evaluate(row: CurveRow, per: number): Vec3[] | null {
-  if (row.periodic) return null;
-  const p = row.degree;
-  const U = expandKnots(row);
-  const n = row.poles.length;
-  if (U.length !== n + p + 1) return null;
-  const rational = row.weights.length === n;
-  const at = (u: number): Vec3 => {
-    let s = p;
-    while (s < n - 1 && u >= U[s + 1]) s++;
-    const d: number[][] = [];
-    for (let j = 0; j <= p; j++) {
-      const i = s - p + j;
-      const w = rational ? row.weights[i] : 1;
-      d.push([row.poles[i][0] * w, row.poles[i][1] * w, row.poles[i][2] * w, w]);
-    }
-    for (let r = 1; r <= p; r++) {
-      for (let j = p; j >= r; j--) {
-        const den = U[s + 1 + j - r] - U[s - p + j];
-        const a = den > 0 ? (u - U[s - p + j]) / den : 0;
-        for (let c = 0; c < 4; c++) d[j][c] = (1 - a) * d[j - 1][c] + a * d[j][c];
-      }
-    }
-    const h = d[p];
-    return [h[0] / h[3], h[1] / h[3], h[2] / h[3]];
-  };
-  const out: Vec3[] = [];
-  for (let i = 0; i < row.knots.length - 1; i++) {
-    const a = row.knots[i], b = row.knots[i + 1];
-    for (let k = 0; k < per; k++) out.push(at(a + ((b - a) * k) / per));
-  }
-  const last = row.knots[row.knots.length - 1];
-  out.push(at(last - (last - row.knots[row.knots.length - 2]) * 1e-12));
-  return out;
-}
+const PREVIEW_GAP_MS = 50;
 
 const flat = (pts: Vec3[]): number[] => pts.flatMap((p) => p);
 
@@ -100,6 +60,9 @@ export class CurveLayer implements ViewLayer {
   private timer = 0;
   private busy = false;
   private again = false;
+  private previewing = false;
+  private previewAt = 0;
+  private previewTimer = 0;
   private loaded = false;
   private fitted = false;
   private readonly off: Array<() => void> = [];
@@ -395,16 +358,51 @@ export class CurveLayer implements ViewLayer {
     if (d.kind === 'cv') {
       it.row.poles[d.index] = to;
       it.cv[d.index].at = to;
-      const s = evaluate(it.row, 16);
-      if (s) { it.row.samples = s; this.paint(it, s); } else this.paint(it, it.row.samples);
     }
+    this.askPreview();
     this.vp.invalidate();
+  }
+
+  private askPreview(): void {
+    if (this.previewing || this.previewTimer) return;
+    const wait = Math.max(0, this.previewAt + PREVIEW_GAP_MS - performance.now());
+    this.previewTimer = window.setTimeout(() => { this.previewTimer = 0; void this.runPreview(); }, wait);
+  }
+
+  private async runPreview(): Promise<void> {
+    const d = this.drag;
+    const doc = docStore.activeId;
+    if (!d || !d.moved || !doc) return;
+    const it = this.items.get(d.handle);
+    if (!it) return;
+    const at = d.grip.at;
+    this.previewing = true;
+    this.previewAt = performance.now();
+    try {
+      const res = await previewCurve(doc, d.handle, d.grip.id, [at[0], at[1]]);
+      const live = this.drag;
+      if (live && live === d && this.items.get(d.handle) === it) {
+        it.row.samples = res.samples;
+        it.row.poles = res.poles;
+        it.cv.forEach((g, i) => { if (res.poles[i] && !(live.kind === 'cv' && i === live.index)) g.at = res.poles[i]; });
+        this.paint(it, res.samples);
+        this.vp.invalidate();
+      }
+    } catch {
+      return;
+    } finally {
+      this.previewing = false;
+      const cur = this.drag;
+      if (cur && cur === d && (cur.grip.at[0] !== at[0] || cur.grip.at[1] !== at[1])) this.askPreview();
+    }
   }
 
   private async dragEnd(e: PointerEvent): Promise<void> {
     const d = this.drag;
     this.drag = null;
     this.down = null;
+    window.clearTimeout(this.previewTimer);
+    this.previewTimer = 0;
     if (!d) return;
     const doc = docStore.activeId;
     const target = d.grip.at;

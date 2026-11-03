@@ -21,6 +21,8 @@ export interface BodyData {
   triFace: Uint32Array;
   edges: EdgeSet;
   snaps: SnapPoint[];
+  component?: string;
+  instance?: string;
 }
 
 export interface SnapPoint {

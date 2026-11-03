@@ -1,0 +1,97 @@
+.dw-layer { position: absolute; inset: 0; z-index: var(--z-raised); pointer-events: none; overflow: hidden; }
+.dw-layer[hidden] { display: none; }
+.dw-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.dw-frame { fill: none; stroke: var(--accent-color); stroke-width: 1; stroke-dasharray: 5 3; }
+.dw-ghost-line { fill: none; stroke: var(--accent-color); stroke-width: 1.5; }
+.dw-ghost-fill { fill: var(--accent-wash); stroke: none; }
+.dw-ghost-rect { fill: var(--accent-wash); stroke: var(--accent-color); stroke-width: 1; stroke-dasharray: 4 3; }
+.dw-ghost-circle { fill: var(--accent-wash); stroke: var(--accent-color); stroke-width: 1.5; }
+.dw-ghost-arrows { fill: none; stroke: var(--accent-color); stroke-width: 1.5; }
+.dw-ghost-hot { fill: none; stroke: var(--accent-color); stroke-width: 3; stroke-linecap: round; }
+.dw-cross { fill: none; stroke: var(--accent-color); stroke-width: 1.2; }
+.dw-handle { pointer-events: auto; cursor: grab; }
+.dw-handle-dot { fill: var(--surface-1); stroke: var(--accent-color); stroke-width: 1.2; }
+.dw-handle:hover .dw-handle-dot { fill: var(--accent-soft); }
+.dw-handle-mark { fill: none; stroke: var(--accent-ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.dw-handle.is-off, .is-tool .dw-handle { display: none; }
+.dw-handle.is-move { cursor: move; }
+
+.dw-tags { position: absolute; inset: 0; pointer-events: none; }
+.dw-tag { position: absolute; left: 0; top: 0; display: flex; align-items: center; height: 20px; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--glass-bg); box-shadow: var(--shadow-sm); pointer-events: auto; font-size: var(--fs-11); }
+.dw-tag.is-selected { border-color: var(--accent-color); }
+.dw-tag-name { height: 100%; padding: 0 var(--space-2); border: 0; background: transparent; color: var(--text-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.dw-badge { height: 100%; padding: 0 var(--space-2); border: 0; border-left: 1px solid var(--glass-border); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--warn); color: var(--bg-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.dw-badge[hidden] { display: none; }
+.dw-tag.is-error .dw-badge { background: var(--danger); color: var(--text-primary); }
+
+.dw-bar { position: absolute; left: 50%; top: var(--space-2); transform: translateX(-50%); display: flex; align-items: center; gap: var(--space-3); max-width: calc(100% - 24px); min-height: 32px; padding: 2px var(--space-3); border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--glass-bg); box-shadow: var(--shadow-sm); color: var(--text-primary); font-size: var(--fs-12); pointer-events: auto; }
+.dw-bar[hidden] { display: none; }
+.dw-bar-title { font-weight: 600; white-space: nowrap; }
+.dw-bar-hint { color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-bar-opts { display: flex; align-items: center; gap: var(--space-2); }
+.dw-bar-opts[hidden] { display: none; }
+.dw-inline { display: flex; align-items: center; gap: var(--space-2); }
+.dw-inline .cv-field { display: flex; align-items: center; gap: var(--space-1); min-height: 24px; }
+.dw-inline .cv-input { height: 24px; width: 92px; }
+.dw-bar-btn { height: 24px; padding: 0 var(--space-3); border: 1px solid var(--line-3); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-primary); font: inherit; cursor: pointer; }
+.dw-bar-btn:hover { background: var(--bg-hover); }
+.dw-bar-btn[hidden] { display: none; }
+.cv-canvas-host.is-draw-tool { cursor: crosshair; }
+
+.dw-panel { gap: var(--space-2); }
+.dw-panel > * { flex: none; }
+.dw-panel.is-off .dw-sheetnote { color: var(--warn); }
+.dw-sec { display: grid; gap: var(--space-1); }
+.dw-sec[hidden] { display: none; }
+.dw-sec.is-idle { opacity: 0.45; pointer-events: none; }
+.dw-hold { min-height: 2.6em; }
+.dw-listnote { min-height: 1.4em; }
+.dw-breaks { min-height: 28px; }
+.dw-sec-title { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--fs-11); font-weight: 600; }
+.dw-sec-body { display: grid; gap: var(--space-1); }
+.dw-panel .cv-field { grid-template-columns: 108px minmax(0, 1fr); min-height: var(--ctl-md); }
+.dw-panel .cv-field.cv-check { grid-template-columns: minmax(0, 1fr) auto; }
+.dw-mono { font-family: var(--font-mono); }
+.dw-num { text-align: right; }
+.dw-read output { color: var(--text-primary); font-family: var(--font-mono); font-size: var(--fs-11); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-btns { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.dw-btn { height: 26px; padding: 0 var(--space-3); border: 1px solid var(--line-3); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-primary); font: inherit; font-size: var(--fs-12); cursor: pointer; }
+.dw-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.dw-btn:disabled { opacity: 0.4; cursor: default; }
+.dw-btn[hidden] { display: none; }
+.dw-btn.is-primary { border-color: var(--cta-bg); background: var(--cta-bg); color: var(--cta-text); }
+.dw-btn.is-danger { color: var(--danger-text); }
+.dw-note { margin: 0; color: var(--text-muted); font-size: var(--fs-12); overflow-wrap: anywhere; }
+.dw-note[hidden] { display: none; }
+.dw-file { padding: 0 var(--space-2); color: var(--text-secondary); font-family: var(--font-mono); font-size: var(--fs-11); overflow-wrap: anywhere; }
+.dw-file[hidden] { display: none; }
+
+.dw-tiles { display: grid; gap: var(--space-1); }
+.dw-tiles-std { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.dw-tiles-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dw-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 50px; padding: var(--space-1); border: 1px solid var(--border-light); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-primary); font: inherit; font-size: var(--fs-10); cursor: pointer; }
+.dw-tile span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-tile:hover:not(:disabled) { background: var(--bg-hover); }
+.dw-tile.is-on { border-color: var(--accent-color); background: var(--accent-soft); }
+.dw-tile:disabled { opacity: 0.4; cursor: default; }
+
+.dw-list { display: flex; flex-direction: column; min-height: 56px; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--bg-primary); }
+.dw-list[hidden] { display: none; }
+.dw-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 22px; align-items: center; gap: var(--space-1); min-height: 26px; padding: 0 var(--space-2); border-left: 2px solid transparent; font-size: var(--fs-12); color: var(--text-primary); cursor: default; user-select: none; }
+.dw-breaks .dw-row { grid-template-columns: minmax(0, 1fr) 22px; }
+.dw-row:hover { background: var(--bg-hover); }
+.dw-row.is-selected { background: var(--accent-soft); border-left-color: var(--accent-color); }
+.dw-row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-row-sub { color: var(--text-muted); font-family: var(--font-mono); font-size: var(--fs-11); }
+.dw-row-up { width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--radius-xs); background: transparent; color: var(--text-secondary); cursor: pointer; }
+.dw-row-up[hidden] { display: none; }
+.dw-row-up:hover { background: var(--bg-hover); color: var(--text-primary); }
+.dw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.dw-row.is-stale .dw-dot, .dw-status.is-stale .dw-dot { background: var(--warn); }
+.dw-row.is-error .dw-dot, .dw-status.is-error .dw-dot { background: var(--danger); }
+.dw-status { display: flex; align-items: center; gap: var(--space-2); min-height: 22px; font-size: var(--fs-12); }
+
+.dw-frame-prev { padding: var(--space-2); border: 1px solid var(--border-light); border-radius: var(--radius-sm); background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-mono); font-size: var(--fs-12); min-height: 34px; overflow-wrap: anywhere; }
+.dw-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-2); }
+.dw-pair .cv-field { grid-template-columns: 70px minmax(0, 1fr); }
+.dw-form { display: grid; gap: var(--space-1); max-height: 380px; overflow-y: auto; }

@@ -31,6 +31,7 @@ export interface SeamReport {
   max_curvature_gap: number;
   tolerance?: { length: number; angle: number; curvature: number; curvature_relative?: number };
   hair?: Array<{ p: Vec3; gap: number; angle: number; curv?: number }>;
+  bodies?: number[];
 }
 
 export interface InvalidShape { statuses?: string[]; [key: string]: unknown }
@@ -81,6 +82,7 @@ export interface ModelTolerance {
 }
 
 export const fetchCurves = (doc: string, perSpan = 16): Promise<{ curves: CurveRow[] }> => call('GET', `/api/docs/${enc(doc)}/curves?per_span=${perSpan}`);
+export const previewCurve = (doc: string, handle: number, grip: string, to: [number, number], perSpan = 16): Promise<{ handle: number; poles: Vec3[]; samples: Vec3[] }> => call('POST', `/api/docs/${enc(doc)}/curves/${handle}/preview`, { grip, to, per_span: perSpan });
 export const fetchLast = (doc: string): Promise<LastSurface> => call('GET', `/api/docs/${enc(doc)}/surface-last`);
 export const fetchTolerance = (doc: string): Promise<ModelTolerance> => call('GET', `/api/docs/${enc(doc)}/model-tolerance`);
 
