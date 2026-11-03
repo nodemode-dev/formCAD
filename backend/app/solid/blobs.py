@@ -6,7 +6,8 @@ CACHE_DIR = "cache/"
 MAX_BLOB = 256 * 1024 * 1024
 MAX_BLOBS_TOTAL = 4096
 MESH_DIR = "meshes/"
-NAME = re.compile(r"^(parts/[0-9a-f]{24}\.brep|cache/[0-9a-f]{24}-[0-9a-z.]{1,12}\.mesh|meshes/[0-9a-f]{24}\.fmesh)$")
+SIM_DIR = "sim/"
+NAME = re.compile(r"^(parts/[0-9a-f]{24}\.brep|cache/[0-9a-f]{24}-[0-9a-z.]{1,12}\.mesh|meshes/[0-9a-f]{24}\.fmesh|sim/[0-9a-f]{24}\.npz)$")
 
 
 def digest(data: bytes) -> str:
@@ -51,12 +52,17 @@ def container_entries(drawing) -> list:
     if not drawing.blobs:
         return []
     live = {e.blob for e in bodies(drawing)} | kept_copies(drawing)
+    from app.sim import records as sim_records
+
+    live |= sim_records.blobs_in_use(drawing)
     out = []
     for path, data in drawing.blobs.items():
         if path.startswith(PART_DIR):
             blob = path[len(PART_DIR):-len(".brep")]
         elif path.startswith(MESH_DIR):
             blob = path[len(MESH_DIR):-len(".fmesh")]
+        elif path.startswith(SIM_DIR):
+            blob = path[len(SIM_DIR):-len(".npz")]
         else:
             blob = path[len(CACHE_DIR):].split("-", 1)[0]
         if blob in live:

@@ -1,0 +1,98 @@
+{
+  "format": "formcad-sim-materials",
+  "version": 1,
+  "units": {"rho": "kg/m3", "E": "GPa", "nu": "1", "sigma_y": "MPa", "sigma_u": "MPa", "k": "W/m/K", "alpha": "1e-6/K", "cp": "J/kg/K"},
+  "note": "Values read from the cited public sources and unit converted (1 ksi = 6.8948 MPa, 1 cal = 4.184 J). A null field was not found in a source read for this release; enter your own with its source. Where two sources disagree both numbers are kept: the default is marked and the alternate lists its source.",
+  "terms": "NASA content is generally not subject to copyright in the United States and asks for acknowledgement (NASA Images and Media Usage Guidelines, https://www.nasa.gov/nasa-brand-center/images-and-media/). The reuse terms of NIST cryogenic pages and of NTRS records were not verified; numbers are facts, the citation is kept, and a legal review before wider redistribution is advised.",
+  "sources": {
+    "nasa6061": {"org": "NASA", "title": "Materials data handbook: Aluminum alloy 6061, NTRS 19720022808 (2nd ed., 1972)", "url": "https://ntrs.nasa.gov/api/citations/19720022808/downloads/19720022808.pdf"},
+    "nasa7075": {"org": "NASA", "title": "Materials data handbook: Aluminum alloy 7075, NTRS 19720022809 (2nd ed., 1972)", "url": "https://ntrs.nasa.gov/api/citations/19720022809/downloads/19720022809.pdf"},
+    "nasati64": {"org": "NASA", "title": "Materials data handbook: Titanium 6Al-4V, NTRS 19720022814 (2nd ed., 1972)", "url": "https://ntrs.nasa.gov/api/citations/19720022814/downloads/19720022814.pdf"},
+    "nist6061": {"org": "NIST", "title": "Material Properties: 6061-T6 Aluminum (cryogenic fits evaluated at 293 K)", "url": "https://trc.nist.gov/cryogenics/materials/6061%20Aluminum/6061_T6Aluminum_rev.htm"},
+    "nistti64": {"org": "NIST", "title": "Material Properties: Ti 6Al 4V (cryogenic fits evaluated at 293 K)", "url": "https://trc.nist.gov/cryogenics/materials/Ti6Al4V/Ti6Al4V_rev.htm"},
+    "nist304": {"org": "NIST", "title": "Material Properties: 304 Stainless (cryogenic fits evaluated at 293 K)", "url": "https://trc.nist.gov/cryogenics/materials/304Stainless/304Stainless_rev.htm"},
+    "nistcu": {"org": "NIST", "title": "Material Properties: OFHC Copper (RRR 50 fit evaluated at 293 K)", "url": "https://trc.nist.gov/cryogenics/materials/OFHC%20Copper/OFHC_Copper_rev1.htm"},
+    "nbs304": {"org": "NIST (NBS)", "title": "NBS IR 80-1627 Table 4, density and Poisson's ratio of 304 stainless steel", "url": "https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nbsir80-1627.pdf"}
+  },
+  "materials": [
+    {
+      "id": "al6061-t6",
+      "name": "Aluminium 6061-T6",
+      "values": {
+        "rho": {"value": 2700.0, "source": "nasa6061"},
+        "E": {"value": 68.9, "source": "nasa6061", "alternates": [{"value": 70.4, "source": "nist6061", "note": "NIST fit at 293 K"}]},
+        "nu": {"value": 0.33, "source": "nasa6061"},
+        "sigma_y": {"value": 276.0, "source": "nasa6061"},
+        "sigma_u": {"value": 310.0, "source": "nasa6061"},
+        "k": {"value": 154.3, "source": "nist6061", "alternates": [{"value": 167.0, "source": "nasa6061", "note": "0.40 cal/cm/s/C"}]},
+        "alpha": {"value": 23.4, "source": "nasa6061", "kind": "mean 20 to 100 C", "alternates": [{"value": 22.6, "source": "nist6061", "note": "slope of the NIST fit at 293 K"}]},
+        "cp": {"value": 943.0, "source": "nist6061", "alternates": [{"value": 962.0, "source": "nasa6061", "note": "at 100 C"}]}
+      },
+      "conflicts": ["Thermal conductivity differs by 8 percent between NASA and NIST; Young's modulus by 2 percent."]
+    },
+    {
+      "id": "al7075-t6",
+      "name": "Aluminium 7075-T6",
+      "values": {
+        "rho": {"value": 2800.0, "source": "nasa7075"},
+        "E": {"value": 71.7, "source": "nasa7075"},
+        "nu": {"value": 0.33, "source": "nasa7075"},
+        "sigma_y": {"value": 503.0, "source": "nasa7075"},
+        "sigma_u": {"value": 572.0, "source": "nasa7075"},
+        "k": {"value": 129.7, "source": "nasa7075"},
+        "alpha": {"value": 23.6, "source": "nasa7075", "kind": "mean, range as printed in the handbook"},
+        "cp": {"value": 962.0, "source": "nasa7075"}
+      },
+      "conflicts": [],
+      "single_source": true
+    },
+    {
+      "id": "ti6al4v-annealed",
+      "name": "Titanium Ti-6Al-4V (annealed)",
+      "values": {
+        "rho": {"value": 4424.0, "source": "nasati64"},
+        "E": {"value": 113.8, "source": "nasati64"},
+        "nu": {"value": 0.342, "source": "nasati64"},
+        "sigma_y": {"value": 883.0, "source": "nasati64"},
+        "sigma_u": {"value": 951.0, "source": "nasati64"},
+        "k": {"value": 7.36, "source": "nistti64", "alternates": [{"value": 5.0, "source": "nasati64", "note": "0.012 cal/cm/s/C read from a poor scan; not used"}]},
+        "alpha": {"value": 8.8, "source": "nasati64", "kind": "mean 0 to 100 C"},
+        "cp": {"value": 565.0, "source": "nasati64", "note": "at 20 C"}
+      },
+      "conflicts": ["The NASA conductivity was read from a poor scan; NIST is the default."]
+    },
+    {
+      "id": "ss304",
+      "name": "Stainless steel 304",
+      "values": {
+        "rho": {"value": 7880.0, "source": "nbs304"},
+        "E": {"value": 199.5, "source": "nist304"},
+        "nu": {"value": 0.29, "source": "nbs304"},
+        "sigma_y": null,
+        "sigma_u": null,
+        "k": {"value": 15.1, "source": "nist304"},
+        "alpha": {"value": 15.4, "source": "nist304", "kind": "slope of the NIST fit at 293 K, understates the 20 to 100 C mean"},
+        "cp": {"value": 470.5, "source": "nist304"}
+      },
+      "conflicts": [],
+      "single_source": true
+    },
+    {
+      "id": "cu-ofhc",
+      "name": "Copper OFHC",
+      "values": {
+        "rho": null,
+        "E": null,
+        "nu": null,
+        "sigma_y": null,
+        "sigma_u": null,
+        "k": {"value": 392.8, "source": "nistcu", "note": "RRR 50 fit"},
+        "alpha": {"value": 16.6, "source": "nistcu", "kind": "slope of the NIST fit at 293 K"},
+        "cp": {"value": 389.1, "source": "nistcu"}
+      },
+      "conflicts": [],
+      "single_source": true,
+      "note": "Thermal fields only; add density and stiffness from your own source to use it in a structural study."
+    }
+  ]
+}

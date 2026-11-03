@@ -5,6 +5,9 @@ kernel/venv/
 kernel/build/
 kernel/dist/
 kernel/dist-kernel/
+mesher/venv/
+mesher/build/
+mesher/dist/
 backend/build/
 backend/dist-engine/
 __pycache__/

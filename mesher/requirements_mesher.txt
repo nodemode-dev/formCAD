@@ -1,0 +1,3 @@
+netgen-mesher==6.2.2608   # tetrahedral mesher with the OpenCascade geometry reader; LGPL-2.1-only; mesher worker only, the engine never imports it
+netgen-occt==7.8.1   # the OpenCascade build netgen-mesher is pinned to; LGPL-2.1 (wheel ships LICENSE_LGPL_21.txt); must stay out of the kernel worker's process (OCP 8.0.1 there)
+numpy==2.5.4   # mesh arrays and the .npz output; BSD-3-Clause

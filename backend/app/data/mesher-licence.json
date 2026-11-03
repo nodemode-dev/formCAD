@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "program": "formcad-mesher",
+  "release": null,
+  "netgen": "6.2.2608",
+  "occt": "7.8.1",
+  "licence": "LGPL-2.1-only",
+  "source": "https://github.com/nodemode-dev/formCAD-binaries",
+  "url": "https://github.com/nodemode-dev/formCAD-binaries/releases/download/mesher-{release}/mesher-lgpl-{release}-{triple}.tar.gz",
+  "folder": "mesher-lgpl-{release}-{triple}",
+  "triples": [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc"
+  ],
+  "files": []
+}

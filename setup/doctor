@@ -11,6 +11,7 @@ if py="$(fc_python)"; then ok "python $("$py" -V 2>&1 | awk '{print $2}')"; else
 if [ -f "$FORMCAD_ROOT/backend/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/backend/venv/Scripts/activate" ]; then ok "engine venv"; else warn "engine venv" "run ./formCAD install"; fi
 if [ -d "$FORMCAD_ROOT/frontend/node_modules" ]; then ok "frontend node_modules"; else warn "frontend deps" "run ./formCAD install"; fi
 if [ -f "$FORMCAD_ROOT/kernel/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/kernel/venv/Scripts/activate" ]; then ok "kernel dev venv"; else warn "kernel dev venv" "run ./formCAD install-kernel (the app runs its 2D features without it)"; fi
+if [ -f "$FORMCAD_ROOT/mesher/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/mesher/venv/Scripts/activate" ]; then ok "mesher dev venv"; else warn "mesher dev venv" "run ./formCAD install-mesher (simulation studies need the mesher)"; fi
 fc_rust_env
 if command -v cargo >/dev/null 2>&1; then ok "rust $(rustc --version | awk '{print $2}') for desktop builds"; else warn "rust" "desktop builds need https://rustup.rs"; fi
 if [ "$(fc_os)" = linux ]; then

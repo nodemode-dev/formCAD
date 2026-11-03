@@ -5,6 +5,7 @@ httpx==0.28.1   # the kernel download from the formCAD-binaries releases; BSD-3-
 ezdxf==1.4.5   # DXF read and write; MIT
 numpy==2.5.4   # geometry arrays; BSD-3-Clause
 scipy==1.18.1   # the graph optimizer (differential_evolution, dual_annealing); BSD-3-Clause
+scikit-fem==12.0.2   # finite element assembly for the simulation studies (P2 tetrahedra); BSD-3-Clause, pure Python, needs only numpy and scipy
 fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT
 uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Apache-2.0, bundles HarfBuzz under the MIT licence
 manifold3d==3.5.4   # mesh booleans, sections and manifold checks; Apache-2.0, statically contains oneTBB, Clipper2 and quickhull

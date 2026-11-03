@@ -35,7 +35,7 @@ PYTHONPATH="$src/backend${PYTHONPATH:+$sep$PYTHONPATH}" pyinstaller --noconfirm 
   --distpath dist-engine --workpath build/pyinstaller --specpath build/pyinstaller \
   --add-data "$src/frontend/dist${sep}frontend_dist" \
   --paths "$src/backend" --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring \
-  --hidden-import numpy --hidden-import ezdxf --hidden-import scipy.optimize --hidden-import scipy.spatial --hidden-import scipy.sparse.csgraph --hidden-import scipy.ndimage --hidden-import pyclipper --collect-submodules fontTools --collect-all uharfbuzz --hidden-import manifold3d --collect-all fast_simplification --collect-all blake3 --hidden-import sqlite3 --hidden-import mujoco --collect-binaries mujoco \
+  --hidden-import numpy --hidden-import ezdxf --hidden-import scipy.optimize --hidden-import scipy.spatial --hidden-import scipy.sparse.csgraph --hidden-import scipy.ndimage --hidden-import pyclipper --collect-submodules fontTools --collect-all skfem --collect-all uharfbuzz --hidden-import manifold3d --collect-all fast_simplification --collect-all blake3 --hidden-import sqlite3 --hidden-import mujoco --collect-binaries mujoco \
   "${extra[@]}" \
   "$src/backend/formcad_engine.py"
 out="$FORMCAD_ROOT/src-tauri/engine"

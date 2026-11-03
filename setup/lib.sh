@@ -35,6 +35,13 @@ fc_kernel_venv() {
   # shellcheck disable=SC1090
   source "$act"
 }
+fc_mesher_venv() {
+  local act="$FORMCAD_ROOT/mesher/venv/bin/activate"
+  [ -f "$act" ] || act="$FORMCAD_ROOT/mesher/venv/Scripts/activate"
+  [ -f "$act" ] || fc_die "mesher venv missing, run ./formCAD install-mesher"
+  # shellcheck disable=SC1090
+  source "$act"
+}
 fc_node_ok() {
   command -v node >/dev/null 2>&1 && node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 22 ? 0 : 1)'
 }

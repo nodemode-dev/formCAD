@@ -9,12 +9,14 @@ if /i "%CMD%"=="dev" ( call setup\boot_all.bat & goto :done )
 if /i "%CMD%"=="install" ( call setup\install_all.bat %ARG% & goto :done )
 if /i "%CMD%"=="install-desktop" ( call setup\install_desktop.bat & goto :done )
 if /i "%CMD%"=="install-kernel" ( call setup\install_kernel.bat & goto :done )
+if /i "%CMD%"=="install-mesher" ( call setup\install_mesher.bat & goto :done )
 if /i "%CMD%"=="backend" ( call setup\boot_backend.bat & goto :done )
 if /i "%CMD%"=="frontend" ( call setup\boot_frontend.bat & goto :done )
 if /i "%CMD%"=="build" ( call setup\build_frontend.bat & goto :done )
 if /i "%CMD%"=="serve" ( call setup\serve.bat & goto :done )
 if /i "%CMD%"=="freeze" ( call setup\freeze_backend.bat & goto :done )
 if /i "%CMD%"=="freeze-kernel" ( call setup\freeze_kernel.bat & goto :done )
+if /i "%CMD%"=="freeze-mesher" ( call setup\freeze_mesher.bat & goto :done )
 if /i "%CMD%"=="desktop" (
   if /i "%ARG%"=="build" ( call setup\desktop_build.bat ) else ( call setup\desktop_dev.bat )
   goto :done
@@ -35,6 +37,6 @@ for /f "tokens=2 delims='" %%v in ('findstr /b /c:"export const VERSION" fronten
 exit /b 0
 :usage
 echo formCAD.bat [command]
-echo   boot ^| install [--lite] ^| install-desktop ^| install-kernel ^| backend ^| frontend
-echo   build ^| serve ^| freeze ^| freeze-kernel ^| desktop dev ^| desktop build ^| doctor ^| mcp ^| clean [--all] ^| version ^| help
+echo   boot ^| install [--lite] ^| install-desktop ^| install-kernel ^| install-mesher ^| backend ^| frontend
+echo   build ^| serve ^| freeze ^| freeze-kernel ^| freeze-mesher ^| desktop dev ^| desktop build ^| doctor ^| mcp ^| clean [--all] ^| version ^| help
 exit /b 0

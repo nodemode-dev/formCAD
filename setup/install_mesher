@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+py="$(fc_python)" || fc_die "Python 3.12 or newer is required"
+[ -f "$FORMCAD_ROOT/mesher/requirements_mesher.txt" ] || fc_die "mesher/requirements_mesher.txt is missing"
+cd "$FORMCAD_ROOT/mesher"
+[ -f venv/bin/activate ] || [ -f venv/Scripts/activate ] || "$py" -m venv venv
+fc_mesher_venv
+python -m pip install --upgrade pip
+pip install -r requirements_mesher.txt
+python formcad_mesher.py --selfcheck
+fc_say "mesher installed in mesher/venv (development only; the app downloads the frozen mesher on first use). Netgen has no wheel for Linux ARM or Windows ARM"

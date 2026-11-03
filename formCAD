@@ -12,12 +12,14 @@ usage: ./formCAD [command] [options]
   install [--lite]      install the engine, the frontend and (without --lite) the kernel dev venv
   install-desktop       install PyInstaller and check the Rust and Tauri toolchain
   install-kernel        create kernel/venv and install kernel/requirements_kernel.txt (development)
+  install-mesher        create mesher/venv and install mesher/requirements_mesher.txt (development)
   backend               boot the engine only
   frontend              boot the frontend only
   build                 production build of the frontend into frontend/dist
   serve                 serve the built frontend from the engine on 127.0.0.1:8290
   freeze                freeze the engine (PyInstaller onedir) into src-tauri/engine
   freeze-kernel         freeze the geometry kernel worker into kernel/dist (never bundled into the app)
+  freeze-mesher         freeze the mesher worker into mesher/dist (never bundled into the app)
   desktop dev|build     run or bundle the desktop app
   doctor                check the toolchain, installs and ports
   mcp                   the engine's MCP server over stdio
@@ -33,12 +35,14 @@ case "$cmd" in
   install) exec setup/install_all "$@" ;;
   install-desktop) exec setup/install_desktop "$@" ;;
   install-kernel) exec setup/install_kernel "$@" ;;
+  install-mesher) exec setup/install_mesher "$@" ;;
   backend) exec setup/boot_backend "$@" ;;
   frontend) exec setup/boot_frontend "$@" ;;
   build) exec setup/build_frontend "$@" ;;
   serve) exec setup/serve "$@" ;;
   freeze) exec setup/freeze_backend "$@" ;;
   freeze-kernel) exec setup/freeze_kernel "$@" ;;
+  freeze-mesher) exec setup/freeze_mesher "$@" ;;
   desktop)
     sub="${1:-dev}"
     [ $# -gt 0 ] && shift

@@ -9,6 +9,7 @@ if [ "$lite" = 1 ]; then
   fc_say "skipping the kernel dev venv (--lite): 2D features work without it"
 else
   "$FORMCAD_ROOT/setup/install_kernel" || fc_say "kernel did not install; the app still runs its 2D features. Retry with ./formCAD install-kernel"
+  "$FORMCAD_ROOT/setup/install_mesher" || fc_say "mesher did not install; simulation studies are unavailable. Retry with ./formCAD install-mesher"
 fi
 fc_say "installing frontend"
 "$FORMCAD_ROOT/setup/install_frontend"

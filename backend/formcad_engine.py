@@ -11,7 +11,7 @@ def resource_dir() -> str:
 
 def selfcheck() -> int:
     info = {"python": sys.version.split()[0]}
-    for name in ("fastapi", "uvicorn", "numpy", "scipy.optimize", "ezdxf", "keyring", "httpx", "uharfbuzz", "manifold3d", "fast_simplification", "blake3", "sqlite3", "mujoco", "pyclipper", "scipy.ndimage"):
+    for name in ("fastapi", "uvicorn", "numpy", "scipy.optimize", "ezdxf", "keyring", "httpx", "uharfbuzz", "manifold3d", "fast_simplification", "blake3", "sqlite3", "mujoco", "pyclipper", "scipy.ndimage", "skfem"):
         try:
             module = __import__(name)
             info[name] = getattr(module, "__version__", "ok")
@@ -33,12 +33,19 @@ def selfcheck() -> int:
         info["app"] = "ok"
         info["routers"] = len(app.main.ROUTERS)
         info["kernel_record"] = "ok" if record.get("program") == "formcad-kernel" else "missing"
+        from app.services import mesher
+
+        info["mesher_record"] = "ok" if mesher.record().get("program") == "formcad-mesher" else "missing"
+        import app.sim.registry as sim_registry
+
+        sim_registry.load()
+        info["sim_solvers"] = len(sim_registry.SOLVERS)
     except Exception as exc:
         info["app"] = f"failed: {exc!r}"
         print(json.dumps(info))
         return 1
     print(json.dumps(info))
-    return 0 if info["kernel_record"] == "ok" else 1
+    return 0 if info["kernel_record"] == "ok" and info["mesher_record"] == "ok" else 1
 
 
 def watch_parent() -> None:
