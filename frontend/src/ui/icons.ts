@@ -360,6 +360,7 @@ export const ICONS: Record<string, string> = {
   vault: s('<rect x="3.500" y="4.500" width="17" height="15" rx="2"/><circle cx="12" cy="12" r="3.200"/><path d="M12 8.800V12l2 1.500"/><path d="M7 19.500v1.500M17 19.500v1.500"/>'),
   merge: s('<circle cx="6" cy="5.500" r="2"/><circle cx="6" cy="18.500" r="2"/><circle cx="18" cy="14" r="2"/><path d="M6 7.500v9"/><path d="M6 12c0-3 6-1 10 0.500"/>'),
   cam: s('<path d="M9 3h6v8l-3 3-3-3z"/><path d="M12 14v3"/><path d="M5 21h14"/><path d="M8 17.500h8"/>'),
+  simulate: s('<path d="M4 18c3-9 5-9 8 0s5 9 8-12"/><path d="M4 21h16"/><path d="M4 3v18"/>'),
 };
 
 export function icon(name: string, size = 16): string {

@@ -233,6 +233,12 @@ const manufacture = (): MenuItem[] => section('Manufacture', () => [
   'p12-toolpaths', 'p12-sim-stock', 'p12-layers',
 ]);
 
+const simulate = (): MenuItem[] => section('Simulate', () => [
+  'p13-study-panel', 'p13-result-panel', SEP,
+  'p13-mesh', 'p13-solve', 'p13-cancel', SEP,
+  'p13-show-result',
+]);
+
 const drawing = (): MenuItem[] => section('Drawing', () => [
   E('New Sheet', 'layout', 'new'), E('Page Setup Manager...', 'pagesetup'), 'dw-titleblock', SEP,
   S('Base View', 'dw-base-front', 'dw-base-back', 'dw-base-left', 'dw-base-right', 'dw-base-top', 'dw-base-bottom', SEP, 'dw-base-iso', 'dw-base-iso2', 'dw-base-iso3', 'dw-base-iso4'),
@@ -303,6 +309,7 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Mesh', items: meshMenu },
     { label: 'Assembly', items: assembly },
     { label: 'Manufacture', items: manufacture },
+    { label: 'Simulate', items: simulate },
     { label: 'Drawing', items: drawing },
     { label: 'Graph', items: graph },
     { label: 'Tools', items: tools },
