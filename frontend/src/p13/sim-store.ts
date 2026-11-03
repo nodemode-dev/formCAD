@@ -237,7 +237,7 @@ class SimStore {
   }
 
   onEvent(e: Json): void {
-    if (e.id !== this.docId()) return;
+    if (e.id !== this.docId() || e.kind === 'generative') return;
     if (typeof e.job === 'string' && (this.job?.job === e.job || !this.job)) {
       this.take(e);
       if (!this.job?.study && typeof e.study === 'string') this.job = { ...(this.job as SimJob), study: e.study };
