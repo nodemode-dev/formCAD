@@ -5,7 +5,7 @@ import numpy as np
 from app.core import guard
 from app.part import rebuild, store
 from app.part.registry import PartError
-from app.plastic import records, rule
+from app.plastic import job, records, rule
 from app.solid import work
 
 DEFAULT_SAMPLES = 1000
@@ -218,10 +218,14 @@ def run(doc, opts: dict | None = None) -> dict:
         nominal = rl["nominal_wall"]
     margin = 0.5 * nominal if nominal else 0.0
     t0 = time.perf_counter()
-    ins = work.kcall("pl_inspect", {"id": wid, "pull": pull, "grid": 7}, work.LONG)
-    t1 = time.perf_counter()
-    wall = work.kcall("pl_wall", {"id": wid, "method": method, "samples": samples, "margin": margin}, work.LONG)
-    t2 = time.perf_counter()
+    with job.running(doc, "plasticcheck") as act:
+        act.step("Inspecting the faces", 0.05)
+        ins = job.interruptible(act, work.kcall, "pl_inspect", {"id": wid, "pull": pull, "grid": 7}, work.LONG)
+        t1 = time.perf_counter()
+        act.step("Measuring the wall thickness", 0.2)
+        wall = job.interruptible(act, work.kcall, "pl_wall", {"id": wid, "method": method, "samples": samples, "margin": margin}, work.LONG)
+        t2 = time.perf_counter()
+        act.step("Writing the report", 0.95)
     findings: list = []
     areas = {r["face"]: r["area"] for r in ins["faces"]}
     min_area = 0.5 * nominal * nominal if nominal else 0.0

@@ -226,7 +226,11 @@ def run_remesh(ctx, handles, args):
     done = []
     with jobs.activity(ctx, "meshremesh") as act:
         for e in found:
-            res, info = guard(remesh.remesh, guard(store.load, ctx.d, e), length * unit, iterations, feature, lock, act)
+            src = guard(store.load, ctx.d, e)
+            diag = float(np.linalg.norm(src.v.max(axis=0) - src.v.min(axis=0))) / unit
+            if length > diag / 2:
+                raise CommandError("The edge length %s is more than half the size of the mesh, which measures %s across in document units." % (ctx.fd(length), ctx.fd(diag)))
+            res, info = guard(remesh.remesh, src, length * unit, iterations, feature, lock, act)
             done.append((e, res, info))
     out = []
     for e, res, info in done:

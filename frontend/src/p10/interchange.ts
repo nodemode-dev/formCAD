@@ -146,7 +146,7 @@ class ImportDialog extends Dialog {
     setChecked(this.pmi.box, true);
     setChecked(this.assembly.box, true);
     setChecked(this.scale.box, true);
-    const lines = [...info.warnings];
+    const lines = info.units_known ? [...info.warnings] : info.warnings.filter((w) => !/carries no unit/i.test(w));
     const hint = info.suggestion?.suggested_unit;
     if (!info.units_known && hint) lines.unshift(`${t('The size looks wrong in the document unit; the numbers may be in')} ${hint}.`);
     if (!info.units_known) lines.unshift(t('This format carries no unit. Choose the unit of its numbers; nothing is rescaled without your choice.'));
@@ -182,7 +182,7 @@ class ExportDialog extends Dialog {
     setText(q(this.unitRow, 'span'), t('Unit in the file'));
     this.unitRow.appendChild(this.unit);
     this.body.append(this.file.row, this.schemaRow, this.unitRow, this.pmi.row, this.selected.row, this.binary.row, this.linear.row, this.angular.row, this.notes.el);
-    this.schema.addEventListener('change', () => this.paint());
+    this.schema.addEventListener('change', () => { if (this.schema.value === 'ap242') setChecked(this.pmi.box, true); this.paint(); });
     this.button('Cancel', 'ghost', () => this.finish(null));
     this.go = this.button('Export', 'primary', () => this.finish(this.collect()));
     this.onClose = () => this.finish(null);
@@ -316,6 +316,19 @@ export async function importWithOptions(path: string): Promise<boolean> {
     toast(e instanceof Error ? e.message : t('The import failed.'), 'error');
   }
   return true;
+}
+
+export async function openOptions(path: string): Promise<ImportOptions | null | false> {
+  if (!IMPORT_EXT.includes(extOf(path))) return false;
+  let info: Inspect;
+  try {
+    info = await call<Inspect>('POST', '/api/interchange/inspect', { path });
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 404 || e.status === 405)) return false;
+    toast(e instanceof Error ? e.message : t('The file could not be read.'), 'error');
+    return null;
+  }
+  return (importDlg ??= new ImportDialog()).ask(path, { ...info, mismatch: false, document_unit: info.unit || t('New document') });
 }
 
 export async function exportWithOptions(path: string): Promise<boolean> {

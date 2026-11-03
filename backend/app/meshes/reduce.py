@@ -19,20 +19,28 @@ def simplify_to(m: Mesh, count: int, lock_boundary: bool) -> Mesh:
     v, t = np.array(m.v, dtype=np.float64), np.array(m.t, dtype=np.int32)
     before = core.edge_classes(m)
     vol0 = core.signed_volume(m)
-    out = m
-    for agg in (5.0, 3.0, 1.0):
+    best, best_err = None, None
+    for agg in (7.0, 9.0, 5.0):
         pts, faces = fs.simplify(v, t, target_count=count, agg=agg, preserve_border=bool(lock_boundary))
         out = Mesh(pts, np.asarray(faces, dtype=np.int64).reshape(-1, 3))
         keep = core.areas(out) > 0
         if not keep.all():
             out = core.compact(Mesh(out.v, out.t[keep]))
+        if len(out.t) > 1.05 * count + 4:
+            continue
         after = core.edge_classes(out)
-        sound = len(after["naked"]) <= len(before["naked"]) and after["nonmanifold"] <= before["nonmanifold"]
-        if sound and not len(before["naked"]) and abs(vol0) > 0:
-            sound = abs(core.signed_volume(out) - vol0) <= 0.02 * abs(vol0)
-        if sound:
-            break
-    return out
+        if len(after["naked"]) > len(before["naked"]) or after["nonmanifold"] > before["nonmanifold"]:
+            continue
+        err = 0.0
+        if not len(before["naked"]) and abs(vol0) > 0:
+            err = abs(core.signed_volume(out) - vol0) / abs(vol0)
+        if err <= 0.02:
+            return out
+        if best is None or err < best_err:
+            best, best_err = out, err
+    if best is None:
+        raise MeshError("The mesh could not be reduced to %d triangles without opening it." % count)
+    return best
 
 
 def reduce(m: Mesh, mode: str, value: float, lock_boundary: bool = True, act=QUIET) -> tuple:
@@ -67,7 +75,11 @@ def reduce(m: Mesh, mode: str, value: float, lock_boundary: bool = True, act=QUI
             mid = int(math.exp((math.log(lo) + math.log(hi)) / 2))
             if mid >= hi or mid <= lo:
                 break
-            trial = simplify_to(m, mid, lock_boundary)
+            try:
+                trial = simplify_to(m, mid, lock_boundary)
+            except MeshError:
+                lo = mid
+                continue
             dev = spatial.deviation(m, trial, 40_000)
             if dev["max"] <= value:
                 best, best_dev = trial, dev

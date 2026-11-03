@@ -1,6 +1,6 @@
 import { onShellMounted } from '../app';
 import { commands } from '../ui/commands';
-import { docStore } from '../ui/doc-store';
+import { docStore, openHooks } from '../ui/doc-store';
 import { registerDockPanel } from '../ui/dock';
 import { onView3d, view3d } from '../view3d/mount';
 import type { Viewport3D } from '../view3d/viewport';
@@ -10,7 +10,10 @@ import { form } from './form-store';
 import { meshPanel } from './mesh-panel';
 import { attachPmi, pmiPanel } from './pmi-panel';
 import { plasticPanel } from './plastic-panel';
+import { openOptions } from './interchange';
 import { runCmd } from './kit';
+
+openHooks.ask = openOptions;
 
 let formLayer: FormLayer | null = null;
 

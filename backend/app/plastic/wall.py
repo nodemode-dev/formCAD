@@ -4,7 +4,7 @@ import tempfile
 import numpy as np
 
 from app.core import guard
-from app.plastic import rule
+from app.plastic import job, rule
 from app.solid.work import SolidError
 from app.solid import work
 
@@ -41,7 +41,9 @@ def wall_values(doc, spec: dict, bodies: list, detail: float) -> tuple:
             out = os.path.join(tmp, "o.wal")
             np.ascontiguousarray(pos, dtype="<f4").tofile(pts)
             np.ascontiguousarray(data[:, :3], dtype="<f4").tofile(nrm)
-            work.kcall("pl_wall", {"id": wid, "method": spec["method"], "points_path": pts, "normals_path": nrm, "out_path": out}, work.LONG)
+            with job.running(doc, "plasticwall", SolidError) as act:
+                act.step("Measuring the wall thickness", 0.1)
+                job.interruptible(act, work.kcall, "pl_wall", {"id": wid, "method": spec["method"], "points_path": pts, "normals_path": nrm, "out_path": out}, work.LONG)
             arr = np.fromfile(out, dtype="<f4")
         if len(arr) != len(pos):
             raise SolidError("The wall thickness values do not follow the display mesh; lower the detail and try again.")

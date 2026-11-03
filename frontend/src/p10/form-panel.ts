@@ -54,11 +54,10 @@ export function formPanel(setEditing: (on: boolean) => void): DockPanel {
       setText(q(nameCtl, 'span'), t('Name'));
       const nameIn = q<HTMLInputElement>(nameCtl, 'input');
       const fieldCtl = new Map<string, Ctl<number | null>>();
-      for (const [k, list] of Object.entries(FIELDS)) for (const f of list) fieldCtl.set(`${k}.${f.key}`, numberCtl(f.label, f.value));
+      for (const [k, list] of Object.entries(FIELDS)) for (const f of list) { const c = numberCtl(f.label, f.value); fieldCtl.set(`${k}.${f.key}`, c); fieldHost.appendChild(c.el); }
       const fieldsFor = (): void => {
         const k = prim.get();
-        const list = FIELDS[k] ?? [];
-        fieldHost.replaceChildren(...list.map((f) => (fieldCtl.get(`${k}.${f.key}`) as Ctl<number | null>).el));
+        for (const [key, c] of fieldCtl) setHidden(c.el, !key.startsWith(`${k}.`));
         setHidden(sym.el, !MIRROR_PRIMS.has(k));
       };
       const bMake = button('Create', () => void make(), 'primary');

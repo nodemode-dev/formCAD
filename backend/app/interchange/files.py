@@ -91,7 +91,11 @@ def model_drawing(path: str, kind: str, report: Report, target=None, options=Non
 
 def read_any(path: str, recover: bool = False, report: Report | None = None, unit: str = "", target=None, options=None):
     report = report or Report()
-    full = os.path.realpath(os.path.expanduser(path))
+    unit = str(unit or (options or {}).get("unit") or "")
+    from app.interchange.fileunits import ALIASES
+
+    unit = ALIASES.get(unit.strip().lower(), unit)
+    full =os.path.realpath(os.path.expanduser(path))
     if not os.path.isfile(full):
         raise InterchangeError('Cannot find the file "%s".' % path, "missing")
     kind = detect(full)

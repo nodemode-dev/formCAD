@@ -1,8 +1,6 @@
 import os
 import re
 
-import numpy as np
-
 from app.core import guard
 from app.interchange import fileunits
 from app.interchange.errors import InterchangeError, Report
@@ -100,7 +98,7 @@ def read_into(path: str, kind: str, report: Report, target=None, options=None):
         report.note("%d layer%s read: %s." % (len(layers_seen), "" if len(layers_seen) == 1 else "s", ", ".join(sorted(layers_seen)[:8])))
     if paths_seen:
         report.note("Assembly structure read: %d assembl%s; each body keeps its path." % (len(paths_seen), "y" if len(paths_seen) == 1 else "ies"))
-    report.note("%d bod%s carry a colour." % (colour_n, "y" if colour_n == 1 else "ies"))
+    report.note("%d bod%s %s a colour." % (colour_n, "y" if colour_n == 1 else "ies", "carries" if colour_n == 1 else "carry"))
     if res.get("colours_in_file", 0) > colour_n:
         report.warn("The file holds %d colours; body colours are kept, face and edge colours are not." % res["colours_in_file"])
     for w in info["warnings"]:

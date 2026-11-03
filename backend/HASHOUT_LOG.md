@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## I11 integration, v0.10.0 (meshes/reduce.py, cmd/commands/meshws.py, cmd/commands/subd.py, interchange/files.py, interchange/stepio.py, plastic/job.py, plastic/check.py, plastic/wall.py, routers/plastic.py)
+
+Reduce returned one triangle count for every mode. fast-simplification only reaches its target at aggression 7 and above; at 5 it stopped at 2188 of 3480 triangles whatever the target and at 3 and 1 it did not reduce at all, and `simplify_to` tried 5, 3, 1 and kept the last attempt even when it had failed the checks. Now 7, 9, 5 in that order; an attempt counts when it lands within 5 percent of the target, opens no hole and adds no non-manifold edge; the first one inside 2 percent volume change is returned, else the least volume change among the sound ones, else a message. Tolerance mode catches that message and treats it as "too far". Checked on a 3664 triangle sphere (proportion 0.5 gives 1832, count 100 gives 100, tolerance 50 gives 60) and on the 80 triangle one (40 and 4).
+
+Remesh refusal. The refusal was correct and its message was wrong: U13 used a mesh of radius 20 document units in an inch drawing (508 mm), so an edge length of 300 document units is more than half of the 69.28 across. The check now runs in the command in document units and says both numbers; the engine check in millimetres stays as the backstop.
+
+Unit option of mesh imports. `options.unit` (what the import dialog sends for STL, OBJ and PLY) was read by nothing: `read_any` only looked at the top level `unit`, and `mesh_files.unit_mm` knows only `in`, `ft`, `um`, not the dialog's `inch`, `foot`, `micron`. `read_any` now takes the unit from either place and maps names through `fileunits.ALIASES`. File, Open of a 3D file uses the same route with the same options (interface side: `openHooks.ask`).
+
+Bridge from a face selection. The panel sends the selected faces as one flat list; the engine wanted two lists. `split_face_groups` splits a flat list into connected groups (shared vertices) and refuses anything but two.
+
+Plastic checks and wall map as jobs. `plastic/job.py`: `running` registers an Activity on the MW1 channel (events `meshjob`, commands `plasticcheck` and `plasticwall`, `POST /meshes/cancel` stops them) and `interruptible` runs a worker call on a thread and polls the cancel flag every 0.2 s, so Cancel answers at once; the worker call itself is not interrupted (it finishes in the background, its result is dropped, later worker calls wait for it). The checks and wall routes no longer wrap the whole run in the document lock (`check.run` takes it only to read the part), so other routes answer while a check runs (7 ms measured against a 6.2 s check). The wall map still runs inside `compute_full` under the document lock because WALLTHICKNESS runs through the command runner; it is cancellable but not lock free.
+
+One message: "1 body carries a colour" grammar in the STEP read report.
+
 ## MW1 mesh workspace, Phase 27 mesh, v0.10.0 (meshes/jobs.py, repair.py, reduce.py, remesh.py, section.py, solidops.py, spatial.py, cmd/commands/meshws.py, routers/meshes.py, kernel/kernel_meshbrep.py, requirements, NOTICE.md, freeze_backend*)
 
 Dependencies. manifold3d 3.5.4 (Apache-2.0; the compiled module statically holds oneTBB, Clipper2, quickhull and nanobind, the wheel has no `*.libs` folder, checked with `ldd` and `strings` on the installed wheel) and fast-simplification 0.2.0 (MIT; its Linux wheel carries libgomp, GPL-3.0 with the GCC Runtime Library Exception, as a separate unmodified library, same treatment as numpy's libgfortran). Both run in the engine, not the worker: neither is LGPL, both are permissive numerics inside cancellable commands. NOTICE rows, both requirements files, both freeze scripts (`--hidden-import manifold3d --collect-all fast_simplification`) and the `--selfcheck` import list were changed in the same edit. nanobind refuses read-only numpy arrays, so every array handed to either library is copied first (the stored meshes come from `frombuffer`).
@@ -36,7 +50,7 @@ Edit design. Soft selection is Dijkstra over cage edges weighted by length with 
 
 Rules. All commands are group `solids`, read and write no file, start no process and change no setting, so `cmd/barred.py` and `core/guard.py` needed no entry; macro and agent callers get the lower caps through `barred.caller`. Routes are read only (cage, soft weights, analysis, limit mesh). A cage that is not manifold draws as its cage only instead of failing the whole scene. `setup/freeze_backend` and `.bat` gained `--hidden-import scipy.spatial` and `scipy.sparse.csgraph` (scipy is already a dependency, so no NOTICE row).
 
-Not done: Fusion-style extrude of faces, weld and unweld, bevel, slide, match and thicken on forms; the G1 patch construction at extraordinary vertices (Gregory or the Loop and Schaefer tangent patches); presentation of crease sharpness that fades out along an edge chain; export of a form to STEP or STL without converting first.
+Not done: extrude of faces, weld and unweld, bevel, slide, match and thicken on forms; the G1 patch construction at extraordinary vertices (Gregory or the Loop and Schaefer tangent patches); presentation of crease sharpness that fades out along an edge chain; export of a form to STEP or STL without converting first.
 
 ## PL1 plastic part rules, features, wall thickness and checks, Phase 27, v0.10.0 (plastic/data.py, rule.py, features.py, snap.py, records.py, check.py, wall.py, routers/plastic.py, cmd/commands/plastic.py, analysis/spec.py, ramps.py, service.py, kernel/kernel_plastic.py, data/plastic/*.json)
 

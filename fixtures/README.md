@@ -235,7 +235,7 @@ SM2 fixture (Phase 22 exit, flat pattern), millimetres. A U channel as one extru
 
 ## graph/plate-holes.fcad
 
-GR2 fixture (Phase 24, geometry nodes and bake), millimetres, with the same graph as `plate-holes.graph`. Graph `Plate with bolt holes`: a 100 by 60 by 20 box, one cylinder of radius 4 turned into a ring of four by the polar array, the difference of the two (volume 115978.7614 mm3, the box minus four holes), a tagged copy (`attr.set`: name `Plate`, layer `Plates`, colour #3a7bd5), the mass node and the mid height section (five curves of total length 420.5310 mm). Baked from the nodes `tag` and `sec`: one solid body named `Plate` on layer `Plates` and five NURBS curves, all carrying the provenance `G1/<node>/<port>/<path>/<index>` in `FORMCAD_GRAPH` extended data. Reopened, the graph solves to the same volume and the baked objects keep name, layer and colour.
+GR2 fixture (Phase 24, node graph geometry and bake), millimetres, with the same graph as `plate-holes.graph`. Graph `Plate with bolt holes`: a 100 by 60 by 20 box, one cylinder of radius 4 turned into a ring of four by the polar array, the difference of the two (volume 115978.7614 mm3, the box minus four holes), a tagged copy (`attr.set`: name `Plate`, layer `Plates`, colour #3a7bd5), the mass node and the mid height section (five curves of total length 420.5310 mm). Baked from the nodes `tag` and `sec`: one solid body named `Plate` on layer `Plates` and five NURBS curves, all carrying the provenance `G1/<node>/<port>/<path>/<index>` in `FORMCAD_GRAPH` extended data. Reopened, the graph solves to the same volume and the baked objects keep name, layer and colour.
 
 ## sheetmetal/bracket.fcad
 

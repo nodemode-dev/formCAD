@@ -2,6 +2,18 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## I11 integration, v0.10.0 (p10/interchange.ts, p10/register.ts, p10/form-panel.ts, p10/plastic-panel.ts, styles/p10.css, ui/doc-store.ts, ui/output/output-api.ts)
+
+File, Open of 3D files. `docStore.openPath` asks `openHooks.ask` (set in `p10/register.ts`, no import cycle with `interchange.ts`) before a foreign file opens; `openOptions` inspects the file without a document, shows the same import dialog (document unit reads "New document", no unit choice because a new document takes the file's unit, a unit choice for STL, OBJ and PLY) and the answer goes to `/interchange/open` as `options`. Cancel opens nothing. The duplicate "carries no unit" line is dropped when the dialog already explains it.
+
+Export dialog. Choosing AP242 ticks the PMI box (it stayed empty, so an AP242 export silently carried no notes); the notes block has a fixed height of six lines and scrolls (a wrapped AP242 note grew the dialog by 12 px, shift 0.0012).
+
+Form panel. The six primitive field sets are built once and shown or hidden by shape (they were swapped with `replaceChildren`, 8 nodes removed per shape change); the field area reserves six rows (shape change shifted the sections below, 0.0024).
+
+Plastic panel. Job bars for the checks and the wall map (commands `plasticcheck`, `plasticwall`, Cancel goes to `meshes/cancel`).
+
+Known and left: the wall map reveals the Surface Analysis dock group, which pushes the Plastic group down (shift 0.013, the existing Z1 behaviour); the job bar phase text changes width on each phase (shift below 1e-4).
+
 ## U13, v0.10.0 interface for Phases 25 to 27 (p10/*, styles/p10.css, ui/output/register.ts, ui/file-dialogs.ts, ui/icons.ts, ui/menu-spec.ts, part/kinds.ts, io/events.ts, graph/*, graphx/*, main.ts, index.html)
 
 Layout. Everything new lives in `src/p10/` and registers from `p10/register.ts`: `kit.ts` (command runner, report box with a fixed row count, job bar, foldable `section`), `interchange.ts` (import options, export options and report dialogs), `pmi-panel.ts` and `pmi-layer.ts`, `form-store.ts`, `form-layer.ts` and `form-panel.ts`, `mesh-panel.ts`, `plastic-panel.ts`. Panels reuse the `u8/ui.ts` controls and `u8-*` classes; only what they lack is in `styles/p10.css` (prefix `xw-`, tokens only). Sections fold (state in `formCAD.p10.folds`), because one long panel was 2,500 px tall.

@@ -37,6 +37,8 @@ export function filterRecent(items: FileItem[]): FileItem[] {
   return cleared ? items.filter((i) => toMillis(i.modified) > cleared) : items;
 }
 
+export const openHooks: { ask?: (path: string) => Promise<object | null | false> } = {};
+
 const failure = (e: unknown): string => (e instanceof ApiError || e instanceof Error ? e.message : 'The engine did not answer');
 
 export class DocStore {
@@ -125,7 +127,13 @@ export class DocStore {
   async openPath(path: string): Promise<DocSummary | null> {
     try {
       const foreign = !/\.fcad$/i.test(path.trim());
-      const doc = foreign ? await trackWork(`Open ${path.split(/[\\/]/).pop() ?? path}`, () => outputApi.openForeign(path)) : await api.openDoc(path);
+      let options: object | undefined;
+      if (foreign && openHooks.ask) {
+        const asked = await openHooks.ask(path);
+        if (asked === null) return null;
+        if (asked) options = asked;
+      }
+      const doc = foreign ? await trackWork(`Open ${path.split(/[\\/]/).pop() ?? path}`, () => outputApi.openForeign(path, false, options)) : await api.openDoc(path);
       this.upsert(doc);
       void this.refreshRecent();
       if (foreign) tellNotes(`Opened ${doc.name}.`, (doc as { notes?: Parameters<typeof tellNotes>[1] }).notes);

@@ -1,5 +1,4 @@
 import io
-import re
 import zipfile
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape, quoteattr

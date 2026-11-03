@@ -709,11 +709,40 @@ def subdbridge_cmd(ctx):
     run_bridge(ctx, {"handle": first_form(ctx, handles), "edges": [parse_edges(a.value)[0], parse_edges(b.value)[0]]})
 
 
+def split_face_groups(cage, faces):
+    faces = sorted(set(int(f) for f in faces))
+    if any(not 0 <= f < len(cage.f) for f in faces):
+        raise CommandError("A selected face does not exist.")
+    parent = {f: f for f in faces}
+
+    def root(f):
+        while parent[f] != f:
+            parent[f] = parent[parent[f]]
+            f = parent[f]
+        return f
+
+    owner = {}
+    for f in faces:
+        for v in cage.f[f]:
+            if v in owner:
+                parent[root(f)] = root(owner[v])
+            else:
+                owner[v] = f
+    groups = {}
+    for f in faces:
+        groups.setdefault(root(f), []).append(f)
+    if len(groups) != 2:
+        raise CommandError("Select faces that form two separate groups, one at each end of the bridge.")
+    return list(groups.values())
+
+
 def run_bridge(ctx, args):
     ent, cage = get_cage(ctx, args)
     kw = {"twist": args.get("twist"), "spans": int(args.get("spans", 1)), "agent": is_agent(ctx)}
     if args.get("faces"):
         groups = args["faces"]
+        if isinstance(groups, list) and groups and all(isinstance(g, int) for g in groups):
+            groups = split_face_groups(cage, groups)
         if not (isinstance(groups, list) and len(groups) == 2 and all(isinstance(g, list) for g in groups)):
             raise CommandError("Give two lists of faces to bridge.")
         out, info = guard(ops.bridge, cage, None, None, groups[0], groups[1], **kw)

@@ -9,7 +9,7 @@ import { toast } from '../ui/toast';
 import { analysis } from '../u8/register';
 import { button, buttons, numberCtl, readout, selectCtl, type Ctl } from '../u8/ui';
 import { view3d } from '../view3d/mount';
-import { docUrl, fixed, num, reportBox, req, runCmd, section, text, type Json } from './kit';
+import { docUrl, fixed, jobBar, num, reportBox, req, runCmd, section, text, type Json } from './kit';
 
 interface Finding { id: string; severity: string; kind: string; message: string; feature?: string | null; face?: number | null; value?: number | null; limit?: number | null; at?: number[] | null; at_units?: number[] | null }
 interface Field { key: string; label: string; unit: string }
@@ -111,7 +111,8 @@ export function plasticPanel(): DockPanel {
       const wall = reportBox(4);
       const fList = el('<div class="u8-list xw-findings is-scroll" role="list" aria-label="Findings"></div>');
       const fEmpty = el('<p class="u8-note xw-empty"></p>');
-      sCheck.body.append(method.el, samples.el, buttons(bCheck, button('Clear marks', () => analysis?.clearNaked())), summary.el, wall.el, fList, fEmpty);
+      const checkJob = jobBar(['plasticcheck'], (id) => docUrl(id, 'meshes/cancel'));
+      sCheck.body.append(method.el, samples.el, buttons(bCheck, button('Clear marks', () => analysis?.clearNaked())), checkJob.el, summary.el, wall.el, fList, fEmpty);
 
       const sMap = section('Wall thickness map');
       const mMethod = selectCtl('Method', METHODS);
@@ -122,7 +123,8 @@ export function plasticPanel(): DockPanel {
       setText(mapNote, t('Blank limits use the wall range of the rule. Colours show on the selected solids, or on all solids when none is selected.'));
       const bMap = button('Show map', () => void showMap(), 'primary');
       const bOff = button('Map off', () => void mapOff());
-      sMap.body.append(mMethod.el, lo.el, hi.el, mapNote, buttons(bMap, bOff));
+      const mapJob = jobBar(['plasticwall'], (id) => docUrl(id, 'meshes/cancel'));
+      sMap.body.append(mMethod.el, lo.el, hi.el, mapNote, buttons(bMap, bOff), mapJob.el);
 
       body.append(sRule.root, sFeat.root, sCheck.root, sMap.root);
 

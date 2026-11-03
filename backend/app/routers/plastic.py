@@ -3,10 +3,21 @@ from typing import Any, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from app.param import store as S
+from app.part.registry import PartError
 from app.plastic import check, data, records, rule
-from app.routers.part import _edit, _read
+from app.routers.part import _doc, _edit, _fail, _read
+from app.solid.work import SolidError
 
 router = APIRouter(tags=["plastic"])
+
+
+def _free(doc_id: str, fn):
+    doc = _doc(doc_id)
+    try:
+        return fn(doc)
+    except (PartError, S.ParamError, SolidError, ValueError, KeyError) as err:
+        _fail(err)
 
 
 class CheckBody(BaseModel):
@@ -62,14 +73,14 @@ def get_features(doc_id: str) -> dict:
 
 @router.post("/{doc_id}/plastic/checks")
 def post_checks(doc_id: str, body: CheckBody) -> dict:
-    return _read(doc_id, lambda doc: check.run(doc, body.model_dump()))
+    return _free(doc_id, lambda doc: check.run(doc, body.model_dump()))
 
 
 @router.get("/{doc_id}/plastic/wall")
 def get_wall(doc_id: str, method: str = "sphere", samples: Optional[int] = None) -> dict:
-    return _read(doc_id, lambda doc: {"wall": check.run(doc, {"method": method, "samples": samples})["wall"]})
+    return _free(doc_id, lambda doc: {"wall": check.run(doc, {"method": method, "samples": samples})["wall"]})
 
 
 @router.post("/{doc_id}/plastic/wall")
 def post_wall(doc_id: str, body: CheckBody) -> dict:
-    return _read(doc_id, lambda doc: {"wall": check.run(doc, body.model_dump())["wall"]})
+    return _free(doc_id, lambda doc: {"wall": check.run(doc, body.model_dump())["wall"]})
