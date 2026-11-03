@@ -361,6 +361,18 @@ export const ICONS: Record<string, string> = {
   merge: s('<circle cx="6" cy="5.500" r="2"/><circle cx="6" cy="18.500" r="2"/><circle cx="18" cy="14" r="2"/><path d="M6 7.500v9"/><path d="M6 12c0-3 6-1 10 0.500"/>'),
   cam: s('<path d="M9 3h6v8l-3 3-3-3z"/><path d="M12 14v3"/><path d="M5 21h14"/><path d="M8 17.500h8"/>'),
   simulate: s('<path d="M4 18c3-9 5-9 8 0s5 9 8-12"/><path d="M4 21h16"/><path d="M4 3v18"/>'),
+  ecad: s('<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M10 7V4M14 7V4M10 20v-3M14 20v-3M7 10H4M7 14H4M20 10h-3M20 14h-3"/>'),
+  pcb: s('<rect x="3.500" y="5" width="17" height="14" rx="2"/><circle cx="8" cy="10" r="1.200"/><circle cx="16" cy="14" r="1.200"/><path d="M8 11.200V14h6M16 12.800V10h-5"/>'),
+  fab: s('<path d="M5 4h10l4 4v12H5z"/><path d="M14 4v5h5"/><path d="M9 14h6M9 17h4"/>'),
+  weld: s('<path d="M3 20L10 8l4 6 7-10"/><path d="M3 20h18"/><circle cx="10" cy="8" r="1.500"/><circle cx="14" cy="14" r="1.500"/>'),
+  mold: s('<rect x="4" y="3.500" width="16" height="7" rx="1.500"/><rect x="4" y="13.500" width="16" height="7" rx="1.500"/><path d="M9 10.500v3M15 10.500v3"/>'),
+  toolbox: s('<rect x="3.500" y="8" width="17" height="11.500" rx="2"/><path d="M9 8V5.500h6V8"/><path d="M3.500 13h17M11 13v2h2v-2"/>'),
+  inspect: s('<circle cx="10.500" cy="10.500" r="6"/><path d="M15 15l5.500 5.500"/><path d="M8 10.500l2 2 3.500-4"/>'),
+  cost: s('<circle cx="12" cy="12" r="8.500"/><path d="M14.500 9.200c-.6-.9-1.500-1.200-2.500-1.200-1.400 0-2.500.8-2.500 2s1 1.700 2.500 2 2.500.8 2.500 2-1.100 2-2.500 2c-1 0-1.900-.4-2.500-1.200"/><path d="M12 6v2M12 16v2"/>'),
+  generative: s('<path d="M4 20V10l5-6 5 6v10"/><circle cx="9" cy="14" r="1.500"/><path d="M14 20h6M17 10v10"/><circle cx="17" cy="7" r="2"/>'),
+  harness: s('<circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 6c5 0 5 6 10 6M7 18c5 0 5-6 10-6"/>'),
+  pipe: s('<path d="M4 6h8a4 4 0 0 1 4 4v8"/><path d="M4 9.500h7a1.500 1.500 0 0 1 1.500 1.500v7"/><path d="M14 18h4"/>'),
+  schematic: s('<path d="M3 12h4l1.500-4 3 8 3-8L16 12h5"/><path d="M12 4v2M12 18v2"/>'),
 };
 
 export function icon(name: string, size = 16): string {

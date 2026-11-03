@@ -239,6 +239,26 @@ const simulate = (): MenuItem[] => section('Simulate', () => [
   'p13-show-result',
 ]);
 
+const produce = (): MenuItem[] => section('Produce', () => [
+  'p15-weld-panel', 'p15-mold-panel', 'p15-toolbox-panel', SEP,
+  'p15-inspect-panel', 'p15-cost-panel', 'p15-check-panel', SEP,
+  'p15-draft-colours',
+]);
+
+const generate = (): MenuItem[] => section('Generate', () => [
+  'p14a-gen-panel', SEP, 'p14a-gen-run', 'p14a-gen-cancel', 'p14a-gen-hide',
+]);
+
+const routing = (): MenuItem[] => section('Routing', () => [
+  'p14a-harness-panel', 'p14a-pipe-panel', 'p14a-schem-panel', SEP, 'p14a-route-show',
+]);
+
+const electronics = (): MenuItem[] => section('Electronics', () => [
+  'p14b-tab-sch', 'p14b-tab-pcb', 'p14b-tab-3d', SEP,
+  'p14b-sch-panel', 'p14b-pcb-panel', 'p14b-out-panel', SEP,
+  'p14b-drc', 'p14b-route', 'p14b-route-cancel',
+]);
+
 const drawing = (): MenuItem[] => section('Drawing', () => [
   E('New Sheet', 'layout', 'new'), E('Page Setup Manager...', 'pagesetup'), 'dw-titleblock', SEP,
   S('Base View', 'dw-base-front', 'dw-base-back', 'dw-base-left', 'dw-base-right', 'dw-base-top', 'dw-base-bottom', SEP, 'dw-base-iso', 'dw-base-iso2', 'dw-base-iso3', 'dw-base-iso4'),
@@ -310,6 +330,10 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Assembly', items: assembly },
     { label: 'Manufacture', items: manufacture },
     { label: 'Simulate', items: simulate },
+    { label: 'Produce', items: produce },
+    { label: 'Generate', items: generate },
+    { label: 'Routing', items: routing },
+    { label: 'Electronics', items: electronics },
     { label: 'Drawing', items: drawing },
     { label: 'Graph', items: graph },
     { label: 'Tools', items: tools },

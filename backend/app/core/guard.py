@@ -80,7 +80,7 @@ def run_files(given) -> tuple:
 CALLER = contextvars.ContextVar("formcad_caller", default="")
 FILES = contextvars.ContextVar("formcad_files", default=())
 MACRO_DENIED_FIRST = {"open", "recovery", "autosave", "3dm"}
-MACRO_DENIED_LATER = {"save", "saveas", "plot", "macro", "export", "xrefs", "import", "materiallib", "assembly", "matesettings", "motionsettings", "docprops", "video", "renderjobs", "vault"}
+MACRO_DENIED_LATER = {"save", "saveas", "plot", "macro", "export", "xrefs", "import", "materiallib", "assembly", "matesettings", "motionsettings", "docprops", "video", "renderjobs", "vault", "library-profile"}
 MACRO_DENIED_WRITE = {"drawann", "graphs", "sim", "topo", "gen", "pipes", "schem", "link", "kicad", "costing", "toolbox"}
 MACRO_WRITE_OK = {"solve", "cancel"}
 

@@ -61,7 +61,7 @@ def register(type, label, run, needs=("material", "fixtures"), options=None, ord
     SOLVERS[str(type)] = Solver(type, label, run, needs, options, order, mesh_order)
 
 
-MODULES = ("app.sim.solvers", "app.simnl.register", "app.topo.register", "app.flow.register")
+MODULES = ("app.sim.solvers", "app.simnl.register", "app.topo.register", "app.gen.register", "app.flow.register")
 _loaded = [False]
 
 

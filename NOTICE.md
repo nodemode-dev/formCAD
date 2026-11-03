@@ -85,6 +85,10 @@ The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-b
 | Mesher worker `formcad-mesher` in `mesher/`, a separate program distributed only from the `formCAD-binaries` releases and never in the kernel worker's process: netgen-mesher 6.2.2608 (LGPL-2.1-only, wheel `License-Expression` and `licenses/LICENSE`) and netgen-occt 7.8.1 (OpenCascade 7.8.1 libraries, LGPL-2.1, wheel ships `LICENSE_LGPL_21.txt`), numpy 2.5.4. The netgen wheel also bundles libGLU, libXmu, libXt, a GUI library and MPI wrappers whose licences the wheel does not state (flagged in `mesher/NOTICE.md`); none loads when a shape is meshed. No wheel exists for Linux ARM or Windows ARM | LGPL-2.1-only, LGPL-2.1, BSD-3-Clause | `mesher/NOTICE.md`, `mesher/requirements_mesher.txt`, `setup/freeze_mesher`, `setup/freeze_mesher.bat` |
 | rhino3dm 8.35.0, used only inside the kernel worker to read and write 3DM files; it carries openNURBS, zlib, pybind11, nanobind and draco. The openNURBS licence text has no SPDX name, so written confirmation from its owner is still recommended before the first kernel release | MIT for rhino3dm; openNURBS under its own permissive text; zlib; BSD-3-Clause; Apache-2.0 | `kernel/NOTICE.md`, `kernel/kernel_3dm.py` |
 
+## File formats written from published specifications
+
+The electronics outputs implement four file formats from their publicly published specifications, without copying specification text or any code: the Gerber layer format, the Excellon drill format, the IDF 3.0 board exchange format and the `.kicad_pcb` board file format. The formats are named only as formats. Whether the owner of the Gerber format requires written permission for a conforming exporter is an owner item and is not settled (research file R26 records it); the terms are not restated here.
+
 ## Independent implementation
 
 formCAD is an independent implementation. Where it offers behaviour comparable to other CAD software, that behaviour was written from functional descriptions only; no source code, text or artwork from those products is included. Product names are trademarks of their owners and are used only to describe compatibility.

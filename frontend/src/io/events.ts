@@ -20,12 +20,14 @@ export interface SimJobEvent { type: 'simjob'; id: string; job?: string; study?:
 
 export interface TopoJobEvent { type: 'topojob'; id: string; job?: string; study?: string; state?: string; phase?: string; progress?: number; message?: string; [key: string]: unknown }
 
-export type EngineEvent =DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent | GraphEvent | MeshJobEvent | MotionEvent | CamEvent | AdditiveEvent | SimJobEvent | TopoJobEvent;
+export interface PcbJobEvent { type: 'pcbjob'; id: string; command?: string; state?: string; phase?: string; progress?: number; message?: string; [key: string]: unknown }
+
+export type EngineEvent =DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent | GraphEvent | MeshJobEvent | MotionEvent | CamEvent | AdditiveEvent | SimJobEvent | TopoJobEvent | PcbJobEvent;
 export type EventType = EngineEvent['type'];
 export type EventOf<T extends EventType> = Extract<EngineEvent, { type: T }>;
 export type LinkState = 'idle' | 'connecting' | 'open' | 'closed';
 
-const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job', 'graph', 'meshjob', 'motion', 'cam', 'additivejob', 'simjob', 'topojob']);
+const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job', 'graph', 'meshjob', 'motion', 'cam', 'additivejob', 'simjob', 'topojob', 'pcbjob']);
 const BACKOFF_MIN = 500;
 const BACKOFF_MAX = 10000;
 

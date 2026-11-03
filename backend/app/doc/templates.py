@@ -1,7 +1,7 @@
 from app.doc import tables as T
 from app.doc.model import Drawing
 
-KINDS = ("drawing", "part", "assembly", "surface", "form", "graph")
+KINDS = ("drawing", "part", "assembly", "surface", "form", "graph", "ecad")
 
 A3 = (420.0, 297.0)
 A4 = (297.0, 210.0)
@@ -16,6 +16,7 @@ TEMPLATES = {
     "surface": {"label": "Surface", "kind": "surface", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Surface"},
     "form": {"label": "Form", "kind": "form", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Form"},
     "graph": {"label": "Graph", "kind": "graph", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Graph"},
+    "ecad": {"label": "Electronics design", "kind": "ecad", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Board"},
     "metric": {"label": "Millimetres", "kind": "drawing", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Drawing"},
     "iso": {"label": "Millimetres", "kind": "drawing", "metric": True, "limits": (420.0, 297.0), "sheet": A3, "prefix": "Drawing"},
     "imperial": {"label": "Inches", "kind": "drawing", "metric": False, "limits": (12.0, 9.0), "sheet": (279.4, 215.9), "prefix": "Drawing"},
