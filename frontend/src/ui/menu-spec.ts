@@ -49,7 +49,7 @@ const file = (recentCount: () => number): MenuItem[] => section('File', () => [
   S('Default Save Format', E('DXF', 'defaultsaveformat', 'dxf'), E('DWG', 'defaultsaveformat', 'dwg'), SEP,
     E('Version 2018', 'defaultsaveformat', '2018'), E('Version 2013', 'defaultsaveformat', '2013'), E('Version 2010', 'defaultsaveformat', '2010'),
     E('Version 2007', 'defaultsaveformat', '2007'), E('Version 2004', 'defaultsaveformat', '2004'), E('Version 2000', 'defaultsaveformat', '2000')),
-  SEP, E('Import...', 'import'), E('Export...', 'export'), E('Export to PDF...', 'exportpdf'),
+  SEP, E('Import...', 'import'), E('Export...', 'export'), 'sm-flat-export', E('Export to PDF...', 'exportpdf'),
   E('Print...', 'plot', undefined, ['Mod+P']), E('Plot Preview', 'plotpreview'), E('Batch Publish...', 'publish'), E('Sheet Books to PDF...', 'sheetbooks'),
   SEP, E('Page Setup Manager...', 'pagesetup'), E('Plotter Manager...', 'plottermanager'), E('Plot Style Manager...', 'stylesmanager'),
   SEP, S('Drawing Utilities', E('Audit', 'audit'), E('Recover...', 'recover'), E('Drawing Recovery Manager...', 'drawingrecovery')),
@@ -166,6 +166,8 @@ const partMenu = (): MenuItem[] => section('Part', () => [
   'pt-sketch', 'pt-finish-sketch', 'pt-edit-sketch', SEP,
   'pt-extrude', 'pt-extrude-cut', 'pt-revolve', 'pt-revolve-cut', 'pt-sweep', 'pt-sweep-cut', 'pt-loft', 'pt-loft-cut', 'pt-boundary', 'pt-rib', 'pt-hole', SEP,
   'pt-fillet', 'pt-chamfer', 'pt-shell', 'pt-draft', 'pt-pattern', 'pt-mirror', SEP,
+  S('Sheet Metal', 'sm-base', 'sm-convert', SEP, 'sm-edge', 'sm-miter', 'sm-hem', 'sm-jog', 'sm-sketched', SEP, 'sm-relief', 'sm-corner', SEP,
+    'sm-flat', 'sm-flat-export', SEP, 'sm-rule', 'sm-tables', 'sm-cutlist'), SEP,
   'pt-edit', 'pt-rebuild', 'pt-force-rebuild', 'pt-roll-end', SEP,
   'pt-design-table', 'pt-materials', 'pt-mass',
 ]);
@@ -223,6 +225,7 @@ const drawing = (): MenuItem[] => section('Drawing', () => [
 ]);
 
 const graph = (): MenuItem[] => section('Graph', () => [
+  'gr-open', SEP,
   E('New Graph', 'graphnew'), E('Add Node...', 'graphnode'), E('Connect', 'graphconnect'), E('Disconnect', 'graphdisconnect'), SEP,
   E('Parameters', 'graphparams'), E('Run Graph', 'graphrun'), E('Bake to Geometry', 'graphbake'), SEP,
   E('Group Nodes', 'graphgroup'), E('Ungroup Nodes', 'graphungroup'), E('Import Graph...', 'graphimport'), E('Export Graph...', 'graphexport'),

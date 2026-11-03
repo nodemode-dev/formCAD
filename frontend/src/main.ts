@@ -13,7 +13,10 @@ import './ui/auto/register';
 import './view3d/mount';
 import './view3d/nurbs-ui';
 import './part/register';
+import './sheet/register';
 import './u8/register';
 import './draw/register';
+import './graph/register';
+import './graphx/register';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });
