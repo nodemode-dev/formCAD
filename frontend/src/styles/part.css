@@ -46,7 +46,7 @@
 .pt-sk-plane { color: var(--text-muted); }
 .pt-sketchbar .cv-btn { height: 26px; padding: 0 var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--cta-bg); background: var(--cta-bg); color: var(--cta-text); font-size: var(--fs-12); cursor: pointer; }
 
-.pp { position: absolute; top: 84px; left: var(--space-2); bottom: var(--space-2); z-index: var(--z-raised); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto auto; width: 304px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--surface-1); box-shadow: var(--shadow-sm); visibility: hidden; pointer-events: none; user-select: text; gap: 0; padding: 0; }
+.pp { position: absolute; top: 84px; left: var(--space-2); bottom: calc(var(--space-2) + 38px); z-index: var(--z-raised); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto auto auto; width: 304px; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: var(--surface-1); box-shadow: var(--shadow-sm); visibility: hidden; pointer-events: none; user-select: text; gap: 0; padding: 0; }
 .pp.is-open { visibility: visible; pointer-events: auto; }
 .pp-head { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); height: 34px; padding: 0 var(--space-2) 0 var(--space-3); border-bottom: 1px solid var(--border-soft); }
 .pp-head-ico { display: grid; place-items: center; color: var(--accent-color); }

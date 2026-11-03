@@ -30,6 +30,7 @@ const VIEWTOOLS: Tile[] = [
   { id: 'aux', icon: 'dwAux', label: 'Auxiliary', run: () => rt.armAux() },
   { id: 'break', icon: 'dwBreak', label: 'Break', run: () => rt.armBreak() },
   { id: 'crop', icon: 'dwCrop', label: 'Crop', run: () => rt.armCrop() },
+  { id: 'flat', icon: 'smFlat', label: 'Flat pattern', run: () => rt.armFlat() },
 ];
 
 function tiles(list: Tile[], cls: string): { root: HTMLElement; nodes: Map<string, HTMLButtonElement> } {

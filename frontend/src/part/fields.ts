@@ -16,6 +16,30 @@ export const pretty = (s: string): string => {
   return w.charAt(0).toUpperCase() + w.slice(1);
 };
 
+const CHOICE_WORDS: Record<string, string> = {
+  kfactor: 'K-factor',
+  allowance: 'Bend allowance',
+  deduction: 'Bend deduction',
+  table: 'Bend table',
+  clamp_warn: 'Hold the nearest value and warn',
+  backup_k: 'Use the backup K-factor',
+  rect: 'Rectangular',
+  material_inside: 'Material inside the outline',
+  material_outside: 'Material outside the outline',
+  bend_outside: 'Bend outside the outline',
+  tangent: 'Tangent to the bend',
+  centered: 'Centred on the edge',
+  offsets: 'Offsets from the ends',
+  full: 'Whole edge',
+  rule: 'From the sheet metal rule',
+  on: 'Relieve',
+  off: 'Do not relieve',
+  closed: 'Closed',
+  open: 'Open',
+  teardrop: 'Teardrop',
+  rolled: 'Rolled',
+};
+
 const numeric = (s: string): number | null => {
   if (!s.trim()) return null;
   const n = Number(s);
@@ -62,10 +86,17 @@ function check(p: ParamSchema, change: () => void): FieldView {
 function choice(p: ParamSchema, change: () => void): FieldView {
   const { row } = shell(p.label || p.name, 'enum');
   const sel = el<HTMLSelectElement>('<select class="cv-input pp-in"></select>');
+  const optional = p.default === null || p.default === undefined;
+  if (optional) {
+    const o = document.createElement('option');
+    o.value = '';
+    o.textContent = t('From the sheet metal rule');
+    sel.appendChild(o);
+  }
   for (const c of p.choices ?? []) {
     const o = document.createElement('option');
     o.value = String(c);
-    o.textContent = t(pretty(String(c)));
+    o.textContent = t(CHOICE_WORDS[String(c)] ?? pretty(String(c)));
     sel.appendChild(o);
   }
   row.appendChild(sel);
@@ -73,8 +104,8 @@ function choice(p: ParamSchema, change: () => void): FieldView {
   return {
     row,
     name: p.name,
-    set: (v) => { sel.value = v === null || v === undefined ? String(p.default ?? p.choices?.[0] ?? '') : String(v); },
-    get: () => sel.value,
+    set: (v) => { sel.value = v === null || v === undefined ? (optional ? '' : String(p.default ?? p.choices?.[0] ?? '')) : String(v); },
+    get: () => (optional && sel.value === '' ? null : sel.value),
     show: (on) => setHidden(row, !on),
     bad: () => false,
   };
@@ -142,6 +173,26 @@ export function makeField(p: ParamSchema, change: () => void): FieldView {
   }
 }
 
+const SHEET_TYPES = new Set(['base_flange', 'convert_sheet', 'edge_flange', 'miter_flange', 'hem', 'jog', 'sketched_bend', 'bend_relief']);
+
+function sheetShown(type: string, name: string, g: (k: string) => unknown): boolean {
+  const method = g('bend_method');
+  const rootType = type === 'base_flange' || type === 'convert_sheet';
+  if (name === 'k_factor') return method === 'kfactor' || (!rootType && !method);
+  if (name === 'ba') return method === 'allowance';
+  if (name === 'bd') return method === 'deduction';
+  if (name === 'table_id') return method === 'table' || (!rootType && !!g('table_id'));
+  if (name === 'table_out_of_range' || name === 'backup_k') return method === 'table';
+  if (name === 'width') return g('width_mode') !== 'full';
+  if (name === 'offset1' || name === 'offset2') return g('width_mode') === 'offsets';
+  if (name === 'gap' && type === 'hem') return g('hem') === 'open';
+  if (type === 'hem' && (name === 'angle' || name === 'hem_radius')) return g('hem') === 'teardrop' || g('hem') === 'rolled';
+  if (name === 'relief_type') return rootType ? true : g('relief_mode') !== 'off';
+  if (name === 'relief_width_ratio' || name === 'relief_extra') return g('relief_type') !== 'none' && (rootType || g('relief_mode') !== 'off');
+  if (name === 'relief_remnant' || name === 'min_gap' || name === 'auto_relief') return rootType;
+  return true;
+}
+
 export function showWhen(type: string, name: string, v: Record<string, unknown>): boolean {
   const g = (k: string): unknown => v[k];
   const sweepOrExtrude = type === 'extrude' || type === 'extrude_cut';
@@ -172,6 +223,7 @@ export function showWhen(type: string, name: string, v: Record<string, unknown>)
     if (name === 'end_dir') return g('end_kind') === 'direction';
   }
   if (type === 'rib' && name === 'draft_out') return Number(g('draft') ?? 0) !== 0;
+  if (SHEET_TYPES.has(type)) return sheetShown(type, name, g);
   if (type === 'hole') {
     const k = g('kind');
     if (name === 'depth') return g('end') === 'blind';

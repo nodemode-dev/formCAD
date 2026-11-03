@@ -41,6 +41,7 @@ class CreateBody(BaseModel):
     show: Optional[dict[str, Any]] = None
     style: Optional[dict[str, Any]] = None
     auto: bool = True
+    flat: bool = False
     breaks: Optional[list[dict[str, Any]]] = None
     polygon: Optional[list[list[float]]] = None
 

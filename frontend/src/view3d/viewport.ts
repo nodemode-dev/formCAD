@@ -44,6 +44,7 @@ export class Viewport3D {
   private readonly group = new THREE.Group();
   private readonly previewGroup = new THREE.Group();
   private previewViews: BodyView[] = [];
+  private bodiesHidden = false;
   private readonly refGeo = new RefGeometry();
   private refItems: RefItem[] = [];
   private readonly layers: ViewLayer[] = [];
@@ -362,7 +363,14 @@ export class Viewport3D {
     for (const v of next) { v.apply(this.kit, this.mode); this.previewGroup.add(v.group); }
     for (const v of this.previewViews) { this.previewGroup.remove(v.group); v.dispose(); }
     this.previewViews = next;
-    this.group.visible = next.length === 0;
+    this.group.visible = next.length === 0 && !this.bodiesHidden;
+    this.invalidate();
+  }
+
+  setBodiesHidden(hidden: boolean): void {
+    if (hidden === this.bodiesHidden) return;
+    this.bodiesHidden = hidden;
+    this.group.visible = this.previewViews.length === 0 && !hidden;
     this.invalidate();
   }
 
@@ -543,7 +551,7 @@ export class Viewport3D {
 
   private bounds(): { min: Vec3; max: Vec3 } {
     const min: Vec3 = [Infinity, Infinity, Infinity], max: Vec3 = [-Infinity, -Infinity, -Infinity];
-    for (const v of this.views.values()) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v.min[k]); max[k] = Math.max(max[k], v.max[k]); }
+    if (!this.bodiesHidden) for (const v of this.views.values()) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], v.min[k]); max[k] = Math.max(max[k], v.max[k]); }
     for (const l of this.layers) {
       const b = l.bounds?.();
       if (b) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], b.min[k]); max[k] = Math.max(max[k], b.max[k]); }

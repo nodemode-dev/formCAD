@@ -17,11 +17,20 @@ export const TYPE_ICON: Record<string, string> = {
   boundary_solid: 'ftBoundary',
   rib: 'ftRib',
   hole: 'ftHole',
+  base_flange: 'smBase',
+  edge_flange: 'smEdge',
+  miter_flange: 'smMiter',
+  hem: 'smHem',
+  jog: 'smJog',
+  sketched_bend: 'smSketchedBend',
+  bend_relief: 'smRelief',
+  corner_relief: 'smRelief',
+  convert_sheet: 'smConvert',
 };
 
 export const iconFor = (type: string): string => TYPE_ICON[type] ?? 'part';
 
-export interface CreateEntry { type: string; label: string; cmd: string; group: 'shape' | 'dressup' | 'pattern' }
+export interface CreateEntry { type: string; label: string; cmd: string; group: 'shape' | 'dressup' | 'pattern' | 'sheet' }
 
 export const CREATE: CreateEntry[] = [
   { type: 'extrude', label: 'Extrude', cmd: 'pt-extrude', group: 'shape' },
@@ -41,4 +50,13 @@ export const CREATE: CreateEntry[] = [
   { type: 'draft', label: 'Draft', cmd: 'pt-draft', group: 'dressup' },
   { type: 'pattern', label: 'Pattern', cmd: 'pt-pattern', group: 'pattern' },
   { type: 'mirror', label: 'Mirror', cmd: 'pt-mirror', group: 'pattern' },
+  { type: 'base_flange', label: 'Base Flange', cmd: 'sm-base', group: 'sheet' },
+  { type: 'edge_flange', label: 'Edge Flange', cmd: 'sm-edge', group: 'sheet' },
+  { type: 'miter_flange', label: 'Miter Flange', cmd: 'sm-miter', group: 'sheet' },
+  { type: 'hem', label: 'Hem', cmd: 'sm-hem', group: 'sheet' },
+  { type: 'jog', label: 'Jog', cmd: 'sm-jog', group: 'sheet' },
+  { type: 'sketched_bend', label: 'Sketched Bend', cmd: 'sm-sketched', group: 'sheet' },
+  { type: 'bend_relief', label: 'Bend Relief', cmd: 'sm-relief', group: 'sheet' },
+  { type: 'corner_relief', label: 'Corner Relief', cmd: 'sm-corner', group: 'sheet' },
+  { type: 'convert_sheet', label: 'Convert to Sheet Metal', cmd: 'sm-convert', group: 'sheet' },
 ];

@@ -155,6 +155,8 @@
   --v3d-cube-base: #aab2bd;
   --v3d-cube-ink: #14181d;
   --v3d-grid: #9aa4b2;
+  --sm-bend-up: #34d399;
+  --sm-bend-down: #f59e0b;
 }
 
 :root {
@@ -189,6 +191,8 @@ body.theme-light {
   --v3d-cube-base: #f4f5f7;
   --v3d-cube-ink: #1c2026;
   --v3d-grid: #3a4350;
+  --sm-bend-up: #0f9d6e;
+  --sm-bend-down: #b45309;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

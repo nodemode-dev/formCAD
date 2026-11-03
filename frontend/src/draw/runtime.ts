@@ -2,6 +2,7 @@ import { docStore } from '../ui/doc-store';
 import { selection } from '../ui/panels/selection-bus';
 import { toast } from '../ui/toast';
 import { t } from '../ui/i18n';
+import { flatViewTool } from '../sheet/draw-flat';
 import { dv, messageOf, type ViewInfo } from './api';
 import { BalloonEditor, DatumEditor, FrameEditor, SettingsDialog, TitleBlockDialog } from './editors';
 import { drawStore } from './store';
@@ -41,6 +42,7 @@ export const armDetail = (): void => arm(tool('detail', detailTool));
 export const armAux = (): void => arm(tool('aux', auxTool));
 export const armBreak = (): void => arm(tool('break', breakTool));
 export const armCrop = (): void => arm(tool('crop', cropTool));
+export const armFlat = (): void => arm(tool('flat', flatViewTool));
 export const armDim = (): void => arm(tool('dim', dimensionTool));
 export const armFinish = (): void => arm(tool('finish', finishTool));
 

@@ -111,6 +111,17 @@ const GROUPS: Tool[][] = [
     { cmd: 'x:seamcheck', icon: 'csSeam', label: 'Seam Continuity' },
     { cmd: 'x:nakededges', icon: 'csNaked', label: 'Naked Edges' },
   ],
+  [
+    { cmd: 'sm-base', icon: 'smBase', label: 'Base Flange' },
+    { cmd: 'sm-edge', icon: 'smEdge', label: 'Edge Flange' },
+    { cmd: 'sm-miter', icon: 'smMiter', label: 'Miter Flange' },
+    { cmd: 'sm-hem', icon: 'smHem', label: 'Hem' },
+    { cmd: 'sm-jog', icon: 'smJog', label: 'Jog' },
+    { cmd: 'sm-sketched', icon: 'smSketchedBend', label: 'Sketched Bend' },
+    { cmd: 'sm-relief', icon: 'smRelief', label: 'Bend Relief' },
+    { cmd: 'sm-convert', icon: 'smConvert', label: 'Convert to Sheet Metal' },
+    { cmd: 'sm-flat', icon: 'smFlat', label: 'Flat Pattern' },
+  ],
 ];
 
 onShellMounted((ctx) => {

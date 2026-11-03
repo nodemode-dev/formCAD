@@ -4,6 +4,7 @@ import { el, q, setClass, setHidden, setText } from '../ui/dom';
 import { t } from '../ui/i18n';
 import { icon } from '../ui/icons';
 import { toast } from '../ui/toast';
+import { bendField } from '../sheet/bend-field';
 import { view3d, type View3dController } from '../view3d/mount';
 import type { SelectionState } from '../view3d/types';
 import { part, previewFeature, type Feature, type HoleRow, type HoleTable, type RefRecord, type RefSchema, type TypeSchema } from './api';
@@ -129,7 +130,8 @@ export class FeatureEditor {
         props.append(row, note);
         continue;
       }
-      const f = makeField(p, change);
+      const bendList = (schema.type === 'bend_relief' && p.name === 'bends') || (schema.type === 'corner_relief' && p.name === 'corners');
+      const f = bendList ? bendField(p, change, p.name === 'corners') : makeField(p, change);
       form.fields.set(p.name, f);
       props.appendChild(f.row);
     }
