@@ -177,6 +177,34 @@ def t_set_variable(a):
     return _result({"name": a["name"].upper(), "value": ops.set_variable(_doc(a), a["name"], a["value"])})
 
 
+def t_graph_run(a):
+    from types import SimpleNamespace
+
+    from app.cmd import barred
+    from app.graph import plugins as graph_plugins
+    from app.graph import runner
+
+    why = barred.args_refusal(None, SimpleNamespace(name="graphrun"), {k: v for k, v in a.items() if k in ("graph_path", "doc_path", "bake_path")})
+    if why:
+        return _result({"ok": False, "error": why}, True)
+    if not runner.acquire():
+        return _result({"ok": False, "error": "Too many graph runs are going. Try again shortly."}, True)
+    try:
+        graph_plugins.load_trusted()
+        if a.get("graph") is not None:
+            defn = a["graph"]
+        elif a.get("graph_path"):
+            defn = runner.read_graph_file(a["graph_path"])
+        else:
+            raise runner.RunError("Give graph (a definition) or graph_path (a .graph file).")
+        result = runner.run_request(defn, a.get("inputs") or {}, a.get("doc_path", ""), a.get("bake_path", ""), a.get("seed"), float(a.get("timeout_s") or runner.DEFAULT_TIMEOUT), None, bool(a.get("strict")))
+        return _result(result, not result["ok"])
+    except runner.RunError as err:
+        return _result({"ok": False, "error": err.message, "code": err.code}, True)
+    finally:
+        runner.release()
+
+
 FIXED = [
     ("formcad_command_line", "Type one line at the command prompt exactly as a person would: command names or aliases, points such as 10,20 or @5<45, distances, keywords. Spaces act as Enter, so a whole command with its answers fits one call. Returns the new prompt, output lines and an error field when the line was refused.", _obj({"text": {"type": "string"}, "document": DOC}, ["text"]), _ann(destructive=True), t_command_line),
     ("formcad_script", "Run a multi-line script in the .scr style: one input per line, a blank line is Enter.", _obj({"text": {"type": "string"}, "document": DOC}, ["text"]), _ann(destructive=True), t_script),
@@ -200,6 +228,7 @@ FIXED = [
     ("formcad_display_list", "Summarise the display list the canvas draws (counts, size); include=true embeds a bounded slice of the JSON.", _obj({"space": {"type": "string"}, "include": {"type": "boolean"}, "max_chars": {"type": "integer"}, "document": DOC}), _ann(read=True), t_display),
     ("formcad_get_variable", "Read a system variable.", _obj({"name": {"type": "string"}, "document": DOC}, ["name"]), _ann(read=True), t_get_variable),
     ("formcad_set_variable", "Set a system variable.", _obj({"name": {"type": "string"}, "value": {}, "document": DOC}, ["name", "value"]), _ann(destructive=True), t_set_variable),
+    ("formcad_graph_run", "Solve a node graph without the interface: a .graph file path or an inline definition, named inputs (graph widgets with a nickname) and the named outputs it returns as data trees. With bake_path the geometry is baked into the base document (doc_path, or a new one) and saved as .fcad.", _obj({"graph_path": {"type": "string"}, "graph": {"type": "object"}, "inputs": {"type": "object"}, "doc_path": {"type": "string"}, "bake_path": {"type": "string"}, "seed": {"type": "integer"}, "timeout_s": {"type": "number", "minimum": 0.1, "maximum": 3600}, "strict": {"type": "boolean"}}), _ann(destructive=True), t_graph_run),
 ]
 
 _tools_cache: list | None = None

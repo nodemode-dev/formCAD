@@ -35,7 +35,7 @@ PYTHONPATH="$src/backend${PYTHONPATH:+$sep$PYTHONPATH}" pyinstaller --noconfirm 
   --distpath dist-engine --workpath build/pyinstaller --specpath build/pyinstaller \
   --add-data "$src/frontend/dist${sep}frontend_dist" \
   --paths "$src/backend" --collect-submodules app --collect-submodules uvicorn --collect-submodules keyring \
-  --hidden-import numpy --hidden-import ezdxf --collect-submodules fontTools --collect-all uharfbuzz \
+  --hidden-import numpy --hidden-import ezdxf --hidden-import scipy.optimize--collect-submodules fontTools --collect-all uharfbuzz \
   "${extra[@]}" \
   "$src/backend/formcad_engine.py"
 out="$FORMCAD_ROOT/src-tauri/engine"

@@ -1,0 +1,11 @@
+{
+  "api": 1,
+  "description": "Two example graph nodes: Repeat Text and Spread.",
+  "entry": "plugin.py",
+  "files": {
+    "plugin.py": "1716bd030b2ef6e7614729da44e11e84e820cf777c7442ea6f1b0ded428df1aa"
+  },
+  "id": "example-nodes",
+  "name": "Example nodes",
+  "version": "1.0.0"
+}

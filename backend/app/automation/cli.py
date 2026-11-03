@@ -25,9 +25,17 @@ HELP = """usage: formcad-engine <command> [options]
   sample NAME OUT                     write a sample drawing: bracket or floor
   plugin seal DIR | list              hash a plugin folder into its manifest, or list plugins
   macro list                          list Python macros and their trust state
+  graph run FILE.graph [--doc BASE.fcad] [--in name=value ...] [--out json|FILE.json] [--bake OUT.fcad]
+        [--seed N] [--timeout SEC] [--strict]
+                                      solve a graph without the interface and print its named outputs
+  graph io FILE.graph                 print the named inputs and outputs of a graph
+  graph optimize FILE.graph --gene NODE ... --fitness NODE[:PORT] [--maximise] [--method evolution|annealing]
+        [--population N] [--generations N] [--budget N] [--seed N] [--doc BASE.fcad] [--write OUT.graph]
+                                      search slider values for the best number
 
 shared: --settings-dir DIR (empty means a throwaway folder), --version, --help
 exit codes: 0 success, 1 a command failed, 2 usage error
+graph run: 0 ok, 1 errors on the way to an output (outputs still printed), 2 usage or file error, 3 a node type is missing, 4 timeout, 5 cancelled
 """
 
 
@@ -571,6 +579,95 @@ def cmd_macro(argv: list) -> int:
     raise Usage("macro takes list.")
 
 
+def cmd_graph(argv: list) -> int:
+    if not argv or argv[0] not in ("run", "io", "optimize"):
+        raise Usage("graph takes run FILE, io FILE or optimize FILE.")
+    sub = argv[0]
+    spec = {"--settings-dir": (1, False), "--doc": (1, False), "--in": (1, True), "--out": (1, False), "--bake": (1, False), "--seed": (1, False), "--timeout": (1, False), "--strict": (0, False)}
+    if sub == "optimize":
+        spec.update({"--gene": (1, True), "--fitness": (1, False), "--maximise": (0, False), "--method": (1, False), "--population": (1, False), "--generations": (1, False), "--budget": (1, False), "--write": (1, False)})
+    pos, opts = parse(argv[1:], spec)
+    settings_dir(opts)
+    if len(pos) != 1:
+        raise Usage("graph %s takes one .graph file." % sub)
+    headless()
+    from app.core import outputs
+    from app.graph import optimize, plugins as graph_plugins, runner, store
+
+    try:
+        number = lambda name, cast: cast(opts[name]) if name in opts else None
+        try:
+            seed, timeout = number("--seed", int), number("--timeout", float)
+        except ValueError:
+            raise Usage("--seed is a whole number and --timeout is seconds.")
+        graph_plugins.load_trusted()
+        defn = runner.read_graph_file(pos[0])
+        g = runner.load_graph(defn)
+        if sub == "io":
+            out(runner.describe(g))
+            return EXIT_OK
+        doc_path = opts.get("--doc", "")
+        if sub == "optimize":
+            return graph_optimize(g, defn, opts, doc_path, seed, optimize, runner, store, outputs)
+        target = ""
+        if opts.get("--out", "json") != "json":
+            try:
+                target = outputs.checked(opts["--out"], (".json",), ".json")
+            except outputs.OutputRefused as exc:
+                raise Usage(str(exc))
+        inputs = runner.inputs_from_text(g, runner.split_in(opts.get("--in", [])))
+        result = runner.run_files(pos[0], inputs, doc_path, opts.get("--bake", ""), seed, timeout or runner.DEFAULT_TIMEOUT, None, bool(opts.get("--strict")))
+    except runner.RunError as exc:
+        if exc.code == "errors" and exc.extra.get("result"):
+            out(exc.extra["result"])
+            err("formcad-engine graph: %s" % exc.message)
+            return EXIT_FAILED
+        err("formcad-engine graph: %s" % exc.message)
+        for item in exc.extra.get("missing", []):
+            err("  missing node type %s (library %s)" % (item["type"], item["library"]))
+        if exc.exit_code == runner.EXIT_USAGE:
+            raise Usage(exc.message)
+        return exc.exit_code
+    if target:
+        with open(target, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        err("wrote %s" % target)
+    else:
+        out(result)
+    return EXIT_OK if result["ok"] else EXIT_FAILED
+
+
+def graph_optimize(g, defn, opts, doc_path, seed, optimize, runner, store, outputs) -> int:
+    genes = [runner.resolve_node(g, ref) for ref in opts.get("--gene", [])]
+    ref = opts.get("--fitness")
+    if not genes or not ref:
+        raise Usage("graph optimize needs --gene NODE (one or more) and --fitness NODE[:PORT].")
+    node_ref, _, port = ref.partition(":")
+    try:
+        spec = {"genes": genes, "fitness_node": runner.resolve_node(g, node_ref), "fitness_port": port, "direction": "maximise" if opts.get("--maximise") else "minimise", "method": opts.get("--method", "evolution"), "seed": seed or 0}
+        for key, flag in (("population", "--population"), ("generations", "--generations"), ("budget", "--budget")):
+            if flag in opts:
+                spec[key] = int(opts[flag])
+    except ValueError:
+        raise Usage("--population, --generations and --budget are whole numbers.")
+    target = ""
+    if opts.get("--write"):
+        try:
+            target = outputs.checked(opts["--write"], (store.EXT,), store.EXT)
+        except outputs.OutputRefused as exc:
+            raise Usage(str(exc))
+    doc = runner.open_private(doc_path) if doc_path else None
+    try:
+        result = optimize.run_blocking(defn, spec, doc.drawing if doc is not None else None)
+    except optimize.OptimizeError as exc:
+        raise Failed(str(exc))
+    if target and result["best"]:
+        store.write_file(target, optimize.with_genome(defn, result["best"]))
+        err("wrote %s" % target)
+    out(result)
+    return EXIT_OK
+
+
 def host_macro(argv: list) -> int:
     import runpy
 
@@ -582,7 +679,7 @@ def host_macro(argv: list) -> int:
     return int(ns["main"]() or 0)
 
 
-COMMANDS = {"info": cmd_info, "convert": cmd_convert, "run": cmd_run, "commands": cmd_commands, "mcp": cmd_mcp, "perf": cmd_perf, "sample": cmd_sample, "plugin": cmd_plugin, "macro": cmd_macro}
+COMMANDS = {"info": cmd_info, "convert": cmd_convert, "run": cmd_run, "commands": cmd_commands, "mcp": cmd_mcp, "perf": cmd_perf, "sample": cmd_sample, "plugin": cmd_plugin, "macro": cmd_macro, "graph": cmd_graph}
 
 
 def main(argv: list) -> int:

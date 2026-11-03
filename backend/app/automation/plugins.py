@@ -17,6 +17,7 @@ from app.core import config
 
 API_VERSION = 1
 GROUP = "formcad.plugins"
+NODE_GROUP = "formcad.nodes"
 MANIFEST = "plugin.json"
 ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]{1,63}$")
 MAX_FILE = 4_000_000
@@ -189,15 +190,17 @@ def distribution_digest(dist, target: str) -> str:
 
 
 def entry_point_items() -> list:
-    try:
-        found = importlib.metadata.entry_points(group=GROUP)
-    except Exception:
-        return []
+    found = []
+    for group, prefix in ((GROUP, "ep:"), (NODE_GROUP, "epn:")):
+        try:
+            found.extend((prefix, ep) for ep in importlib.metadata.entry_points(group=group))
+        except Exception:
+            continue
     out = []
-    for ep in found:
+    for prefix, ep in found:
         dist = getattr(ep, "dist", None)
         digest = distribution_digest(dist, ep.value) if dist else ""
-        out.append({"id": "ep:" + ep.name, "tier": "entry-point", "name": ep.name, "version": getattr(dist, "version", "") if dist else "", "package": getattr(dist, "name", "") if dist else "", "target": ep.value, "manifestSha256": digest, "ep": ep})
+        out.append({"id": prefix + ep.name, "tier": "entry-point", "name": ep.name, "version": getattr(dist, "version", "") if dist else "", "package": getattr(dist, "name", "") if dist else "", "target": ep.value, "manifestSha256": digest, "ep": ep})
     return out
 
 
@@ -252,6 +255,7 @@ def discover() -> list:
             item["state"] = "disabled"
         item["error"] = FAILED.get(pid, "")
         item["commands"] = list(LOADED.get(pid, {}).get("commands", []))
+        item["nodes"] = list(LOADED.get(pid, {}).get("nodes", []))
     return items
 
 
@@ -259,7 +263,18 @@ class Api:
     def __init__(self, plugin_id: str):
         self.plugin_id = plugin_id
         self.commands: list = []
+        self.nodes: list = []
         self.api_version = API_VERSION
+
+    def node(self, local_name, **spec):
+        from app.graph import plugins as graph_plugins
+
+        return graph_plugins.declare(self, local_name, **spec)
+
+    def port(self, name, kind="any", access="item", **spec):
+        from app.graph import sdk
+
+        return sdk.Port(name, kind, access, **spec)
 
     def command(self, name, aliases=(), group="plugin", label="", description="", menu="", transparent=False, undoable=True, repeatable=True):
         key = name.lower()
@@ -294,6 +309,13 @@ def _unregister(commands: list) -> None:
             for a in spec.aliases:
                 if registry.ALIASES.get(a) == name:
                     registry.ALIASES.pop(a, None)
+
+
+def _withdraw_nodes(type_ids: list) -> None:
+    if type_ids:
+        from app.graph import plugins as graph_plugins
+
+        graph_plugins.withdraw(type_ids)
 
 
 FINDERS: dict = {}
@@ -454,7 +476,7 @@ def load(plugin_id: str) -> dict:
         api = Api(plugin_id)
         try:
             if item["tier"] == "entry-point":
-                ep = next(e for e in importlib.metadata.entry_points(group=GROUP) if "ep:" + e.name == plugin_id)
+                ep = next(e for g, p in ((GROUP, "ep:"), (NODE_GROUP, "epn:")) for e in importlib.metadata.entry_points(group=g) if p + e.name == plugin_id)
                 target = _load_entry_point(plugin_id, ep, item["manifestSha256"])
                 register = target if callable(target) else getattr(target, "register", None)
             else:
@@ -465,11 +487,12 @@ def load(plugin_id: str) -> dict:
             register(api)
         except Exception as err:
             _unregister(api.commands)
+            _withdraw_nodes(api.nodes)
             _forget(plugin_id)
             FAILED[plugin_id] = "%s: %s" % (type(err).__name__, err)
             raise PluginError(FAILED[plugin_id])
         FAILED.pop(plugin_id, None)
-        LOADED[plugin_id] = {"commands": list(api.commands), "loadedAt": time.time()}
+        LOADED[plugin_id] = {"commands": list(api.commands), "nodes": list(api.nodes), "loadedAt": time.time()}
         return LOADED[plugin_id]
 
 
@@ -478,6 +501,7 @@ def unload(plugin_id: str) -> None:
         info = LOADED.pop(plugin_id, None)
         if info:
             _unregister(info["commands"])
+            _withdraw_nodes(info.get("nodes", []))
         _forget(plugin_id)
 
 
