@@ -1,0 +1,25 @@
+{
+  "format": "formcad-environments",
+  "version": 1,
+  "licence": {"id": "CC0-1.0", "url": "https://polyhaven.com/license", "note": "Poly Haven states that all its HDRIs, textures and models are CC0, usable commercially and redistributable, with no attribution required."},
+  "download_hosts": ["dl.polyhaven.org"],
+  "max_download_bytes": 134217728,
+  "shipped_resolution": "1k",
+  "environments": [
+    {"id": "studio_small_08", "name": "Studio, small, low contrast", "author": "Sergej Majboroda", "page": "https://polyhaven.com/a/studio_small_08", "category": "studio",
+     "files": {
+       "1k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_08_1k.hdr", "size": 1508872, "md5": "de3ba64222895aca876b1d1c2e0cf81a", "shipped": true},
+       "2k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/studio_small_08_2k.hdr", "size": 5930381, "md5": "18571cc63a24b0b7b9e9e7c909b3e8ee", "shipped": false},
+       "4k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/studio_small_08_4k.hdr", "size": 23545064, "md5": "03675606a83014ee631e140a876523b1", "shipped": false}}},
+    {"id": "kloofendal_48d_partly_cloudy", "name": "Outdoor, partly cloudy, sun", "author": "Greg Zaal", "page": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy", "category": "outdoor",
+     "files": {
+       "1k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_48d_partly_cloudy_1k.hdr", "size": 1637206, "md5": "ee096fe9e26ce29d8f110b5ba0579011", "shipped": true},
+       "2k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_48d_partly_cloudy_2k.hdr", "size": 6480797, "md5": "72b472b131798b3eb5fc67fce3ab672e", "shipped": false},
+       "4k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/kloofendal_48d_partly_cloudy_4k.hdr", "size": 25820705, "md5": "afb5e5f0c035d24567e8d778dd35c752", "shipped": false}}},
+    {"id": "kloofendal_overcast", "name": "Outdoor, overcast", "author": "Greg Zaal", "page": "https://polyhaven.com/a/kloofendal_overcast", "category": "outdoor",
+     "files": {
+       "1k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloofendal_overcast_1k.hdr", "size": 1590386, "md5": "702c39d6253f4e482fa151edc03f1728", "shipped": true},
+       "2k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/kloofendal_overcast_2k.hdr", "size": 6286056, "md5": "69d4466c74c4d62704db12a6a20dd434", "shipped": false},
+       "4k": {"url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/4k/kloofendal_overcast_4k.hdr", "size": 25195459, "md5": "8884aaf7e23baca1b144d28498a5a6d5", "shipped": false}}}
+  ]
+}

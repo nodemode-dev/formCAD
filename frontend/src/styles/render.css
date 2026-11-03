@@ -1,0 +1,22 @@
+.rn-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  visibility: hidden;
+  background-color: var(--canvas-bg-model);
+}
+.rn-canvas.is-ready { visibility: visible; }
+.rn-panel .rn-bodies, .rn-panel .rn-decals { height: 132px; min-height: 132px; max-height: 132px; }
+.rn-row { grid-template-columns: 14px minmax(0, 1fr) minmax(0, 0.9fr); }
+.rn-sw { width: 12px; height: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-xs); background: var(--bg-input); }
+.rn-app { min-width: 0; overflow: hidden; color: var(--text-muted); font-size: var(--fs-11); text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.rn-panel .rn-note, .rn-panel .rn-decal-note { min-height: 2.6em; }
+.rn-panel .rn-error { min-height: 1.4em; color: var(--danger-text); }
+.rn-panel .rn-file { min-width: 0; color: var(--text-secondary); font-size: var(--fs-11); }
+.rn-panel .u8-btn.is-on { border-color: var(--accent-color); }
+.rn-dlg { display: grid; gap: var(--space-2); }
+.rn-dlg .cv-field { grid-template-columns: 110px minmax(0, 1fr); }
+.rn-dlg .rn-summary { min-height: 2.6em; }

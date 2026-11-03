@@ -71,5 +71,8 @@ export default defineConfig({
     sourcemap: true,
     target: 'es2022',
     chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      input: { main: 'index.html', render: 'render.html' },
+    },
   },
 });
