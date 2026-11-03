@@ -2,6 +2,12 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.16.0 · 2026-11-03
+
+- Two agent skill packs: `skills/formcad-harness` for agents that install, run, verify and extend FormCAD, and `skills/formcad-driving` for agents that operate it through its MCP server and command line, both passing the skill validator.
+- A user manual (`docs/MANUAL.md`) covering every workspace, and a wiki (`.docs/wiki/`) on getting started, the architecture, each workspace group, automation and agents, building and releasing, licensing and data provenance, and contributing.
+- Workspace panels load their data only when shown and only for the documents they serve, so editing a board or a part no longer waits on every other workspace.
+
 ## 0.15.0 · 2026-11-03
 
 - Weldments: structural members from your own profile sketches along a frame of lines, with miter, butt, cope and trim corners, gussets and end caps, and a cut list with both cut angles placed as a table on a drawing.
