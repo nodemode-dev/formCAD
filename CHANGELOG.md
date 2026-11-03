@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.15.0 · 2026-11-03
+
+- Weldments: structural members from your own profile sketches along a frame of lines, with miter, butt, cope and trim corners, gussets and end caps, and a cut list with both cut angles placed as a table on a drawing.
+- Mold tools: draft and undercut colours for a pull direction, a parting line, shut-offs for through holes, a mold block split into core and cavity with a volume check, and shrinkage.
+- A toolbox of screws, nuts, washers, pins, bearings and structural shapes built from the sizes you enter or import from your own table, inserted into assemblies with their mates.
+- Inspection: numbered characteristics from product manufacturing information and drawing dimensions, balloons and a first-article style report; saved model-based views.
+- Cost estimates from material, machine time, setup and tooling, manufacturability checks for machining, sheet metal, printing and molding, a design checker for your own rules, and a carbon estimate from factors you enter.
+- Release preparation: the binaries repository layout with checksums and the source offer, signing scripts, release workflows and the family registry files, ready to publish.
+
 ## 0.14.0 · 2026-11-03
 
 - Generative design: preserved and obstacle regions, loads, a safety factor target and manufacturing methods (3D printing, milling, cutting, casting), giving several outcomes with mass and safety factor that you can apply as mesh or solid bodies.
