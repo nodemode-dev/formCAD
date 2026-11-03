@@ -1,7 +1,8 @@
 import os
 
 from app.cmd.context import CommandError
-from app.cmd.registry import command, executes
+from app.cmd import barred
+from app.cmd.registry import COMMANDS, command, executes
 from app.core import outputs
 from app.doc.service import DocumentFault, service
 from app.interchange import files
@@ -16,7 +17,11 @@ def stem(ctx) -> str:
 
 def ask(ctx, what, default):
     r = yield ctx.text("Enter file name (%s)" % HINT[what], default)
-    if r.kind == "enter":
+    if r.kind == "enter" or r.from_default:
+        if default:
+            why = barred.args_refusal(ctx.runner, COMMANDS[what], {"path": default})
+            if why:
+                raise CommandError(why)
         return default or None
     if r.kind != "text":
         return None

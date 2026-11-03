@@ -176,6 +176,8 @@ def drawview(e, ctx):
         look = look_for(ctx, model.LAYER_BREAK, None)
         for rec in extra:
             parts.append(stamp(xf_geom(geom2d.display(rec), m), look))
+    if e.vtype == "detail" and e.detail.get("radius") and e.show.get("boundary", True) and layer_on(ctx, model.LAYER_VISIBLE):
+        parts.append(stamp({"type": "circle", "c": [e.position[0], e.position[1]], "r": float(e.detail["radius"]) * k}, look_for(ctx, model.LAYER_VISIBLE, None)))
     b = e.bounds()
     pts.extend([[b[0], b[1]], [b[2], b[3]]])
     if e.label and e.show.get("label", True) and layer_on(ctx, model.LAYER_LABEL):

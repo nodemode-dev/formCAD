@@ -2,7 +2,8 @@ import base64
 import os
 
 from app.cmd.context import CommandError
-from app.cmd.registry import command, executes
+from app.cmd import barred
+from app.cmd.registry import COMMANDS, command, executes
 from app.doc import layouts as L
 from app.doc import papers
 from app.doc.model import SPACE_MODEL
@@ -61,8 +62,12 @@ def echo(ctx, res: dict) -> None:
 
 def ask_path(ctx, layout: str, ext: str):
     r = yield ctx.text("Enter output file name", default_path(ctx, layout, ext))
-    if r.kind == "enter":
-        return default_path(ctx, layout, ext)
+    if r.kind == "enter" or r.from_default:
+        path = default_path(ctx, layout, ext)
+        why = barred.args_refusal(ctx.runner, COMMANDS["plot"], {"path": path})
+        if why:
+            raise CommandError(why)
+        return path
     if r.kind != "text":
         return None
     return str(r.value).strip()

@@ -83,7 +83,7 @@ def build_block(d, name=BLOCK, width=180.0, height=40.0):
     for tag, _k, prompt in FIELDS:
         x, y = cols[tag]
         ents.append(AttDef(position=[float(x), float(y) + 2.5, 0.0], tag=tag, prompt=prompt, default="", height=2.5))
-    blockdefs.define(d, name, ents, [0.0, 0.0, 0.0], description="Drawing title block with data fields following the ISO 7200 list (single source)")
+    blockdefs.define(d, name, ents, [0.0, 0.0, 0.0], description="Drawing title block with owner, number, revision, date, sheet, title, scale and paper fields")
     return blockdefs.lookup(d, name)
 
 
