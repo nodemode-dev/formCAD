@@ -31,6 +31,7 @@ FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of i
 - **Parametric parts** a feature tree w/ rollback, 20 feature types, references that survive edits, configurations, design tables & mass properties
 - **NURBS curves & surfaces** blend curves to G3, blend & match surfaces to G2, seam continuity badges, zebra, curvature, draft & deviation analysis, a gumball
 - **Assemblies & drawings** components w/ safe file references, 13 mate kinds w/ DOF & conflict explanations, motion, explode & interference; drawing views in first or third angle w/ sections & details, dimensions that follow the model, tolerance frames, balloons, BOM tables & title blocks
+- **Motion, vault & rendering** joints & motion studies w/ contact stops & dynamics, a local vault w/ branches, merges & lifecycle, path-traced renders up to 4K & storyboard videos
 - **Forms, meshes & plastic parts** subdivision forms w/ creases converted to closed solids, mesh repair, reduce, remesh & mesh to solid, plastic features & wall checks from cited rules
 - **Sheet metal** flanges, hems, jogs & reliefs from one rule, K-factor, allowance or deduction bends, flat patterns w/ bend notes & DXF for cutting or bending
 - **The graph** a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, graphs run headless from the CLI, HTTP or MCP, & node plugins
@@ -112,6 +113,9 @@ formCAD/
 │   ├── src/graph/         the graph editor: node canvas, wires, search, tree tooltips
 │   ├── src/graphx/        in-node widgets, node palette, bake, optimizer, run dialogs, 3D preview
 │   ├── src/p10/           interchange dialogs, PMI notes, the Form workspace, mesh tools & the plastic panel
+│   ├── src/p11/           joints, motion studies, dynamics & the vault panel
+│   ├── src/render/        path-traced render mode, render dialog & tiled final frames
+│   ├── src/an1/           storyboards, illustration styles & video export
 │   ├── src/ui/            the form family shell, panels, dialogs, output, parameters, automation
 │   ├── src/io/            the engine client & event stream
 │   └── src/styles/        tokens & stylesheets (tokens only, z-index from the scale)
@@ -139,7 +143,11 @@ formCAD/
 │   ├── app/graph/         data trees, matching, the node SDK, solver, nodes, bake, loops, optimizer, runner
 │   ├── app/pmi/           semantic PMI: dimensions, tolerances & datums on faces & edges
 │   ├── app/subd/          subdivision forms w/ creases & their conversion to B-rep
-│   └── app/plastic/       plastic part rules, features & checks
+│   ├── app/plastic/       plastic part rules, features & checks
+│   ├── app/joints/        joints, motion studies, contact sets & dynamics
+│   ├── app/vault/         the local content-addressed vault, merges & lifecycle
+│   ├── app/render/        appearances, environments, render settings & final-frame jobs
+│   └── app/anim/          storyboards & frame sampling for video
 ├── kernel/                the separate OpenCascade worker program (JSON lines on stdio)
 ├── src-tauri/             the desktop shell (Tauri 2): splash, reveal, title bar, engine sidecar
 ├── setup/                 install, boot, freeze, desktop & doctor scripts behind ./formCAD
@@ -152,7 +160,7 @@ formCAD/
 
 ## Status
 
-Phases 0 to 27 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics. v0.8.0 added surface analysis, the gumball, 3DM through the kernel (trimmed faces are flagged, STEP keeps them better), meshes w/ STL & OBJ, assemblies w/ mates, motion, explode & interference, & drawings from 3D w/ annotation. v0.9.0 added sheet metal (flanges, hems, jogs, reliefs, convert, flat patterns w/ DXF for cutting or bending) & the graph: a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, a headless runner (CLI, HTTP, MCP) & node plugins; v0.10.0 added STEP AP203, AP214 & AP242 w/ semantic PMI, IGES, 3MF, GLB & PLY w/ unit checks, subdivision form modelling converted to closed solids, a mesh workspace (repair, reduce, remesh, sections, booleans, mesh to solid) & plastic part rules w/ cited values; next come joints & motion, the local vault & rendering (Phases 28 to 30). The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
+Phases 0 to 30 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics. v0.8.0 added surface analysis, the gumball, 3DM through the kernel (trimmed faces are flagged, STEP keeps them better), meshes w/ STL & OBJ, assemblies w/ mates, motion, explode & interference, & drawings from 3D w/ annotation. v0.9.0 added sheet metal (flanges, hems, jogs, reliefs, convert, flat patterns w/ DXF for cutting or bending) & the graph: a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, a headless runner (CLI, HTTP, MCP) & node plugins; v0.10.0 added STEP AP203, AP214 & AP242 w/ semantic PMI, IGES, 3MF, GLB & PLY w/ unit checks, subdivision form modelling converted to closed solids, a mesh workspace (repair, reduce, remesh, sections, booleans, mesh to solid) & plastic part rules w/ cited values; v0.11.0 added joints, motion studies w/ contact stops & dynamics, a local vault w/ branches & merges, path-traced rendering up to 4K & storyboards exported to video; next come machining, multi-axis & cutting, & additive (Phases 31 to 33). The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
 
 ## Development
 

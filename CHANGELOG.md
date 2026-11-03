@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.11.0 · 2026-11-03
+
+- Joints in assemblies: rigid, revolute, slider, cylindrical, pin-slot, planar and ball, with limits, as-built joints, joint links and drives.
+- Motion studies on a timeline with plots of joint values, contact sets that stop the motion, and dynamics with gravity and contacts through MuJoCo in a job you can cancel (not available on Intel Macs).
+- A local vault for your files: versions, branches, merges that list each conflict with both values, check-in and check-out with locks, lifecycle states and revisions, where-used, and comments and markup pinned to the model.
+- Path-traced rendering in the 3D view, appearances and environments that name their sources, decals, turntables, and final images up to 4K rendered in the window, a hidden window or a headless browser.
+- Storyboards from exploded steps, drives and camera moves, five technical illustration styles, and MP4 video export.
+
 ## 0.10.0 · 2026-11-03
 
 - STEP files in the AP203, AP214 and AP242 schemas and IGES files carry names, colours, layers, assembly structure and units both ways; when a file's unit differs from the drawing's you choose to convert or keep the numbers.
