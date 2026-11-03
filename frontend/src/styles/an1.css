@@ -1,0 +1,12 @@
+.an1-stage { position: absolute; inset: 0; z-index: var(--z-raised); display: flex; align-items: center; justify-content: center; background: var(--bg-primary); }
+.an1-stage[hidden] { display: none; }
+.an1-stage-canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+.an1-shots { height: 156px; min-height: 156px; max-height: 156px; }
+.an1-track { display: flex; gap: 2px; height: 34px; padding: 2px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--bg-primary); overflow: hidden; }
+.an1-block { flex: 1 1 0; min-width: 0; padding: 0 var(--space-1); border: 1px solid var(--line-3); border-radius: var(--radius-xs); background: var(--surface-2); color: var(--text-secondary); font: inherit; font-size: var(--fs-11); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.an1-block:hover { background: var(--bg-hover); }
+.an1-block.is-selected { border-color: var(--accent-color); background: var(--accent-soft); color: var(--text-primary); }
+.an1-ico { display: inline-flex; vertical-align: middle; margin-right: var(--space-1); }
+.an1-ico[hidden] { display: none; }
+.an1-lab { display: inline-block; min-width: 4ch; }
+.an1-prog { display: block; min-height: 16px; color: var(--text-secondary); font-family: var(--font-mono); font-size: var(--fs-11); }
