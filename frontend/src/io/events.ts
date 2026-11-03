@@ -6,12 +6,14 @@ export interface SysvarEvent { type: 'sysvar'; name: string; value: unknown; doc
 export interface KernelEvent extends Partial<KernelStatus> { type: 'kernel'; [key: string]: unknown }
 export interface JobEvent { type: 'job'; id: string; label?: string; state?: string; progress?: number; message?: string; [key: string]: unknown }
 
-export type EngineEvent = DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent;
+export interface GraphEvent { type: 'graph'; id: string; graph: string; reason: string; [key: string]: unknown }
+
+export type EngineEvent = DocEvent | DocsEvent | SysvarEvent | KernelEvent | JobEvent | GraphEvent;
 export type EventType = EngineEvent['type'];
 export type EventOf<T extends EventType> = Extract<EngineEvent, { type: T }>;
 export type LinkState = 'idle' | 'connecting' | 'open' | 'closed';
 
-const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job']);
+const EVENT_TYPES: ReadonlySet<string> = new Set(['doc', 'docs', 'sysvar', 'kernel', 'job', 'graph']);
 const BACKOFF_MIN = 500;
 const BACKOFF_MAX = 10000;
 
