@@ -7,3 +7,5 @@ numpy
 scipy
 fonttools==4.68.0   # TrueType and OpenType outlines for text; MIT
 uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Apache-2.0, bundles HarfBuzz under the MIT licence
+manifold3d==3.5.4   # mesh booleans, sections and manifold checks; Apache-2.0
+fast-simplification==0.2.0   # quadric mesh reduction; MIT
