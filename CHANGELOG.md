@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.14.0 · 2026-11-03
+
+- Generative design: preserved and obstacle regions, loads, a safety factor target and manufacturing methods (3D printing, milling, cutting, casting), giving several outcomes with mass and safety factor that you can apply as mesh or solid bodies.
+- Electronics: schematic capture with generated symbols, hierarchical sheets, buses and electrical rule checks; boards with layers, footprints from FormCAD's own land pattern generator, tracks, vias, copper pours with thermal reliefs, design rule checks with fabricator profiles that name their sources, and a two-layer autorouter.
+- Board outputs: Gerber X2, Excellon drill, IDF, a 3D board for assemblies, an outline kept in step with an enclosure part, and KiCad files on request.
+- Harnesses routed through clips with bend radius checks, flattened to a formboard drawing with wire lists and from-to tables.
+- Tube and pipe runs with bend tables for benders, generated fittings and cut lists, and electrical schematics numbered and matched to the harness wires.
+
 ## 0.13.0 · 2026-11-03
 
 - A Simulation workspace: studies on parts and assemblies with materials that name their sources, loads, fixtures, contacts and mesh controls, meshed by a separate mesher program, with contour plots, deformed shapes, animation, probes, sections and reports.
