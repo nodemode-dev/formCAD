@@ -161,8 +161,9 @@ def report(m: Mesh) -> dict:
 
 
 def union_pairs(v, tol):
-    cells = np.floor(v / tol).astype(np.int64)
-    c = cells - cells.min(axis=0) + 1
+    low = v.min(axis=0)
+    cell = max(float(tol), float((v.max(axis=0) - low).max()) / 9.0e5)
+    c = np.floor((v - low) / cell).astype(np.int64) + 1
     d1, d2 = int(c[:, 1].max()) + 3, int(c[:, 2].max()) + 3
     key = (c[:, 0] * d1 + c[:, 1]) * d2 + c[:, 2]
     order = np.argsort(key, kind="stable")

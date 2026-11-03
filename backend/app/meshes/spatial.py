@@ -103,14 +103,20 @@ class Surface:
         return best, where, which
 
 
-def deviation(a: Mesh, b: Mesh, limit: int = 600_000) -> dict:
+def deviation(a: Mesh, b: Mesh, limit: int = 600_000, check=None) -> dict:
     if not len(a.t) or not len(b.t):
         return {"max": 0.0, "rms": 0.0}
+    tick = check or (lambda: None)
     sb = Surface(b)
+    tick()
     sa = Surface(a)
+    tick()
     pa = surface_samples(a, limit)
     pb = surface_samples(b, limit)
+    tick()
     d1 = sb.nearest(pa)[0]
+    tick()
     d2 = sa.nearest(pb)[0]
+    tick()
     both = np.concatenate([d1, d2])
     return {"max": float(both.max()), "rms": float(np.sqrt((both**2).mean()))}

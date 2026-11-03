@@ -1,13 +1,22 @@
 import re
+import struct
 
 import numpy as np
 
+from app.core import guard
 from app.meshes.core import Mesh, MeshError, compact
 
 MAX_FILE = 512 * 1024 * 1024
-MAX_VERTICES = 20_000_000
-MAX_FACES = 20_000_000
+MAX_VERTICES = 10_000_000
+MAX_FACES = 10_000_000
 MAX_HEADER = 64 * 1024
+WINDOW_LIMITS = {"file": MAX_FILE, "vertices": MAX_VERTICES, "faces": MAX_FACES, "mixed": 3_000_000, "items": 20_000_000, "ascii": 4_000_000, "who": ""}
+AGENT_LIMITS = {"file": 64 << 20, "vertices": 2_000_000, "faces": 2_000_000, "mixed": 500_000, "items": 4_000_000, "ascii": 500_000, "who": " for a macro or agent"}
+STRUCT_CHAR = {"i1": "b", "u1": "B", "i2": "h", "u2": "H", "i4": "i", "u4": "I", "f4": "f", "f8": "d"}
+
+
+def limits():
+    return AGENT_LIMITS if guard.CALLER.get() else WINDOW_LIMITS
 SCALARS = {
     "char": "i1", "int8": "i1", "uchar": "u1", "uint8": "u1", "short": "i2", "int16": "i2", "ushort": "u2", "uint16": "u2",
     "int": "i4", "int32": "i4", "uint": "u4", "uint32": "u4", "float": "f4", "float32": "f4", "double": "f8", "float64": "f8",
@@ -66,18 +75,25 @@ def file_unit(comments):
 
 
 def read_ply(data: bytes) -> tuple:
-    if len(data) > MAX_FILE:
-        raise MeshError("The file is larger than the 512 MB limit.")
+    lim = limits()
+    if len(data) > lim["file"]:
+        raise MeshError("The file is larger than the %d MB limit%s." % (lim["file"] >> 20, lim["who"]))
     fmt, elements, comments, start = parse_header(data)
     names = {e["name"]: e for e in elements}
     vert = names.get("vertex")
     if vert is None or vert["count"] <= 0:
         raise MeshError("The PLY file holds no vertices.")
-    if vert["count"] > MAX_VERTICES:
-        raise MeshError("The PLY file holds more than %d vertices." % MAX_VERTICES)
+    if vert["count"] > lim["vertices"]:
+        raise MeshError("The PLY file holds more than %d vertices%s." % (lim["vertices"], lim["who"]))
     face = names.get("face")
-    if face is not None and face["count"] > MAX_FACES:
-        raise MeshError("The PLY file holds more than %d faces." % MAX_FACES)
+    if face is not None and face["count"] > lim["faces"]:
+        raise MeshError("The PLY file holds more than %d faces%s." % (lim["faces"], lim["who"]))
+    if any(e["count"] < 0 or e["count"] > lim["vertices"] + lim["faces"] for e in elements):
+        raise MeshError("A PLY element declares a count that is not allowed%s." % lim["who"])
+    if sum(e["count"] for e in elements) > 4 * (len(data) - start) + 16:
+        raise MeshError("The PLY header declares more elements than the file can hold.")
+    if fmt == "ascii" and sum(e["count"] for e in elements) > lim["ascii"]:
+        raise MeshError("An ASCII PLY file holds at most %d rows%s; write it as binary for more." % (lim["ascii"], lim["who"]))
     pnames = [p["name"] for p in vert["props"]]
     if not all(k in pnames for k in ("x", "y", "z")):
         raise MeshError("The PLY vertices lack x, y and z.")
@@ -109,16 +125,66 @@ def read_ply(data: bytes) -> tuple:
 
 
 def triangulate(counts, flat):
-    tris = []
-    pos = 0
-    for n in counts:
-        n = int(n)
-        if n >= 3:
-            base = flat[pos]
-            for k in range(1, n - 1):
-                tris.append((base, flat[pos + k], flat[pos + k + 1]))
-        pos += n
-    return np.array(tris, dtype=np.int64).reshape(-1, 3)
+    counts = np.asarray(counts, dtype=np.int64)
+    flat = np.asarray(flat, dtype=np.int64)
+    if (counts < 0).any() or int(counts.sum()) != len(flat):
+        raise MeshError("A PLY face list does not match its vertex count.")
+    m = np.where(counts >= 3, counts - 2, 0)
+    total = int(m.sum())
+    if not total:
+        return np.zeros((0, 3), dtype=np.int64)
+    starts = np.cumsum(counts) - counts
+    fid = np.repeat(np.arange(len(counts)), m)
+    j = np.arange(total) - np.repeat(np.cumsum(m) - m, m) + 1
+    s0 = starts[fid]
+    return np.stack([flat[s0], flat[s0 + j], flat[s0 + j + 1]], axis=1)
+
+
+def walk_faces(body, el, endian, pos, limit):
+    n = el["count"]
+    if n > limit["mixed"]:
+        raise MeshError("The PLY file holds more than %d faces with mixed vertex counts%s; write triangles or quads only." % (limit["mixed"], limit["who"]))
+    fixed = []
+    for p in el["props"]:
+        if p["list"]:
+            fixed.append((True, struct.Struct(endian + STRUCT_CHAR[p["count_type"]]), np.dtype(p["type"]).itemsize, p["name"] in ("vertex_indices", "vertex_index")))
+        else:
+            fixed.append((False, None, np.dtype(p["type"]).itemsize, False))
+    ks = np.zeros(n, dtype=np.int64)
+    starts = np.zeros(n, dtype=np.int64)
+    size = len(body)
+    index_prop = next((p for p in el["props"] if p["list"] and p["name"] in ("vertex_indices", "vertex_index")), None)
+    if index_prop is None and el["name"] == "face":
+        raise MeshError("The PLY faces have no vertex_indices list.")
+    item_size = np.dtype(index_prop["type"]).itemsize if index_prop else 1
+    for i in range(n):
+        for is_list, st, isz, is_index in fixed:
+            if is_list:
+                if pos + st.size > size:
+                    raise MeshError("The PLY file ends before its %s data does." % el["name"])
+                k = st.unpack_from(body, pos)[0]
+                pos += st.size
+                if k < 0 or pos + k * isz > size:
+                    raise MeshError("A PLY list is cut off.")
+                if is_index:
+                    ks[i] = k
+                    starts[i] = pos
+                pos += k * isz
+            else:
+                pos += isz
+    if pos > size:
+        raise MeshError("The PLY file ends before its %s data does." % el["name"])
+    if index_prop is None:
+        return None, pos
+    total = int(ks.sum())
+    if total > limit["items"]:
+        raise MeshError("The PLY faces hold more than %d vertex references%s." % (limit["items"], limit["who"]))
+    first = np.cumsum(ks) - ks
+    at = np.repeat(starts, ks) + (np.arange(total) - np.repeat(first, ks)) * item_size
+    raw = np.frombuffer(body, dtype=np.uint8)
+    gathered = raw[at[:, None] + np.arange(item_size)[None, :]] if total else np.zeros((0, item_size), dtype=np.uint8)
+    flat = np.ascontiguousarray(gathered).view(np.dtype(endian + index_prop["type"])).reshape(-1).astype(np.int64)
+    return triangulate(ks, flat), pos
 
 
 def vertex_arrays(table, pnames, colour_names):
@@ -159,6 +225,8 @@ def read_ascii(body: bytes, elements, pnames, colour_names):
                 for i, p in enumerate(el["props"]):
                     if p["list"]:
                         n = int(float(tok[at]))
+                        if n < 0 or n > 1024:
+                            raise MeshError("A PLY face lists %d vertices, which is not allowed." % n)
                         if i == index_prop:
                             counts.append(n)
                             flat.extend(int(float(x)) for x in tok[at + 1:at + 1 + n])
@@ -208,26 +276,9 @@ def read_binary(body: bytes, elements, endian, pnames, colour_names):
                                 counts = np.full(n, k)
                                 tris = triangulate(counts, arr["v"].reshape(-1).astype(np.int64)) if k != 3 else arr["v"].reshape(-1, 3).astype(np.int64)
                             continue
-        counts_out, flat_out = [], []
-        for _i in range(n):
-            for p in el["props"]:
-                if p["list"]:
-                    ct, vt = np.dtype(endian + p["count_type"]), np.dtype(endian + p["type"])
-                    if pos + ct.itemsize > len(body):
-                        raise MeshError("The PLY file ends before its %s data does." % el["name"])
-                    k = int(np.frombuffer(body, dtype=ct, count=1, offset=pos)[0])
-                    pos += ct.itemsize
-                    if k < 0 or pos + k * vt.itemsize > len(body):
-                        raise MeshError("A PLY list is cut off.")
-                    items = np.frombuffer(body, dtype=vt, count=k, offset=pos)
-                    pos += k * vt.itemsize
-                    if el["name"] == "face" and p["name"] in ("vertex_indices", "vertex_index"):
-                        counts_out.append(k)
-                        flat_out.extend(int(x) for x in items)
-                else:
-                    pos += np.dtype(p["type"]).itemsize
+        got, pos = walk_faces(body, el, endian, pos, limits())
         if el["name"] == "face":
-            tris = triangulate(counts_out, flat_out)
+            tris = got
     if verts is None:
         raise MeshError("The PLY file holds no vertices.")
     if tris is None:

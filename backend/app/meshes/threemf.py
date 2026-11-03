@@ -1,21 +1,48 @@
+import array
 import io
 import zipfile
+import zlib
 from xml.etree import ElementTree as ET
 from xml.sax.saxutils import escape, quoteattr
 
 import numpy as np
 
+from app.core import guard
 from app.meshes.core import Mesh, MeshError
 
 CORE_NS = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
 MATERIAL_NS = "http://schemas.microsoft.com/3dmanufacturing/material/2015/02"
 MODEL_REL = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
 UNIT_MM = {"micron": 0.001, "millimeter": 1.0, "centimeter": 10.0, "inch": 25.4, "foot": 304.8, "meter": 1000.0}
-MAX_ARCHIVE = 512 * 1024 * 1024
 MAX_PARTS = 64
 MAX_OBJECTS = 20000
-MAX_TRIANGLES = 20_000_000
 MAX_DEPTH = 24
+MAX_RATIO = 200
+MAX_ENTRIES = 4096
+MAX_RESOURCE_ITEMS = 200000
+WINDOW_LIMITS = {"archive": 256 << 20, "member": 64 << 20, "vertices": 4_000_000, "triangles": 4_000_000, "instances": 4_000_000, "bodies": MAX_OBJECTS, "who": ""}
+AGENT_LIMITS = {"archive": 32 << 20, "member": 16 << 20, "vertices": 500_000, "triangles": 1_000_000, "instances": 1_000_000, "bodies": 500, "who": " for a macro or agent"}
+
+
+def limits():
+    return AGENT_LIMITS if guard.CALLER.get() else WINDOW_LIMITS
+
+
+class CappedStream:
+    def __init__(self, src, cap, what, check_doctype=False):
+        self.src, self.cap, self.what, self.read_bytes, self.check_doctype = src, cap, what, 0, check_doctype
+
+    def read(self, n=-1):
+        data = self.src.read(65536 if n is None or n < 0 else min(n, 65536))
+        if self.check_doctype and data:
+            self.check_doctype = False
+            low = data.lower()
+            if b"<!doctype" in low or b"<!entity" in low:
+                raise MeshError("The 3MF model uses an XML declaration that is refused for safety.")
+        self.read_bytes += len(data)
+        if self.read_bytes > self.cap:
+            raise MeshError("The 3MF %s expands beyond %d MB; it is refused." % (self.what, self.cap >> 20))
+        return data
 
 
 def hex_color(rgb):
@@ -112,92 +139,178 @@ def parse_color(text):
     return None
 
 
+def member_bytes(zf, info, cap):
+    if info.file_size > cap:
+        raise MeshError("A 3MF part is larger than %d MB; it is refused." % max(1, cap >> 20))
+    stream = CappedStream(zf.open(info), cap, "part")
+    chunks = []
+    while True:
+        d = stream.read()
+        if not d:
+            break
+        chunks.append(d)
+    return b"".join(chunks)
+
+
+def parse_model(stream, lim, warns):
+    root_attrs = None
+    stack = []
+    materials, objects, build_items = {}, {}, []
+    group = None
+    cur = None
+    seen = {"resources": False, "build": False}
+    nverts = ntris = nitems = 0
+    try:
+        for event, el in ET.iterparse(stream, events=("start", "end")):
+            tag = local(el.tag)
+            if event == "start":
+                stack.append(el)
+                if root_attrs is None:
+                    root_attrs = dict(el.attrib)
+                elif tag == "object":
+                    if len(objects) >= MAX_OBJECTS:
+                        raise MeshError("The 3MF file holds more than %d objects." % MAX_OBJECTS)
+                    cur = {"name": el.get("name") or "", "type": el.get("type") or "model", "pid": el.get("pid"), "pindex": el.get("pindex"), "v": array.array("d"), "t": array.array("q"), "props": set(), "mesh": None, "components": []}
+                elif tag in ("basematerials", "colorgroup"):
+                    group = []
+                continue
+            stack.pop()
+            parent = stack[-1] if stack else None
+            if tag == "vertex" and cur is not None:
+                nverts += 1
+                if nverts > lim["vertices"]:
+                    raise MeshError("The 3MF file holds more than %d vertices%s." % (lim["vertices"], lim["who"]))
+                try:
+                    cur["v"].extend((float(el.get("x")), float(el.get("y")), float(el.get("z"))))
+                except (TypeError, ValueError):
+                    raise MeshError("A 3MF vertex holds a value that is not a number.")
+            elif tag == "triangle" and cur is not None:
+                ntris += 1
+                if ntris > lim["triangles"]:
+                    raise MeshError("The 3MF file holds more than %d triangles%s." % (lim["triangles"], lim["who"]))
+                try:
+                    cur["t"].extend((int(el.get("v1")), int(el.get("v2")), int(el.get("v3"))))
+                except (TypeError, ValueError, OverflowError):
+                    raise MeshError("A 3MF triangle holds an index that is not a number.")
+                if len(cur["props"]) < 1024:
+                    cur["props"].add((el.get("pid"), el.get("p1")))
+            elif tag in ("base", "color") and group is not None:
+                nitems += 1
+                if nitems > MAX_RESOURCE_ITEMS:
+                    raise MeshError("The 3MF file holds more than %d colours." % MAX_RESOURCE_ITEMS)
+                group.append(parse_color(el.get("displaycolor") if tag == "base" else el.get("color")))
+            elif tag in ("basematerials", "colorgroup") and group is not None:
+                materials[el.get("id")] = group
+                group = None
+            elif tag == "component" and cur is not None:
+                nitems += 1
+                if nitems > MAX_RESOURCE_ITEMS:
+                    raise MeshError("The 3MF file holds more than %d components." % MAX_RESOURCE_ITEMS)
+                if any(k.endswith("}path") for k in el.attrib):
+                    warns.append("A component refers to another model part (production extension); it is skipped.")
+                else:
+                    cur["components"].append((el.get("objectid"), matrix_of(el.get("transform"))))
+            elif tag == "item" and parent is not None and local(parent.tag) == "build":
+                nitems += 1
+                if nitems > MAX_RESOURCE_ITEMS:
+                    raise MeshError("The 3MF file builds more than %d items." % MAX_RESOURCE_ITEMS)
+                build_items.append((el.get("objectid"), matrix_of(el.get("transform"))))
+            elif tag == "object" and cur is not None:
+                v = np.frombuffer(cur["v"], dtype=np.float64).reshape(-1, 3) if len(cur["v"]) else None
+                t = np.frombuffer(cur["t"], dtype=np.int64).reshape(-1, 3) if len(cur["t"]) else None
+                if v is not None and t is not None:
+                    if not np.isfinite(v).all():
+                        raise MeshError("A 3MF vertex holds a value that is not finite.")
+                    if t.min() < 0 or t.max() >= len(v):
+                        raise MeshError("A 3MF triangle refers to a vertex that does not exist.")
+                    cur["mesh"] = (v, t, cur["props"])
+                cur["nv"] = len(v) if cur["mesh"] else 0
+                cur["nt"] = len(t) if cur["mesh"] else 0
+                del cur["v"], cur["t"], cur["props"]
+                objects[el.get("id")] = cur
+                cur = None
+            elif tag in ("resources", "build"):
+                seen[tag] = True
+            if parent is not None:
+                el.clear()
+                parent.remove(el)
+    except ET.ParseError as err:
+        raise MeshError("The 3MF model is not valid XML (%s)." % err)
+    if root_attrs is None:
+        raise MeshError("The 3MF model is empty.")
+    return root_attrs, materials, objects, build_items, seen
+
+
 def read_3mf(data: bytes) -> tuple:
-    if len(data) > MAX_ARCHIVE:
-        raise MeshError("The file is larger than the 512 MB limit.")
+    lim = limits()
+    if len(data) > lim["archive"]:
+        raise MeshError("The 3MF file is larger than the %d MB limit%s." % (lim["archive"] >> 20, lim["who"]))
     try:
         zf = zipfile.ZipFile(io.BytesIO(data))
-    except zipfile.BadZipFile:
+    except (zipfile.BadZipFile, EOFError):
         raise MeshError("The file is not a valid 3MF archive.")
-    infos = zf.infolist()
-    if len(infos) > 4096 or sum(i.file_size for i in infos) > MAX_ARCHIVE or any(i.file_size > MAX_ARCHIVE // 2 for i in infos):
+    infos = {i.filename: i for i in zf.infolist()}
+    if len(zf.infolist()) > MAX_ENTRIES:
         raise MeshError("The 3MF archive is larger than the limits allow.")
-    path = None
-    if "_rels/.rels" in zf.namelist():
-        rels = parse_xml(zf.read("_rels/.rels"))
-        for r in rels:
-            if r.get("Type") == MODEL_REL:
-                path = (r.get("Target") or "").lstrip("/")
-                break
-    if not path or path not in zf.namelist():
-        cands = [n for n in zf.namelist() if n.lower().endswith(".model")]
-        if not cands:
-            raise MeshError("The 3MF archive holds no model part.")
-        path = cands[0]
-    root = parse_xml(zf.read(path))
-    unit = root.get("unit") or "millimeter"
+    try:
+        path = None
+        if "_rels/.rels" in infos:
+            rels = parse_xml(member_bytes(zf, infos["_rels/.rels"], 1 << 20))
+            for r in rels:
+                if r.get("Type") == MODEL_REL:
+                    path = (r.get("Target") or "").lstrip("/")
+                    break
+        if not path or path not in infos:
+            cands = [n for n in infos if n.lower().endswith(".model")]
+            if not cands:
+                raise MeshError("The 3MF archive holds no model part.")
+            path = cands[0]
+        info = infos[path]
+        if info.file_size > lim["member"]:
+            raise MeshError("The 3MF model part is %d MB when unpacked; the limit is %d MB%s." % (info.file_size >> 20, lim["member"] >> 20, lim["who"]))
+        if info.file_size > (1 << 20) and info.compress_size > 0 and info.file_size / info.compress_size > MAX_RATIO:
+            raise MeshError("The 3MF model part is compressed %d to 1, which is how an archive bomb looks; it is refused." % (info.file_size // info.compress_size))
+        warns = []
+        stream = CappedStream(zf.open(info), lim["member"], "model part", True)
+        root_attrs, materials, objects, build_items, seen = parse_model(stream, lim, warns)
+    except (zipfile.BadZipFile, NotImplementedError, RuntimeError, EOFError, zlib.error):
+        raise MeshError("The 3MF archive cannot be unpacked (damaged, encrypted or an unsupported compression).")
+    unit = root_attrs.get("unit") or "millimeter"
     if unit not in UNIT_MM:
         raise MeshError('The 3MF unit "%s" is not one of the unit names of the specification.' % unit)
     scale = UNIT_MM[unit]
-    notes, warns = [], []
-    ns = root.tag.split("}")[0] + "}" if "}" in root.tag else ""
-    required = root.get("requiredextensions")
+    notes = []
+    required = root_attrs.get("requiredextensions")
     if required:
         warns.append("The file requires extensions this reader does not implement (%s); only the core geometry is read." % required)
-    resources = None
-    build = None
-    for ch in root:
-        if local(ch.tag) == "resources":
-            resources = ch
-        elif local(ch.tag) == "build":
-            build = ch
-    if resources is None or build is None:
+    if not seen["resources"] or not seen["build"]:
         raise MeshError("The 3MF model has no resources or no build section.")
-    materials = {}
-    for res in resources:
-        t = local(res.tag)
-        if t == "basematerials":
-            materials[res.get("id")] = [parse_color(b.get("displaycolor")) for b in res if local(b.tag) == "base"]
-        elif t == "colorgroup":
-            materials[res.get("id")] = [parse_color(c.get("color")) for c in res if local(c.tag) == "color"]
-    objects = {}
-    count = 0
-    for res in resources:
-        if local(res.tag) != "object":
-            continue
-        count += 1
-        if count > MAX_OBJECTS:
-            raise MeshError("The 3MF file holds more than %d objects." % MAX_OBJECTS)
-        obj = {"name": res.get("name") or "", "type": res.get("type") or "model", "pid": res.get("pid"), "pindex": res.get("pindex"), "mesh": None, "components": []}
-        for ch in res:
-            t = local(ch.tag)
-            if t == "mesh":
-                verts, tris, tprops = [], [], []
-                for sub in ch:
-                    if local(sub.tag) == "vertices":
-                        try:
-                            verts = [(float(v.get("x")), float(v.get("y")), float(v.get("z"))) for v in sub]
-                        except (TypeError, ValueError):
-                            raise MeshError("A 3MF vertex holds a value that is not a number.")
-                    elif local(sub.tag) == "triangles":
-                        try:
-                            for tr in sub:
-                                tris.append((int(tr.get("v1")), int(tr.get("v2")), int(tr.get("v3"))))
-                                tprops.append((tr.get("pid"), tr.get("p1")))
-                        except (TypeError, ValueError):
-                            raise MeshError("A 3MF triangle holds an index that is not a number.")
-                if len(tris) > MAX_TRIANGLES:
-                    raise MeshError("The 3MF file holds more than %d triangles." % MAX_TRIANGLES)
-                if verts and tris:
-                    obj["mesh"] = (np.array(verts, dtype=np.float64), np.array(tris, dtype=np.int64), tprops)
-            elif t == "components":
-                for c in ch:
-                    if local(c.tag) == "component":
-                        if any(k.endswith("}path") for k in c.attrib):
-                            warns.append("A component refers to another model part (production extension); it is skipped.")
-                            continue
-                        obj["components"].append((c.get("objectid"), matrix_of(c.get("transform"))))
-        objects[res.get("id")] = obj
+
+    memo = {}
+
+    def weigh(oid, depth, trail):
+        if depth > MAX_DEPTH or oid in trail:
+            raise MeshError("The 3MF components nest too deeply or loop.")
+        if oid in memo:
+            return memo[oid]
+        obj = objects.get(oid)
+        if obj is None:
+            raise MeshError("A 3MF item refers to the object %s, which does not exist." % oid)
+        tri, vert, bod = obj["nt"], obj["nv"], 1 if obj["mesh"] is not None else 0
+        for cid, _cm in obj["components"]:
+            a, b, c = weigh(cid, depth + 1, trail | {oid})
+            tri, vert, bod = tri + a, vert + b, bod + c
+        memo[oid] = (tri, vert, bod)
+        return memo[oid]
+
+    total_t = total_v = total_b = 0
+    for oid, _m in build_items:
+        a, b, c = weigh(oid, 0, frozenset())
+        total_t, total_v, total_b = total_t + a, total_v + b, total_b + c
+        if total_t > lim["instances"] or total_v > lim["instances"]:
+            raise MeshError("The 3MF components build more than %d triangles once every instance is counted%s." % (lim["instances"], lim["who"]))
+        if total_b > lim["bodies"]:
+            raise MeshError("The 3MF file builds more than %d bodies%s." % (lim["bodies"], lim["who"]))
 
     def colour_of(obj, tprops):
         pid, pidx = obj["pid"], obj["pindex"]
@@ -231,8 +344,6 @@ def read_3mf(data: bytes) -> tuple:
         found = []
         if obj["mesh"] is not None:
             v, t, tp = obj["mesh"]
-            if t.min() < 0 or t.max() >= len(v):
-                raise MeshError("A 3MF triangle refers to a vertex that does not exist.")
             w = (np.c_[v, np.ones(len(v))] @ mat.T)[:, :3]
             tt = t.copy()
             if np.linalg.det(mat[:3, :3]) < 0:
@@ -243,12 +354,8 @@ def read_3mf(data: bytes) -> tuple:
         return found
 
     parts = []
-    for item in build:
-        if local(item.tag) != "item":
-            continue
-        parts.extend(flatten(item.get("objectid"), matrix_of(item.get("transform")), 0, frozenset()))
-        if len(parts) > MAX_OBJECTS:
-            raise MeshError("The 3MF file builds more than %d bodies." % MAX_OBJECTS)
+    for oid, item_matrix in build_items:
+        parts.extend(flatten(oid, item_matrix, 0, frozenset()))
     if not parts:
         raise MeshError("The 3MF file builds no geometry.")
     for p in parts:

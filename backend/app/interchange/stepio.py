@@ -1,3 +1,4 @@
+import math
 import os
 import re
 
@@ -58,6 +59,20 @@ def read_into(path: str, kind: str, report: Report, target=None, options=None):
     cap = body_cap()
     if len(res["bodies"]) > cap:
         raise InterchangeError("The file holds %d bodies; this caller may import at most %d." % (len(res["bodies"]), cap), "toomany")
+    sizes = []
+    for b in res["bodies"]:
+        box = (b.get("summary") or {}).get("bbox")
+        ext = max((abs(box[i + 3] - box[i]) for i in range(3)), default=0.0) * LENGTH_MM[kunit] if box and all(isinstance(x, (int, float)) and math.isfinite(x) for x in box) else None
+        if ext is None or ext > 1e8:
+            try:
+                work.kcall("shape_free", {"ids": [x["id"] for x in res["bodies"]]}, 10.0)
+            except work.SolidError:
+                pass
+            raise InterchangeError("A body in the file has no usable size (its unit factor is zero, negative or absurd). The file is refused; check the length unit in the STEP header.", "badunit")
+        sizes.append((b.get("name") or "A body", ext))
+    for name, ext in sizes:
+        if ext < 1e-3 or ext > 1e6:
+            report.warn('"%s" measures %.4g mm across; check the length unit of the file.' % (name, ext))
     stem = os.path.splitext(os.path.basename(path))[0]
     handles = []
     layers_seen = set()
@@ -291,8 +306,13 @@ def write_file(doc_or_d, path: str, report: Report, options=None, doc=None):
     if assembly_mode:
         report.note("PMI of the component parts is not written from an assembly document.")
     if pmi_items and schema != "ap242":
-        schema = "ap242"
-        report.note("The document carries PMI, so the AP242 schema was used.")
+        if options.get("schema"):
+            pmi_report["dropped"] = list(pmi_report.get("dropped", [])) + [{"id": it["id"], "reason": "%s carries no semantic PMI" % SCHEMA_NAME[schema].split(" (")[0]} for it in pmi_items]
+            report.warn("%s carries no semantic PMI; %d item%s left out. Choose AP242 to keep them." % (SCHEMA_NAME[schema].split(" (")[0], len(pmi_items), "" if len(pmi_items) == 1 else "s"))
+            pmi_items = []
+        else:
+            schema = "ap242"
+            report.note("The document carries PMI, so the AP242 schema was used.")
     kernel_bodies = {}
     try:
         for key, b in bodies.items():

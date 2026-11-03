@@ -48,7 +48,9 @@ def wall_values(doc, spec: dict, bodies: list, detail: float) -> tuple:
         if len(arr) != len(pos):
             raise SolidError("The wall thickness values do not follow the display mesh; lower the detail and try again.")
         per[b.handle] = (arr.astype(np.float64) / s).astype(np.float32)
-    return per, "unit"
+    from app.interchange import fileunits
+
+    return per, fileunits.document_unit(d)[0]
 
 
 def limits(d, spec: dict, scale: float) -> tuple:

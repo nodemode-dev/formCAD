@@ -141,7 +141,9 @@ def deviation_values(doc, spec: dict, bodies: list, detail: float) -> tuple:
         per_body[body.handle] = dist.astype(np.float32)
     if not per_body:
         raise SpecError("Choose a source surface other than the target.")
-    return per_body, "unit"
+    from app.interchange import fileunits
+
+    return per_body, fileunits.document_unit(d)[0]
 
 
 def compute(doc, spec: dict, detail: float = 1.0) -> bytes:

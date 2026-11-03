@@ -80,7 +80,7 @@ def reduce(m: Mesh, mode: str, value: float, lock_boundary: bool = True, act=QUI
             except MeshError:
                 lo = mid
                 continue
-            dev = spatial.deviation(m, trial, 40_000)
+            dev = spatial.deviation(m, trial, 40_000, act.check)
             if dev["max"] <= value:
                 best, best_dev = trial, dev
                 hi = mid
@@ -91,7 +91,8 @@ def reduce(m: Mesh, mode: str, value: float, lock_boundary: bool = True, act=QUI
         out = best
         tol_found = best_dev
     act.step("Measuring the deviation", 0.92)
-    dev = spatial.deviation(m, out, 150_000)
+    dev = spatial.deviation(m, out, 150_000, act.check)
+    act.check()
     if tol_found is not None and out is m:
         dev = {"max": 0.0, "rms": 0.0}
     info = {"before": n, "after": int(len(out.t)), "deviation_max": dev["max"], "deviation_rms": dev["rms"], "mode": mode, "lock_boundary": bool(lock_boundary)}

@@ -43,7 +43,7 @@
 .xw-fbtn { display: inline-flex; align-items: center; gap: var(--space-1); }
 .xw-fbtn .icon { display: inline-flex; }
 .xw-fields { display: grid; gap: var(--space-1); align-content: start; min-height: calc(6 * 28px + 5 * var(--space-1)); }
-.xw-findings { min-height: 90px; max-height: 220px; }
+.xw-findings { height: 220px; }
 .xw-find { grid-template-columns: auto minmax(0, 1fr) auto; cursor: pointer; }
 .xw-sources { min-height: 32px; }
 .xw-cont { min-height: calc(10 * 1.45 * var(--fs-12)); }

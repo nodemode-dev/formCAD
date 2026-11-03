@@ -6,13 +6,19 @@ import struct
 
 import numpy as np
 
+from app.core import guard
 from app.meshes.core import Mesh, MeshError
 
 MAX_JSON = 64 * 1024 * 1024
 MAX_BUFFER = 512 * 1024 * 1024
-MAX_TRIANGLES = 20_000_000
 MAX_NODES = 100000
 MAX_DEPTH = 64
+WINDOW_LIMITS = {"file": MAX_BUFFER, "json": MAX_JSON, "triangles": 5_000_000, "vertices": 5_000_000, "who": ""}
+AGENT_LIMITS = {"file": 64 << 20, "json": 16 << 20, "triangles": 1_000_000, "vertices": 1_000_000, "who": " for a macro or agent"}
+
+
+def limits():
+    return AGENT_LIMITS if guard.CALLER.get() else WINDOW_LIMITS
 COMPONENT = {5120: "i1", 5121: "u1", 5122: "i2", 5123: "u2", 5125: "u4", 5126: "f4"}
 WIDTH = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
 METAL_WORDS = ("steel", "iron", "aluminium", "aluminum", "brass", "bronze", "copper", "titanium", "zinc", "nickel", "magnesium", "metal", "alloy")
@@ -137,8 +143,10 @@ def load_buffers(doc, glb_bin, base_dir):
                 raise MeshError("The buffer file \"%s\" is missing or too large." % uri)
             with open(full, "rb") as fh:
                 out.append(fh.read())
-        if len(out[-1]) > MAX_BUFFER:
-            raise MeshError("A buffer is larger than the 512 MB limit.")
+        if len(out[-1]) > limits()["file"]:
+            raise MeshError("A buffer is larger than the %d MB limit%s." % (limits()["file"] >> 20, limits()["who"]))
+        if sum(len(x) for x in out) > limits()["file"]:
+            raise MeshError("The buffers together are larger than the %d MB limit%s." % (limits()["file"] >> 20, limits()["who"]))
     return out
 
 
@@ -151,14 +159,25 @@ def accessor_array(doc, buffers, index):
     if dt is None or width is None:
         raise MeshError("An accessor has an unknown type.")
     count = int(acc.get("count", 0))
+    lim = limits()
+    if count < 0 or count > 3 * lim["triangles"]:
+        raise MeshError("An accessor holds %d elements; the limit is %d%s." % (count, 3 * lim["triangles"], lim["who"]))
     if "bufferView" not in acc:
-        return np.zeros((count, width), dtype=dt)
+        raise MeshError("An accessor without a buffer view (all zeros) is not supported.")
     view = doc["bufferViews"][acc["bufferView"]]
     buf = buffers[view["buffer"]]
-    start = int(view.get("byteOffset", 0)) + int(acc.get("byteOffset", 0))
+    view_start = int(view.get("byteOffset", 0))
+    view_len = int(view.get("byteLength", 0))
+    if view_start < 0 or view_len < 0 or view_start + view_len > len(buf):
+        raise MeshError("A buffer view reaches past the end of its buffer.")
+    start = view_start + int(acc.get("byteOffset", 0))
     item = np.dtype(dt).itemsize * width
     stride = int(view.get("byteStride", 0)) or item
+    if stride < item or stride > 252:
+        raise MeshError("A buffer view has a byte stride that does not fit its accessor.")
     need = start + stride * (count - 1) + item if count else start
+    if start < view_start or need > view_start + view_len:
+        raise MeshError("An accessor reads past the end of its buffer view.")
     if need > len(buf):
         raise MeshError("An accessor reads past the end of its buffer.")
     if stride == item:
@@ -188,16 +207,19 @@ def node_matrix(node):
 
 
 def read_gltf(data: bytes, base_dir=None) -> tuple:
-    if len(data) > MAX_BUFFER:
-        raise MeshError("The file is larger than the 512 MB limit.")
+    lim = limits()
+    if len(data) > lim["file"]:
+        raise MeshError("The file is larger than the %d MB limit%s." % (lim["file"] >> 20, lim["who"]))
     binary = data[:4] == b"glTF"
     try:
         if binary:
             doc, glb_bin = split_glb(data)
         else:
-            if len(data) > MAX_JSON:
-                raise MeshError("The glTF JSON is larger than the 64 MB limit.")
+            if len(data) > lim["json"]:
+                raise MeshError("The glTF JSON is larger than the %d MB limit%s." % (lim["json"] >> 20, lim["who"]))
             doc, glb_bin = json.loads(data.decode("utf-8")), None
+    except RecursionError:
+        raise MeshError("The glTF JSON nests too deeply.")
     except (ValueError, UnicodeDecodeError) as err:
         raise MeshError("The glTF JSON cannot be read (%s)." % err)
     if not isinstance(doc, dict) or str((doc.get("asset") or {}).get("version", "")) != "2.0":
@@ -213,12 +235,18 @@ def read_gltf(data: bytes, base_dir=None) -> tuple:
     mats = doc.get("materials", [])
     notes, warns = [], []
     parts = []
-    total = [0]
+    total = [0, 0]
+    visited = set()
     yup = np.array([[1.0, 0, 0, 0], [0, 0, -1.0, 0], [0, 1.0, 0, 0], [0, 0, 0, 1.0]])
 
     def visit(index, parent, depth):
         if depth > MAX_DEPTH:
             raise MeshError("The glTF nodes nest too deeply.")
+        if not isinstance(index, int) or isinstance(index, bool) or index < 0 or index >= len(nodes):
+            raise MeshError("A glTF node refers to a node that does not exist.")
+        if index in visited:
+            raise MeshError("The glTF node graph is not a tree: node %d is reached twice." % index)
+        visited.add(index)
         node = nodes[index]
         mat = parent @ node_matrix(node)
         if "mesh" in node:
@@ -229,6 +257,9 @@ def read_gltf(data: bytes, base_dir=None) -> tuple:
                     warns.append("A primitive of mode %s (points or lines) is skipped." % mode)
                     continue
                 pos = accessor_array(doc, buffers, prim["attributes"]["POSITION"]).astype(np.float64)
+                total[1] += len(pos)
+                if total[1] > lim["vertices"]:
+                    raise MeshError("The glTF file holds more than %d vertices%s." % (lim["vertices"], lim["who"]))
                 if "indices" in prim:
                     idx = accessor_array(doc, buffers, prim["indices"]).reshape(-1).astype(np.int64)
                 else:
@@ -236,12 +267,17 @@ def read_gltf(data: bytes, base_dir=None) -> tuple:
                 if mode == 4:
                     idx = idx[: len(idx) // 3 * 3].reshape(-1, 3)
                 elif mode == 5:
-                    idx = np.array([(idx[i] if i % 2 == 0 else idx[i + 1], idx[i + 1] if i % 2 == 0 else idx[i], idx[i + 2]) for i in range(len(idx) - 2)], dtype=np.int64).reshape(-1, 3)
+                    n = max(len(idx) - 2, 0)
+                    swap = (np.arange(n) % 2).astype(bool)
+                    first, second = idx[:n].copy(), idx[1:n + 1].copy()
+                    first[swap], second[swap] = idx[1:n + 1][swap], idx[:n][swap]
+                    idx = np.stack([first, second, idx[2:n + 2]], axis=1) if n else np.zeros((0, 3), dtype=np.int64)
                 else:
-                    idx = np.array([(idx[0], idx[i], idx[i + 1]) for i in range(1, len(idx) - 1)], dtype=np.int64).reshape(-1, 3)
+                    n = max(len(idx) - 2, 0)
+                    idx = np.stack([np.full(n, idx[0]) if n else idx[:0], idx[1:n + 1], idx[2:n + 2]], axis=1) if n else np.zeros((0, 3), dtype=np.int64)
                 total[0] += len(idx)
-                if total[0] > MAX_TRIANGLES:
-                    raise MeshError("The glTF file holds more than %d triangles." % MAX_TRIANGLES)
+                if total[0] > lim["triangles"]:
+                    raise MeshError("The glTF file holds more than %d triangles%s." % (lim["triangles"], lim["who"]))
                 if len(idx) and (idx.min() < 0 or idx.max() >= len(pos)):
                     raise MeshError("A glTF index refers to a vertex that does not exist.")
                 world = (np.c_[pos, np.ones(len(pos))] @ mat.T)[:, :3]

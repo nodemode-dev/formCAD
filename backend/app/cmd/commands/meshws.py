@@ -15,6 +15,7 @@ from app.solid import work
 from app.solid.work import SolidError
 
 PLANES = {"xy": (0.0, 0.0, 1.0), "yz": (1.0, 0.0, 0.0), "zx": (0.0, 1.0, 0.0)}
+DEFAULT_WELD = 0.0001
 
 
 def guard(fn, *a, **k):
@@ -83,14 +84,14 @@ def meshrepair_cmd(ctx):
     handles = yield from pick(ctx, "Select meshes to repair")
     if not handles:
         return
-    r = yield ctx.distance("Weld distance (0 to skip)", default=ctx.d.tolerances["absolute"], nonneg=True)
+    r = yield ctx.distance("Weld distance (0 to skip)", default=DEFAULT_WELD, nonneg=True)
     if r.kind != "number":
         return
     run_repair(ctx, handles, {"weld": float(r.value)})
 
 
 def run_repair(ctx, handles, args):
-    weld = number(args, "weld", ctx.d.tolerances["absolute"], 0.0, what="The weld distance")
+    weld = number({k: v for k, v in args.items() if k != "weld" or v is not None}, "weld", DEFAULT_WELD, 0.0, what="The weld distance")
     fill = int(number(args, "fill_edges", 32, 0, core.MAX_FILL_EDGES, "The hole size"))
     if 0 < fill < 3:
         raise CommandError("A hole has at least 3 edges.")
@@ -433,17 +434,26 @@ def run_tobrep(ctx, handles, args):
     if not e.summary.get("closed"):
         ctx.say("MESHTOBREP: the mesh is open (%d naked edges); the result will be an open surface, not a solid." % int(e.summary.get("naked_edges", 0)))
     began = time.time()
-    with jobs.activity(ctx, "meshtobrep") as act:
-        act.step("Preparing the mesh", 0.05)
-        wm = guard(mesh_files.body_mesh, ctx.d, e)
-        with tempfile.TemporaryDirectory(prefix="fcmesh_") as tmp:
-            path = os.path.join(tmp, "in.fcm")
-            with open(path, "wb") as fh:
-                fh.write(store.pack(wm))
-            act.step("Building the B-rep in the kernel", 0.2)
-            params = {"path": path, "tolerance": tol, "merge_planar": merge_planar, "merge_cylinders": merge_cyl, "angle": number(args, "angle", 12.0, 0.5, 60.0, "angle")}
-            res = guard(work.kcall, "mesh_to_brep", params, 900.0)
-        act.step("Storing the body", 0.9)
+    res = None
+    try:
+        with jobs.activity(ctx, "meshtobrep") as act:
+            act.step("Preparing the mesh", 0.05)
+            wm = guard(mesh_files.body_mesh, ctx.d, e)
+            with tempfile.TemporaryDirectory(prefix="fcmesh_") as tmp:
+                path = os.path.join(tmp, "in.fcm")
+                with open(path, "wb") as fh:
+                    fh.write(store.pack(wm))
+                act.step("Building the B-rep in the kernel", 0.2)
+                params = {"path": path, "tolerance": tol, "merge_planar": merge_planar, "merge_cylinders": merge_cyl, "angle": number(args, "angle", 12.0, 0.5, 60.0, "angle")}
+                res = guard(work.kcall, "mesh_to_brep", params, 900.0)
+            act.step("Storing the body", 0.9)
+    except jobs.Cancelled as err:
+        if res is not None:
+            try:
+                work.kcall("shape_free", {"ids": [res["id"]]}, 10.0)
+            except SolidError:
+                pass
+        raise CommandError(str(err))
     if not res["summary"].get("valid"):
         try:
             work.kcall("shape_free", {"ids": [res["id"]]}, 10.0)

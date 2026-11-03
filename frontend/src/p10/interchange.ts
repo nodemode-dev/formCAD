@@ -1,4 +1,4 @@
-import { ApiError, call } from '../io/api';
+import { ApiError, api, call } from '../io/api';
 import { Dialog } from '../ui/dialogs';
 import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setChecked, setHidden, setText, store, stored } from '../ui/dom';
@@ -161,7 +161,7 @@ class ExportDialog extends Dialog {
   private readonly file = readoutRow('File');
   private readonly schema = select(SCHEMAS, 'STEP schema');
   private readonly schemaRow: HTMLElement;
-  private readonly unit = select([['mm', 'Millimetres'], ['inch', 'Inches'], ['m', 'Metres']], 'Unit written to the file');
+  private readonly unit = select(UNITS, 'Unit written to the file');
   private readonly unitRow: HTMLElement;
   private readonly pmi = check('Write model based notes (PMI)');
   private readonly selected = check('Selected solids only');
@@ -235,7 +235,7 @@ class ExportDialog extends Dialog {
     setHidden(this.binary.row, ext !== 'ply');
     setHidden(this.linear.row, !MESH_WRITE.includes(ext));
     setHidden(this.angular.row, !MESH_WRITE.includes(ext));
-    this.unit.value = ['mm', 'inch', 'm'].includes(docUnit) ? docUnit : 'mm';
+    this.unit.value = UNITS.some(([v]) => v === docUnit) ? docUnit : 'mm';
     this.schema.value = 'ap214';
     setChecked(this.binary.box, true);
     setChecked(this.selected.box, false);
@@ -331,11 +331,23 @@ export async function openOptions(path: string): Promise<ImportOptions | null | 
   return (importDlg ??= new ImportDialog()).ask(path, { ...info, mismatch: false, document_unit: info.unit || t('New document') });
 }
 
+const DOCUMENT_UNIT: Record<number, string> = { 1: 'inch', 2: 'foot', 4: 'mm', 5: 'cm', 6: 'm' };
+
+async function documentUnit(): Promise<string> {
+  try {
+    const { vars } = await api.sysvars();
+    const v = vars.find((x) => x.name.toUpperCase() === 'INSUNITS');
+    return DOCUMENT_UNIT[Number(v?.value)] ?? 'mm';
+  } catch {
+    return 'mm';
+  }
+}
+
 export async function exportWithOptions(path: string): Promise<boolean> {
   const ext = extOf(path);
   const id = docStore.activeId;
   if (!id || !EXPORT_EXT.includes(ext)) return false;
-  const options = await (exportDlg ??= new ExportDialog()).ask(path, 'mm');
+  const options = await (exportDlg ??= new ExportDialog()).ask(path, await documentUnit());
   if (!options) return true;
   try {
     const r = await trackWork(`${t('Export')} ${tail(path)}`, () => call<{ path: string; notes?: InterchangeNotes }>('POST', `/api/docs/${enc(id)}/interchange/export`, { path, options }));

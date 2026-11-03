@@ -67,6 +67,15 @@ def args_refusal(runner, spec, args) -> str:
     return ""
 
 
+def path_refusal(path, runner=None) -> str:
+    who = caller(runner)
+    if not who:
+        return ""
+    if _inside(path, _granted(runner, who)):
+        return ""
+    return "The file %s is outside the folders granted to this %s." % (os.path.basename(str(path)) or "path", "macro" if who == "macro" else "agent")
+
+
 FILE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs", ".3dm", ".stl", ".obj", ".3mf", ".glb", ".gltf", ".ply", ".fcad", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".txt", ".json", ".py", ".lsp", ".lisp", ".scr", ".xlsx", ".xls")
 
 

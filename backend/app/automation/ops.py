@@ -276,6 +276,7 @@ def export(doc, path: str, version: str = "", window=None, view: str = "", layou
     from app.output import request as R
 
     full = checked_output(path, tuple(EXPORT_KINDS) + (".dxf", ".dwg"))
+    granted(full)
     ext = os.path.splitext(full)[1].lower()
     if ext in (".dxf", ".dwg"):
         try:
@@ -333,8 +334,17 @@ def render_b64(doc, window=None, size: int = 1600) -> dict:
     return {"mime": "image/png", "bytes": len(data), "data": base64.b64encode(data).decode("ascii")}
 
 
+def granted(path: str) -> None:
+    from app.cmd import barred
+
+    why = barred.path_refusal(path)
+    if why:
+        raise OpError(why)
+
+
 def open_path(path: str) -> dict:
     full = os.path.abspath(os.path.expanduser(str(path or "")))
+    granted(full)
     if not os.path.isfile(full):
         raise OpError('Cannot find the file "%s".' % path)
     if os.path.splitext(full)[1].lower() not in FILE_KINDS + (".svg", ".svgz"):
@@ -348,7 +358,7 @@ def new_doc(name: str = "", template: str = "") -> dict:
 
 def save_doc(doc, path: str = "") -> dict:
     if path:
-        checked_output(path, FILE_KINDS)
+        granted(checked_output(path, FILE_KINDS))
     return guarded(lambda: service.save(doc, path or "").summary())
 
 

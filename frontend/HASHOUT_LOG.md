@@ -2,6 +2,12 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## F10, v0.10.0 audit fixes (p10/interchange.ts, styles/p10.css)
+
+Finding 6, Run checks shift. The findings list had `min-height: 90px; max-height: 220px`, so 57 rows pushed the wall map section by 130 px. It is now a fixed `height: 220px` (scrolls inside); measured at 4x CPU, 150 ms, 1.6 Mbit/s: shift 6.8e-5 (the job bar text), 2 removed, 57 added inside the list, against 0.0078 before.
+
+Export dialog unit. `exportWithOptions` reads INSUNITS from `/api/sysvars` and passes the matching unit (inch, foot, mm, cm, m) to the dialog; the unit select now offers the same six units as the import dialog.
+
 ## I11 integration, v0.10.0 (p10/interchange.ts, p10/register.ts, p10/form-panel.ts, p10/plastic-panel.ts, styles/p10.css, ui/doc-store.ts, ui/output/output-api.ts)
 
 File, Open of 3D files. `docStore.openPath` asks `openHooks.ask` (set in `p10/register.ts`, no import cycle with `interchange.ts`) before a foreign file opens; `openOptions` inspects the file without a document, shows the same import dialog (document unit reads "New document", no unit choice because a new document takes the file's unit, a unit choice for STL, OBJ and PLY) and the answer goes to `/interchange/open` as `options`. Cancel opens nothing. The duplicate "carries no unit" line is dropped when the dialog already explains it.

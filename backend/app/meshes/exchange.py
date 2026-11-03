@@ -1,7 +1,9 @@
 import os
+import struct
 
 import numpy as np
 
+from app.core import guard
 from app.interchange.errors import InterchangeError, Report
 from app.interchange.fileunits import ALIASES, document_unit, unit_key
 from app.meshes import core, gltf, ply, store, threemf
@@ -14,6 +16,7 @@ NEW_EXT = (".3mf", ".glb", ".gltf", ".ply")
 UNITLESS = (".stl", ".obj", ".ply")
 THREEMF_UNIT = {"mm": "millimeter", "cm": "centimeter", "m": "meter", "in": "inch", "ft": "foot", "um": "micron"}
 MAX_FILE = 512 * 1024 * 1024
+AGENT_FILE = 64 * 1024 * 1024
 DEFAULT_LINEAR = 0.01
 DEFAULT_ANGULAR = 0.1
 TRIANGLE_CAP = 4_000_000
@@ -41,8 +44,9 @@ def plausibility(report: Report, name: str, diag_mm: float, chosen_key: str, dia
 
 def read_file_bytes(path: str) -> bytes:
     try:
-        if os.path.getsize(path) > MAX_FILE:
-            raise InterchangeError("The file is larger than the 512 MB limit.", "toolarge")
+        cap = AGENT_FILE if guard.CALLER.get() else MAX_FILE
+        if os.path.getsize(path) > cap:
+            raise InterchangeError("The file is larger than the %d MB limit%s." % (cap >> 20, " for a macro or agent" if guard.CALLER.get() else ""), "toolarge")
         with open(path, "rb") as fh:
             return fh.read()
     except OSError as err:
@@ -60,7 +64,9 @@ def read_parts(path: str, ext: str):
         return [{"name": os.path.splitext(os.path.basename(path))[0], "mesh": m, "rgb": info.get("rgb")}], info
     except MeshError as err:
         raise InterchangeError(str(err), "badmesh")
-    except (ValueError, KeyError, IndexError, TypeError) as err:
+    except MemoryError:
+        raise InterchangeError("The file needs more memory than is available and is refused. Reduce it or split it first.", "toolarge")
+    except (ValueError, KeyError, IndexError, TypeError, OverflowError, RecursionError, struct.error) as err:
         raise InterchangeError("The file could not be read (%s)." % err, "badmesh")
 
 
