@@ -31,8 +31,8 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | Work | License | Where |
 | --- | --- | --- |
 | fastapi 0.141.1, keyring 25.7.0, ezdxf 1.4.5 | MIT | `backend/requirements.txt` |
-| uvicorn 0.53.0, httpx 0.28.1, numpy 2.5.4 | BSD-3-Clause | `backend/requirements.txt` |
-| scipy 1.18.1 | BSD-3-Clause (its bundled-components list names no GPL or LGPL part) | `backend/requirements.txt`, `backend/requirements_macos.txt`, used by `backend/app/graph/optimize.py` |
+| uvicorn 0.53.0, httpx 0.28.1, numpy 2.5.4 | BSD-3-Clause; numpy's Linux wheel carries OpenBLAS (BSD-3-Clause), libgfortran (GPL-3.0 with the GCC Runtime Library Exception) and libquadmath (LGPL-2.1) as separate, unmodified shared libraries in `numpy.libs`, replaceable by the user | `backend/requirements.txt` |
+| scipy 1.18.1 | BSD-3-Clause; its Linux wheel also carries OpenBLAS (BSD-3-Clause), libgfortran (GPL-3.0 with the GCC Runtime Library Exception) and libquadmath (LGPL-2.1) as separate, unmodified shared libraries in `scipy.libs`, the same three numpy carries | `backend/requirements.txt`, `backend/requirements_macos.txt`, used by `backend/app/graph/optimize.py` |
 | fonttools 4.68.0 | MIT | `backend/requirements.txt`, `backend/requirements_macos.txt` |
 | uharfbuzz 0.57.0 (HarfBuzz 15.0.0 inside) | Apache-2.0 (uharfbuzz), MIT (HarfBuzz) | `backend/requirements.txt`, `backend/requirements_macos.txt`, used by `backend/app/text/shaping.py` |
 | formcad-stroke single-stroke drafting font, drawn for FormCAD | Apache-2.0 (original work, no third-party glyph data) | `backend/app/data/fonts/formcad-stroke.json` |
