@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## I9 integration, v0.9.0 (view3d/viewport.ts, sheet/draw-flat.ts, graphx/preview-layer.ts, graphx/optimizer.ts, graphx/bake-dialog.ts, graph/canvas.ts, styles/graph.css)
+
+Flat pattern picks: the picker's body list and snap list are empty while `bodiesHidden`, so face, edge and snap picks no longer land on the folded bodies behind the flat (scan of 80 points over the flat: no hit; the same scan with the flat off hits a face).
+
+Flat drawing view: `POST /drawviews` takes `flat`, so the PATCH fallback in `flatViewTool` never ran (the created view already reports `flat`); removed with its `dv` import.
+
+Preview colour: a graph preview body whose scene colour is not the default body colour gets a material tinted with it (one material per colour, cloned from the accent fill, kept in `tints`); selection still uses the hot material. The facade preview shows the blue of its attribute node.
+
+Optimizer fitness list: outputs of kind `any` (the expression node) are offered when the node state shows one numeric item; before, only `number` and `integer` kinds were listed and the facade fitness could not be chosen in the panel.
+
+Bake default: with nothing selected the dialog ticks only nodes whose geometry is not wired onward (the facade gave 167 objects from 7 nodes, which baked every intermediate shape; now 1 node). A selection still wins, and all rows are used when every node feeds another.
+
+Wire box select: a marquee also selects every wire with both ends inside it. The count `.gx-stat` min width is 7 spaces of 32 px so the status text no longer changes the box width (layout shift 7e-5 and 1.5e-4 gone, 0 now).
+
 ## Graph editor canvas, Phase 23, v0.9.0 (graph/*, styles/graph.css, io/events.ts, ui/menu-spec.ts, main.ts, index.html)
 
 Rendering: nodes are DOM, wires are one SVG path per wire, both inside one world element moved by a single transform (pan and zoom write one style value per frame; the dot grid is a separate element moved by transform). DOM nodes keep text, widgets (U12 mounts real inputs) and hit testing native; SVG gives per-wire classes for item, list and tree styles; Canvas 2D was rejected because widgets and focus would need a second DOM layer. Port and wire positions are computed from the model (fixed row heights), never measured, so no layout reads happen on edits. Nodes are positioned with left and top and use `content-visibility: auto`, port dots sit inside the node box (paint containment clips outside it). `will-change: transform` on the world was removed: with 500 nodes it made layerization cost about 25 ms per frame against about 4 ms without.

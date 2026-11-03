@@ -1,4 +1,3 @@
-import { dv } from '../draw/api';
 import { palette } from '../draw/state';
 import { drawStore } from '../draw/store';
 import type { Tool, ToolHost } from '../draw/tool-host';
@@ -26,7 +25,6 @@ export function flatViewTool(h: ToolHost): Tool {
         label: t('Flat pattern'),
         source: { component: String(body) },
       });
-      if (info && !(info as { flat?: boolean }).flat) await drawStore.run((id) => dv.patch(id, info.handle, { changes: { flat: true } }));
       if (info && !e.shiftKey) h.disarm();
     },
   };

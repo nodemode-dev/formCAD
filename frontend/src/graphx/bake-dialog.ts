@@ -80,7 +80,9 @@ export class BakeDialog extends Dialog {
     this.picked.clear();
     const sel = new Set(graphEditor.selected());
     const withSel = rows.filter((r) => sel.has(r.id));
-    for (const r of withSel.length ? withSel : rows) this.picked.add(r.id);
+    const fed = new Set((graphEditor.record()?.wires ?? []).map((w) => w.from.node));
+    const ends = rows.filter((r) => !fed.has(r.id));
+    for (const r of withSel.length ? withSel : ends.length ? ends : rows) this.picked.add(r.id);
     this.paint(rows);
     if (!this.name.value) this.name.value = t('Graph object');
     this.open(this.go);

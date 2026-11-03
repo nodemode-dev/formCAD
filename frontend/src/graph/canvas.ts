@@ -694,6 +694,10 @@ export class GraphCanvas implements WidgetHost {
     }
     const wires = new Set<string>();
     if (this.shiftBox) for (const id of this.selWires) wires.add(id);
+    for (const wv of this.wires.values()) {
+      const ends = wv.ends();
+      if (ends && ends.ax >= x0 && ends.ax <= x1 && ends.bx >= x0 && ends.bx <= x1 && ends.ay >= y0 && ends.ay <= y1 && ends.by >= y0 && ends.by <= y1) wires.add(wv.rec.id);
+    }
     this.setSelection(hit, wires, []);
   }
 

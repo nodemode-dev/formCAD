@@ -102,7 +102,7 @@ export class Viewport3D {
     this.hoverHL = new Highlight(look, highlightColor(this.pal, 'hover'), this.kit.resolution);
     this.selHL = new Highlight(look, highlightColor(this.pal, 'select'), this.kit.resolution);
     this.scene.add(this.hoverHL.group, this.selHL.group);
-    this.picker = new Picker(this.rig, () => [...this.views.values()], () => (this.snapOn ? this.model.snaps : []));
+    this.picker = new Picker(this.rig, () => (this.bodiesHidden ? [] : [...this.views.values()]), () => (this.snapOn && !this.bodiesHidden ? this.model.snaps : []));
     this.overlay.ink = resolveInk(this.probe);
     this.rig.onChange = () => { this.invalidate(); if (!this.interacting) this.schedulePick(); };
     this.rig.onInteract = (on) => { this.interacting = on; if (on) this.clearHover(); };

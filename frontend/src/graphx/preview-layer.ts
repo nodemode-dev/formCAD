@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Palette } from '../view3d/kit';
+import { DEFAULT_BODY_COLOR, type Palette } from '../view3d/kit';
 import type { ViewLayer } from '../view3d/layer';
 import { parseScene } from '../view3d/scene-format';
 import type { BodyData, Vec3 } from '../view3d/types';
@@ -12,6 +12,7 @@ interface Slot {
   dots: THREE.Points;
   node: string;
   picked: boolean;
+  color: number;
   min: Vec3;
   max: Vec3;
   tris: number;
@@ -60,6 +61,7 @@ export class GraphPreviewLayer implements ViewLayer {
   private readonly hotEdge = new THREE.LineBasicMaterial();
   private readonly dot3 = new THREE.PointsMaterial({ size: 6, sizeAttenuation: false });
   private readonly hotDot = new THREE.PointsMaterial({ size: 9, sizeAttenuation: false });
+  private readonly tints = new Map<number, THREE.MeshStandardMaterial>();
   private selected = new Set<string>();
   private framed = false;
 
@@ -148,9 +150,20 @@ export class GraphPreviewLayer implements ViewLayer {
     this.vp.invalidate();
   }
 
+  private tint(color: number): THREE.MeshStandardMaterial {
+    if (color === DEFAULT_BODY_COLOR) return this.fill;
+    let mat = this.tints.get(color);
+    if (!mat) {
+      mat = this.fill.clone();
+      mat.color.set(color);
+      this.tints.set(color, mat);
+    }
+    return mat;
+  }
+
   private paint(slot: Slot): void {
     const hot = slot.picked || this.selected.has(slot.node);
-    slot.mesh.material = hot ? this.hot : this.fill;
+    slot.mesh.material = hot ? this.hot : this.tint(slot.color);
     slot.lines.material = hot ? this.hotEdge : this.edge;
     slot.dots.material = hot ? this.hotDot : this.dot3;
   }
@@ -176,7 +189,7 @@ export class GraphPreviewLayer implements ViewLayer {
     const group = new THREE.Group();
     group.add(mesh, lines, dots);
     this.group.add(group);
-    const slot: Slot = { group, mesh, lines, dots, node: '', picked: false, tris: 0, segs: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+    const slot: Slot = { group, mesh, lines, dots, node: '', picked: false, color: DEFAULT_BODY_COLOR, tris: 0, segs: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
     this.slots.set(id, slot);
     this.stats.created++;
     return slot;
@@ -226,6 +239,7 @@ export class GraphPreviewLayer implements ViewLayer {
     this.measure(slot, b.positions, b.edges.positions);
     slot.node = side.node;
     slot.picked = side.picked;
+    slot.color = b.color;
     slot.mesh.visible = slot.tris > 0;
     slot.lines.visible = slot.segs > 0;
     slot.dots.visible = false;
@@ -245,6 +259,7 @@ export class GraphPreviewLayer implements ViewLayer {
   dispose(): void {
     for (const s of this.slots.values()) { s.mesh.geometry.dispose(); s.lines.geometry.dispose(); s.dots.geometry.dispose(); }
     this.slots.clear();
-    for (const m of [this.fill, this.hot, this.edge, this.hotEdge, this.dot3, this.hotDot]) m.dispose();
+    for (const m of [this.fill, this.hot, this.edge, this.hotEdge, this.dot3, this.hotDot, ...this.tints.values()]) m.dispose();
+    this.tints.clear();
   }
 }

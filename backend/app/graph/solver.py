@@ -245,8 +245,10 @@ def solve(g, doc=None, expire_all: bool = False, cancel=None, on_node=None, inpu
             g.expire_all()
         for nid in g.rebind_types():
             g.expire(nid)
+        from app.graph import loops, shapes
+
+        shapes.refresh(g)
         order = g.order()
-        from app.graph import loops
 
         held, order = loops.plan(g, order)
     rep.order = list(order)

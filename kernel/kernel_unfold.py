@@ -321,10 +321,6 @@ def seg_start(seg):
     return tuple(seg["pts"][0]) if seg["t"] == "poly" else tuple(seg["a"])
 
 
-def seg_end(seg):
-    return tuple(seg["pts"][-1]) if seg["t"] == "poly" else tuple(seg["b"])
-
-
 def transform_seg(seg, rg):
     out = dict(seg)
     t = seg["t"]

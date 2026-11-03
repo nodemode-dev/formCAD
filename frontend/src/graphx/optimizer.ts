@@ -22,6 +22,11 @@ function genes(): Gene[] {
   });
 }
 
+function holdsNumber(id: string, port: string): boolean {
+  const s = graphEditor.store.states.get(id)?.outputs[port];
+  return !!s && s.items === 1 && s.first.length > 0 && Number.isFinite(Number(s.first[0]));
+}
+
 function targets(): Target[] {
   const rec = graphEditor.record();
   if (!rec) return [];
@@ -29,7 +34,7 @@ function targets(): Target[] {
   for (const n of rec.nodes) {
     const entry = graphEditor.store.entries.get(n.type);
     for (const p of entry?.outputs ?? []) {
-      if (!NUMERIC.has(p.kind)) continue;
+      if (!NUMERIC.has(p.kind) && !(p.kind === 'any' && holdsNumber(n.id, p.name))) continue;
       out.push({ key: `${n.id}\u0001${p.name}`, label: `${n.nickname || entry?.name || n.type} · ${p.name}` });
     }
   }

@@ -59,7 +59,7 @@
   font: inherit;
   padding: 0 var(--space-2);
 }
-.gx-stat { color: var(--text-muted); font-size: var(--fs-11); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: calc(var(--space-8) * 3); text-align: right; }
+.gx-stat { color: var(--text-muted); font-size: var(--fs-11); font-variant-numeric: tabular-nums; white-space: nowrap; min-width: calc(var(--space-8) * 7); text-align: right; }
 
 .gx-view {
   position: relative;

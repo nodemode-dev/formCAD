@@ -552,12 +552,6 @@ def face_of(spec):
     return TopoDS.Face(ex.Current())
 
 
-def uv_bounds(face):
-    u0, u1, v0, v1 = 0.0, 0.0, 0.0, 0.0
-    b = BRepTools.UVBounds_s(face)
-    return b
-
-
 def eval_face(face, u, v, bounds):
     u0, u1, v0, v1 = bounds
     uu, vv = u0 + (u1 - u0) * u, v0 + (v1 - v0) * v
