@@ -17,7 +17,7 @@ const findingRows = (list: Json[]): TRow[] => list.map((f, i) => ({
 }));
 
 export const costSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'cost', label: 'Cost and DFM', icon: 'cost', order: 50, note: 'Open a part or assembly to estimate cost.', need: () => true,
+  id: 'cost', label: 'Cost and DFM', icon: 'cost', order: 50, note: 'Open a part or assembly to estimate cost.', need: () => true, kinds: ['part', 'assembly'],
   build(live) {
     let lines: Json[] = [];
     let rowsData: Json[] = [];
@@ -216,7 +216,7 @@ const KIND_FIELDS: Record<string, Array<readonly [string, string, 'text' | 'num'
 };
 
 export const checkSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'check', label: 'Design check', icon: 'check', order: 51, note: 'Open a part or assembly to check it against rules.', need: () => true,
+  id: 'check', label: 'Design check', icon: 'check', order: 51, note: 'Open a part or assembly to check it against rules.', need: () => true, kinds: ['part', 'assembly'],
   build(live) {
     let rules: Json[] = [];
     let kinds: Json = {};

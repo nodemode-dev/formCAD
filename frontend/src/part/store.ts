@@ -1,6 +1,7 @@
 import { ApiError } from '../io/api';
 import { events } from '../io/events';
 import { docStore } from '../ui/doc-store';
+import { MODEL, serves } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { part, type Feature, type PartTree, type TypeSchema } from './api';
 
@@ -49,7 +50,7 @@ class PartStore {
 
   refresh(delay = 90): void {
     if (this.timer) return;
-    this.timer = window.setTimeout(() => { this.timer = 0; void this.load(); }, delay);
+    this.timer = window.setTimeout(() => { this.timer = 0; if (serves(MODEL)) void this.load(); }, delay);
   }
 
   async load(): Promise<void> {

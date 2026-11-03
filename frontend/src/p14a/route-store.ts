@@ -1,5 +1,6 @@
 import { events } from '../io/events';
 import { docStore } from '../ui/doc-store';
+import { DOCS, gate } from '../ui/panel-gate';
 import { docUrl, req, type Json } from './kit';
 
 export class Feed {
@@ -10,8 +11,10 @@ export class Feed {
   private timer = 0;
   private seq = 0;
   private doc = '';
+  private readonly allow: () => boolean;
 
   constructor(private readonly family: string, private readonly paths: Record<string, string>) {
+    this.allow = gate([family], DOCS, () => this.schedule(0));
     events.on('doc', (e) => { if (e.id === docStore.activeId) this.schedule(); });
     docStore.onChange(() => { this.data = {}; this.loaded = false; this.doc = ''; this.emit(); this.schedule(0); });
   }
@@ -25,7 +28,7 @@ export class Feed {
 
   schedule(delay = 150): void {
     if (!this.active || this.timer) return;
-    this.timer = window.setTimeout(() => { this.timer = 0; void this.refresh(); }, delay);
+    this.timer = window.setTimeout(() => { this.timer = 0; if (this.allow()) void this.refresh(); }, delay);
   }
 
   async refresh(): Promise<void> {

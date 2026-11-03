@@ -4,6 +4,7 @@ import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setClass, setHidden, setText } from '../ui/dom';
 import { pickPath } from '../ui/file-dialogs';
 import { t } from '../ui/i18n';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { buffer } from '../u8/net';
 import { button, buttons, checkCtl, selectCtl } from '../u8/ui';
@@ -53,8 +54,9 @@ async function refresh(): Promise<void> {
   } finally { busy = false; }
 }
 const schedule = (delay = 150): void => { if (timer) return; timer = window.setTimeout(() => { timer = 0; void refresh(); }, delay); };
-events.on('doc', (e) => { if (e.id === docStore.activeId) schedule(); });
-docStore.onChange(() => schedule(50));
+const addGate = gate(['additive'], MODEL, () => schedule(0));
+events.on('doc', (e) => { if (e.id === docStore.activeId && addGate()) schedule(); });
+docStore.onChange(() => { if (addGate()) schedule(50); });
 
 export function additivePanel(): DockPanel {
   return {

@@ -4,6 +4,7 @@ import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setClass, setText } from '../ui/dom';
 import { t } from '../ui/i18n';
 import { icon } from '../ui/icons';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { view3d } from '../view3d/mount';
 import { part, type RefGeoItem } from './api';
@@ -41,9 +42,11 @@ export async function loadReference(): Promise<void> {
 
 export const referenceItems = (): RefGeoItem[] => items;
 
+const refAllow = gate(['refgeo', 'features'], MODEL, () => later());
+
 function later(): void {
   window.clearTimeout(timer);
-  timer = window.setTimeout(() => { void loadReference(); }, 140);
+  timer = window.setTimeout(() => { if (refAllow()) void loadReference(); }, 140);
 }
 
 export function watchReference(): void {

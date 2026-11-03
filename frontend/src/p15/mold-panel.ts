@@ -10,7 +10,7 @@ import { moldState, type DraftClass } from './mold-layer';
 const AXES: Array<[string, number[]]> = [['+X', [1, 0, 0]], ['-X', [-1, 0, 0]], ['+Y', [0, 1, 0]], ['-Y', [0, -1, 0]], ['+Z', [0, 0, 1]], ['-Z', [0, 0, -1]]];
 
 export const moldSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'mold', label: 'Mold tools', icon: 'mold', order: 47, note: 'Open a part to analyse a mold.', need: () => true,
+  id: 'mold', label: 'Mold tools', icon: 'mold', order: 47, note: 'Open a part to analyse a mold.', need: () => true, kinds: ['part'],
   build(live) {
     let settings: Json = {};
     let faces: Json[] = [];

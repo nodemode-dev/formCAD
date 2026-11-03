@@ -14,7 +14,7 @@ interface Ref { comp: string; face: number }
 const POOL = 12;
 
 export const toolboxSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'toolbox', label: 'Toolbox', icon: 'toolbox', order: 48, note: 'Open a document to use the toolbox.', need: () => true,
+  id: 'toolbox', label: 'Toolbox', icon: 'toolbox', order: 48, note: 'Open a document to use the toolbox.', need: () => true, kinds: ['part', 'assembly'],
   build(live) {
     let kinds: KindSpec[] = [];
     let fams: Json[] = [];

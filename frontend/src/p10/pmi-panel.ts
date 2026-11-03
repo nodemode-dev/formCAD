@@ -4,6 +4,7 @@ import type { DockPanel } from '../ui/dock';
 import { el, patchList, q, setClass, setDisabled, setHidden, setText } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { t } from '../ui/i18n';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { button, buttons, checkCtl, numberCtl, readout, selectCtl, type Ctl } from '../u8/ui';
 import { view3d } from '../view3d/mount';
@@ -298,7 +299,8 @@ export function pmiPanel(): DockPanel {
       }
 
       let timer = 0;
-      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { void refresh(); }, 150); };
+      const allow = gate(['pmi'], MODEL, () => later());
+      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { if (allow()) void refresh(); }, 150); };
       events.on('doc', (e) => { if (e.id === docStore.activeId) later(); });
       docStore.onChange(later);
       formSync();

@@ -4,6 +4,7 @@ import { fetchTolerance } from '../../view3d/nurbs-api';
 import { docStore } from '../doc-store';
 import { el, q, setText, setValue } from '../dom';
 import { t } from '../i18n';
+import { gate, MODEL } from '../panel-gate';
 import { toast } from '../toast';
 import { selection } from './selection-bus';
 
@@ -37,9 +38,10 @@ export function modelToleranceRows(): HTMLElement[] {
       return;
     }
   };
+  const allow = gate(['doc-info'], MODEL, () => later());
   const later = (): void => {
     window.clearTimeout(timer);
-    timer = window.setTimeout(() => { void load(); }, 150);
+    timer = window.setTimeout(() => { if (allow()) void load(); }, 150);
   };
   const apply = async (arg: Record<string, number>): Promise<void> => {
     const id = docStore.activeId;

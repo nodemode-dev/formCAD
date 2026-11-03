@@ -3,6 +3,7 @@ import { docStore } from '../ui/doc-store';
 import type { DockPanel } from '../ui/dock';
 import { el, patchList, q, setChecked, setDisabled, setText } from '../ui/dom';
 import { t } from '../ui/i18n';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { analysis } from '../u8/register';
 import { button, buttons, checkCtl, numberCtl, selectCtl } from '../u8/ui';
@@ -244,7 +245,8 @@ export function meshPanel(): DockPanel {
       state();
 
       let timer = 0;
-      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { void refresh(); }, 120); };
+      const allow = gate(['meshws'], MODEL, () => later());
+      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { if (allow()) void refresh(); }, 120); };
       events.on('doc', (e) => { if (e.id === docStore.activeId) later(); });
       docStore.onChange(later);
       document.addEventListener('formcad:selection', () => {

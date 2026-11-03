@@ -65,11 +65,12 @@ class GenStore {
   async loadOutcomes(): Promise<void> {
     const id = this.studyId;
     const s = this.study(id);
-    if (!id || !s || !s.result) { this.data = null; this.dataFor = ''; this.emit(); return; }
+    if (!id || !s || !s.result || sim.recordsDoc !== this.docId()) { this.data = null; this.dataFor = ''; this.emit(); return; }
     const seq = ++this.seq;
+    const doc = this.docId();
     try {
       const d = await req<Outcomes>('GET', this.url(`/studies/${encodeURIComponent(id)}/outcomes?thumbnails=true`));
-      if (seq !== this.seq || id !== this.studyId) return;
+      if (seq !== this.seq || id !== this.studyId || doc !== this.docId()) return;
       this.data = d;
       this.dataFor = String(s.result);
       if (!d.outcomes.some((o) => o.id === this.outcomeId)) this.outcomeId = '';

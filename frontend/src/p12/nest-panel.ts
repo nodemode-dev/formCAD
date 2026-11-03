@@ -3,6 +3,7 @@ import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setClass, setHidden, setText } from '../ui/dom';
 import { pickPath } from '../ui/file-dialogs';
 import { t } from '../ui/i18n';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { button, buttons, selectCtl } from '../u8/ui';
 import { cam } from './cam-store';
@@ -315,8 +316,9 @@ export function nestPanel(): DockPanel {
         if (procSel.get() !== nestState.proc && document.activeElement !== procSel.input && nestState.proc) procSel.set(nestState.proc);
       }
 
-      events.on('doc', (e) => { if (e.id === docStore.activeId) void load(); });
-      docStore.onChange(() => { paintShell(); void load(); void sources(); });
+      const nestGate = gate(['camnest'], MODEL, () => { void load(); void sources(); });
+      events.on('doc', (e) => { if (e.id === docStore.activeId && nestGate()) void load(); });
+      docStore.onChange(() => { paintShell(); if (nestGate()) { void load(); void sources(); } });
       cam.onChange(paint);
       paintShell();
       paint();

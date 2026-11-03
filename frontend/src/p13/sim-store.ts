@@ -1,6 +1,7 @@
 import { events } from '../io/events';
 import { docStore } from '../ui/doc-store';
 import { docUrl, req, text } from '../u8/net';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import type { ResultLayer } from './result-layer';
 
@@ -43,6 +44,7 @@ const ACTIVE = new Set(['queued', 'running', 'start', 'progress']);
 
 class SimStore {
   records = new Map<string, Rec>();
+  recordsDoc = '';
   solvers: Solver[] = [];
   mesher: MesherInfo = {};
   limits: Json = {};
@@ -76,7 +78,9 @@ class SimStore {
   get running(): boolean { return !!this.job && ACTIVE.has(this.job.state); }
 
   switchDoc(): void {
+    this.seq += 1;
     this.records = new Map();
+    this.recordsDoc = '';
     this.studyId = '';
     this.recId = '';
     this.job = null;
@@ -104,13 +108,15 @@ class SimStore {
     if (!this.docId()) { this.records.clear(); this.studyId = ''; this.recId = ''; this.loaded = false; this.emit(); return; }
     this.busy = true;
     const seq = ++this.seq;
+    const doc = this.docId() ?? '';
     try {
       const raw = await req<Json>('GET', this.url());
-      if (seq !== this.seq) return;
+      if (seq !== this.seq || doc !== this.docId()) return;
       this.overviewSeen.raw = raw;
       const next = new Map<string, Rec>();
       collect(raw.records ?? raw.rows ?? raw, next);
       this.records = next;
+      this.recordsDoc = doc;
       const s = solverList(raw.solvers);
       if (s.length) this.solvers = s;
       this.mesher = asObj(raw.mesher) ?? this.mesher;
@@ -291,7 +297,8 @@ class SimStore {
 
 export const sim = new SimStore();
 
-events.on('doc', (e) => { if (e.id === docStore.activeId) sim.schedule(); });
+const simGate = gate(['sim', 'simresult', 'simcalc', 'gen'], MODEL, () => sim.schedule());
+events.on('doc', (e) => { if (e.id === docStore.activeId && simGate()) sim.schedule(); });
 let seenDoc = docStore.activeId;
 docStore.onChange(() => {
   if (docStore.activeId === seenDoc) return;

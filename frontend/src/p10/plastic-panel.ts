@@ -5,6 +5,7 @@ import type { DockPanel } from '../ui/dock';
 import { el, patchList, q, setClass, setDisabled, setText } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { t } from '../ui/i18n';
+import { gate, MODEL } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { analysis } from '../u8/register';
 import { button, buttons, numberCtl, readout, selectCtl, type Ctl } from '../u8/ui';
@@ -246,7 +247,8 @@ export function plasticPanel(): DockPanel {
       }
 
       let timer = 0;
-      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { void loadRule(); }, 150); };
+      const allow = gate(['plastic'], MODEL, () => later());
+      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { if (allow()) void loadRule(); }, 150); };
       events.on('doc', (e) => { if (e.id === docStore.activeId) later(); });
       docStore.onChange(later);
       paintFindings();

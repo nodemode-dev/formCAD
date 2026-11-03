@@ -3,6 +3,7 @@ import { docStore } from '../ui/doc-store';
 import type { DockPanel } from '../ui/dock';
 import { el, patchList, q, setClass, setHidden, setText, store, stored } from '../ui/dom';
 import { t } from '../ui/i18n';
+import { gate } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { req, text, docUrl } from '../u8/net';
 import { numberCtl, section as baseSection, type Ctl } from '../u8/ui';
@@ -131,6 +132,7 @@ export interface PanelSpec {
   order: number;
   note: string;
   need?: () => boolean;
+  kinds?: readonly string[];
   build(live: HTMLElement): { load(): Promise<void>; reset?(): void };
 }
 
@@ -155,9 +157,11 @@ export function dockPanel(spec: PanelSpec): DockPanel {
         setHidden(note, ok);
         setHidden(live, !ok);
       };
+      const allow = gate([spec.id], spec.kinds ?? null, () => { void p.refresh(); });
       p.refresh = async (): Promise<void> => {
         paint();
         if (!p.active || !docStore.activeId || (spec.need && !spec.need())) return;
+        if (!allow()) return;
         if (busy) { again = true; return; }
         busy = true;
         const mine = ++seq;

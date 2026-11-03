@@ -6,6 +6,7 @@ import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setDisabled, setText } from '../ui/dom';
 import { t } from '../ui/i18n';
 import { icon } from '../ui/icons';
+import { gate } from '../ui/panel-gate';
 import { toast } from '../ui/toast';
 import { part, type ConfigList, type DesignTable, type TableColumn, type TableRow } from './api';
 import { messageOf, partStore } from './store';
@@ -193,7 +194,8 @@ export function configPanel(table: () => DesignTableDialog): DockPanel {
       });
       bTable.addEventListener('click', () => { void table().showFor().catch((e: unknown) => toast(messageOf(e), 'error')); });
       let timer = 0;
-      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { void load(); }, 160); };
+      const allow = gate(['configurations'], ['part', 'assembly'], () => later());
+      const later = (): void => { window.clearTimeout(timer); timer = window.setTimeout(() => { if (allow()) void load(); }, 160); };
       events.on('doc', (e) => { if (e.id === docStore.activeId) later(); });
       docStore.onChange(later);
       void load();

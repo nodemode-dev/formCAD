@@ -1,5 +1,6 @@
 import { events } from '../io/events';
 import { docStore } from '../ui/doc-store';
+import { gate, MODEL } from '../ui/panel-gate';
 import { camUrl, docCam, guard, req, type Json } from './kit';
 import type { FieldSpec } from './fields';
 import type { Flat, Wcs } from './toolpath-layer';
@@ -176,6 +177,7 @@ class CamStore {
 
 export const cam = new CamStore();
 
-events.on('doc', (e) => { if (e.id === docStore.activeId) cam.schedule(); });
+const camGate = gate(['cam', 'camtools', 'camnest', 'camsim', 'camturn'], MODEL, () => cam.schedule());
+events.on('doc', (e) => { if (e.id === docStore.activeId && camGate()) cam.schedule(); });
 events.on('cam', (e) => { if (e.id === docStore.activeId && e.reason !== 'simulate') cam.schedule(); });
 docStore.onChange(() => cam.schedule(50));

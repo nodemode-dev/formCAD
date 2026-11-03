@@ -9,7 +9,7 @@ import {
 const CLASSES: Array<readonly [string, string]> = [['', 'No class'], ['critical', 'Critical'], ['major', 'Major'], ['minor', 'Minor'], ['key', 'Key']];
 
 export const inspectSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'inspect', label: 'Inspection', icon: 'inspect', order: 49, note: 'Open a part, assembly or drawing to inspect.', need: () => true,
+  id: 'inspect', label: 'Inspection', icon: 'inspect', order: 49, note: 'Open a part, assembly or drawing to inspect.', need: () => true, kinds: ['part', 'assembly', 'drawing'],
   build(live) {
     let items: Json[] = [];
     let views: Json[] = [];

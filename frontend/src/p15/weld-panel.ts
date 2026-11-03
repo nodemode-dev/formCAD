@@ -13,7 +13,7 @@ const SIZE_NAMES = ['w', 'h', 't', 'r', 'd', 'a', 'b'];
 interface Shape { shape: string; fields: Array<{ name: string; label: string }> }
 
 export const weldSpec = (): ReturnType<typeof dockPanel> => dockPanel({
-  id: 'weld', label: 'Weldment', icon: 'weld', order: 46, note: 'Open a part to build a weldment.', need: () => docKind() !== 'assembly',
+  id: 'weld', label: 'Weldment', icon: 'weld', order: 46, note: 'Open a part to build a weldment.', need: () => docKind() !== 'assembly', kinds: ['part'],
   build(live) {
     let fid = '';
     let params: Json = {};

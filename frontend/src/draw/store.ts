@@ -1,6 +1,7 @@
 import { events } from '../io/events';
 import { docStore } from '../ui/doc-store';
 import { layoutState } from '../ui/layout-state';
+import { DOCS, serves } from '../ui/panel-gate';
 import { selection } from '../ui/panels/selection-bus';
 import { toast } from '../ui/toast';
 import { dv, messageOf, type ViewInfo } from './api';
@@ -70,7 +71,7 @@ class DrawStore {
 
   schedule(): void {
     if (this.timer) return;
-    this.timer = window.setTimeout(() => { this.timer = 0; void this.load(); }, 40);
+    this.timer = window.setTimeout(() => { this.timer = 0; if (serves(DOCS)) void this.load(); }, 40);
   }
 
   async load(): Promise<void> {
