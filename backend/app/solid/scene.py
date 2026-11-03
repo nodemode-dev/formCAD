@@ -21,7 +21,7 @@ FLAG_MESHED = 2
 FLAG_CLOSED = 4
 SNAP = np.dtype([("p", "<f4", 3), ("kind", "<u4"), ("owner", "<u4"), ("n", "<f4", 3)])
 MEDIA_TYPE = "application/vnd.formcad.scene"
-BODY_KINDS = ("solidbody", "meshbody")
+BODY_KINDS = ("solidbody", "meshbody", "subdbody")
 
 
 def pad4(buf: bytearray) -> None:
@@ -105,6 +105,13 @@ def build(doc, since: int = 0, detail: float = 1.0) -> bytes:
                     meshes[row["ent"].handle] = mesh_store.scene_bytes(d, row["ent"])
                 except Exception as err:
                     raise SolidError(str(err))
+            elif row["ent"].kind == "subdbody":
+                from app.subd import store as subd_store
+
+                try:
+                    meshes[row["ent"].handle] = subd_store.scene_bytes(d, row["ent"])
+                except Exception as err:
+                    raise SolidError(str(err))
             else:
                 meshes[row["ent"].handle] = work.mesh_for(d, row["ent"], detail)
     body = bytearray()
@@ -126,9 +133,10 @@ def build(doc, since: int = 0, detail: float = 1.0) -> bytes:
         pos = (m["pos"] / np.float32(scale) + off).astype("<f4")
         epos = (m["epos"] / np.float32(scale) + off).astype("<f4")
         faces = m["faces"].copy()
-        faces[:, 0] = pids(ent.face_ids, m["nf"])
         edges = m["edges"].copy()
-        edges[:, 0] = pids(ent.edge_ids, m["ne"])
+        if ent.kind != "subdbody":
+            faces[:, 0] = pids(ent.face_ids, m["nf"])
+            edges[:, 0] = pids(ent.edge_ids, m["ne"])
         snaps = m["snaps"].copy()
         snaps["p"] = snaps["p"] / np.float32(scale) + off
         edge_pid = pids(ent.edge_ids, m["ne"])
