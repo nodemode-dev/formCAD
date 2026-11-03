@@ -2,6 +2,16 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.10.0 · 2026-11-03
+
+- STEP files in the AP203, AP214 and AP242 schemas and IGES files carry names, colours, layers, assembly structure and units both ways; when a file's unit differs from the drawing's you choose to convert or keep the numbers.
+- Product manufacturing information in 3D: dimensions, the fourteen geometric tolerance characteristics and datums attached to faces and edges, written to AP242 STEP and read back with a report of anything dropped.
+- 3MF, GLB and PLY files, with a warning whenever a mesh format carries no unit.
+- Form modelling: subdivision bodies with creases, primitives, forms from sketches, editing with soft selection and live symmetry, bridge and fill hole, converted to a closed solid with a continuity report.
+- A mesh workspace: repair, self-intersection marks, reduce, remesh, plane sections, mesh booleans and mesh to solid with flat and cylinder face merging, each with progress and Cancel.
+- Plastic parts: a rule set whose every value names its source, boss, rib, snap hook, lip and groove features, a wall thickness map and a checks report.
+- Graph: the headless run takes a document, the editor reopens your last graph, and loops get scope, pass and collect settings.
+
 ## 0.9.0 · 2026-11-03
 
 - Sheet metal parts: a rule for thickness, inside radius and bend method (K-factor, bend allowance, bend deduction or your own table); base, edge and miter flanges, closed, open, teardrop and rolled hems, jogs, bends along a sketch line, bend and corner reliefs, and converting a constant-thickness solid by finding its bends.
