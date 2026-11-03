@@ -41,7 +41,7 @@ FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of i
 
 ### Requirements
 
-Node 20.19+ or 22.12+, Python 3.12+. Desktop builds also need Rust (`https://rustup.rs`). `./formCAD doctor` checks them.
+Node 20.19+ or 22.12+, Python 3.12+. Desktop builds also need Rust (`https://rustup.rs`). `./formCAD doctor` checks them. Platform note: dynamics runs use MuJoCo, which publishes no macOS Intel wheel; on an Intel Mac joints & motion studies still work & the dynamics command says it is unavailable.
 
 ### macOS & Linux
 

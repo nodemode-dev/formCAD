@@ -2,10 +2,10 @@ import math
 
 import numpy as np
 
-from app.mates import rig
+from app.mates import joint_eq, rig
 
 PL, AX, PT = "plane", "axis", "point"
-KINDS = ("coincident", "concentric", "distance", "angle", "parallel", "perpendicular", "tangent", "lock", "gear", "rackpinion", "screw", "limitdistance", "limitangle")
+KINDS = ("coincident", "concentric", "distance", "angle", "parallel", "perpendicular", "tangent", "lock", "gear", "rackpinion", "screw", "limitdistance", "limitangle", "joint", "jointlink")
 MECHANICAL = ("gear", "rackpinion", "screw")
 VALUED = ("distance", "angle", "limitdistance", "limitangle")
 ALIGNS = ("any", "aligned", "anti", "auto")
@@ -318,6 +318,7 @@ RES = {
     "coincident": res_coincident, "concentric": res_concentric, "distance": res_distance, "angle": res_angle, "parallel": res_parallel,
     "perpendicular": res_perpendicular, "tangent": res_tangent, "lock": res_lock, "gear": res_gear, "rackpinion": res_rackpinion,
     "screw": res_screw, "limitdistance": res_limitdistance, "limitangle": res_limitangle,
+    "joint": joint_eq.res_joint, "jointlink": joint_eq.res_link,
 }
 
 
@@ -393,7 +394,9 @@ def resolve(m: Mate, W: list) -> None:
 
 def update_state(m: Mate, W: list) -> None:
     st = m.opt.setdefault("state", {})
-    if m.kind == "gear":
+    if m.kind in joint_eq.KINDS:
+        joint_eq.update_state(m, W)
+    elif m.kind == "gear":
         st["a"] = _turn(m, "a", phi_of(m, "a", W[0], W[0]["R"]))
         st["b"] = _turn(m, "b", phi_of(m, "b", W[1], W[1]["R"]))
     elif m.kind == "rackpinion":

@@ -6,7 +6,7 @@ import numpy as np
 
 from app.assembly import store as A
 from app.assembly import xform
-from app.mates import eqs, explain, pick, rig, timing
+from app.mates import eqs, explain, joint_eq, pick, rig, timing
 from app.mates import net as N
 from app.mates import store as S
 from app.param.units import mm_per_unit
@@ -28,6 +28,8 @@ def kind_of(word) -> str:
 def to_mate(rec: dict) -> eqs.Mate:
     kind = rec["kind"]
     sides = [pick.side_of(g) for g in rec["geom"]]
+    if kind in joint_eq.KINDS:
+        return eqs.Mate(int(rec["id"]), kind, sides, None, joint_eq.runtime(rec), rec.get("name", ""), bool(rec.get("suppressed")))
     value = rec.get("value")
     opt = copy.deepcopy(rec.get("opt") or {})
     if kind == "angle" and value is not None:
@@ -43,6 +45,8 @@ def to_mate(rec: dict) -> eqs.Mate:
 
 
 def clean_opt(m: eqs.Mate, rec: dict) -> dict:
+    if m.kind in joint_eq.KINDS:
+        return joint_eq.persist(m, rec)
     out = {}
     for k, v in m.opt.items():
         if k in ("min", "max") and m.kind.startswith("limit"):
@@ -129,7 +133,7 @@ class Model:
 
     def save_states(self) -> None:
         for m in self.mates:
-            if m.suppressed or m.kind not in eqs.MECHANICAL:
+            if m.suppressed or (m.kind not in eqs.MECHANICAL and m.kind not in joint_eq.KINDS):
                 continue
             self.save_mate(m)
 

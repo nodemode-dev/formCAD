@@ -11,7 +11,7 @@ src="$(fc_native_path "$FORMCAD_ROOT")"
 rm -rf build dist
 pyinstaller --noconfirm --clean --onedir --name formcad-kernel \
   --distpath dist --workpath build --specpath build \
-  --collect-all OCP --collect-all build123d \
+  --collect-all OCP --collect-all build123d --hidden-import scipy.spatial \
   "$src/kernel/formcad_kernel.py"
 bin="dist/formcad-kernel/formcad-kernel${ext}"
 reply="$(printf '{"id":1,"method":"hello","params":{}}\n{"id":2,"method":"shutdown","params":{}}\n' | "$bin" | head -n 1)"
