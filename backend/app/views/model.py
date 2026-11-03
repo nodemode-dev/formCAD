@@ -14,6 +14,7 @@ LAYER_SECTION = "VIEW_SECTION"
 LAYER_BREAK = "VIEW_BREAK"
 LAYER_LABEL = "VIEW_LABEL"
 LAYER_VIEWS = "VIEWS"
+LAYER_BEND = "VIEW_BEND"
 
 CLASS_LAYER = {
     "sharp_v": LAYER_VISIBLE, "outline_v": LAYER_VISIBLE, "sewn_v": LAYER_TANGENT, "smooth_v": LAYER_TANGENT,
@@ -27,6 +28,7 @@ LAYER_DEFS = {
     LAYER_BREAK: {"color": 7, "linetype": "Continuous", "lineweight": 25},
     LAYER_LABEL: {"color": 7, "linetype": "Continuous", "lineweight": 25},
     LAYER_VIEWS: {"color": 7, "linetype": "Continuous", "lineweight": 25},
+    LAYER_BEND: {"color": 3, "linetype": "CENTER", "lineweight": 25},
 }
 
 DEFAULT_SHOW = {"hidden": True, "tangent": False, "silhouette": True, "seam": False, "hatch": True, "label": True}

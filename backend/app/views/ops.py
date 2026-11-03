@@ -152,13 +152,14 @@ def create_base(doc, args: dict) -> int:
     if not layout:
         raise ViewError("Say which layout the view goes on.")
     layout_rec(d, layout)
-    normal, up = direction_of(args)
+    flat = bool(args.get("flat", False))
+    normal, up = ([0.0, 0.0, 1.0], [0.0, 1.0, 0.0]) if flat else direction_of(args)
     scale, text = parse_scale(args.get("scale"), 1.0)
     src = {"doc": str((args.get("source") or {}).get("doc", "")), "component": str((args.get("source") or {}).get("component", "")), "config": str((args.get("source") or {}).get("config", ""))}
     if args.get("component") not in (None, ""):
         src["component"] = str(args["component"])
-    view = DrawView(vtype="base", source=src, vnormal=normal, vup=up, scale=scale, scale_text=text, mode=clean_mode(args.get("mode")), show=clean_show(args.get("show")), style=clean_style(args.get("style")), label=clean_label(args.get("label")), auto=bool(args.get("auto", True)))
-    if args.get("origin"):
+    view = DrawView(vtype="base", source=src, vnormal=normal, vup=up, scale=scale, scale_text=text, mode=clean_mode(args.get("mode")), show=clean_show(args.get("show")), style=clean_style(args.get("style")), label=clean_label(args.get("label")), auto=bool(args.get("auto", True)), flat=flat)
+    if args.get("origin") and not flat:
         view.origin = [float(c) for c in args["origin"]]
     h = add_view(doc, layout, view)
     build.rebuild(doc, h, first=True)
@@ -496,6 +497,11 @@ def edit(doc, handle, changes: dict) -> dict:
         redo = True
     if "auto" in ch:
         ent.auto = bool(ch["auto"])
+    if "flat" in ch and ent.vtype == "base":
+        ent.flat = bool(ch["flat"])
+        if ent.flat:
+            ent.vnormal, ent.vup = [0.0, 0.0, 1.0], [0.0, 1.0, 0.0]
+        redo = True
     if ch.get("direction") or ch.get("vnormal") is not None:
         ent.vnormal, ent.vup = direction_of(ch)
         redo = True
@@ -530,7 +536,7 @@ def info(d, v, cache: bool = False) -> dict:
     out = {
         "handle": v.handle, "name": v.name, "label": v.label, "vtype": v.vtype, "layout": v.owner[7:], "source": v.source, "vnormal": v.vnormal, "vup": v.vup,
         "scale": v.scale, "scaleText": v.scale_text, "position": v.position, "origin": v.origin, "parent": v.parent, "align": v.align, "section": v.section,
-        "detail": v.detail, "broken": v.broken, "crop": v.crop, "show": v.show, "style": v.style, "mode": v.mode, "auto": v.auto, "state": v.state,
+        "detail": v.detail, "broken": v.broken, "crop": v.crop, "show": v.show, "style": v.style, "mode": v.mode, "auto": v.auto, "flat": v.flat, "state": v.state,
         "bounds": list(v.bounds()), "counts": (v.cache or {}).get("counts", {}), "unitMm": v.unit_mm,
     }
     if cache:

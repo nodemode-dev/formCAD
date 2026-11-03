@@ -66,6 +66,10 @@ def compute(doc, view, first: bool = False) -> tuple:
     items = sources.resolve(doc, view.source)
     if len(items) > sources.MAX_ITEMS:
         raise ViewError("There are too many bodies for one view.")
+    if getattr(view, "flat", False):
+        from app.views import flatview
+
+        return items, flatview.compute(doc, view, items)
     t0 = time.perf_counter()
     try:
         res = work.kcall("view_build", worker_params(view, items, first), LONG)
@@ -82,6 +86,8 @@ def store(d, handle: int, items: list, res: dict, rev: int, message: str = "") -
         "classes": res["classes"], "faces": res["faces"], "extra": res["extra"], "bounds": res["bounds"], "frame": res["frame"],
         "origin": res["origin"], "model_bbox": res["model_bbox"], "counts": res["counts"], "items": [i.record() for i in items], "breaks": res.get("breaks", []),
     }
+    if res.get("bends"):
+        v.cache["bends"] = res["bends"]
     v.origin = [float(c) for c in res["origin"]]
     v.unit_mm = unit_mm_of(d, v)
     v.state = {"status": "ok", "message": message, "sig": sources.signature(items), "ms": round(res["stats"]["round_trip_ms"], 1), "mode_used": res["stats"]["mode"], "built_rev": rev, "stats": res["stats"]}

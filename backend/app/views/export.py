@@ -1,3 +1,5 @@
+import math
+
 from app.doc import hatchfill as H
 from app.doc import patterns
 from app.doc.entities import Arc, Circle, Ellipse, Line, LwPolyline, Spline, Text
@@ -70,6 +72,18 @@ def entities(e):
             ent = convert(rec, f, k, layer)
             if ent is not None:
                 out.append(ent)
+    for bd in cache.get("bends") or []:
+        ent = convert({"t": "line", "a": bd["a"], "b": bd["b"]}, f, k, model.LAYER_BEND)
+        if ent is not None:
+            out.append(ent)
+        if e.show.get("label", True) and bd.get("note"):
+            th = 2.5 / (e.unit_mm or 1.0)
+            pa, pb = f(bd["a"]), f(bd["b"])
+            ang = math.atan2(pb[1] - pa[1], pb[0] - pa[0])
+            pos = [(pa[0] + pb[0]) / 2.0 - math.sin(ang) * th * 1.2, (pa[1] + pb[1]) / 2.0 + math.cos(ang) * th * 1.2, 0.0]
+            txt = Text(position=pos, align_point=list(pos), height=th, text=bd["note"], rotation=ang, halign=1, valign=2)
+            txt.layer = model.LAYER_BEND
+            out.append(txt)
     faces = cache.get("faces") or []
     if faces and e.show.get("hatch", True):
         out.extend(hatch_lines(e, faces, f, k, model.LAYER_SECTION))

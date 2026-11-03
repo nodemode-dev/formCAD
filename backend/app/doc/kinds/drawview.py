@@ -49,6 +49,7 @@ class DrawView(Entity):
     style: dict = field(default_factory=dict)
     mode: str = "exact"
     auto: bool = True
+    flat: bool = False
     state: dict = field(default_factory=_state)
     cache: dict = field(default_factory=dict)
 

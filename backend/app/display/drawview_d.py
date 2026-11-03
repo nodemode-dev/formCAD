@@ -164,6 +164,18 @@ def drawview(e, ctx):
             count += 1
             if count > MAX_PARTS:
                 break
+    bends = cache.get("bends") or []
+    if bends and layer_on(ctx, model.LAYER_BEND):
+        look = look_for(ctx, model.LAYER_BEND, (e.style or {}).get("bend") or {})
+        th = 2.5 / unit
+        for bd in bends:
+            parts.append(stamp(xf_geom({"type": "line", "p1": bd["a"], "p2": bd["b"]}, m), look))
+            if e.show.get("label", True) and bd.get("note"):
+                mx, my = e.position[0] + (bd["a"][0] + bd["b"][0]) / 2.0 * k, e.position[1] + (bd["a"][1] + bd["b"][1]) / 2.0 * k
+                dx, dy = bd["b"][0] - bd["a"][0], bd["b"][1] - bd["a"][1]
+                ang = math.atan2(dy, dx)
+                tp, tb = text_prims(ctx, bd["note"], [mx - math.sin(ang) * th * 1.2, my + math.cos(ang) * th * 1.2], th, look, ang)
+                prims.extend(tp)
     faces = cache.get("faces") or []
     if faces and e.show.get("hatch", True) and layer_on(ctx, model.LAYER_SECTION):
         look = look_for(ctx, model.LAYER_SECTION, None)

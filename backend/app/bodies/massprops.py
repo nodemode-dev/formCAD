@@ -1,6 +1,7 @@
 import numpy as np
 
 from app.bodies import materials, refgeo
+from app.sheetmetal import flat
 from app.solid import work
 
 MM3_TO_M3 = 1e-9
@@ -59,6 +60,10 @@ def compute(d, handles=None, cs=None, density=None) -> dict:
     out = {"bodies": per, "count": len(rows), "cs": frame["name"], "units": {"length": "mm", "mass": "kg", "volume": "mm3", "area": "mm2", "inertia": "kg*mm2", "density": "kg/m3"}, "mm_per_unit": s, "area": area, "notes": notes}
     for body, raw, dens in rows:
         entry = {"handle": body.handle, "name": body.name, "material": body.material or None, "density": dens, "volume": raw["volume"], "area": raw["area"], "closed": raw["closed"], "valid": raw["valid"]}
+        if len(rows) == 1 and flat.is_sheet(d, body):
+            sheet = flat.cutlist_of(d, body.handle)
+            if sheet:
+                entry["sheet"] = sheet
         if raw["volume"] is None:
             entry["note"] = raw.get("note", "")
             notes.append("%s: %s" % (body.name or body.handle, raw.get("note", "No volume.")))
