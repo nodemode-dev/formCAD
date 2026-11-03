@@ -3,6 +3,7 @@
 .cv-titlebar { grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto auto; }
 .cv-titlebar > .cv-title-tools { grid-column: 4; }
 .cv-menubar { overflow: hidden; }
+html:not(.has-native-menus) .cv-titlebar { grid-template-columns: minmax(0, 1fr) 0 auto auto; }
 .cv-app.is-menubar-hidden .cv-menubar { display: none; }
 .has-native-menus .cv-menubar { display: none; }
 @media (max-width: 1419px) { .has-overlay-titlebar:not(.has-native-menus) .cv-titlebar .cv-tb-app { display: none; } }

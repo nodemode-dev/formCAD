@@ -195,8 +195,31 @@ export class MenuBar {
   private altLone = false;
   private barBack: HTMLElement | null = null;
 
+  private firstHidden = Number.MAX_SAFE_INTEGER;
+
+  private fit(host: HTMLElement): void {
+    const n = this.bars.length - 1;
+    if (n < 1 || !host.offsetParent) return;
+    const more = this.bars[n].btn;
+    for (const b of this.bars) b.btn.hidden = false;
+    const gap = 2, avail = host.clientWidth;
+    const ws = this.bars.slice(0, n).map((b) => b.btn.offsetWidth);
+    const total = ws.reduce((a, w) => a + w + gap, 0) - gap;
+    if (total <= avail) { more.hidden = true; this.firstHidden = Number.MAX_SAFE_INTEGER; return; }
+    const reserve = more.offsetWidth + gap;
+    let used = 0, k = 0;
+    while (k < n && used + ws[k] + gap + reserve <= avail) { used += ws[k] + gap; k++; }
+    for (let i = k; i < n; i++) this.bars[i].btn.hidden = true;
+    this.firstHidden = k;
+    if (this.openIndex >= 0 && this.bars[this.openIndex].btn.hidden) this.close();
+  }
+
+  private spill(): MenuItem[] {
+    return this.bars.slice(this.firstHidden, this.bars.length - 1).map((b) => ({ label: b.def.label, items: itemsOf(b.def) }));
+  }
+
   constructor(host: HTMLElement, commands: Commands, defs: MenuDef[]) {
-    for (const def of defs) {
+    for (const def of [...defs, { label: 'More', items: () => this.spill() }]) {
       const btn = el<HTMLButtonElement>('<button class="cv-menu-btn" type="button" aria-haspopup="menu"></button>');
       setText(btn, t(def.label));
       host.appendChild(btn);
@@ -238,7 +261,10 @@ export class MenuBar {
         setText(b.btn, t(b.def.label));
         b.menu.relabel();
       }
+      this.fit(host);
     });
+    this.bars[this.bars.length - 1].btn.hidden = true;
+    new ResizeObserver(() => this.fit(host)).observe(host);
   }
 
   get isOpen(): boolean { return this.openIndex >= 0; }
@@ -276,7 +302,13 @@ export class MenuBar {
       if (anyDialogOpen() || e.ctrlKey || e.metaKey) return;
       const at = this.bars.findIndex((b) => b.btn === document.activeElement);
       if (at >= 0 && !e.altKey && !e.shiftKey) {
-        const focus = (i: number): void => this.bars[(i + this.bars.length) % this.bars.length].btn.focus();
+        const step = e.key === 'ArrowLeft' || e.key === 'End' ? -1 : 1;
+        const focus = (i: number): void => {
+          for (let k = 0; k < this.bars.length; k++) {
+            const b = this.bars[(((i + k * step) % this.bars.length) + this.bars.length) % this.bars.length].btn;
+            if (!b.hidden) { b.focus(); return; }
+          }
+        };
         if (e.key === 'ArrowRight') { stop(); focus(at + 1); return; }
         if (e.key === 'ArrowLeft') { stop(); focus(at - 1); return; }
         if (e.key === 'Home') { stop(); focus(0); return; }
@@ -293,7 +325,7 @@ export class MenuBar {
       if (!e.altKey || e.shiftKey || isMac || !/^Key[A-Z]$/.test(e.code)) return;
       const letter = e.code.slice(3).toLowerCase();
       const hits = this.bars.map((b, i) => (first(b) === letter ? i : -1)).filter((i) => i >= 0);
-      if (!hits.length || !this.bars[hits[0]].btn.offsetParent) return;
+      if (!hits.length || !this.bars[0].btn.offsetParent) return;
       stop();
       this.open(hits[0], true);
       return;
@@ -338,13 +370,14 @@ export class MenuBar {
 
   open(i: number, keyboard = false): void {
     const from = document.activeElement, keep = this.returnTo;
+    if (i === this.bars.length - 1 && this.bars[i].btn.hidden) i = 0;
     this.shut();
     this.returnTo = keep ?? (keyboard && from instanceof HTMLElement && !from.closest('.cv-menu') ? from : null);
     const b = this.bars[i];
     b.menu.setItems(itemsOf(b.def));
     this.openIndex = i;
     setClass(b.btn, 'is-open', true);
-    const r = b.btn.getBoundingClientRect();
+    const r = (b.btn.hidden ? this.bars[this.bars.length - 1].btn : b.btn).getBoundingClientRect();
     b.menu.openAt(r.left, r.bottom + 4);
     if (keyboard) b.menu.items()[0]?.focus();
   }

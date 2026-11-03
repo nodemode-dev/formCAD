@@ -162,7 +162,8 @@ class GenStore {
 export const gen = new GenStore();
 
 events.on('topojob', (e) => { gen.onEvent(e as Json); });
-docStore.onChange(() => { gen.reset(); });
+let seenDoc = docStore.activeId;
+docStore.onChange(() => { if (docStore.activeId !== seenDoc) { seenDoc = docStore.activeId; gen.reset(); } });
 sim.onChange(() => {
   const list = gen.studies();
   if (gen.studyId && !gen.study()) { gen.reset(); }
