@@ -5,8 +5,10 @@ from app.interchange import dwg, dxfcommon
 from app.interchange.errors import InterchangeError, Report
 
 MODEL_EXT = (".step", ".stp", ".iges", ".igs")
-READ_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz") + MODEL_EXT
-WRITE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf")
+THREEDM_EXT = (".3dm",)
+MESH_EXT = (".stl", ".obj")
+READ_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz") + MODEL_EXT + THREEDM_EXT + MESH_EXT
+WRITE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf") + THREEDM_EXT + MESH_EXT
 PLOT_EXT = (".svg", ".png", ".pdf")
 NATIVE = ".fcad"
 MERGED = ("layers", "linetypes", "textstyles", "dimstyles", "mleaderstyles", "tablestyles", "mlinestyles", "scales")
@@ -47,8 +49,8 @@ def detect(path: str) -> str:
 
 def formats() -> dict:
     return {
-        "read": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".svgz", "SVGZ"), (".step", "STEP (needs the kernel)"), (".stp", "STEP (needs the kernel)"), (".iges", "IGES (needs the kernel)"), (".igs", "IGES (needs the kernel)"))],
-        "write": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".png", "PNG"), (".pdf", "PDF"), (".step", "STEP (needs the kernel)"))],
+        "read": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".svgz", "SVGZ"), (".step", "STEP (needs the kernel)"), (".stp", "STEP (needs the kernel)"), (".iges", "IGES (needs the kernel)"), (".igs", "IGES (needs the kernel)"), (".3dm", "3DM (needs the kernel)"), (".stl", "STL mesh"), (".obj", "OBJ mesh"))],
+        "write": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".png", "PNG"), (".pdf", "PDF"), (".step", "STEP (needs the kernel)"), (".3dm", "3DM (needs the kernel)"), (".stl", "STL mesh"), (".obj", "OBJ mesh"))],
         "versions": list(dxfcommon.VERSION_ORDER),
     }
 
@@ -82,7 +84,7 @@ def model_drawing(path: str, kind: str, report: Report):
     return d
 
 
-def read_any(path: str, recover: bool = False, report: Report | None = None):
+def read_any(path: str, recover: bool = False, report: Report | None = None, unit: str = "", target=None):
     report = report or Report()
     full = os.path.realpath(os.path.expanduser(path))
     if not os.path.isfile(full):
@@ -104,6 +106,14 @@ def read_any(path: str, recover: bool = False, report: Report | None = None):
         d = svg_drawing(full, report)
     elif kind in MODEL_EXT:
         d = model_drawing(full, kind, report)
+    elif kind in THREEDM_EXT:
+        from app.interchange import threedm
+
+        d = threedm.read_drawing(full, report, target)
+    elif kind in MESH_EXT:
+        from app.meshes import files as mesh_files
+
+        d = mesh_files.mesh_drawing(full, report, unit, target)
     else:
         raise InterchangeError("Files of this type are not read here.", "unsupported")
     from app.doc.kinds import blockcache
@@ -118,7 +128,7 @@ def write_any(drawing, path: str, version: str = "", binary: bool = False, preci
     from app.interchange import dxf_write
 
     ver = dxfcommon.parse_version(version) if version else ""
-    if version and not ver:
+    if version and not ver and kind not in THREEDM_EXT + MESH_EXT:
         raise InterchangeError('Unknown DXF version "%s". Use one of %s.' % (version, ", ".join(dxfcommon.VERSION_ORDER)), "badversion")
     if kind in (".dxf", ".dwt"):
         return dxf_write.write_file(drawing, path, ver, report, precision, binary)
@@ -131,11 +141,27 @@ def write_any(drawing, path: str, version: str = "", binary: bool = False, preci
             for n in dwg.dxf_to_dwg(mid, path, ver or "R2018"):
                 report.note(n)
         return report
+    if kind in THREEDM_EXT:
+        from app.interchange import threedm
+
+        try:
+            number = int(version) if version else 0
+        except ValueError:
+            raise InterchangeError('The 3DM archive version "%s" is not a number. Use 0 for the latest or a number from 2 up.' % version, "badversion")
+        threedm.write(drawing, path, report, number)
+        return report
+    if kind in MESH_EXT:
+        from app.meshes import files as mesh_files
+
+        bodies = [e for e in drawing.entities("model") if e.kind in ("meshbody", "solidbody")]
+        res = mesh_files.write_file(drawing, path, bodies, str(version).lower() != "ascii")
+        report.note("%d triangles written as %s." % (res["triangles"], res["form"]))
+        return report
     raise InterchangeError('Files of type "%s" cannot be written here.' % (kind or "this"), "unsupported")
 
 
-def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False) -> dict:
-    src, report, kind = read_any(path, recover)
+def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False, unit: str = "") -> dict:
+    src, report, kind = read_any(path, recover, None, unit, doc.drawing)
     d = doc.drawing
     added = {"objects": 0, "layers": 0, "blocks": 0}
     from app.doc import blockdefs
@@ -195,6 +221,13 @@ def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False) -> 
             if c.kind == "dimension":
                 c.associativity = {}
             if c.kind == "solidbody":
+                from app.solid import ids
+
+                for path, data in src.blobs.items():
+                    d.blobs.setdefault(path, data)
+                c.face_ids, c.edge_ids = ids.fresh(d, len(c.face_ids), len(c.edge_ids))
+                c.lineage = {}
+            if c.kind == "meshbody":
                 from app.solid import ids
 
                 for path, data in src.blobs.items():

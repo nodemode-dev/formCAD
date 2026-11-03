@@ -175,7 +175,7 @@ DIM_NAME_VARS = {"DIMBLK", "DIMBLK1", "DIMBLK2", "DIMLDRBLK", "DIMTXSTY", "DIMLT
 
 COMMON_FIELDS = ("handle", "owner", "layer", "color", "linetype", "lineweight", "ltscale", "transparency", "visible", "thickness", "normal", "plot_style", "annotation_scales", "xdata", "reactors", "extra")
 BASE_EXTRAS = ("annotation_scales", "reactors", "extra", "plot_style")
-FULL_KINDS = ("assoc_array", "table", "mleader", "dimension", "helix", "mline", "region", "hatch")
+FULL_KINDS = ("assoc_array", "table", "mleader", "dimension", "helix", "mline", "region", "hatch", "gdtframe", "datumsym", "balloon", "finishmark", "centermark")
 NATIVE_FIELDS = {
     "viewport": ("center", "width", "height", "view_center", "scale", "on", "locked", "frozen", "clip"),
     "insert": ("block", "position", "scale", "rotation", "attributes", "array"),
@@ -187,6 +187,7 @@ NATIVE_FIELDS = {
 SIG_KEYS = {
     "assoc_array": ("base",), "table": ("position",), "mleader": ("content_pos",), "dimension": ("def_point",),
     "helix": ("center",), "mline": ("scale",), "region": (),
+    "gdtframe": ("position",), "datumsym": ("position",), "balloon": ("position",), "finishmark": ("position",), "centermark": ("center",),
 }
 
 

@@ -5,6 +5,7 @@ from app.solid import dressup, planes
 
 PLANE_CHOICES = ["XY", "XZ", "YZ", "face", "source"]
 PLANE_KIND = 0
+MAX_DEPTH_MM = 1.0e6
 
 
 def frame_of(origin, normal, xdir):
@@ -77,6 +78,8 @@ def extrude_plan(op):
             depth = step.length("depth1")
             if not depth or depth <= 0:
                 raise PartError("The extrusion depth must be positive.")
+            if depth > MAX_DEPTH_MM:
+                raise PartError("The extrusion depth must be under 1,000,000 mm.")
             spec["depth"] = depth
         if end1 == "face":
             spec["face"] = step.face("face1")
@@ -89,6 +92,8 @@ def extrude_plan(op):
                 d2 = step.length("depth2")
                 if not d2 or d2 <= 0:
                     raise PartError("The second direction depth must be positive.")
+                if d2 > MAX_DEPTH_MM:
+                    raise PartError("The second direction depth must be under 1,000,000 mm.")
                 spec2["depth"] = d2
             p["end2"] = spec2
         ang = step.p("draft") or 0.0

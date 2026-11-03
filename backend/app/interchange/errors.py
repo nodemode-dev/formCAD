@@ -12,6 +12,7 @@ class Report:
         self.dropped: dict = {}
         self.converted: dict = {}
         self.warnings: list = []
+        self.extra: dict = {}
 
     def count(self, what: str, n: int = 1) -> None:
         self.counts[what] = self.counts.get(what, 0) + n
@@ -31,7 +32,10 @@ class Report:
             self.warnings.append(text)
 
     def to_dict(self) -> dict:
-        return {"notes": list(self.notes), "warnings": list(self.warnings), "counts": dict(self.counts), "dropped": dict(self.dropped), "converted": dict(self.converted)}
+        out = {"notes": list(self.notes), "warnings": list(self.warnings), "counts": dict(self.counts), "dropped": dict(self.dropped), "converted": dict(self.converted)}
+        if self.extra:
+            out["extra"] = dict(self.extra)
+        return out
 
     def summary(self) -> str:
         parts = []

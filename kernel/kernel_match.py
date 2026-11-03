@@ -462,12 +462,27 @@ def resolve_side(spec, tol):
     return Side(face, edge, tol)
 
 
+def edge_offset(sa, sb):
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeVertex
+    from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+
+    worst = 0.0
+    for k in (0.0, 0.5, 1.0):
+        q = sa.point(sa.t0 + (sa.t1 - sa.t0) * k)
+        v = BRepBuilderAPI_MakeVertex(gp_Pnt(float(q[0]), float(q[1]), float(q[2]))).Vertex()
+        d = BRepExtrema_DistShapeShape(v, sb.edge)
+        if d.IsDone():
+            worst = max(worst, float(d.Value()))
+    return worst
+
+
 def continuity(p):
     tol, ang = tolerances(p)
     sa = resolve_side(p["a"], tol)
     sb = resolve_side(p["b"], tol)
     rep = seam_report(sa, sb, tol, ang, int(p.get("samples", 41)), float(p.get("curvature_relative", 0.01)))
     rep["op"] = "continuity"
+    rep["edge_offset"] = edge_offset(sa, sb)
     rep["tol"] = tol
     rep["angtol"] = ang
     return {"report": rep}

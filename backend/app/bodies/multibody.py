@@ -141,10 +141,20 @@ def split(d, handle, planes=None, tools=None, keep_tools=True, fuzzy=None, force
     tool_bodies = unique_bodies(d, tools)
     if body.handle in {t.handle for t in tool_bodies}:
         raise BodyError("A body cannot split itself.")
-    if part_owner(d, [body] + tool_bodies)[1]:
-        raise BodyError("Split cannot act on the body of a part that has a feature tree: the tree would discard the pieces at the next rebuild. Copy the body first, or split a body that is not part of the tree.")
     if not specs and not tool_bodies:
         raise BodyError("Give a cutting plane or a surface body to split with.")
+    doc, owned = part_owner(d, [body] + tool_bodies)
+    if owned:
+        if body.handle != owned:
+            raise BodyError("The body of a part with a feature tree can be split, but it cannot be a cutting body.")
+        out = add_part_feature(doc, "split_body", {"planes": [dict(p) if isinstance(p, dict) else p for p in planes or []], "tools": [t.handle for t in tool_bodies], "keep": 1, "force": bool(force)}, None)
+        if out["state"].get("status") == "error":
+            raise BodyError(out["state"].get("message") or "The split failed.")
+        from app.part import store
+
+        sides = store.tree(d).get("sides") or {}
+        mine = [h for k, h in sorted(sides.items(), key=lambda kv: int(kv[0].rsplit(":", 1)[1])) if k.startswith(out["id"] + ":")]
+        return {"handles": [owned] + mine, "erased": [], "feature": out["id"], "message": "Added %s to the feature tree: %d pieces; piece 1 stays the part and the others are separate bodies that follow every rebuild." % (out["label"], 1 + len(mine)), "diagnostics": {}}
     wid = guarded(work.worker_id, d, body)
     tool_wids = [guarded(work.worker_id, d, t) for t in tool_bodies]
     fuzz = float(fuzzy) if fuzzy is not None else float(d.tolerances["absolute"])
@@ -240,6 +250,18 @@ def copy_bodies(d, handles, params, count=1) -> dict:
     if not 1 <= count <= MAX_COPIES:
         raise BodyError("Make between 1 and %d copies." % MAX_COPIES)
     made = []
+    doc, owned = part_owner(d, bodies)
+    if owned:
+        scaled(d, params, 1)
+        raw = {k: params.get(k) for k in ("translate", "rotate") if params.get(k) is not None}
+        out = add_part_feature(doc, "copy_body", dict(raw, count=count), None)
+        if out["state"].get("status") == "error":
+            raise BodyError(out["state"].get("message") or "The copy failed.")
+        from app.part import store
+
+        sides = store.tree(d).get("sides") or {}
+        made.extend(h for k, h in sorted(sides.items(), key=lambda kv: int(kv[0].rsplit(":", 1)[1])) if k.startswith(out["id"] + ":"))
+        bodies = [b for b in bodies if b.handle != owned]
     for b in bodies:
         wid = guarded(work.worker_id, d, b)
         for k in range(1, count + 1):

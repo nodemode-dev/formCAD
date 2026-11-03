@@ -13,6 +13,11 @@ def watched_handles(d) -> set:
             sk = S.get_sketch(d, rec["params"].get("sketch") or "")
             if sk is not None:
                 out.update(int(h) for h in sk["entities"])
+        for h in (rec.get("params") or {}).get("tools") or []:
+            try:
+                out.add(int(h))
+            except (TypeError, ValueError):
+                continue
     return out
 
 

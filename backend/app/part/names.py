@@ -148,4 +148,5 @@ def match_signature(sig, cands, diag, taken=()):
 
 def lost(slot, ref, what="reference"):
     key = ref.get("key") or ""
-    return RefLost("A %s in %s no longer exists (%s) and no matching shape was found." % (what, slot, key or "unnamed"), slot, key)
+    article = "An" if what[:1].lower() in "aeiou" else "A"
+    return RefLost("%s %s in %s no longer exists (%s) and no matching shape was found." % (article, what, slot, key or "unnamed"), slot, key)

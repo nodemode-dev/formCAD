@@ -1,6 +1,11 @@
+import math
+from types import SimpleNamespace
+
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from app.doc.service import DocumentFault, service
+from app.nurbs3d import grips
 from app.nurbs3d.form import FormError, NurbsForm
 
 router = APIRouter(tags=["curves"])
@@ -41,6 +46,33 @@ def curves(doc_id: str, per_span: int = 24) -> dict:
         except FormError as err:
             out.append({"handle": e.handle, "error": str(err)})
     return {"curves": out}
+
+
+class PreviewIn(BaseModel):
+    grip: str
+    to: list[float]
+    per_span: int = 16
+
+
+@router.post("/{doc_id}/curves/{handle}/preview")
+def curve_preview(doc_id: str, handle: int, body: PreviewIn) -> dict:
+    try:
+        d = service.get(doc_id)
+    except DocumentFault as err:
+        raise HTTPException(err.status, err.message)
+    if len(body.to) < 2 or not all(math.isfinite(v) for v in body.to[:2]):
+        raise HTTPException(400, "Give the new position as two finite numbers.")
+    with d.lock:
+        e = d.drawing.get(handle)
+        if e is None or e.kind != "nurbscurve":
+            raise HTTPException(404, "No such curve.")
+        try:
+            held = SimpleNamespace(degree=e.degree, poles=[list(p) for p in e.poles], weights=list(e.weights), knots=list(e.knots), mults=list(e.mults), periodic=bool(e.periodic))
+            grips.stretch(held, body.grip, body.to[:2])
+            form = NurbsForm.from_entity(held)
+            return {"handle": handle, "poles": [list(p) for p in held.poles], "samples": form.sample(max(2, min(int(body.per_span), 64)))}
+        except (FormError, ValueError, IndexError) as err:
+            raise HTTPException(400, str(err))
 
 
 @router.get("/{doc_id}/surface-last")

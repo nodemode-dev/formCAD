@@ -683,15 +683,19 @@ class CommandRunner:
                 return
             self._feed(tok)
 
-    def _feed_text(self, text: str) -> None:
-        run = self.run
-        p = run.prompt
+    def _refuse_prompt(self, p, tok: str) -> bool:
         from app.cmd import barred
 
-        why = barred.prompt_refusal(self, p)
+        why = barred.prompt_refusal(self, p, tok)
         if why:
             self._fail(why)
             self.cancel_run(quiet=True)
+        return bool(why)
+
+    def _feed_text(self, text: str) -> None:
+        run = self.run
+        p = run.prompt
+        if self._refuse_prompt(p, text):
             return
         self.log("%s %s" % (format_prompt(p), text))
         if text == "" and p.default is None:
@@ -991,6 +995,8 @@ class CommandRunner:
             self._feed_sel(tok)
             return
         p = run.prompt
+        if p is not None and self._refuse_prompt(p, tok):
+            return
         try:
             res = resolve(p, tok, self.env())
         except InputError as err:

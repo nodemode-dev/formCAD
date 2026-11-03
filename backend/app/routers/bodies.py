@@ -4,17 +4,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
-from app.bodies import configs, massprops, materials, multibody, refgeo
+from app.bodies import configs, massprops, materials, multibody, planesource, refgeo
 from app.doc.document import CommandFailed
 from app.doc.service import DocumentFault, service
 from app.param import ops
 from app.param import store as S
 from app.solid.work import SolidError
-
-try:
-    from app.bodies import planesource  # noqa: F401
-except ImportError:
-    pass
 
 router = APIRouter(tags=["bodies"])
 

@@ -11,6 +11,7 @@ The `formcad-kernel` worker is a separate program shipped only from the `formCAD
 | bd_materials | 0.2.x | Apache-2.0 (PyPI metadata is blank; the repository LICENSE file is the Apache-2.0 text) | github.com/bernhard-42/bd_materials, `LICENSE` |
 | anytree | 2.13.0 | Apache-2.0 (PyPI metadata is blank; the repository shows Apache-2.0) | github.com/c0fec0de/anytree |
 | threejs-materials | 1.2.x | Apache-2.0 for the package; FLAG: the texture sets it downloads come from ambientCG, GPUOpen MaterialX Library, PolyHaven and PhysicallyBased, and the package page states no licence for them | pypi.org/project/threejs-materials |
+| rhino3dm (3DM reader and writer, imported only by `kernel_3dm.py`) | 8.35.0 | MIT. The wheel also carries openNURBS (its own permissive licence text, which has no SPDX name), zlib (zlib licence), pybind11 and nanobind (BSD-3-Clause) and draco (Apache-2.0). Written confirmation of the openNURBS terms is still recommended before release | github.com/mcneel/rhino3dm, `LICENSE` and the third-party notices in its source tree |
 | ocp_gordon, svgpathtools, trianglesolver, ezdxf, lib3mf, numpy, scipy, sympy, ipython, webcolors, fonttools | as pinned by build123d | Apache-2.0, MIT, MIT, MIT, BSD, BSD-3-Clause and others, BSD, BSD, BSD-3-Clause, BSD-3-Clause, MIT | the PyPI pages in R15 section 1 |
 
 Open items before the first kernel release:

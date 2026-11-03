@@ -820,7 +820,7 @@ def crvextend_exec(ctx, args):
 
 def run_report(ctx, ea, end_a, eb, end_b):
     res = guard(service.measure, ctx.d, service.form_of(ea), end_a, service.form_of(eb), end_b)
-    ctx.say("CRVCONT: %s. Position gap %s, tangent angle %s, curvature gap %s, third-derivative gap %.3g (relative)." % (res["level"], ctx.fd(res["position_gap"]), ctx.fa(res["tangent_angle"]), ctx.fd(res["curvature_gap"]), res["third_relative"]))
+    ctx.say("CRVCONT: %s. Position gap %.3e, tangent angle %.3e rad, curvature gap %.3e, third-derivative gap %.3e (relative)." % (res["level"], res["position_gap"], res["tangent_angle"], res["curvature_gap"], res["third_relative"]))
     return res
 
 

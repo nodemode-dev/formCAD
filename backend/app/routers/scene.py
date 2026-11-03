@@ -20,9 +20,16 @@ def _doc(doc_id: str):
 def get_scene(doc_id: str, since: int = 0, detail: float = 1.0) -> Response:
     doc = _doc(doc_id)
     try:
-        payload = scene_mod.build(doc, since, detail)
+        if doc.kind == "assembly":
+            from app.assembly import scene as assembly_scene
+
+            payload = assembly_scene.build(doc, since, detail)
+        else:
+            payload = scene_mod.build(doc, since, detail)
     except SolidError as err:
         raise HTTPException(503, str(err))
+    except ValueError as err:
+        raise HTTPException(400, str(err))
     return Response(content=payload, media_type=scene_mod.MEDIA_TYPE, headers={"Cache-Control": "no-store", "X-FormCAD-Rev": str(doc.rev)})
 
 

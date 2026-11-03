@@ -63,6 +63,7 @@ The `formcad-kernel` worker in `kernel/` is distributed only from the `formCAD-b
 | Work | License | Where |
 | --- | --- | --- |
 | Kernel worker third-party notices (OpenCascade 8.0.1, cadquery-ocp-novtk, build123d, ocpsvg, bd_materials, anytree, threejs-materials with a texture-licence flag) | LGPL-2.1 with the OCCT exception, Apache-2.0, MIT, BSD | `kernel/NOTICE.md` |
+| rhino3dm 8.35.0, used only inside the kernel worker to read and write 3DM files; it carries openNURBS, zlib, pybind11, nanobind and draco. The openNURBS licence text has no SPDX name, so written confirmation from its owner is still recommended before the first kernel release | MIT for rhino3dm; openNURBS under its own permissive text; zlib; BSD-3-Clause; Apache-2.0 | `kernel/NOTICE.md`, `kernel/kernel_3dm.py` |
 
 ## Independent implementation
 

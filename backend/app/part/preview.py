@@ -18,6 +18,7 @@ def isolated_cache(doc):
     shadow.entries = dict(real.entries)
     shadow.serial = real.serial
     shadow.applied = getattr(real, "applied", None)
+    shadow.sides = dict(real.sides)
     shadow.trash = Discard()
     return real, shadow
 
@@ -31,6 +32,7 @@ def free_new(real, shadow):
             ids.append(e.wid)
         if e.tool:
             ids.append(e.tool)
+        ids.extend(x["wid"] for x in e.extras)
     if ids:
         try:
             kernel.call("shape_free", {"ids": ids}, 10.0)

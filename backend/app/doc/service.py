@@ -11,7 +11,7 @@ from app.doc.model import Drawing
 from app.sysvars import registry as sv
 
 EXT = ".fcad"
-FOREIGN_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs")
+FOREIGN_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs", ".3dm", ".stl", ".obj")
 MAX_RECENT = 30
 
 

@@ -6,7 +6,7 @@ def next_pid(drawing) -> int:
     if not cur:
         top = 0
         for e in drawing.ents.values():
-            if e.kind == "solidbody":
+            if e.kind in ("solidbody", "meshbody"):
                 top = max([top, *e.face_ids, *e.edge_ids] if (e.face_ids or e.edge_ids) else [top])
         cur = top + 1
     drawing.pid_next = cur + 1

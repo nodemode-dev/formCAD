@@ -5,15 +5,15 @@ from bisect import bisect_right
 LINE_HOOKS = []
 
 from app.cmd.grips import grips_of
-from app.display import annot, arrays, attribs, constraint_marks, curves3d, dimensions, extra_d2, hatch_d, insert, palette, shapes, viewport_frame, xref_clip
+from app.display import annot, arrays, attribs, constraint_marks, curves3d, dimensions, drawann_d, drawview_d, extra_d2, hatch_d, insert, palette, shapes, viewport_frame, xref_clip
 from app.display.resolve import Context
 from app.doc import annotation
 
-BUILDER_MODULES = (insert, shapes, extra_d2, curves3d, arrays, annot, hatch_d, dimensions, viewport_frame, attribs, xref_clip, constraint_marks)
+BUILDER_MODULES = (insert, shapes, extra_d2, curves3d, arrays, annot, hatch_d, dimensions, viewport_frame, attribs, xref_clip, constraint_marks, drawann_d, drawview_d)
 STEP = 1024
 _encode = json.JSONEncoder(separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode
 _states = weakref.WeakKeyDictionary()
-TEXT_KINDS = ("text", "mtext", "insert", "dimension", "attdef")
+TEXT_KINDS = ("text", "mtext", "insert", "dimension", "attdef", "gdtframe", "datumsym", "balloon", "finishmark")
 
 
 class Entry:

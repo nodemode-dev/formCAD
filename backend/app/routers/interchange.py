@@ -3,6 +3,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.core import outputs
 from app.doc.service import DocumentFault, service
 from app.interchange import dwg, files, hooks
 from app.interchange.errors import InterchangeError
@@ -81,6 +82,15 @@ def open_file(body: OpenBody) -> dict:
 @router.post("/docs/{doc_id}/interchange/saveas")
 def save_as(doc_id: str, body: SaveBody) -> dict:
     doc = _doc(doc_id)
+    if files.ext_of(body.path) in files.THREEDM_EXT + files.MESH_EXT:
+        try:
+            target = outputs.checked(body.path, files.THREEDM_EXT + files.MESH_EXT)
+        except outputs.OutputRefused as err:
+            raise HTTPException(400, str(err))
+        report = _wrap(lambda: files.write_any(doc.drawing, target, body.version or "", body.binary))
+        out = doc.summary()
+        out["notes"] = report.to_dict()
+        return out
     if files.ext_of(body.path) in (".dxf", ".dwg", ".dwt"):
         out = _wrap(lambda: service.save_foreign(doc, body.path, body.version or "", body.binary)).summary()
     else:

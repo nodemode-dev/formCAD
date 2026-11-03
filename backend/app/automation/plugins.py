@@ -367,8 +367,65 @@ def _forget(plugin_id: str) -> None:
     finder = FINDERS.pop(plugin_id, None)
     if finder is not None and finder in sys.meta_path:
         sys.meta_path.remove(finder)
+        if finder.root != root:
+            root = finder.root
     for name in [n for n in sys.modules if n == root or n.startswith(root + ".")]:
         sys.modules.pop(name, None)
+
+
+def read_verified_dist(dist, target: str, expected: str) -> tuple:
+    files = _digest_files(dist, target)
+    top = target.split(":")[0].split(".")[0].strip()
+    h = hashlib.sha256()
+    blobs = {}
+    entry = ""
+    for name, path in files:
+        try:
+            with open(path, "rb") as fh:
+                data = fh.read(MAX_FILE + 1)
+        except OSError:
+            raise PluginError("%s cannot be read" % name)
+        h.update(name.encode("utf-8") + b"\0" + hashlib.sha256(data).hexdigest().encode("ascii") + b"\n")
+        if name.startswith("module/"):
+            rel = os.path.normpath(name[7:])
+            if path.suffix in (".so", ".pyd", ".dll"):
+                raise PluginError("%s is compiled code, which cannot be loaded from verified bytes." % rel)
+            if len(data) > MAX_FILE:
+                raise PluginError("%s is too large" % rel)
+            blobs[rel] = data
+    if h.hexdigest() != expected:
+        raise PluginError("The installed files changed since the plugin was enabled.")
+    if "__init__.py" in blobs:
+        entry = "__init__.py"
+    elif top + ".py" in blobs:
+        entry = top + ".py"
+    else:
+        raise PluginError("The module %s has no source file to verify." % top)
+    return top, entry, blobs
+
+
+def _load_entry_point(plugin_id: str, ep, expected: str):
+    _forget(plugin_id)
+    dist = getattr(ep, "dist", None)
+    if dist is None:
+        raise PluginError("The plugin has no installed distribution to verify.")
+    top, entry, blobs = read_verified_dist(dist, ep.value, expected)
+    if top in sys.modules:
+        raise PluginError("The module %s was imported before it was verified; restart the engine to load it." % top)
+    spec = importlib.util.find_spec(top)
+    origin = Path(spec.origin).parent if spec is not None and spec.origin else Path(".")
+    finder = VerifiedImporter(top, origin, entry, blobs)
+    sys.meta_path.insert(0, finder)
+    FINDERS[plugin_id] = finder
+    try:
+        module_name, _, attr = ep.value.partition(":")
+        target = importlib.import_module(module_name.split("[")[0].strip())
+        for part in [a for a in attr.split("[")[0].strip().split(".") if a]:
+            target = getattr(target, part)
+        return target
+    except Exception:
+        _forget(plugin_id)
+        raise
 
 
 def _load_module(plugin_id: str, directory: Path, entry: str, expected_manifest: str):
@@ -398,7 +455,7 @@ def load(plugin_id: str) -> dict:
         try:
             if item["tier"] == "entry-point":
                 ep = next(e for e in importlib.metadata.entry_points(group=GROUP) if "ep:" + e.name == plugin_id)
-                target = ep.load()
+                target = _load_entry_point(plugin_id, ep, item["manifestSha256"])
                 register = target if callable(target) else getattr(target, "register", None)
             else:
                 module = _load_module(plugin_id, Path(item["path"]), item["entry"], item["manifestSha256"])

@@ -1037,6 +1037,42 @@ class Writer:
         ent = self.new(lay, "INSERT", {"name": name, "insert": (0.0, 0.0, 0.0)}, e)
         return ent
 
+    def w_drawann(self, e, lay):
+        from app.drawann import explode
+
+        self.counter["G"] = self.counter.get("G", 0) + 1
+        name = "*U%d" % self.counter["G"]
+        while self.d.tables["blocks"].has(name) or name in self.blocks:
+            self.counter["G"] += 1
+            name = "*U%d" % self.counter["G"]
+        blk = self.doc.blocks.new(name)
+        self.blocks[name] = blk
+        for p in explode.parts(e, None, self.d):
+            p.handle = 0
+            try:
+                getattr(self, "w_" + p.kind)(p, blk)
+            except Exception:
+                continue
+        return self.new(lay, "INSERT", {"name": name, "insert": (0.0, 0.0, 0.0)}, e)
+
+    w_gdtframe = w_datumsym = w_balloon = w_finishmark = w_centermark = w_drawann
+
+    def w_drawview(self, e, lay):
+        from app.views import export
+
+        out = []
+        for p in export.entities(e):
+            p.handle = 0
+            try:
+                got = getattr(self, "w_" + p.kind)(p, lay)
+            except Exception:
+                continue
+            if isinstance(got, list):
+                out.extend(got)
+            elif got is not None:
+                out.append(got)
+        return out or None
+
     def w_assoc_array(self, e, lay):
         self.counter["A"] += 1
         name = "*A%d" % self.counter["A"]

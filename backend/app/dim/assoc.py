@@ -1,4 +1,5 @@
 from app.dim import features, regen
+from app.drawann import viewsrc
 
 LINKABLE = {
     "linear": ("p13", "p14"),
@@ -89,7 +90,7 @@ def follow(doc, changed):
         dropped = False
         for name, link in links.items():
             obj = d.ents.get(link.get("h"))
-            fp = features.feature_point(obj, link) if obj is not None else None
+            fp = (viewsrc.point(d, link) if viewsrc.is_view(obj) else features.feature_point(obj, link)) if obj is not None else None
             cur = _pt(dim, name)
             if fp is None or cur is None:
                 dropped = True

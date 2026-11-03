@@ -531,7 +531,7 @@ class Reader:
                 setattr(snap, k, copy.deepcopy(getattr(ent, k)))
             snap.xdata = ent.xdata
             self.restored[snap.handle] = snap
-            if ent.kind == "insert" and kind in ("table", "assoc_array"):
+            if ent.kind == "insert" and kind in ("table", "assoc_array", "gdtframe", "datumsym", "balloon", "finishmark", "centermark"):
                 self.drop_blocks.add(getattr(ent, "block", ""))
             if kind == "dimension" and getattr(ent, "block", ""):
                 self.drop_blocks.add(ent.block)

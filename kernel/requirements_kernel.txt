@@ -1,2 +1,3 @@
 cadquery-ocp-novtk==8.0.1.1.0   # Python binding to OpenCascade 8.0.1 without VTK; wrapper Apache-2.0, bundled OpenCascade LGPL-2.1 with the OCCT exception
 build123d==0.13.0   # modelling API over OCP; Apache-2.0
+rhino3dm==8.35.0   # reads and writes 3DM files; MIT, bundles openNURBS, zlib, pybind11, nanobind and draco; kernel worker only, the engine never imports it

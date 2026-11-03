@@ -143,6 +143,53 @@ def load_operations() -> None:
 
         for name in ("surf_loft", "surf_sweep", "surf_network", "surf_patch", "surf_extrude", "surf_revolve", "surf_planar", "surf_edge", "surf_extend", "surf_offset", "surf_split", "surf_join", "surf_continuity", "surf_blend", "surf_match", "bool_diag", "fillet_edge", "chamfer_edge"):
             METHODS.setdefault(name, surfaces_unavailable)
+    try:
+        import kernel_views
+
+        METHODS.update(kernel_views.METHODS)
+    except Exception as err:
+        failure6 = str(err)
+
+        def views_unavailable(_params):
+            raise RuntimeError("The drawing view operations could not be loaded (%s)." % failure6)
+
+        METHODS.setdefault("view_build", views_unavailable)
+    try:
+        import kernel_analysis
+
+        METHODS.update(kernel_analysis.METHODS)
+    except Exception as err:
+        failure6 = str(err)
+
+        def analysis_unavailable(_params):
+            raise RuntimeError("The analysis operations could not be loaded (%s)." % failure6)
+
+        for name in ("an_shape_data", "an_deviation", "an_comb", "an_affine", "an_snap"):
+            METHODS.setdefault(name, analysis_unavailable)
+    try:
+        import kernel_3dm
+
+        METHODS.update(kernel_3dm.METHODS)
+    except Exception as err:
+        failure7 = str(err)
+
+        def threedm_unavailable(_params):
+            raise RuntimeError("The 3DM operations could not be loaded (%s)." % failure7)
+
+        for name in ("threedm_info", "threedm_read", "threedm_write", "threedm_compare", "threedm_curve_compare", "threedm_verify"):
+            METHODS.setdefault(name, threedm_unavailable)
+    try:
+        import kernel_asm
+
+        METHODS.update(kernel_asm.METHODS)
+    except Exception as err:
+        failure8 = str(err)
+
+        def assembly_unavailable(_params):
+            raise RuntimeError("The assembly operations could not be loaded (%s)." % failure8)
+
+        for name in ("asm_interference", "asm_blocking"):
+            METHODS.setdefault(name, assembly_unavailable)
 
 
 def reply(payload: dict) -> None:

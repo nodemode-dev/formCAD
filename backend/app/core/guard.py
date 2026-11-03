@@ -79,25 +79,28 @@ def run_files(given) -> tuple:
 
 CALLER = contextvars.ContextVar("formcad_caller", default="")
 FILES = contextvars.ContextVar("formcad_files", default=())
-MACRO_DENIED_FIRST = {"open", "recovery", "autosave"}
-MACRO_DENIED_LATER = {"save", "plot", "macro", "export", "xrefs", "import", "materiallib"}
+MACRO_DENIED_FIRST = {"open", "recovery", "autosave", "3dm"}
+MACRO_DENIED_LATER = {"save", "saveas", "plot", "macro", "export", "xrefs", "import", "materiallib", "assembly", "matesettings", "docprops"}
+MACRO_DENIED_WRITE = {"drawann"}
 
 
-def _macro_route_ok(path: str) -> bool:
+def _macro_route_ok(path: str, method: str = "") -> bool:
     parts = [p for p in path.split("/") if p]
     if len(parts) >= 3 and parts[:2] == ["api", "docs"]:
         if parts[2] in MACRO_DENIED_FIRST:
+            return False
+        if method.upper() in ("PUT", "POST", "PATCH", "DELETE") and any(p in MACRO_DENIED_WRITE for p in parts[3:]):
             return False
         return not any(p in MACRO_DENIED_LATER for p in parts[3:])
     return True
 
 
-def _scoped(given: str | None, path: str) -> bool:
+def _scoped(given: str | None, path: str, method: str = "") -> bool:
     if not given:
         return False
     for token, prefixes in list(RUN_TOKENS.items()):
         if hmac.compare_digest(given.encode("utf-8"), token.encode("utf-8")):
-            return any(path == p or path.startswith(p + "/") for p in prefixes) and _macro_route_ok(path)
+            return any(path == p or path.startswith(p + "/") for p in prefixes) and _macro_route_ok(path, method)
     return False
 
 
@@ -126,7 +129,7 @@ class Guard:
             return True
         if _same(headers.get(HEADER)):
             return True
-        if scope["type"] == "http" and _scoped(headers.get(HEADER), scope.get("path", "")):
+        if scope["type"] == "http" and _scoped(headers.get(HEADER), scope.get("path", ""), scope.get("method", "")):
             scope["formcad_caller"] = "macro"
             scope["formcad_files"] = run_files(headers.get(HEADER))
             return True

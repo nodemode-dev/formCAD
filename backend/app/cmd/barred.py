@@ -4,8 +4,8 @@ from app.core import guard
 
 MACRO_GROUPS = {"draw", "modify", "format", "annotate", "annotation", "constraints", "inquiry", "block", "layout", "solids", "edit", "view", "tools", "script", "settings", "extra"}
 MACRO_NAMES = {"purge", "-purge", "audit"}
-MACRO_BARRED = {"aliasedit", "reinit", "dsettings", "materiallib", "modeltol"}
-AGENT_BARRED = {"pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay", "materiallib", "modeltol"}
+MACRO_BARRED = {"aliasedit", "reinit", "dsettings", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings"}
+AGENT_BARRED = {"pluginenable", "aliasedit", "reinit", "appload", "macrosave", "macroplay", "materiallib", "modeltol", "gdtstyle", "docprops", "asmsearch", "analysisramp", "matesettings"}
 
 
 def caller(runner=None) -> str:
@@ -67,14 +67,33 @@ def args_refusal(runner, spec, args) -> str:
     return ""
 
 
-def prompt_refusal(runner, prompt) -> str:
+FILE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs", ".3dm", ".stl", ".obj", ".fcad", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".txt", ".json", ".py", ".lsp", ".lisp", ".scr", ".xlsx", ".xls")
+
+
+def looks_like_path(tok) -> bool:
+    s = str(tok).strip()
+    if not s or (" " in s and not s.startswith(("/", "~", "\\"))):
+        return False
+    if s.startswith(("/", "~", "\\", "./", "../", ".\\", "..\\")) or (len(s) > 2 and s[1] == ":" and s[2] in "/\\"):
+        return True
+    return s.lower().endswith(FILE_EXT)
+
+
+def prompt_refusal(runner, prompt, tok=None) -> str:
     who = caller(runner)
     if not who:
         return ""
     words = str(getattr(prompt, "message", "")).lower()
-    if not any(w in words for w in ("file", "folder", "path", "directory")):
+    free = bool(getattr(prompt, "free_text", False))
+    asks = free and any(w in words for w in ("file", "folder", "path", "directory"))
+    typed = tok is not None and free and looks_like_path(tok)
+    if not asks and not typed:
         return ""
-    return "A file name cannot be typed for a prompt by a %s." % ("macro" if who == "macro" else "outside agent")
+    if tok is None or str(tok).strip() == "":
+        return ""
+    if _inside(str(tok), _granted(runner, who)):
+        return ""
+    return "A file name outside the granted folders cannot be typed for a prompt by %s." % ("a macro" if who == "macro" else "an outside agent")
 
 
 def refusal(runner, spec) -> str:
@@ -92,4 +111,9 @@ def refusal(runner, spec) -> str:
 
 
 def lisp_refusal(runner) -> str:
-    return "LISP is not available to a Python macro; use the FormCAD window." if caller(runner) == "macro" else ""
+    who = caller(runner)
+    if who == "macro":
+        return "LISP is not available to a Python macro; use the FormCAD window."
+    if who == "agent":
+        return "LISP is not available to outside agents; use the FormCAD window."
+    return ""

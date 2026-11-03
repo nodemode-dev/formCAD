@@ -37,6 +37,17 @@ def positive(value, what):
     return v
 
 
+def bounded(args, key, default, low, high, what):
+    raw = args.get(key, default)
+    try:
+        v = int(raw)
+    except (TypeError, ValueError):
+        raise CommandError("%s must be a whole number from %d to %d." % (what, low, high))
+    if not low <= v <= high:
+        raise CommandError("%s must be from %d to %d; %s is out of range." % (what, low, high, raw))
+    return v
+
+
 def to_mm(ctx, value, what, minimum_positive=True):
     v = positive(value, what) if minimum_positive else float(value)
     return v * sw.scale(ctx.d)
@@ -180,7 +191,7 @@ def do_network(ctx, args):
     vs = sw.curves_of(ctx.d, handles_of(args, "v"), args.get("v_edges"))
     if len(us) < 2 or len(vs) < 2:
         raise CommandError("A network needs at least two curves in each direction.")
-    res = guard(sw.call, ctx.d, "surf_network", {"u": us, "v": vs, "degree": int(args.get("degree", 3)), "points": int(args.get("points", 20)), "iterations": int(args.get("iterations", 3))})
+    res = guard(sw.call, ctx.d, "surf_network", {"u": us, "v": vs, "degree": bounded(args, "degree", 3, 1, 8, "The degree"), "points": bounded(args, "points", 20, 2, 2000, "The point count"), "iterations": bounded(args, "iterations", 3, 1, 10, "The iteration count")})
     body = guard(sw.add_result, ctx, res, "Network surface", "network")
     announce(ctx, "SRFNETWORK", res)
     rep = res["report"]
@@ -212,7 +223,7 @@ def do_patch(ctx, args):
     points = [sw.p3(q, s) for q in args.get("points") or []]
     if not (curves or points or supports):
         raise CommandError("Give curves, points or supports for the patch.")
-    params = {"curves": curves, "points": points, "supports": supports, "degree": int(args.get("degree", 3)), "samples": int(args.get("samples", 15)), "iterations": int(args.get("iterations", 3)), "order": str(args.get("order", "g0"))}
+    params = {"curves": curves, "points": points, "supports": supports, "degree": bounded(args, "degree", 3, 1, 8, "The degree"), "samples": bounded(args, "samples", 15, 2, 2000, "The sample count"), "iterations": bounded(args, "iterations", 3, 1, 10, "The iteration count"), "segments": bounded(args, "segments", 9, 1, 64, "The segment count"), "order": str(args.get("order", "g0"))}
     res = guard(sw.call, d, "surf_patch", params)
     body = guard(sw.add_result, ctx, res, "Patch surface", "patch")
     announce(ctx, "SRFPATCH", res)
@@ -411,6 +422,8 @@ def do_match(ctx, args):
     moving, target = two_sides(ctx, args, "moving", "target")
     params = {"moving": sw.side_params(moving), "target": sw.side_params(target), "continuity": int(args.get("continuity", 2)), "correspondence": str(args.get("correspondence", "parameter")), "refine": bool(args.get("refine", True))}
     res = guard(sw.call, d, "surf_match", params)
+    if isinstance(res.get("report", {}).get("seam"), dict):
+        res["report"]["seam"]["bodies"] = [moving["body"].handle, target["body"].handle]
     body, in_place = guard(sw.edit_surface, ctx, moving["body"], res, "match")
     announce(ctx, "SRFMATCH", res)
     rep = res["report"]
@@ -821,14 +834,18 @@ def seamcheck_cmd(ctx):
 
 def do_seam(ctx, args):
     sa, sb = two_sides(ctx, args)
-    params = {"a": sw.side_params(sa), "b": sw.side_params(sb), "samples": int(args.get("samples", 41))}
+    params = {"a": sw.side_params(sa), "b": sw.side_params(sb), "samples": bounded(args, "samples", 41, 2, 2000, "The sample count")}
     if args.get("curvature_relative") is not None:
         params["curvature_relative"] = positive(args["curvature_relative"], "The curvature tolerance")
     res = guard(sw.call, ctx.d, "surf_continuity", params)
     rep = res["report"]
+    rep["bodies"] = [sa["body"].handle, sb["body"].handle]
     ctx.say("SEAMCHECK: %s." % sw.seam_line(rep))
     t = rep.get("tolerance") or {}
     ctx.say("Against position %.3g mm, angle %.3g rad, curvature %.3g: G0 %s, G1 %s, G2 %s. G3 is not measured." % (t.get("length", 0.0), t.get("angle", 0.0), t.get("curvature", 0.0), "yes" if rep.get("g0") else "no", "yes" if rep.get("g1") else "no", "yes" if rep.get("g2") else "no"))
+    off = rep.get("edge_offset")
+    if off is not None and off > max(10.0 * float(t.get("length", 0.0)), 1e-6):
+        ctx.say("Warning: the second edge lies %.3g mm from the first, so it is not the seam; the report measures the first edge against the second surface. Pick the edge that meets the first." % off)
     keep_report(ctx, rep)
     return {"report": sw.compact(rep)}
 

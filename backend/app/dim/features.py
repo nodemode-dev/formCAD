@@ -1,6 +1,7 @@
 import math
 
 from app.doc import geom
+from app.drawann import viewsrc
 from app.doc.entities import Arc, Circle, Ellipse, Insert, Line, LwPolyline, MText, Point, Spline, Text
 
 RANK = {"start": 0, "end": 0, "vertex": 0, "center": 1, "mid": 2, "segmid": 2, "ins": 0, "pos": 0}
@@ -89,6 +90,11 @@ def find_link(d, p, space, tol):
     px, py = float(p[0]), float(p[1])
     for e in d.entities(space):
         if e.kind == "dimension" or not d.visible(e):
+            continue
+        if viewsrc.is_view(e):
+            hit = viewsrc.nearest_link(d, e, (px, py), tol)
+            if hit:
+                return hit
             continue
         for link in features_of(e):
             fp = feature_point(e, link)

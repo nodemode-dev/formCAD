@@ -34,6 +34,7 @@ class Entry:
         self.ms = 0.0
         self.status = "ok"
         self.adjacency = None
+        self.extras = []
 
 
 class Cache:
@@ -41,6 +42,7 @@ class Cache:
         self.entries: dict = {}
         self.serial = 0
         self.trash: list = []
+        self.sides: dict = {}
 
 
 def cache_of(doc) -> Cache:
@@ -60,6 +62,7 @@ def sync_cache(doc, need_kernel=True) -> Cache:
     if serial != c.serial:
         c.entries.clear()
         c.trash.clear()
+        c.sides = {}
         c.serial = serial
     return c
 
@@ -85,6 +88,8 @@ def drop_entry(cache: Cache, fid: str) -> None:
             cache.trash.append(e.wid)
         if e.tool:
             cache.trash.append(e.tool)
+        for x in e.extras:
+            cache.trash.append(x["wid"])
 
 
 def flat_refs(rec):
@@ -305,8 +310,21 @@ class Rebuilder:
                 parts.append(self.cache.entries[ref["id"]].hash)
         return parts
 
+    def tool_stamp(self, values):
+        out = []
+        for h in values.get("tools") or []:
+            try:
+                e = self.d.get(int(h))
+            except (TypeError, ValueError):
+                e = None
+            out.append([h, None if e is None else [getattr(e, "version", 0), list(getattr(e, "offset", None) or [])]])
+        return out
+
     def feature_hash(self, rec, values, prev_hash):
-        blob = json.dumps([prev_hash, rec["type"], values, self.ref_hash(rec), bool(rec.get("suppressed"))], sort_keys=True, default=str, separators=(",", ":"))
+        parts = [prev_hash, rec["type"], values, self.ref_hash(rec), bool(rec.get("suppressed"))]
+        if values.get("tools"):
+            parts.append(self.tool_stamp(values))
+        blob = json.dumps(parts, sort_keys=True, default=str, separators=(",", ":"))
         return hashlib.sha1(blob.encode()).hexdigest()[:20]
 
     def run(self):
@@ -388,6 +406,8 @@ class Rebuilder:
                 self.cache.trash.append(old.wid)
             if old.tool and old.tool != e.tool:
                 self.cache.trash.append(old.tool)
+            for x in old.extras:
+                self.cache.trash.append(x["wid"])
         self.cache.entries[fid] = e
 
     def copy_through(self, e, prev):
@@ -443,7 +463,7 @@ class Rebuilder:
                 raise PartError("%s needs a body; add a base feature before it." % ft.label)
             if step.base is not None:
                 params.setdefault("id", step.base)
-            res = kcall(call["method"], params)
+            res = {"passthrough": True} if call.get("passthrough") else kcall(call["method"], params)
             if res.get("ok") is False:
                 msg = res.get("message") or "The kernel could not build this feature."
                 failed = res.get("failed") or {}
@@ -451,7 +471,9 @@ class Rebuilder:
                 e.warnings = [w.get("message", str(w)) if isinstance(w, dict) else str(w) for w in res.get("warnings") or []]
                 e.ms = round((time.perf_counter() - t0) * 1000.0, 2)
                 return e
-            e = self.accept(rec, ft, step, res, prev, hsh)
+            res = self.keep_piece(res, step)
+            e = self.carry(hsh, prev) if res.get("passthrough") else self.accept(rec, ft, step, res, prev, hsh)
+            e.extras = self.extras_of(call, res, step)
             if ft.finish is not None:
                 ft.finish(step, res)
             e.warnings = list(step.warnings) + [w.get("message", str(w)) if isinstance(w, dict) else str(w) for w in res.get("warnings") or []]
@@ -465,6 +487,37 @@ class Rebuilder:
             if isinstance(err, RefLost):
                 e.failed = {"slot": err.slot, "key": err.key}
             return e
+
+    def carry(self, hsh, prev):
+        e = Entry()
+        e.hash = hsh
+        e.status = "built"
+        self.copy_through(e, prev)
+        e.adjacency = prev.adjacency if prev is not None else None
+        return e
+
+    def keep_piece(self, res, step):
+        pieces = res.get("pieces")
+        if not pieces:
+            return res
+        keep = int(step.p("keep") or 1)
+        if not 1 <= keep <= len(pieces):
+            for p in pieces:
+                self.cache.trash.append(p["id"])
+            raise PartError("Keep piece %d does not exist; the split made %d pieces." % (keep, len(pieces)))
+        chosen = pieces[keep - 1]
+        out = {"id": chosen["id"], "summary": chosen["summary"], "history": {"inputs": [{"id": step.base, "faces": chosen.get("faces") or {}, "edges": chosen.get("edges") or {}}]}}
+        out["rest"] = [{"piece": i + 1, "role": "piece", "wid": p["id"], "summary": p["summary"]} for i, p in enumerate(pieces) if i != keep - 1]
+        return out
+
+    def extras_of(self, call, res, step):
+        out = list(res.get("rest") or [])
+        for i, spec in enumerate(call.get("extras") or []):
+            params = dict(spec.get("params") or {})
+            params.setdefault("id", step.base)
+            made = kcall(spec["method"], params)
+            out.append({"piece": i + 1, "role": "copy", "wid": made["id"], "summary": made["summary"]})
+        return out
 
     def failed_keys(self, prev, failed):
         out = {}
@@ -536,8 +589,48 @@ class Rebuilder:
                 q["state"] = new_state
                 store.put(d, q)
         self.apply_body(t, last)
+        self.apply_sides(t, recs, active)
         if t != store.tree(d):
             store.save_tree(d, t)
+
+    def apply_sides(self, t, recs, active):
+        d = self.d
+        wanted = {}
+        for fid in active:
+            e = self.cache.entries.get(fid)
+            if e is None or e.error or recs[fid].get("suppressed"):
+                continue
+            for x in e.extras:
+                wanted["%s:%d" % (fid, x["piece"])] = (fid, x)
+        held = dict(t.get("sides") or {})
+        base_body = d.get(int(t.get("body") or 0)) if t.get("body") else None
+        base = (base_body.name if base_body is not None else "") or getattr(self.doc, "name", "") or "Part"
+        for key in [k for k in held if k not in wanted]:
+            old = d.get(held.pop(key))
+            self.cache.sides.pop(key, None)
+            if old is not None and old.kind == "solidbody":
+                d.erase_entity(old.handle)
+        for key, (fid, x) in wanted.items():
+            body = d.get(held[key]) if key in held else None
+            if body is not None and body.kind != "solidbody":
+                body = None
+            if body is not None and self.cache.sides.get(key) == (x["wid"], body.handle) and body.blob:
+                continue
+            source = {"op": "part-" + x["role"], "feature": fid, "piece": x["piece"]}
+            name = "%s (%d)" % (base, x["piece"]) if x["role"] == "piece" else "%s copy %d" % (base, x["piece"])
+            if body is None:
+                body = work.new_body(d, x["wid"], x["summary"], name, source, list(base_body.rgb) if base_body is not None else None)
+                if base_body is not None:
+                    body.layer = base_body.layer
+                held[key] = d.add_entity(body, "model")
+            else:
+                body = d.modify(body.handle)
+                work.apply_result(d, body, x["wid"], x["summary"], source)
+            self.cache.sides[key] = (x["wid"], held[key])
+        if held:
+            t["sides"] = held
+        else:
+            t.pop("sides", None)
 
     def apply_body(self, t, last):
         d = self.d

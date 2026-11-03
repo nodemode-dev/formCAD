@@ -21,6 +21,7 @@ FLAG_MESHED = 2
 FLAG_CLOSED = 4
 SNAP = np.dtype([("p", "<f4", 3), ("kind", "<u4"), ("owner", "<u4"), ("n", "<f4", 3)])
 MEDIA_TYPE = "application/vnd.formcad.scene"
+BODY_KINDS = ("solidbody", "meshbody")
 
 
 def pad4(buf: bytearray) -> None:
@@ -78,10 +79,10 @@ def pids(values: list, count: int) -> np.ndarray:
 def collect(doc, since: int):
     d = doc.drawing
     if since <= 0:
-        picked = [e for e in d.ordered_entities() if e.kind == "solidbody"]
+        picked = [e for e in d.ordered_entities() if e.kind in BODY_KINDS]
         removed = []
     else:
-        picked = [d.ents[h] for h, r in doc.ent_rev.items() if r > since and h in d.ents and d.ents[h].kind == "solidbody"]
+        picked = [d.ents[h] for h, r in doc.ent_rev.items() if r > since and h in d.ents and d.ents[h].kind in BODY_KINDS]
         removed = [h for h, r in doc.removed_rev.items() if r > since and h not in d.ents]
     rows = []
     for e in picked:
@@ -97,7 +98,15 @@ def build(doc, since: int = 0, detail: float = 1.0) -> bytes:
     meshes = {}
     for row in rows:
         if row["visible"]:
-            meshes[row["ent"].handle] = work.mesh_for(d, row["ent"], detail)
+            if row["ent"].kind == "meshbody":
+                from app.meshes import store as mesh_store
+
+                try:
+                    meshes[row["ent"].handle] = mesh_store.scene_bytes(d, row["ent"])
+                except Exception as err:
+                    raise SolidError(str(err))
+            else:
+                meshes[row["ent"].handle] = work.mesh_for(d, row["ent"], detail)
     body = bytearray()
     records = []
     strings = []

@@ -1,3 +1,4 @@
+import contextvars
 import os
 import queue
 import threading
@@ -149,7 +150,7 @@ class Routine:
             threading.stack_size(STACK_BYTES)
         except (ValueError, RuntimeError):
             pass
-        t = threading.Thread(target=self._work, name="lisp-routine", daemon=True)
+        t = threading.Thread(target=contextvars.copy_context().run, args=(self._work,), name="lisp-routine", daemon=True)
         try:
             t.start()
         finally:

@@ -5,7 +5,8 @@ PART_DIR = "parts/"
 CACHE_DIR = "cache/"
 MAX_BLOB = 256 * 1024 * 1024
 MAX_BLOBS_TOTAL = 4096
-NAME = re.compile(r"^(parts/[0-9a-f]{24}\.brep|cache/[0-9a-f]{24}-[0-9a-z.]{1,12}\.mesh)$")
+MESH_DIR = "meshes/"
+NAME = re.compile(r"^(parts/[0-9a-f]{24}\.brep|cache/[0-9a-f]{24}-[0-9a-z.]{1,12}\.mesh|meshes/[0-9a-f]{24}\.fmesh)$")
 
 
 def digest(data: bytes) -> str:
@@ -36,17 +37,26 @@ def get_part(drawing, blob: str) -> bytes:
 
 
 def bodies(drawing):
-    return [e for e in drawing.ents.values() if e.kind == "solidbody"]
+    return [e for e in drawing.ents.values() if e.kind in ("solidbody", "meshbody")]
+
+
+def kept_copies(drawing) -> set:
+    tbl = drawing.tables.get("components")
+    if tbl is None:
+        return set()
+    return {str(b.get("blob")) for r in tbl.values() for b in ((r.get("cache") or {}).get("bodies") or []) if b.get("blob")}
 
 
 def container_entries(drawing) -> list:
     if not drawing.blobs:
         return []
-    live = {e.blob for e in bodies(drawing)}
+    live = {e.blob for e in bodies(drawing)} | kept_copies(drawing)
     out = []
     for path, data in drawing.blobs.items():
         if path.startswith(PART_DIR):
             blob = path[len(PART_DIR):-len(".brep")]
+        elif path.startswith(MESH_DIR):
+            blob = path[len(MESH_DIR):-len(".fmesh")]
         else:
             blob = path[len(CACHE_DIR):].split("-", 1)[0]
         if blob in live:
