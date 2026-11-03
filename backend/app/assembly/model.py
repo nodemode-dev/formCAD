@@ -100,7 +100,10 @@ def _check_config(lp, name: str) -> str:
 def _fill_from(doc, rec: dict, lp, real: str, relative: bool) -> None:
     d = doc.drawing
     head = store.header(d)
+    pin = (rec.get("ref") or {}).get("vault")
     rec["ref"] = {"path": refs.stored_path(real, doc.path, relative), "abs": real}
+    if pin:
+        rec["ref"]["vault"] = pin
     rec["sig"] = copy.deepcopy(lp.sig)
     if rec["type"] == "part":
         src = lp
@@ -327,7 +330,10 @@ def find(doc, cid: str, folders=(), deep: bool = False, relink: bool = True, rel
     live = d.modify_record(store.COMPONENTS, rec["id"])
     live["search"] = {"found_by": by, "resolved": real, "log": log, "order": refs.describe_order(head) + (["deep"] if deep and "deep" not in refs.describe_order(head) else []), "at": now()}
     if real and relink:
+        pin = (live.get("ref") or {}).get("vault")
         live["ref"] = {"path": refs.stored_path(real, doc.path, relative), "abs": real}
+        if pin:
+            live["ref"]["vault"] = pin
     return {"id": rec["id"], "found": bool(real), "resolved": real, "found_by": by, "order": live["search"]["order"], "log": log}
 
 
@@ -345,6 +351,7 @@ def replace(doc, cid: str, path, relative: bool = True) -> dict:
     live = d.modify_record(store.COMPONENTS, rec["id"])
     tmp = copy.deepcopy(live)
     _fill_from(doc, tmp, lp, real, relative)
+    tmp["ref"].pop("vault", None)
     for k in ("ref", "sig", "cache", "search"):
         live[k] = tmp[k]
     warnings = []
@@ -424,7 +431,10 @@ def rebase(doc, relative: bool = True) -> dict:
             continue
         new = refs.stored_path(real, doc.path, relative)
         if new != (rec.get("ref") or {}).get("path") or real != (rec.get("ref") or {}).get("abs"):
-            d.modify_record(store.COMPONENTS, rec["id"])["ref"] = {"path": new, "abs": real}
+            fresh = {"path": new, "abs": real}
+            if (rec.get("ref") or {}).get("vault"):
+                fresh["vault"] = rec["ref"]["vault"]
+            d.modify_record(store.COMPONENTS, rec["id"])["ref"] = fresh
             changed.append(rec["id"])
     return {"changed": changed, "missing": missing}
 

@@ -98,6 +98,12 @@ def _deep(roots: list, name: str, log: list) -> str:
 
 def search(host_path: str, ref: dict, head: dict, folders=(), deep: bool = False) -> tuple:
     log: list = []
+    if isinstance(ref.get("vault"), dict):
+        from app.vault import registry
+
+        pinned = registry.resolve_ref(ref["vault"], log)
+        if pinned:
+            return pinned, "vault", log
     stored = _norm(ref.get("path"))
     hint = _norm(ref.get("abs"))
     hostdir = os.path.dirname(os.path.realpath(host_path)) if host_path else ""

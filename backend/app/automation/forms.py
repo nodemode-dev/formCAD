@@ -29,7 +29,7 @@ CURATED = {
     "setvar": ({"name": STR, "value": {}}, ["name"]),
 }
 
-READ_ONLY_NAMES = {"id", "dist", "area", "list", "measuregeom", "cal", "find", "status", "time", "dimstyle.list", "hatch.patterns", "groups.list", "blocks.list", "layer.list", "layout.list", "style.list", "viewport.list", "dynblock.read", "pan", "zoom", "regen", "regenall", "redraw", "preview"}
+READ_ONLY_NAMES = {"id", "dist", "area", "list", "measuregeom", "cal", "find", "status", "time", "dimstyle.list", "hatch.patterns", "groups.list", "blocks.list", "layer.list", "layout.list", "style.list", "viewport.list", "dynblock.read", "pan", "zoom", "regen", "regenall", "redraw", "preview", "vaultlog", "vaultdiff", "vaultwhereused", "vaultverify"}
 ADDITIVE_GROUPS = {"draw", "view", "text", "inquiry", "settings", "script", "macro", "file"}
 DESTRUCTIVE_NAMES = {"erase", "purge", "-purge", "wblock", "-wblock", "saveas", "export", "explode", "laydel", "layer.delete", "layer.merge", "laymrg", "break", "trim", "extend", "oops", "undo", "redo", "layout.delete", "style.delete"}
 
