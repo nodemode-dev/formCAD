@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.13.0 · 2026-11-03
+
+- A Simulation workspace: studies on parts and assemblies with materials that name their sources, loads, fixtures, contacts and mesh controls, meshed by a separate mesher program, with contour plots, deformed shapes, animation, probes, sections and reports.
+- Linear static stress, modal frequencies, heat conduction, thermal stress and linear buckling on curved second-order elements, in jobs you can cancel, with memory checked before a solve.
+- First versions of nonlinear statics with plasticity and rubber-like materials, contact, quasistatic and dynamic events, fatigue life from S-N curves, and laminated composites, each checked against a published or analytic case.
+- Topology optimization with preserved regions, symmetry and a stress check that keeps the result under your limit, turned into a mesh body; basic shape optimization.
+- Flow: laminar pipe and duct flow on FormCAD's own solver, an optional link to SU2 if you install it, electronics cooling, duct pressure loss, and injection fill time with pack and warp shown as estimates.
+
 ## 0.12.0 · 2026-11-03
 
 - A Manufacture workspace: setups with stock and work coordinates, a tool library of your own, feeds and speeds, and operations that regenerate when the model changes.
