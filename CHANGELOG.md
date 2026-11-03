@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.9.0 · 2026-11-03
+
+- Sheet metal parts: a rule for thickness, inside radius and bend method (K-factor, bend allowance, bend deduction or your own table); base, edge and miter flanges, closed, open, teardrop and rolled hems, jogs, bends along a sketch line, bend and corner reliefs, and converting a constant-thickness solid by finding its bends.
+- Flat patterns: show and refold in place, bend lines marked up or down with angle and radius, cut list properties (blank size, area, cutting length, bend count), DXF export for laser cutting or for bending, and flat pattern views on drawings with bend notes.
+- The graph: a node editor for building geometry from wired nodes, with data trees, item, list and tree access, longest, shortest and cross matching, graft, flatten, simplify and the other tree tools, and only the affected nodes recomputing when something changes.
+- About 185 nodes: numbers, sliders, panels, toggles, buttons, value lists, maths and expressions, lists, sets, vectors, planes and transforms, curves, surfaces, solids, intersections, references to the open drawing and attributes; preview in the 3D view and bake into the drawing in one undoable step.
+- Loops, an optimizer that tunes sliders to minimise or maximise a result, graphs run without the window from the command line, over HTTP or by an agent through MCP, `.graph` files, and node plugins that load like other plugins, with placeholders when one is missing.
+- Fixes: pressing Enter at a file prompt from a macro or an agent now obeys the granted folders; detail views draw their boundary circle.
+
 ## 0.8.0 · 2026-11-03
 
 - Analysis in the 3D view: zebra stripes, Gaussian and mean curvature, draft angle against a pull direction, deviation between surfaces or from points, and curvature combs, each with a colour scale you can edit.

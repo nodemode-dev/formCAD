@@ -17,7 +17,7 @@
 
 FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of its siblings formvis (image) & formmorpheus (animation). One `.fcad` project holds a full 2D drafting database w/ layouts & plotting, parametric part features on an OpenCascade kernel, NURBS curves & surfaces, & sketches w/ constraints & equations, all driven by one engine that you can also run headless, script in LISP or Python, or hand to an agent over MCP. Instead of SolidWorks, Fusion, Rhino, Grasshopper and CADcraft. The OpenCascade kernel runs as a separate program the app downloads & verifies, so the app itself stays Apache-2.0.
 
-**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.8.0, phases 0 to 21 of 43 landed (about 560 engine commands; drafting floor taken from a clean-room functional study, never from another product's code)
+**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.9.0, phases 0 to 24 of 43 landed (about 590 engine commands, about 185 graph nodes; drafting floor taken from a clean-room functional study, never from another product's code)
 
 ## Highlights
 
@@ -31,6 +31,8 @@ FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of i
 - **Parametric parts** a feature tree w/ rollback, 20 feature types, references that survive edits, configurations, design tables & mass properties
 - **NURBS curves & surfaces** blend curves to G3, blend & match surfaces to G2, seam continuity badges, zebra, curvature, draft & deviation analysis, a gumball
 - **Assemblies & drawings** components w/ safe file references, 13 mate kinds w/ DOF & conflict explanations, motion, explode & interference; drawing views in first or third angle w/ sections & details, dimensions that follow the model, tolerance frames, balloons, BOM tables & title blocks
+- **Sheet metal** flanges, hems, jogs & reliefs from one rule, K-factor, allowance or deduction bends, flat patterns w/ bend notes & DXF for cutting or bending
+- **The graph** a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, graphs run headless from the CLI, HTTP or MCP, & node plugins
 - **Automation** a LISP dialect w/ 188 builtins, scripts, a macro recorder, Python macros in an isolated process, hashed plugins, a headless CLI & an MCP server for agents
 - **The form family shell** the same splash & reveal, title bar, menus, Home screen, Preferences & status bar as formvis, w/ 28 shared themes & zero flash on load
 
@@ -105,6 +107,9 @@ formCAD/
 │   ├── src/part/          the feature tree, feature panels, configurations & materials
 │   ├── src/u8/            the gumball, analysis panels, 3D snaps & the assembly panels
 │   ├── src/draw/          drawing views & their annotation tools on layout sheets
+│   ├── src/sheet/         sheet metal rule, panels, flat pattern display, cut list & flat DXF
+│   ├── src/graph/         the graph editor: node canvas, wires, search, tree tooltips
+│   ├── src/graphx/        in-node widgets, node palette, bake, optimizer, run dialogs, 3D preview
 │   ├── src/ui/            the form family shell, panels, dialogs, output, parameters, automation
 │   ├── src/io/            the engine client & event stream
 │   └── src/styles/        tokens & stylesheets (tokens only, z-index from the scale)
@@ -127,12 +132,14 @@ formCAD/
 │   ├── app/assembly/      assemblies, component references, patterns, configurations & BOM
 │   ├── app/mates/         the 3D mate solver, motion, exploded views & interference
 │   ├── app/views/         drawing views from hidden line removal
-│   └── app/drawann/       drawing annotation: tolerance frames, datums, balloons, BOM tables, title blocks
+│   ├── app/drawann/       drawing annotation: tolerance frames, datums, balloons, BOM tables, title blocks
+│   ├── app/sheetmetal/    sheet metal rule, bend list, bend maths, flat patterns & flat DXF
+│   └── app/graph/         data trees, matching, the node SDK, solver, nodes, bake, loops, optimizer, runner
 ├── kernel/                the separate OpenCascade worker program (JSON lines on stdio)
 ├── src-tauri/             the desktop shell (Tauri 2): splash, reveal, title bar, engine sidecar
 ├── setup/                 install, boot, freeze, desktop & doctor scripts behind ./formCAD
 ├── fixtures/              sample documents for the acceptance walk-throughs
-├── docs/                  contracts other tools rely on (`ASSEMBLY_SCHEMA.md`)
+├── docs/                  contracts other tools rely on (`ASSEMBLY_SCHEMA.md`, `GRAPH_FORMAT.md`, `NODE_SDK.md`)
 ├── .github/workflows/     CI: typecheck, engine boot, script checks, text lint, three-OS engine freeze, licence scan
 ├── build_app              the desktop build, start to finish
 └── assets/                repo-level art (not wired into the build)
@@ -140,7 +147,7 @@ formCAD/
 
 ## Status
 
-Phases 0 to 21 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics. v0.8.0 added surface analysis, the gumball, 3DM through the kernel (trimmed faces are flagged, STEP keeps them better), meshes w/ STL & OBJ, assemblies w/ mates, motion, explode & interference, & drawings from 3D w/ annotation; next come sheet metal, the graph engine & its runner (Phases 22 to 24). The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
+Phases 0 to 24 of the 43-phase plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics. v0.8.0 added surface analysis, the gumball, 3DM through the kernel (trimmed faces are flagged, STEP keeps them better), meshes w/ STL & OBJ, assemblies w/ mates, motion, explode & interference, & drawings from 3D w/ annotation. v0.9.0 added sheet metal (flanges, hems, jogs, reliefs, convert, flat patterns w/ DXF for cutting or bending) & the graph: a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, a headless runner (CLI, HTTP, MCP) & node plugins; next come 3D interchange, form modelling & the mesh workspace (Phases 25 to 27). The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
 
 ## Development
 
