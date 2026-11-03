@@ -8,6 +8,7 @@ from app.part.registry import PartError
 from app.plastic import features as plastic_features
 from app.sheetmetal import features as sheet_features
 from app.solid import work
+from app.weld import features as weld_features
 
 MAX_FEATURES = 5000
 LABEL_MAX = 80
