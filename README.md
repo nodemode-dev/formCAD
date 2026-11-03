@@ -7,7 +7,7 @@
 <p align="center"><b>The CAD studio of the form family: 2D drafting, parametric parts, NURBS surfaces & automation in one open desktop app.</b></p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.12.0-f97316" alt="version v0.12.0" />
+  <img src="https://img.shields.io/badge/version-v0.13.0-f97316" alt="version v0.13.0" />
   <img src="https://img.shields.io/badge/Node.js-20.19%2B-339933?logo=nodedotjs&logoColor=white" alt="Node.js 20.19+" />
   <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white" alt="Python 3.12+" />
   <img src="https://img.shields.io/badge/license-Apache--2.0-555555" alt="license Apache-2.0" />
@@ -17,7 +17,7 @@
 
 FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of its siblings formvis (image) & formmorpheus (animation). One `.fcad` project holds a full 2D drafting database w/ layouts & plotting, parametric part features on an OpenCascade kernel, NURBS curves & surfaces, & sketches w/ constraints & equations, all driven by one engine that you can also run headless, script in LISP or Python, or hand to an agent over MCP. Instead of SolidWorks, Fusion, Rhino, Grasshopper and CADcraft. The OpenCascade kernel runs as a separate program the app downloads & verifies, so the app itself stays Apache-2.0.
 
-**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.12.0, phases 0 to 33 of 43 landed (about 670 engine commands, about 185 graph nodes; drafting floor taken from a clean-room functional study, never from another product's code)
+**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.13.0, phases 0 to 36 of 43 landed (about 690 engine commands, about 185 graph nodes; drafting floor taken from a clean-room functional study, never from another product's code)
 
 ## Highlights
 
