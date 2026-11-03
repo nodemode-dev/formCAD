@@ -50,7 +50,7 @@ export interface GraphRecord {
   extra: Record<string, unknown>;
 }
 
-export interface GraphListItem { id: string; name: string }
+export interface GraphListItem { id: string; name: string; nodes?: number }
 
 export interface CataloguePort { name: string; nick?: string; kind: string; access?: Access; description?: string; optional?: boolean }
 export interface CatalogueEntry {

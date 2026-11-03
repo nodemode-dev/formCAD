@@ -16,11 +16,13 @@ import { OptimizerPanel } from './optimizer';
 import { NodePalette, registerIcons } from './palette';
 import { GraphPreviewLayer } from './preview-layer';
 import { RunDialog, exportDialog, importDialog } from './run-dialog';
+import { loopFieldsWidget } from './loop-fields';
 import { sliderWidget } from './slider';
 
 for (const [kinds, factory] of [
   [['slider', 'input.slider'], sliderWidget], [['panel', 'input.panel'], panelWidget], [['toggle', 'input.toggle'], toggleWidget],
   [['button', 'input.button'], buttonWidget], [['value_list', 'input.value_list'], valueListWidget],
+  [['flow.loop_begin'], loopFieldsWidget(false)], [['flow.loop_end'], loopFieldsWidget(true)],
 ] as const) for (const k of kinds) registerNodeWidget(k, factory);
 registerIcons();
 

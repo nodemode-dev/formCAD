@@ -68,6 +68,11 @@ export class GraphStore {
 
   private base(): string { return `/api/docs/${enc(this.docId)}/graphs`; }
 
+  private pathKey(): string {
+    const path = docStore.docs.find((d) => d.id === this.docId)?.path;
+    return path ? `formCAD.graph.last.path.${path}` : '';
+  }
+
   private fail(err: unknown): void {
     this.error = err instanceof ApiError ? err.message : err instanceof Error ? err.message : String(err);
     this.emit('error');
@@ -85,8 +90,8 @@ export class GraphStore {
   async refreshList(): Promise<GraphListItem[]> {
     const id = docStore.activeId;
     if (!id) { this.list = []; this.emit('list'); return []; }
-    const res = await call<{ graphs: Array<{ id: string; label: string }> }>('GET', `/api/docs/${enc(id)}/graphs`);
-    this.list = res.graphs.map((g) => ({ id: g.id, name: g.label }));
+    const res = await call<{ graphs: Array<{ id: string; label: string; nodes?: number }> }>('GET', `/api/docs/${enc(id)}/graphs`);
+    this.list = res.graphs.map((g) => ({ id: g.id, name: g.label, nodes: g.nodes }));
     this.emit('list');
     return this.list;
   }
@@ -112,7 +117,8 @@ export class GraphStore {
       const list = await this.refreshList();
       if (list.length === 0) return;
       const last = stored(`formCAD.graph.last.${id}`);
-      const pick = list.find((g) => g.id === last) ?? list[0];
+      const byPath = this.pathKey() ? stored(this.pathKey()) : null;
+      const pick = list.find((g) => g.id === last) ?? list.find((g) => g.id === byPath) ?? list.find((g) => (g.nodes ?? 0) > 0) ?? list[0];
       await this.open(pick.id);
     } catch (e) { this.fail(e); }
   }
@@ -129,6 +135,7 @@ export class GraphStore {
       this.problems = res.problems ?? [];
       this.states.clear();
       persist(`formCAD.graph.last.${this.docId}`, res.id);
+      if (this.pathKey()) persist(this.pathKey(), res.id);
       this.view = this.loadView();
       this.emit('open');
       this.emit('graph');

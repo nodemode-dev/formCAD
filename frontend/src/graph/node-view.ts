@@ -52,7 +52,7 @@ export class NodeView {
     this.entry = entry;
     this.el = el(
       '<div class="gx-node">' +
-      '<div class="gx-nh"><span class="gx-ni"></span><span class="gx-nt"></span><span class="gx-nm">' + icon('warning', 16) + '</span>' +
+      '<div class="gx-nh"><span class="gx-ni"></span><span class="gx-nt"></span><span class="gx-nm">' + icon('warning', 16) + icon('info', 16) + '</span>' +
       '<button class="gx-tog gx-eye" type="button" data-act="preview">' + icon('eye', 16) + '</button>' +
       '<button class="gx-tog gx-pow" type="button" data-act="enable">' + icon('bulbOn', 16) + '</button></div>' +
       '<div class="gx-np"></div><div class="gx-nb" hidden></div></div>',
@@ -226,8 +226,10 @@ export class NodeView {
   }
 
   private paintClass(): void {
-    const has = !!this.state && this.state.messages.length > 0 && this.rec.enabled;
-    const next = `gx-node is-${this.stateName}${has ? ' has-msg' : ''}${this.rec.preview ? '' : ' is-nopreview'}${this.selected ? ' is-sel' : ''}`;
+    const live = !!this.state && this.rec.enabled;
+    const loud = live && this.state!.messages.some((m) => m.level !== 'remark');
+    const note = live && !loud && this.state!.messages.length > 0;
+    const next = `gx-node is-${this.stateName}${loud ? ' has-msg' : note ? ' has-note' : ''}${this.rec.preview ? '' : ' is-nopreview'}${this.selected ? ' is-sel' : ''}`;
     if (this.el.className !== next) this.el.className = next;
   }
 

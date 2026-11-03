@@ -64,7 +64,7 @@ export const optimizeStart = (gid: string, req: OptimizeRequest): Promise<Optimi
 export const optimizeStatus = (gid: string, job: string): Promise<OptimizeStatus> => call<Dict>('GET', `${graphBase(gid)}/optimize/${enc(job)}`).then(statusOf);
 export const optimizeCancel = (gid: string, job: string): Promise<unknown> => call('POST', `${graphBase(gid)}/optimize/${enc(job)}/cancel`, {});
 
-export interface RunRequest { graph?: Dict; graph_path?: string; inputs: Dict }
+export interface RunRequest { graph?: Dict; graph_path?: string; inputs: Dict; document?: string }
 export interface RunOutput { name: string; branches: number; items: number; first: string[] }
 export interface RunResult { rows: RunOutput[]; ok: boolean; digest: string; problems: string[] }
 

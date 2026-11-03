@@ -166,8 +166,12 @@
 .gx-nt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .gx-nm { flex: none; width: var(--space-4); height: var(--space-4); visibility: hidden; color: var(--warn); display: inline-flex; }
 .gx-nm svg { width: 100%; height: 100%; }
+.gx-nm svg + svg { display: none; }
 .gx-node.is-error .gx-nm { color: var(--danger-soft); }
 .gx-node.has-msg .gx-nm { visibility: visible; }
+.gx-node.has-note .gx-nm { visibility: visible; color: var(--text-secondary); }
+.gx-node.has-note .gx-nm svg:first-child { display: none; }
+.gx-node.has-note .gx-nm svg + svg { display: block; }
 .gx-tog {
   flex: none;
   width: var(--space-5);

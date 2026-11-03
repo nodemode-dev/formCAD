@@ -1,4 +1,5 @@
 import { Dialog } from '../ui/dialogs';
+import { docStore } from '../ui/doc-store';
 import { el, patchList, q, setClass, setDisabled, setHidden, setText } from '../ui/dom';
 import { pickPath, type FileKind } from '../ui/file-dialogs';
 import { t } from '../ui/i18n';
@@ -38,6 +39,7 @@ export class RunDialog extends Dialog {
   private readonly source: HTMLSelectElement;
   private readonly path: HTMLInputElement;
   private readonly pathRow: HTMLElement;
+  private readonly doc: HTMLSelectElement;
   private readonly inputs: HTMLTextAreaElement;
   private readonly results: HTMLElement;
   private readonly note: HTMLElement;
@@ -54,6 +56,10 @@ export class RunDialog extends Dialog {
     const browse = el<HTMLButtonElement>('<button class="cv-btn cv-btn-ghost" type="button"></button>');
     row.append(this.path, browse);
     this.pathRow = this.field('File', row);
+    this.doc = el<HTMLSelectElement>('<select class="cv-input" aria-label="Document the graph reads"></select>');
+    this.field('Document', this.doc);
+    this.body.appendChild(el('<p class="cv-note gp-rdocnote"></p>'));
+    setText(q(this.body, '.gp-rdocnote'), t('The graph reads this document and never changes it. Choose none to run without one.'));
     this.inputs = el<HTMLTextAreaElement>('<textarea class="cv-input gp-rinputs" spellcheck="false" aria-label="Named inputs as JSON">{}</textarea>');
     this.field('Inputs', this.inputs);
     this.note = el('<p class="cv-note gp-rmsg" role="status"></p>');
@@ -77,7 +83,19 @@ export class RunDialog extends Dialog {
     setHidden(this.pathRow, this.source.value !== 'file');
   }
 
+  private docs(): void {
+    const rows = [{ id: '', name: t('None') }, ...docStore.docs.map((d) => ({ id: d.id, name: d.name }))];
+    const keep = this.doc.value || (this.doc.options.length ? '' : docStore.activeId ?? '');
+    patchList(this.doc, rows, {
+      key: (r) => r.id,
+      create: (r) => el<HTMLOptionElement>(`<option value="${r.id.replace(/"/g, '')}"></option>`),
+      update: (node, r) => { setText(node, r.name); },
+    });
+    this.doc.value = rows.some((r) => r.id === keep) ? keep : '';
+  }
+
   show(): void {
+    this.docs();
     this.open(this.go);
   }
 
@@ -98,7 +116,8 @@ export class RunDialog extends Dialog {
     this.say(t('Running'), false);
     try {
       await graphEditor.store.flush();
-      const res = await runHeadless(file ? { graph_path: this.path.value.trim(), inputs } : { graph: await definitionOf(graphEditor.gid()), inputs });
+      const document = this.doc.value;
+      const res = await runHeadless(file ? { graph_path: this.path.value.trim(), inputs, document } : { graph: await definitionOf(graphEditor.gid()), inputs, document });
       this.paint(res.rows);
       this.say(res.ok ? `${res.rows.length} ${t('outputs')} · ${res.digest.slice(0, 19)}` : (res.problems[0] ?? t('The graph reported errors.')), !res.ok);
     } catch (e) {
