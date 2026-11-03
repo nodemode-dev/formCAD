@@ -190,6 +190,41 @@ def load_operations() -> None:
 
         for name in ("asm_interference", "asm_blocking"):
             METHODS.setdefault(name, assembly_unavailable)
+    try:
+        import kernel_unfold
+
+        METHODS.update(kernel_unfold.METHODS)
+    except Exception as err:
+        failure9 = str(err)
+
+        def unfold_unavailable(_params):
+            raise RuntimeError("The flat pattern operations could not be loaded (%s)." % failure9)
+
+        METHODS.setdefault("unfold_solid", unfold_unavailable)
+    try:
+        import kernel_sheet
+
+        METHODS.update(kernel_sheet.METHODS)
+    except Exception as err:
+        failure11 = str(err)
+
+        def sheet_unavailable(_params):
+            raise RuntimeError("The sheet metal operations could not be loaded (%s)." % failure11)
+
+        for name in ("sm_base_flange", "sm_edge_flange", "sm_miter_flange", "sm_hem", "sm_jog", "sm_sketched_bend", "sm_bend_relief", "sm_corner_relief", "sm_convert", "sm_analyze", "sm_verify"):
+            METHODS.setdefault(name, sheet_unavailable)
+    try:
+        import kernel_graph
+
+        METHODS.update(kernel_graph.METHODS)
+    except Exception as err:
+        failure10 = str(err)
+
+        def graph_unavailable(_params):
+            raise RuntimeError("The graph geometry operations could not be loaded (%s)." % failure10)
+
+        for name in ("graph_batch", "graph_preview", "graph_alive"):
+            METHODS.setdefault(name, graph_unavailable)
 
 
 def reply(payload: dict) -> None:

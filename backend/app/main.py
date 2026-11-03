@@ -42,6 +42,8 @@ ROUTERS = [
     ("app.routers.part", "/api/docs"),
     ("app.routers.part_preview", "/api/docs"),
     ("app.routers.bodies", "/api/docs"),
+    ("app.routers.sheetflat", "/api/docs"),
+    ("app.routers.sheetfeat", "/api/docs"),
     ("app.routers.assembly", "/api/docs"),
     ("app.routers.mates", "/api/docs"),
     ("app.routers.curves", "/api/docs"),
@@ -55,6 +57,8 @@ ROUTERS = [
     ("app.routers.uistyle", "/api"),
     ("app.routers.filetools", "/api"),
     ("app.routers.docquery", "/api/docs"),
+    ("app.routers.graph", "/api"),
+    ("app.routers.graphrun", "/api"),
     ("app.routers.automation", "/api/automation"),
     ("app.routers.mcp", ""),
 ]
