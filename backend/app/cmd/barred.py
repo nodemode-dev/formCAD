@@ -67,7 +67,7 @@ def args_refusal(runner, spec, args) -> str:
     return ""
 
 
-FILE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs", ".3dm", ".stl", ".obj", ".fcad", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".txt", ".json", ".py", ".lsp", ".lisp", ".scr", ".xlsx", ".xls")
+FILE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz", ".step", ".stp", ".iges", ".igs", ".3dm", ".stl", ".obj", ".3mf", ".glb", ".gltf", ".ply", ".fcad", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".txt", ".json", ".py", ".lsp", ".lisp", ".scr", ".xlsx", ".xls")
 
 
 def looks_like_path(tok) -> bool:

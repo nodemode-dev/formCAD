@@ -6,9 +6,10 @@ from app.interchange.errors import InterchangeError, Report
 
 MODEL_EXT = (".step", ".stp", ".iges", ".igs")
 THREEDM_EXT = (".3dm",)
-MESH_EXT = (".stl", ".obj")
+NEW_MESH_EXT = (".3mf", ".glb", ".gltf", ".ply")
+MESH_EXT = (".stl", ".obj") + NEW_MESH_EXT
 READ_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".svgz") + MODEL_EXT + THREEDM_EXT + MESH_EXT
-WRITE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf") + THREEDM_EXT + MESH_EXT
+WRITE_EXT = (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf") + MODEL_EXT + THREEDM_EXT + MESH_EXT
 PLOT_EXT = (".svg", ".png", ".pdf")
 NATIVE = ".fcad"
 MERGED = ("layers", "linetypes", "textstyles", "dimstyles", "mleaderstyles", "tablestyles", "mlinestyles", "scales")
@@ -47,11 +48,24 @@ def detect(path: str) -> str:
     raise InterchangeError('Files of type "%s" are not supported.' % e, "unsupported")
 
 
+MODEL_OPTIONS = {
+    "step": ["schema", "unit", "pmi", "bodies"],
+    "iges": ["unit", "bodies"],
+    "3mf": ["unit", "linear", "angular", "bodies"],
+    "glb": ["linear", "angular", "bodies"],
+    "ply": ["unit", "binary", "linear", "angular", "bodies"],
+}
+
+
 def formats() -> dict:
+    read = [(".dxf", "DXF", "drawing"), (".dwg", "DWG (needs a converter)", "drawing"), (".dwt", "Drawing template", "drawing"), (".svg", "SVG", "drawing"), (".svgz", "SVGZ", "drawing"), (".step", "STEP (needs the kernel)", "step"), (".stp", "STEP (needs the kernel)", "step"), (".iges", "IGES (needs the kernel)", "iges"), (".igs", "IGES (needs the kernel)", "iges"), (".3dm", "3DM (needs the kernel)", "3dm"), (".stl", "STL mesh", "mesh"), (".obj", "OBJ mesh", "mesh"), (".3mf", "3MF mesh", "3mf"), (".glb", "glTF binary", "glb"), (".gltf", "glTF", "glb"), (".ply", "PLY mesh", "ply")]
+    write = [(".dxf", "DXF", "drawing"), (".dwg", "DWG (needs a converter)", "drawing"), (".dwt", "Drawing template", "drawing"), (".svg", "SVG", "drawing"), (".png", "PNG", "drawing"), (".pdf", "PDF", "drawing"), (".step", "STEP (needs the kernel)", "step"), (".stp", "STEP (needs the kernel)", "step"), (".iges", "IGES (needs the kernel)", "iges"), (".igs", "IGES (needs the kernel)", "iges"), (".3dm", "3DM (needs the kernel)", "3dm"), (".stl", "STL mesh", "mesh"), (".obj", "OBJ mesh", "mesh"), (".3mf", "3MF mesh", "3mf"), (".glb", "glTF binary", "glb"), (".ply", "PLY mesh", "ply")]
     return {
-        "read": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".svgz", "SVGZ"), (".step", "STEP (needs the kernel)"), (".stp", "STEP (needs the kernel)"), (".iges", "IGES (needs the kernel)"), (".igs", "IGES (needs the kernel)"), (".3dm", "3DM (needs the kernel)"), (".stl", "STL mesh"), (".obj", "OBJ mesh"))],
-        "write": [{"ext": e, "name": n} for e, n in ((".dxf", "DXF"), (".dwg", "DWG (needs a converter)"), (".dwt", "Drawing template"), (".svg", "SVG"), (".png", "PNG"), (".pdf", "PDF"), (".step", "STEP (needs the kernel)"), (".3dm", "3DM (needs the kernel)"), (".stl", "STL mesh"), (".obj", "OBJ mesh"))],
+        "read": [{"ext": e, "name": n, "kind": k, "options": MODEL_OPTIONS.get(k, [])} for e, n, k in read],
+        "write": [{"ext": e, "name": n, "kind": k, "options": MODEL_OPTIONS.get(k, [])} for e, n, k in write],
         "versions": list(dxfcommon.VERSION_ORDER),
+        "schemas": [{"id": "ap203", "name": "AP203"}, {"id": "ap214", "name": "AP214 (default)"}, {"id": "ap242", "name": "AP242 (DIS schema, carries PMI)"}],
+        "units": ["mm", "cm", "m", "in", "ft", "um"],
     }
 
 
@@ -69,22 +83,13 @@ def svg_drawing(path: str, report: Report):
     return d
 
 
-def model_drawing(path: str, kind: str, report: Report):
-    from app.doc.model import Drawing
-    from app.solid import work
+def model_drawing(path: str, kind: str, report: Report, target=None, options=None):
+    from app.interchange import stepio
 
-    d = Drawing(True)
-    d.header["INSUNITS"] = 4
-    try:
-        items = work.read_model(path, kind)
-        count = work.add_model_bodies(d, items, os.path.splitext(os.path.basename(path))[0])
-    except work.SolidError as err:
-        raise InterchangeError(str(err), "kernel")
-    report.note("%d 3D bod%s read; the file's units were converted to millimetres." % (count, "y" if count == 1 else "ies"))
-    return d
+    return stepio.read_into(path, kind, report, target, options)
 
 
-def read_any(path: str, recover: bool = False, report: Report | None = None, unit: str = "", target=None):
+def read_any(path: str, recover: bool = False, report: Report | None = None, unit: str = "", target=None, options=None):
     report = report or Report()
     full = os.path.realpath(os.path.expanduser(path))
     if not os.path.isfile(full):
@@ -105,11 +110,15 @@ def read_any(path: str, recover: bool = False, report: Report | None = None, uni
     elif kind in (".svg", ".svgz"):
         d = svg_drawing(full, report)
     elif kind in MODEL_EXT:
-        d = model_drawing(full, kind, report)
+        d = model_drawing(full, kind, report, target, options)
     elif kind in THREEDM_EXT:
         from app.interchange import threedm
 
         d = threedm.read_drawing(full, report, target)
+    elif kind in NEW_MESH_EXT:
+        from app.meshes import exchange
+
+        d = exchange.mesh_drawing_new(full, report, unit, target, options)
     elif kind in MESH_EXT:
         from app.meshes import files as mesh_files
 
@@ -122,12 +131,31 @@ def read_any(path: str, recover: bool = False, report: Report | None = None, uni
     return d, report, kind
 
 
-def write_any(drawing, path: str, version: str = "", binary: bool = False, precision: int = 16) -> Report:
+def write_any(drawing, path: str, version: str = "", binary: bool = False, precision: int = 16, options=None, doc=None) -> Report:
     report = Report()
     kind = ext_of(path)
     from app.interchange import dxf_write
 
     ver = dxfcommon.parse_version(version) if version else ""
+    if kind in MODEL_EXT:
+        from app.interchange import stepio
+
+        opts = dict(options or {})
+        if version and not opts.get("schema"):
+            opts["schema"] = str(version).lower()
+        stepio.write_file(drawing, path, report, opts, doc)
+        return report
+    if kind in NEW_MESH_EXT:
+        from app.meshes import exchange
+
+        opts = dict(options or {})
+        opts.setdefault("binary", bool(binary) or str(version).lower() != "ascii")
+        chosen = opts.get("bodies")
+        ents = [e for e in drawing.entities("model") if e.kind in ("meshbody", "solidbody") and (not chosen or e.handle in {int(h) for h in chosen})]
+        res = exchange.write_new(drawing, path, ents, opts, report)
+        report.note("%d triangles written as %s." % (res["triangles"], res["form"]))
+        report.extra["mesh"] = res
+        return report
     if version and not ver and kind not in THREEDM_EXT + MESH_EXT:
         raise InterchangeError('Unknown DXF version "%s". Use one of %s.' % (version, ", ".join(dxfcommon.VERSION_ORDER)), "badversion")
     if kind in (".dxf", ".dwt"):
@@ -160,10 +188,11 @@ def write_any(drawing, path: str, version: str = "", binary: bool = False, preci
     raise InterchangeError('Files of type "%s" cannot be written here.' % (kind or "this"), "unsupported")
 
 
-def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False, unit: str = "") -> dict:
-    src, report, kind = read_any(path, recover, None, unit, doc.drawing)
+def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False, unit: str = "", options=None) -> dict:
+    src, report, kind = read_any(path, recover, None, unit, doc.drawing, options)
     d = doc.drawing
     added = {"objects": 0, "layers": 0, "blocks": 0}
+    handle_map, pid_map = {}, {}
     from app.doc import blockdefs
     from app.doc.entities import entity_from_dict
     from app.doc.model import SPACE_MODEL, block_space
@@ -225,7 +254,12 @@ def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False, uni
 
                 for path, data in src.blobs.items():
                     d.blobs.setdefault(path, data)
+                old_faces, old_edges = list(c.face_ids), list(c.edge_ids)
                 c.face_ids, c.edge_ids = ids.fresh(d, len(c.face_ids), len(c.edge_ids))
+                for a, b in zip(old_faces, c.face_ids):
+                    pid_map[(e.handle, "face", a)] = b
+                for a, b in zip(old_edges, c.edge_ids):
+                    pid_map[(e.handle, "edge", a)] = b
                 c.lineage = {}
             if c.kind == "meshbody":
                 from app.solid import ids
@@ -234,8 +268,12 @@ def merge_into(doc, path: str, label: str = "IMPORT", recover: bool = False, uni
                     d.blobs.setdefault(path, data)
                 c.face_ids, c.edge_ids = ids.fresh(d, len(c.face_ids), len(c.edge_ids))
                 c.lineage = {}
-            d.add_entity(c, SPACE_MODEL)
+            handle_map[e.handle] = d.add_entity(c, SPACE_MODEL)
             added["objects"] += 1
+        if handle_map and isinstance(src.header.get("PMI"), dict):
+            from app.pmi import store as pmi_store
+
+            added["pmi"] = pmi_store.merge(d, src, handle_map, pid_map)
     from app.doc.kinds import blockcache
 
     blockcache.refresh_all(d)

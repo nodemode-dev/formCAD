@@ -141,7 +141,7 @@ class Service:
         self.add_recent(full)
         return doc
 
-    def open_foreign(self, full: str, recover: bool = False) -> Document:
+    def open_foreign(self, full: str, recover: bool = False, unit: str = "", options=None) -> Document:
         from app.interchange import files
         from app.interchange.errors import InterchangeError
 
@@ -151,7 +151,7 @@ class Service:
                     self.active_id = d.id
                     return d
             try:
-                drawing, report, kind = files.read_any(full, recover)
+                drawing, report, kind = files.read_any(full, recover, None, unit, None, options)
             except InterchangeError as err:
                 raise DocumentFault(str(err))
             name = os.path.splitext(os.path.basename(full))[0]

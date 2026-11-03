@@ -19,7 +19,7 @@ def _class_of(head: bytes) -> str:
     return "text"
 
 
-EXPECT = {".fcad": ("zip",), ".dwg": ("dwg",), ".pdf": ("pdf",), ".png": ("png",), ".dwt": ("text", "dwg", "zip"), ".dxf": ("text", "binary"), ".stl": ("text", "binary"), ".3dm": ("text", "binary")}
+EXPECT = {".fcad": ("zip",), ".dwg": ("dwg",), ".pdf": ("pdf",), ".png": ("png",), ".dwt": ("text", "dwg", "zip"), ".dxf": ("text", "binary"), ".stl": ("text", "binary"), ".3dm": ("text", "binary"), ".3mf": ("zip",), ".glb": ("binary",), ".gltf": ("text", "binary"), ".ply": ("text", "binary")}
 
 
 def checked(path: str, allowed: tuple, default: str = "") -> str:

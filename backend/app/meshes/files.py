@@ -54,7 +54,11 @@ def mesh_drawing(path: str, report: Report, unit: str = "", target=None):
     s = body.summary
     report.note("%d triangles and %d vertices read (%s)." % (s["triangles"], s["vertices"], info.get("form")))
     if not unit:
-        report.note("The file carries no unit; its numbers are read as %s." % ("millimetres" if scale == 1.0 else "drawing units"))
+        report.warn("The file carries no unit (%s is a unitless format); its numbers are read as %s." % (os.path.splitext(path)[1][1:].upper(), "millimetres" if scale == 1.0 else "drawing units"))
+    from app.meshes import exchange
+
+    diag_mm = float(((m.v.max(axis=0) - m.v.min(axis=0)) ** 2).sum() ** 0.5)
+    exchange.plausibility(report, stem, diag_mm, "the chosen unit", diag_mm / scale, scale)
     if s["naked_edges"]:
         report.warn("The mesh has %d naked edges in %d loops." % (s["naked_edges"], s["naked_loops"]))
     if s["nonmanifold_edges"]:

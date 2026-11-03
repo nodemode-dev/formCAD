@@ -8,7 +8,7 @@ from app.doc.service import DocumentFault, service
 from app.interchange import files
 from app.interchange.errors import InterchangeError
 
-HINT = {"open": ".dxf, .dwg, .dwt, .svg, .svgz, .step, .iges, .3dm, .stl, .obj or .fcad", "saveas": ".fcad, .dxf, .dwg, .dwt or .3dm", "export": ".dxf, .dwg, .dwt, .svg, .png, .pdf, .step, .3dm, .stl or .obj", "import": ".dxf, .dwg, .svg, .svgz, .step, .iges, .3dm, .stl or .obj"}
+HINT = {"open": ".dxf, .dwg, .dwt, .svg, .svgz, .step, .iges, .3dm, .stl, .obj, .3mf, .glb, .gltf, .ply or .fcad", "saveas": ".fcad, .dxf, .dwg, .dwt or .3dm", "export": ".dxf, .dwg, .dwt, .svg, .png, .pdf, .step, .iges, .3dm, .stl, .obj, .3mf, .glb or .ply", "import": ".dxf, .dwg, .svg, .svgz, .step, .iges, .3dm, .stl, .obj, .3mf, .glb, .gltf or .ply"}
 
 
 def stem(ctx) -> str:
@@ -67,18 +67,33 @@ def do_saveas(ctx, path, version="", binary=False):
     return {"path": path}
 
 
-def do_export(ctx, path, version="", binary=False, unit=""):
+def export_interchange(ctx, path, version, binary, unit, options):
+    opts = dict(options or {})
+    if unit:
+        opts.setdefault("unit", unit)
+    chosen = [h for h in ctx.doc.selection if ctx.d.get(h) is not None and ctx.d.get(h).kind in ("solidbody", "meshbody")]
+    if chosen:
+        opts.setdefault("bodies", chosen)
+    try:
+        report = files.write_any(ctx.d, path, version, binary, 16, opts, ctx.doc)
+    except InterchangeError as err:
+        raise CommandError(str(err))
+    ctx.say("Exported %s." % path)
+    for w in report.warnings[:6]:
+        ctx.say(w)
+    return {"path": path, "notes": report.to_dict()}
+
+
+def do_export(ctx, path, version="", binary=False, unit="", options=None):
     try:
         path = outputs.checked(path, (".dxf", ".dwg", ".dwt", ".svg", ".png", ".pdf") + tuple(files.MODEL_EXT) + files.THREEDM_EXT + files.MESH_EXT, ".dxf")
     except outputs.OutputRefused as err:
         raise CommandError(str(err))
     ext = files.ext_of(path)
+    if ext in files.MODEL_EXT or ext in files.NEW_MESH_EXT:
+        return export_interchange(ctx, path, version, binary, unit, options)
     if ext in files.THREEDM_EXT or ext in files.MESH_EXT:
         return export_threedm_mesh(ctx, path, ext, version, binary, unit)
-    if ext in files.MODEL_EXT:
-        from app.cmd.commands import solids
-
-        return solids.export_model(ctx, path, ext)
     if ext in files.PLOT_EXT:
         from app.cmd.commands import plot as P
 
@@ -124,9 +139,9 @@ def export_threedm_mesh(ctx, path, ext, version, binary, unit):
     return {"path": path, "notes": report.to_dict()}
 
 
-def do_import(ctx, path, recover=False, unit=""):
+def do_import(ctx, path, recover=False, unit="", options=None):
     try:
-        out = files.merge_into(ctx.doc, path, "IMPORT", recover, unit)
+        out = files.merge_into(ctx.doc, path, "IMPORT", recover, unit, options)
     except InterchangeError as err:
         raise CommandError(str(err))
     ctx.say("Imported %s." % path)
@@ -166,7 +181,7 @@ def export_cmd(ctx):
 
 @executes("export")
 def export_exec(ctx, args):
-    return do_export(ctx, str(args.get("path", "")), str(args.get("version", "") or ""), bool(args.get("binary", False)), str(args.get("unit", "") or ""))
+    return do_export(ctx, str(args.get("path", "")), str(args.get("version", "") or ""), bool(args.get("binary", False)), str(args.get("unit", "") or ""), args.get("options") if isinstance(args.get("options"), dict) else None)
 
 
 @command("import", group="file", label="Import", description="Bring a DXF, DWG or SVG file into the current drawing.", menu="File > Import...", undoable=True, repeatable=False)
@@ -178,4 +193,4 @@ def import_cmd(ctx):
 
 @executes("import")
 def import_exec(ctx, args):
-    return do_import(ctx, str(args.get("path", "")), bool(args.get("recover", False)), str(args.get("unit", "") or ""))
+    return do_import(ctx, str(args.get("path", "")), bool(args.get("recover", False)), str(args.get("unit", "") or ""), args.get("options") if isinstance(args.get("options"), dict) else None)
