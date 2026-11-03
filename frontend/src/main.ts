@@ -24,6 +24,7 @@ import './p12/register';
 import './p13/register';
 import './p14a/register';
 import './p14b/register';
+import './p15/register';
 import './an1/register';
 import './render/register';
 
