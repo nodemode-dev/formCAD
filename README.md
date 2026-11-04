@@ -1,199 +1,172 @@
 <p align="center">
-  <img src="assets/formcad_icon.png" alt="FormCAD logo" width="160" />
+  <img src="assets/app-icon/formCAD-256.png" width="128" height="128" alt="FormCAD icon">
 </p>
 
 <h1 align="center">FormCAD</h1>
 
-<p align="center"><b>The CAD studio of the form family: 2D drafting, parametric parts, NURBS surfaces & automation in one open desktop app.</b></p>
-
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.16.0-f97316" alt="version v0.16.0" />
-  <img src="https://img.shields.io/badge/Node.js-20.19%2B-339933?logo=nodedotjs&logoColor=white" alt="Node.js 20.19+" />
-  <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white" alt="Python 3.12+" />
-  <img src="https://img.shields.io/badge/license-Apache--2.0-555555" alt="license Apache-2.0" />
+  <b>CAD; the CAD studio of the Form family.</b><br>
+  2D drafting, parametric parts, NURBS surfaces and automation on an OpenCascade engine,<br>
+  on your own computer with no account. Agents drive it over MCP.
 </p>
 
-## What it is
+<p align="center">
+  <img alt="version 0.16.2" src="https://img.shields.io/badge/version-0.16.2-eef0f4?style=flat-square">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Vite-3178c6?style=flat-square&logo=typescript&logoColor=white">
+  <img alt="Python" src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square">
+  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-2f7bf5?style=flat-square">
+  <img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-3a3a3a?style=flat-square">
+  <img alt="Status: pre-release" src="https://img.shields.io/badge/status-pre--release-d69e2e?style=flat-square">
+</p>
 
-FormCAD is a desktop CAD app for macOS, Linux & Windows, built in the image of its siblings formvis (image) & formmorpheus (animation). One `.fcad` project holds a full 2D drafting database w/ layouts & plotting, parametric part features on an OpenCascade kernel, NURBS curves & surfaces, & sketches w/ constraints & equations, all driven by one engine that you can also run headless, script in LISP or Python, or hand to an agent over MCP. Instead of SolidWorks, Fusion, Rhino, Grasshopper and CADcraft. The OpenCascade kernel runs as a separate program the app downloads & verifies, so the app itself stays Apache-2.0.
+<p align="center">
+  <a href="https://formai.studio/"><b>Download FormCAD on formai.studio</b></a> ·
+  <a href="#run-it-from-source">Run it from source</a>
+</p>
 
-**Stack:** vanilla TypeScript + Vite + three.js · Python + FastAPI · OpenCascade 8 worker · Tauri 2 · **Scale:** v0.16.0, all 43 phases landed (about 725 engine commands, about 185 graph nodes; drafting floor taken from a clean-room functional study, never from another product's code)
+<br>
 
-## Highlights
+<p align="center">
+  <img src="docs/images/formCAD-hero.png" alt="A gusseted aluminium bracket with fillets and bolt holes shaded in the 3D view, with the feature tree on the right" width="100%">
+  <br>
+  <sub>A gusseted bracket built from sketches, extrudes, fillets and cuts, with its feature tree beside the 3D view.</sub>
+</p>
 
-- **Every 2D command** draw, modify, arrays, hatch & gradient w/ islands, regions, text w/ right-to-left & Arabic shaping, 69 dimension variables w/ associativity, multileaders, tables w/ formulas
-- **Drafting aids** object snaps w/ tracking, polar, ortho, isometric, grips in five modes, dynamic input, selection by window, crossing, fence & polygon
-- **Blocks & references** attributes, the Block Editor, dynamic blocks, in-place editing, external references w/ relative paths, nesting & clipping
-- **Layers, layouts & plotting** layer states & filters, viewports w/ their own scale & layer overrides, page setups, plot styles, PDF w/ layers & searchable text, PNG & SVG
-- **Interchange** DXF R12 to R2018 checked entity by entity, SVG import, STEP AP203, AP214 & AP242 w/ semantic PMI, IGES & 3DM through the kernel, STL, OBJ, PLY, 3MF & GLB meshes, DWG through a converter you install
-- **Parametric sketches** geometric & dimensional constraints, status colours, a conflict explainer that refuses over-defining dimensions, parameters w/ units & equations
-- **3D on OpenCascade** solids, booleans w/ diagnostics, per-face meshes, seven display modes, a view cube, named views & construction planes
-- **Parametric parts** a feature tree w/ rollback, 20 feature types, references that survive edits, configurations, design tables & mass properties
-- **NURBS curves & surfaces** blend curves to G3, blend & match surfaces to G2, seam continuity badges, zebra, curvature, draft & deviation analysis, a gumball
-- **Assemblies & drawings** components w/ safe file references, 13 mate kinds w/ DOF & conflict explanations, motion, explode & interference; drawing views in first or third angle w/ sections & details, dimensions that follow the model, tolerance frames, balloons, BOM tables & title blocks
-- **Weldments, molds, toolbox & costing** frames w/ cut lists, core & cavity splits, standard parts from your own sizes, inspection reports, cost, manufacturability & design checks
-- **Generative, electronics & routing** outcomes per manufacturing method, schematics & boards w/ an autorouter & Gerber output, harnesses, tubes & pipes w/ wire lists & bender tables
-- **Simulation** linear static, modal, thermal & buckling on second-order elements, nonlinear, contact & fatigue, topology optimization under a stress limit, & laminar flow, cooling & injection fill
-- **Manufacture** 2D & 3D milling, 3+2 & 5-axis w/ stock & collision simulation, turning, probing, laser, plasma & waterjet cutting w/ nesting, posts for LinuxCNC & grbl, & an own FFF slicer
-- **Motion, vault & rendering** joints & motion studies w/ contact stops & dynamics, a local vault w/ branches, merges & lifecycle, path-traced renders up to 4K & storyboard videos
-- **Forms, meshes & plastic parts** subdivision forms w/ creases converted to closed solids, mesh repair, reduce, remesh & mesh to solid, plastic features & wall checks from cited rules
-- **Sheet metal** flanges, hems, jogs & reliefs from one rule, K-factor, allowance or deduction bends, flat patterns w/ bend notes & DXF for cutting or bending
-- **The graph** a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, graphs run headless from the CLI, HTTP or MCP, & node plugins
-- **Automation** a LISP dialect w/ 188 builtins, scripts, a macro recorder, Python macros in an isolated process, hashed plugins, a headless CLI & an MCP server for agents
-- **The form family shell** the same splash & reveal, title bar, menus, Home screen, Preferences & status bar as formvis, w/ 28 shared themes & zero flash on load
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#everything-in-the-box">In the box</a> ·
+  <a href="#built-for-agents">Agents</a> ·
+  <a href="#under-the-hood">Under the hood</a> ·
+  <a href="#download">Download</a> ·
+  <a href="#run-it-from-source">Run from source</a>
+</p>
 
-## Quick Start
+<br>
 
-### Requirements
+<table>
+  <tr>
+    <td width="25%" valign="top"><h3>Drafting</h3>Every 2D command, layers, layouts, blocks and plotting to PDF, PNG and SVG in one project file.</td>
+    <td width="25%" valign="top"><h3>Parametric parts</h3>A feature tree with rollback on an OpenCascade kernel, with references that survive edits.</td>
+    <td width="25%" valign="top"><h3>NURBS surfaces</h3>Blend and match surfaces to G2, then check the seams with zebra, curvature and deviation analysis.</td>
+    <td width="25%" valign="top"><h3>Agent-ready</h3>The same engine from the window, the command line and an MCP server.</td>
+  </tr>
+</table>
 
-Node 20.19+ or 22.12+, Python 3.12+. Desktop builds also need Rust (`https://rustup.rs`). `./formCAD doctor` checks them. Platform note: dynamics runs use MuJoCo, which publishes no macOS Intel wheel; on an Intel Mac joints & motion studies still work & the dynamics command says it is unavailable.
+<br>
 
-### macOS & Linux
+## Features
 
-```shell
-chmod +x formCAD_oc_install formCAD build_app
-./formCAD_oc_install          # engine venv & interface packages
-./formCAD install-kernel      # optional: the OpenCascade worker for 3D, in kernel/venv
-./formCAD                     # engine & interface together
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/formCAD-feature-tree.png" alt="The Fillet feature panel open over the bracket, with the feature tree highlighting the edited feature" width="100%">
+      <br><sub>Editing a fillet in the feature tree.</sub><h3>Feature tree with rollback</h3>Open any feature, change its radius or depth, and the rest of the part rebuilds. A failed feature is marked with its reason and never silently changes the model.</td>
+    <td width="50%" valign="top">
+      <img src="docs/images/formCAD-drawing.png" alt="An A3 drawing sheet with front, top, right, isometric and section views of the bracket and a title block" width="100%">
+      <br><sub>An A3 sheet with projected, isometric and section views.</sub><h3>Drawing sheets from the model</h3>Place base, projected, section and detail views in first or third angle on a layout. Views update when the part changes.</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/images/formCAD-graph.png" alt="The node graph editor with eight wired nodes that build a plate with bolt holes" width="100%">
+      <br><sub>A solved node graph: plate, bolt-hole ring, boolean cut, mass and section.</sub><h3>Node graph</h3>Build geometry from wired nodes with data trees, preview it, bake it into the drawing, or run the graph headless from the command line.</td>
+    <td width="50%" valign="top">
+      <img src="docs/images/formCAD-surface.png" alt="Three NURBS surfaces joined by a G2 blend, shown with zebra stripes" width="100%">
+      <br><sub>Zebra stripes across two surfaces and their G2 blend.</sub><h3>NURBS and analysis</h3>Loft, sweep, blend and match surfaces, then read continuity at the seams with zebra, curvature, draft and deviation.</td>
+  </tr>
+</table>
+
+## Everything in the box
+
+<table>
+  <tr>
+    <td width="33%" valign="top"><h4>2D and 3D modelling</h4>Draw and modify · Dimensions · Blocks · Layouts and plotting · Sketch constraints · Parts · Assemblies · Drawing views · Sheet metal · NURBS · Subdivision forms · Meshes</td>
+    <td width="33%" valign="top"><h4>Engineering workspaces</h4>Weldments · Molds · Toolbox · Costing · Simulation · Generative design · Electronics · Harness and pipe routing · Manufacture · 3D print slicer · Renders</td>
+    <td width="33%" valign="top"><h4>Formats</h4>Interchange: DXF, SVG, STEP, IGES, 3DM, STL, OBJ, PLY, 3MF, GLB · Plots: PDF, PNG, SVG · Native: <code>.fcad</code></td>
+  </tr>
+</table>
+
+## Built for agents
+
+727 commands live in one registry; the window, the CLI and the MCP server all call the same ones.
+
+```sh
+./formCAD mcp                                  # MCP server on stdio for Claude Code, Codex and Cursor
+python backend/formcad_engine.py commands      # print the command catalogue as JSON
+python backend/formcad_engine.py info FILE     # JSON summary of a drawing, headless
+python backend/formcad_engine.py graph run FILE.graph   # solve a node graph without the interface
 ```
 
-Desktop app:
+Agent rules are in [`AGENTS.md`](AGENTS.md); two skill packs live in [`skills/`](skills): `formcad-harness` and `formcad-driving`.
 
-```shell
-./formCAD desktop dev
-./build_app
+## Under the hood
+
+- **Interface:** vanilla TypeScript, Vite and three.js for the 3D view, with a WebGL2 drafting canvas.
+- **Engine:** Python and FastAPI own every document, command and piece of geometry; the interface only renders and dispatches.
+- **Kernel:** a separate OpenCascade 8 worker speaks JSON lines on stdio, so the app itself stays Apache-2.0.
+- **Desktop:** a Tauri 2 shell around the engine as a sidecar; the same UI runs in a browser.
+- **Scripting:** a LISP dialect, macros, Python macros in an isolated process and hashed plugins.
+- **Clean room:** the drafting floor comes from a functional study, never from another product's code.
+
+## Download
+
+| Platform | Download | Release |
+|---|---|---|
+| macOS | [Download FormCAD for macOS](https://formai.studio/get/formcad/macos) | [FormCAD releases on FormCompiler](https://github.com/nodemode-dev/formcompiler/releases?q=formCAD-v&expanded=true) |
+| Windows | [Download FormCAD for Windows](https://formai.studio/get/formcad/windows) | [FormCAD releases on FormCompiler](https://github.com/nodemode-dev/formcompiler/releases?q=formCAD-v&expanded=true) |
+| Linux | [Download FormCAD for Linux](https://formai.studio/get/formcad/linux) | [FormCAD releases on FormCompiler](https://github.com/nodemode-dev/formcompiler/releases?q=formCAD-v&expanded=true) |
+
+All FormCAD builds are compiled and released from [FormCompiler](https://github.com/nodemode-dev/formcompiler); this repo holds the source.
+
+## Run it from source
+
+Prefer it in your browser, or want to contribute? Run the web UI straight from this repo.
+
+**Requires:** Node 20.19+ or 22.12+ and Python 3.12+; Rust only for the desktop shell.
+
+```sh
+git clone git@github.com:nodemode-dev/formCAD.git
+cd formCAD
+./formCAD_oc_install     # engine venv and interface packages
+./formCAD install-kernel # the OpenCascade worker, needed for 3D
+./formCAD                # web UI at http://localhost:5290
 ```
 
-### Windows
-
-```shell
-formCAD_oc_install.bat
-formCAD.bat
-build_app.bat
-```
-
-### Ports
+`./formCAD desktop dev` opens the desktop window instead. On Windows use `formCAD_oc_install.bat` and `formCAD.bat`.
 
 | Service | URL | Notes |
 |---|---|---|
-| Frontend | http://127.0.0.1:5290 | Vite dev server, `server.host` false, strict port |
+| Frontend | http://127.0.0.1:5290 | Vite dev server, strict port |
 | Preview | http://127.0.0.1:5291 | `vite preview` of the built interface |
-| Backend | http://127.0.0.1:8290 | FastAPI engine, loopback only, per-start token & Origin check; the desktop app picks a free port |
+| Backend | http://127.0.0.1:8290 | FastAPI engine, loopback only, per-start token and Origin check |
 
-## Configuration
+Set `FORMCAD_DATA_DIR`, `FORMCAD_PORT` or `FORMCAD_KERNEL` in the shell to move the data folder, the engine port or the kernel worker.
 
-| Variable | Purpose |
+> [!IMPORTANT]
+> **Status:** pre-release. All 43 planned phases have landed, many as first versions; Linux builds are tested here, macOS and Windows builds are configured but untested.
+
+**Contributing:** branch from `main`, keep changes to source here, and leave packaging and releases to formcompiler. See [`BRANCHING.md`](BRANCHING.md) and [`AGENTS.md`](AGENTS.md).
+
+## Repository
+
+`frontend/` the interface · `backend/` the engine · `kernel/` the OpenCascade worker · `mesher/` the Netgen mesher · `src-tauri/` the desktop shell · `setup/` install and boot scripts · `fixtures/` sample documents · `skills/` agent skill packs · `docs/` the manual and format contracts
+
+Docs: [`.docs/wiki`](.docs/wiki) · Manual: [`docs/MANUAL.md`](docs/MANUAL.md) · Agents: [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md) · Contributing: [`BRANCHING.md`](BRANCHING.md)
+
+<br>
+
+---
+
+## Maintainers
+
+| Maintainer | Role |
 |---|---|
-| `FORMCAD_DATA_DIR` | where the engine keeps settings, sessions, autosaves & the kernel (default: the platform's app data folder) |
-| `FORMCAD_LIBRARY_DIR` | a different folder for the drawing library |
-| `FORMCAD_PORTABLE` | `1` keeps all data beside the app |
-| `FORMCAD_PORT` | the engine port (desktop app: 0, a free port) |
-| `FORMCAD_HOST` | the address the engine binds (default `127.0.0.1`); anything but loopback exposes the engine to the network & is not supported |
-| `FORMCAD_DIST` | a built interface folder for `./formCAD serve` to serve instead of `frontend/dist` |
-| `FORMCAD_CONTROL_PORT` | turns on the local control protocol on this loopback port |
-| `FORMCAD_CORS_ORIGINS` | extra interface origins the engine accepts (development only) |
-| `FORMCAD_KERNEL` | path to a kernel worker to use instead of the downloaded one |
-| `FORMCAD_KERNEL_RELEASE` | the formCAD-binaries release to download & verify |
-| `FORMCAD_FONTS` | extra font folders for text |
-| `FORMCAD_LOG_LEVEL`, `FORMCAD_LOG_BYTES` | engine log level & log file size cap |
-| `FORMCAD_API_DOCS` | `1` turns on the generated API pages |
-| `FORMCAD_TARGET`, `FORMCAD_RUST_TOOLCHAIN` | build only: the Rust target triple & toolchain for `./build_app` |
-| `FORMCAD_BUNDLES`, `FORMCAD_CARGO_TARGET` | build only: the bundle kinds to make & a separate cargo target folder for `./build_app` |
-| `FORMCAD_BACKEND_PORT` | development only: the engine port the Vite dev server proxies to (default 8290) |
+| [@nodemode-ai](https://github.com/nodemode-ai) | Owner |
+| [@gbarnai](https://github.com/gbarnai) | Co-owner |
 
-Set them in the shell. No `.env` is read or committed.
+Code owners are set in [`.github/CODEOWNERS`](.github/CODEOWNERS).
 
-## Architecture
+## License
 
-```
-formCAD/
-├── frontend/              the interface (vanilla TS + Vite)
-│   ├── src/canvas/        the WebGL2 drafting canvas, input, snaps, grips, constraint glyphs
-│   ├── src/view3d/        the three.js 3D view, display modes, view cube, picking, curve & seam layers
-│   ├── src/part/          the feature tree, feature panels, configurations & materials
-│   ├── src/u8/            the gumball, analysis panels, 3D snaps & the assembly panels
-│   ├── src/draw/          drawing views & their annotation tools on layout sheets
-│   ├── src/sheet/         sheet metal rule, panels, flat pattern display, cut list & flat DXF
-│   ├── src/graph/         the graph editor: node canvas, wires, search, tree tooltips
-│   ├── src/graphx/        in-node widgets, node palette, bake, optimizer, run dialogs, 3D preview
-│   ├── src/p10/           interchange dialogs, PMI notes, the Form workspace, mesh tools & the plastic panel
-│   ├── src/p11/           joints, motion studies, dynamics & the vault panel
-│   ├── src/render/        path-traced render mode, render dialog & tiled final frames
-│   ├── src/an1/           storyboards, illustration styles & video export
-│   ├── src/p12/           the Manufacture workspace, simulation player, nesting & the Print panel
-│   ├── src/p13/           the Simulate workspace: studies, results, calculators
-│   ├── src/p14a/          generative design, harness, pipe & schematic panels
-│   ├── src/p14b/          the Electronics workspace: schematic, board, outputs, 3D board
-│   ├── src/p15/           weldment, mold, toolbox, inspection, cost & design check panels
-│   ├── src/ui/            the form family shell, panels, dialogs, output, parameters, automation
-│   ├── src/io/            the engine client & event stream
-│   └── src/styles/        tokens & stylesheets (tokens only, z-index from the scale)
-├── backend/               the engine (FastAPI), owns every document, command & geometry
-│   ├── app/doc/           the drawing database, undo journal, .fcad container
-│   ├── app/cmd/           the command pipeline & every command
-│   ├── app/display/       display lists for the interface
-│   ├── app/interchange/   DXF, SVG, DWG & 3DM routing
-│   ├── app/output/        PDF, PNG & SVG writers, plot styles
-│   ├── app/lisp/          the LISP dialect
-│   ├── app/automation/    CLI, MCP, control protocol, macros, plugins
-│   ├── app/param/         constraints, sketches & parameters on the in-house solver
-│   ├── app/solid/         solids, persistent ids & the binary scene for the 3D view
-│   ├── app/part/          the part feature tree & rebuild
-│   ├── app/bodies/        multibody, reference geometry, configurations, materials & mass properties
-│   ├── app/nurbs3d/       NURBS curve construction, blends & continuity
-│   ├── app/analysis/      zebra, curvature, draft & deviation values & colour ramps
-│   ├── app/gumball/       the gumball frame & its move, rotate & scale operations
-│   ├── app/meshes/        mesh entities, repair, STL & OBJ
-│   ├── app/assembly/      assemblies, component references, patterns, configurations & BOM
-│   ├── app/mates/         the 3D mate solver, motion, exploded views & interference
-│   ├── app/views/         drawing views from hidden line removal
-│   ├── app/drawann/       drawing annotation: tolerance frames, datums, balloons, BOM tables, title blocks
-│   ├── app/sheetmetal/    sheet metal rule, bend list, bend maths, flat patterns & flat DXF
-│   ├── app/graph/         data trees, matching, the node SDK, solver, nodes, bake, loops, optimizer, runner
-│   ├── app/pmi/           semantic PMI: dimensions, tolerances & datums on faces & edges
-│   ├── app/subd/          subdivision forms w/ creases & their conversion to B-rep
-│   ├── app/plastic/       plastic part rules, features & checks
-│   ├── app/joints/        joints, motion studies, contact sets & dynamics
-│   ├── app/vault/         the local content-addressed vault, merges & lifecycle
-│   ├── app/render/        appearances, environments, render settings & final-frame jobs
-│   ├── app/anim/          storyboards & frame sampling for video
-│   ├── app/cam/           setups, tools, 2D operations, posts & NC export
-│   ├── app/cam3d/         cutter location, 3D & 5-axis operations, machine model & stock simulation
-│   ├── app/turning/       turning operations; app/probing/ probe cycles; app/cutting/ cutting plans & nesting
-│   ├── app/additive/      the slicer, supports, orientation, plates & layer preview
-│   ├── app/sim/           studies, materials, the mesher link & linear solvers; app/simnl/ nonlinear, events & fatigue
-│   ├── app/topo/          topology & shape optimization; app/flow/ Stokes flow, SU2 link, cooling & fill
-│   ├── app/gen/           generative design; app/ecad/ schematics; app/pcb/ boards; app/ecadout/ board outputs
-│   ├── app/harness/       harnesses; app/pipe/ tubes & pipes; app/schem/ electrical schematics; app/routing/ shared paths
-│   └── app/weld/          weldments; app/mold/ mold tools; app/toolbox/ standard parts & inspection; app/costing/ cost & checks
-├── release/               the binaries repository layout, signing scripts, SBOMs & the dry run
-├── apps/                  formcompiler & formportal registry files
-├── skills/                agent skill packs: formcad-harness & formcad-driving
-├── mesher/                the separate Netgen mesher program
-├── kernel/                the separate OpenCascade worker program (JSON lines on stdio)
-├── src-tauri/             the desktop shell (Tauri 2): splash, reveal, title bar, engine sidecar
-├── setup/                 install, boot, freeze, desktop & doctor scripts behind ./formCAD
-├── fixtures/              sample documents for the acceptance walk-throughs
-├── docs/                  contracts other tools rely on (`ASSEMBLY_SCHEMA.md`, `GRAPH_FORMAT.md`, `NODE_SDK.md`)
-├── .github/workflows/     CI: typecheck, engine boot, script checks, text lint, three-OS engine freeze, licence scan
-├── build_app              the desktop build, start to finish
-└── assets/                repo-level art (not wired into the build)
-```
+FormCAD is licensed under the Apache License 2.0 ([`LICENSE`](LICENSE), SPDX `Apache-2.0`). Copyright 2026 NodeAgentc, Inc. Third-party notices: [`NOTICE.md`](NOTICE.md).
 
-## Status
-
-All 43 phases of the plan have landed. v0.2.0 to v0.4.0 built the shell, the drawing database & command line, the drafting canvas, snaps & grips, every Draw & Modify command, arrays, hatch, text & dimensions. v0.5.0 added blocks, references, layers, layouts, DXF, SVG, DWG routing & plotting. v0.6.0 added LISP, scripts, macros, plugins, the CLI & MCP server, the OpenCascade worker w/ a 3D view, & parametric sketches; its audit found a macro-to-plugin escape that was closed before release, so macros & agents now run w/ less trust than the window. v0.7.0 added parametric parts (a feature tree w/ extrude, revolve, fillet, chamfer, shell, draft, patterns, mirror, sweep, loft, rib & holes, references that survive upstream edits, multibody, configurations, design tables, materials & mass properties), NURBS curves w/ blends to G3, & surfaces w/ G2 blends, seam checks & boolean diagnostics. v0.8.0 added surface analysis, the gumball, 3DM through the kernel (trimmed faces are flagged, STEP keeps them better), meshes w/ STL & OBJ, assemblies w/ mates, motion, explode & interference, & drawings from 3D w/ annotation. v0.9.0 added sheet metal (flanges, hems, jogs, reliefs, convert, flat patterns w/ DXF for cutting or bending) & the graph: a node editor w/ data trees & matching, about 185 nodes, preview & bake, loops, an optimizer, a headless runner (CLI, HTTP, MCP) & node plugins; v0.10.0 added STEP AP203, AP214 & AP242 w/ semantic PMI, IGES, 3MF, GLB & PLY w/ unit checks, subdivision form modelling converted to closed solids, a mesh workspace (repair, reduce, remesh, sections, booleans, mesh to solid) & plastic part rules w/ cited values; v0.11.0 added joints, motion studies w/ contact stops & dynamics, a local vault w/ branches & merges, path-traced rendering up to 4K & storyboards exported to video; v0.12.0 added a Manufacture workspace (2D & 3D milling, 3+2 & 5-axis w/ stock simulation, turning, probing, laser, plasma & waterjet cutting w/ nesting, LinuxCNC & grbl posts) & FormCAD's own 3D-print slicer w/ supports & a layer preview; v0.13.0 added a Simulate workspace (a separate Netgen mesher, linear static, modal, thermal & buckling, nonlinear, contact, events & fatigue, topology optimization w/ a stress check, laminar flow, cooling & injection fill); v0.14.0 added generative design w/ manufacturing methods, electronics (schematics, boards, a two-layer autorouter, Gerber X2, drill & IDF output, a 3D board linked to its enclosure) & routing (harnesses flattened to formboards, tube & pipe runs, electrical schematics); v0.15.0 added weldments, mold tools, a toolbox of parametric standard parts from your own sizes, inspection reports, costing, manufacturability & design checks, & the prepared family release (binaries layout, signing scripts, registry files; nothing published); v0.16.0 added two agent skill packs, the user manual & the wiki. Many features are first versions whose limits are listed in the manual & the changelog. The Linux builds are tested here; macOS & Windows builds are configured but untested, & hardware GPU timings are owed.
-
-## Development
-
-Changes follow the family's rules: single-region hand edits, zero DOM flash, tokens only, no emoji, decisions & removed code in `frontend/HASHOUT_LOG.md` & `backend/HASHOUT_LOG.md`, behaviour from functional specs only. Agent rules live in `CLAUDE.md` & `AGENTS.md`. Commits are Conventional Commits as `nodemode-ai <mackin@nodemode.ai>` w/o attribution trailers; branches in `BRANCHING.md`.
-
-**Docs:** the user manual is `docs/MANUAL.md`, the wiki lives in `.docs/wiki/` (start at `Home.md`), release engineering in `docs/RELEASE.md`, data sources in `docs/DATA_PROVENANCE.md`. **Agent skills:** `skills/formcad-harness` (install, run, verify & extend FormCAD) & `skills/formcad-driving` (operate it over MCP & the CLI).
-
-## Contributors
-
-- nodemode-ai · owner
-
-## Licensing
-
-Apache-2.0, see `LICENSE` & `NOTICE.md`. Copyright 2026 NodeAgentc, Inc.
+<sub>Screenshot content: a bracket and a node graph made for this README, plus a sample NURBS surface from `fixtures/`.</sub>
