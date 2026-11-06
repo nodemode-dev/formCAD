@@ -2,6 +2,16 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.16.2 · 2026-11-04
+
+- A README in the Form family layout with screenshots of the part, drawing sheet, node graph and NURBS views.
+- The manual, the wiki and the skill packs now state the current version.
+
+## 0.16.1 · 2026-11-03
+
+- The unified app icon for the desktop window, the web favicon and the README, and the family icon set.
+- Co-ownership of the repository is recorded in the code owners file.
+
 ## 0.16.0 · 2026-11-03
 
 - Two agent skill packs: `skills/formcad-harness` for agents that install, run, verify and extend FormCAD, and `skills/formcad-driving` for agents that operate it through its MCP server and command line, both passing the skill validator.
