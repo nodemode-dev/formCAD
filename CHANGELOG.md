@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.17.0 · 2026-11-18
+
+- The first build through formcompiler. The registry file passes its check and builds in contract mode for Apple silicon, Intel Macs, Linux and Windows; the release stays a draft on this repository. The Linux AppImage no longer stops on the physics library's plugin files, and `formCAD.bat desktop build` passes its arguments on.
+- The splash bar carries the family gradient. On macOS a window whose page stops twice within two minutes offers Restart FormCAD or Quit, and the engine now exits with the shell even when its launcher was force-closed.
+- The home screen follows the family layout: the formCAD mark, Start, Recent, Templates, Projects and Outputs, a list of open drawings, and a Demos section.
+- Three demos open from the home screen as untitled copies: a dimensioned floor plan on an A3 sheet, a parametric plate with its feature tree, and a node graph that drives a plate with a ring of bolt holes. The part and the graph show without the 3D worker; editing them needs it.
+- Three browser demos, `demo/`, `demos/part/` and `demos/graph/`: the real window over a recording of the engine, opened from `index.html` with no install and no network.
+- The kernel and mesher workers are downloaded from the `formcad/` releases of nodemode-dev/formai-binaries. No worker release exists yet, so 3D editing and simulation wait for the first one.
+
 ## 0.16.2 · 2026-11-04
 
 - A README in the Form family layout with screenshots of the part, drawing sheet, node graph and NURBS views.

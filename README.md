@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.16.2" src="https://img.shields.io/badge/version-0.16.2-eef0f4?style=flat-square">
+  <img alt="version 0.17.0" src="https://img.shields.io/badge/version-0.17.0-eef0f4?style=flat-square">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Vite-3178c6?style=flat-square&logo=typescript&logoColor=white">
   <img alt="Python" src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-2f7bf5?style=flat-square">
@@ -140,6 +140,8 @@ cd formCAD
 | Backend | http://127.0.0.1:8290 | FastAPI engine, loopback only, per-start token and Origin check |
 
 Set `FORMCAD_DATA_DIR`, `FORMCAD_PORT` or `FORMCAD_KERNEL` in the shell to move the data folder, the engine port or the kernel worker.
+
+**Demos:** open any of the three in a browser, with no install and no network. Each is the real window over a recording of the engine, so you can look, pan, zoom, pick and browse the panels, and anything that would change the document says the desktop app does it. [`demo/index.html`](demo/README.md) opens a dimensioned floor plan on an A3 sheet. [`demos/part/index.html`](demos/part/README.md) opens a parametric plate with its feature tree in the 3D view. [`demos/graph/index.html`](demos/graph/README.md) opens a node graph that drives a plate with a ring of bolt holes. The same three documents open from the home screen of the app.
 
 > [!IMPORTANT]
 > **Status:** pre-release. All 43 planned phases have landed, many as first versions; Linux builds are tested here, macOS and Windows builds are configured but untested.
