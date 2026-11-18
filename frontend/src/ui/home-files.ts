@@ -65,6 +65,7 @@ export class HomeFiles {
 
   constructor(private readonly d: HomeFilesDeps, private readonly tab: FilesTab, private readonly opts: { limit?: number; compact?: boolean; onCount?: (n: number) => void } = {}) {
     setClass(this.root, 'is-compact', !!opts.compact);
+    setClass(this.root, 'is-pending', true);
     if (opts.compact) this.prefs.view = 'grid';
     this.sort.value = this.prefs.sort;
     for (const b of Array.from(this.root.querySelectorAll<HTMLButtonElement>('.cv-hf-view'))) {
@@ -110,6 +111,7 @@ export class HomeFiles {
     this.all = list.map((i) => ({ key: i.path || i.name, name: i.name, kind: kindOf(i), size: i.size, when: toMillis(i.modified), where: i.path }));
     this.opts.onCount?.(this.all.length);
     this.render();
+    setClass(this.root, 'is-pending', false);
   }
 
   private render(): void {

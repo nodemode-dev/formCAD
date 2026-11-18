@@ -1,5 +1,8 @@
+import type { DocSummary } from '../io/api';
+import { commands } from './commands';
+import { DEMOS, isDemo, openDemo, type DemoId } from './demos';
 import type { DocStore } from './doc-store';
-import { el, isMac, q, setClass, setHidden, setText } from './dom';
+import { el, escapeHtml, isMac, patchList, pendingClass, q, setClass, setHidden, setText, setTitle } from './dom';
 import { HomeFiles, type FilesTab } from './home-files';
 import { icon } from './icons';
 import { toast } from './toast';
@@ -12,7 +15,7 @@ export interface HomeDeps {
   openPath: (path: string) => void;
 }
 
-type Page = 'start' | FilesTab;
+type Page = 'start' | 'templates' | FilesTab;
 
 interface Template { id: string; name: string; meta: string; icon?: string; sheet?: [number, number] }
 
@@ -43,6 +46,9 @@ export class HomeScreen {
   private lastCount = 0;
   private hadDocument = false;
   private readonly back: HTMLElement;
+  private readonly openWrap: HTMLElement;
+  private readonly openList: HTMLElement;
+  private demoBusy = false;
   private onShown: Array<(shown: boolean) => void> = [];
 
   constructor(host: HTMLElement, private readonly d: HomeDeps) {
@@ -55,11 +61,14 @@ export class HomeScreen {
       const art = p.sheet ? `<span class="cv-home-sheet" style="aspect-ratio: ${p.sheet[0]} / ${p.sheet[1]}"></span>` : icon(p.icon ?? 'file', 28);
       return `<button class="cv-home-size" type="button" data-template="${i}"><span class="cv-home-size-box">${art}</span><span class="cv-home-size-name">${p.name}</span><span class="cv-home-size-meta">${p.meta}</span></button>`;
     }).join('');
-    const nav = `${navItem('start', 'home', 'Start')}${navItem('recent', 'history', 'Recent')}${navItem('projects', 'folder', 'Projects')}${navItem('outputs', 'download', 'Outputs')}`;
+    const demos = DEMOS.map((m) => `<button class="cv-home-card" type="button" data-demo="${m.id}"><span class="cv-home-card-pic" aria-hidden="true"><img alt="" decoding="async" draggable="false" width="640" height="400" src="${m.picture}"></span><span class="cv-home-card-body"><span class="cv-home-card-name">${escapeHtml(m.title)}</span><span class="cv-home-card-meta" title="${escapeHtml(m.line)}">${escapeHtml(m.line)}</span></span></button>`).join('');
+    const nav = `${navItem('start', 'home', 'Start')}${navItem('recent', 'history', 'Recent')}${navItem('templates', 'sheet', 'Templates')}${navItem('projects', 'folder', 'Projects')}${navItem('outputs', 'download', 'Outputs')}`;
     const filesPage = (p: FilesTab, extra = ''): string => `<div class="cv-home-page" data-page="${p}" hidden><div class="cv-home-head"><div><h1 class="cv-home-title">${PAGE_TEXT[p].title}</h1><p class="cv-home-sub">${PAGE_TEXT[p].sub}</p></div>${extra}</div><div class="cv-home-slot" data-slot="${p}"></div></div>`;
+    const mark = `<img class="cv-home-mark" src="${import.meta.env.BASE_URL}favicon.png" width="26" height="26" alt="" draggable="false">`;
     this.root.innerHTML = `<nav class="cv-home-nav" aria-label="Home">
-      <div class="cv-home-brand">FormCAD <span>by NodeMode</span></div>
+      <div class="cv-home-brand" translate="no">${mark}formCAD <span>by nodemode.ai</span></div>
       ${nav}
+      <div class="cv-home-open" hidden><div class="cv-home-nav-sep"></div><div class="cv-home-nav-title">Open drawings</div><div class="cv-home-open-list"></div></div>
       <div class="cv-home-nav-sep"></div>
       <div class="cv-home-nav-title">Create</div>
       ${cmdItem('new', 'newFile', 'New drawing')}${cmdItem('open', 'folderOpen', 'Open')}${cmdItem('x:import', 'importFile', 'Import')}
@@ -68,7 +77,7 @@ export class HomeScreen {
     <div class="cv-home-main">
       <div class="cv-home-narrow">${nav}</div>
       <div class="cv-home-page" data-page="start">
-        <div class="cv-home-head"><div><h1 class="cv-home-title"></h1><p class="cv-home-sub">Open a drawing or a model, or start from a template.</p></div></div>
+        <div class="cv-home-head"><div><h1 class="cv-home-title"></h1><p class="cv-home-sub">Open a drawing or a model, or start from a template.</p></div><div class="cv-home-head-actions"><button class="cv-btn" type="button" data-cmd="open">${icon('folderOpen', 14)}Open file</button><button class="cv-btn" type="button" data-cmd="new">${icon('newFile', 14)}Blank drawing</button></div></div>
         <div class="cv-home-hero">
           <span class="cv-home-hero-icon">${icon('drawing', 26)}</span>
           <div class="cv-home-hero-text"><div class="cv-home-hero-title">Start a drawing or open a model</div>
@@ -81,9 +90,11 @@ export class HomeScreen {
           </div>
         </div>
         <section class="cv-home-section"><div class="cv-home-section-head"><h2 class="cv-home-section-title">Recent</h2><button class="cv-btn cv-btn-ghost" type="button" data-v="recent">See all</button></div><div class="cv-home-slot" data-slot="start"></div></section>
-        <section class="cv-home-section"><div class="cv-home-section-head"><h2 class="cv-home-section-title">New from template</h2><button class="cv-btn cv-btn-ghost" type="button" data-cmd="new">Blank drawing</button></div><div class="cv-home-sizes">${tiles}</div></section>
+        <section class="cv-home-section" data-section="demos"><div class="cv-home-section-head"><h2 class="cv-home-section-title">Demos</h2><span class="cv-home-section-note">Each opens as a new untitled copy</span></div><div class="cv-home-cards">${demos}</div></section>
+        <section class="cv-home-section"><div class="cv-home-section-head"><h2 class="cv-home-section-title">New from template</h2><button class="cv-btn cv-btn-ghost" type="button" data-v="templates">See all</button></div><div class="cv-home-sizes">${tiles}</div></section>
       </div>
-      ${filesPage('recent')}${filesPage('projects', `<div class="cv-home-head-actions"><button class="cv-btn" type="button" data-cmd="settings">${icon('folder', 14)}Library folder...</button></div>`)}${filesPage('outputs')}
+      ${filesPage('recent')}
+      <div class="cv-home-page" data-page="templates" hidden><div class="cv-home-head"><div><h1 class="cv-home-title">Templates</h1><p class="cv-home-sub">Start a new drawing or model from one of ${TEMPLATES.length} templates.</p></div><div class="cv-home-head-actions"><button class="cv-btn" type="button" data-cmd="new">${icon('newFile', 14)}Blank drawing</button></div></div><div class="cv-home-sizes">${tiles}</div></div>${filesPage('projects', `<div class="cv-home-head-actions"><button class="cv-btn" type="button" data-cmd="settings">${icon('folder', 14)}Library folder...</button></div>`)}${filesPage('outputs')}
     </div>`;
     this.back = q(this.root, '[data-back]');
     const files = { openPath: d.openPath };
@@ -98,12 +109,20 @@ export class HomeScreen {
     mount('recent', new HomeFiles(files, 'recent', { onCount: count('recent') }));
     mount('projects', new HomeFiles(files, 'projects', { onCount: count('projects') }));
     mount('outputs', new HomeFiles(files, 'outputs', { onCount: count('outputs') }));
+    for (const c of Array.from(this.root.querySelectorAll('[data-v="templates"] .cv-home-count'))) setText(c, String(TEMPLATES.length));
+    for (const img of Array.from(this.root.querySelectorAll<HTMLImageElement>('.cv-home-card-pic img'))) img.addEventListener('error', () => setHidden(img, true), { once: true });
+    this.openWrap = q(this.root, '.cv-home-open');
+    this.openList = q(this.root, '.cv-home-open-list');
     this.root.addEventListener('click', (e) => {
       const target = e.target as HTMLElement;
       if (target.closest('[data-back]')) { this.forced = false; this.sync(); return; }
       const v = (target.closest('[data-v]') as HTMLElement | null)?.dataset.v as Page | undefined;
       if (v) { this.show(v); return; }
       if (target.closest('[data-cmd]')) return;
+      const docId = (target.closest('[data-doc]') as HTMLElement | null)?.dataset.doc;
+      if (docId) { d.docs.switchTo(docId); this.forced = false; this.sync(); return; }
+      const card = target.closest<HTMLElement>('[data-demo]');
+      if (card && isDemo(card.dataset.demo)) { void this.demo(card.dataset.demo, card); return; }
       const at = (target.closest('[data-template]') as HTMLElement | null)?.dataset.template;
       const tpl = at !== undefined ? TEMPLATES[Number(at)] : undefined;
       if (tpl) d.newFromTemplate(tpl.id, tpl.name);
@@ -118,6 +137,41 @@ export class HomeScreen {
   }
 
   onVisibility(fn: (shown: boolean) => void): void { this.onShown.push(fn); }
+
+  private async demo(id: DemoId, card: HTMLElement): Promise<void> {
+    if (this.demoBusy) return;
+    this.demoBusy = true;
+    card.setAttribute('aria-busy', 'true');
+    const done = pendingClass(card);
+    try {
+      const doc = await openDemo(id);
+      await this.d.docs.refresh();
+      this.d.docs.switchTo(doc.id);
+      const graph = id === 'graph' ? commands.get('gr-open') : undefined;
+      if (graph && !graph.checked?.()) void graph.run();
+    } catch (e) {
+      toast(`Could not open the demo: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    } finally {
+      done();
+      card.removeAttribute('aria-busy');
+      this.demoBusy = false;
+    }
+  }
+
+  private paintOpen(): void {
+    const list = this.d.docs.docs;
+    setHidden(this.openWrap, list.length === 0);
+    patchList(this.openList, list, {
+      key: (doc) => doc.id,
+      create: () => el(`<button class="cv-home-nav-item" type="button">${icon('drawing', 16)}<span class="cv-home-open-name"></span></button>`),
+      update: (n, doc: DocSummary) => {
+        n.dataset.doc = doc.id;
+        setText(q(n, '.cv-home-open-name'), doc.dirty ? `${doc.name} *` : doc.name);
+        setTitle(n, doc.path ?? doc.name);
+        setClass(n, 'is-current', doc.id === this.d.docs.activeId);
+      },
+    });
+  }
 
   private paint(): void {
     for (const n of Array.from(this.root.querySelectorAll<HTMLElement>('.cv-home-page'))) setHidden(n, n.dataset.page !== this.page);
@@ -159,6 +213,7 @@ export class HomeScreen {
     const on = this.forced || (n === 0 && (this.hadDocument ? this.d.afterClose() : this.d.autoShow()));
     const was = !this.root.hidden;
     if (on && !was) { this.paint(); this.fill(); }
+    if (on) this.paintOpen();
     setHidden(this.root, !on);
     setHidden(this.back, n === 0);
     if (on !== was) for (const fn of this.onShown) fn(on);
