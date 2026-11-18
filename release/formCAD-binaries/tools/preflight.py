@@ -60,7 +60,7 @@ def check_app_record(kind_name, record, app_path, problems):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="check the records of formCAD-binaries, and their copies inside the app")
+    ap = argparse.ArgumentParser(description="check the formCAD records of formai-binaries, and their copies inside the app")
     ap.add_argument("--records", default=str(HERE / "records"))
     ap.add_argument("--app-data", help="backend/app/data of the FormCAD repository")
     ap.add_argument("--published", action="store_true", help="records must be filled in (release set, targets present)")

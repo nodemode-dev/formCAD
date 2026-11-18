@@ -32,9 +32,9 @@ The complete corresponding source of the LGPL libraries, the pinned package list
 (requirements.lock) and the source of the worker are on the release page that hosts this
 archive:
 
-  https://github.com/nodemode-dev/formCAD-binaries/releases/tag/occt-{release}
+  https://github.com/nodemode-dev/formai-binaries/releases/tag/occt-{release}
   asset: occt-source-{release}.tar.gz
 
-If that page is not reachable, write to https://github.com/nodemode-dev/formCAD-binaries/issues
+If that page is not reachable, write to https://github.com/nodemode-dev/formai-binaries/issues
 and the source will be sent for no more than the cost of distribution. The offer is valid for
 at least three years after the last distribution of this binary.

@@ -24,7 +24,7 @@ Run the frozen engine's selfcheck: `src-tauri/engine/formcad-engine --selfcheck`
 
 ## The release folder
 
-The family release is prepared in the tree and never published from it: `release/formCAD-binaries/` (the binaries repository layout: records, templates, tools, the LGPL offer, `SOURCES.md`), `release/sbom/`, `release/sign/` (signing scripts that read secrets from the environment only), `release/dry_run`, `apps/formCAD.json` for formcompiler, `apps/products-row.json` and `apps/form-app.json` for formportal. Rules:
+The family release is prepared in the tree and never published from it: `release/formCAD-binaries/` (the layout of the `formcad/` folder of the shared formai-binaries repository: records, templates, tools, the LGPL offer, `SOURCES.md`), `release/sbom/`, `release/sign/` (signing scripts that read secrets from the environment only), `release/dry_run`, `apps/formCAD.json` for formcompiler, `apps/products-row.json` and `apps/form-app.json` for formportal. Rules:
 
 - No remote is set. Do not add one and do not push. The owner pushes.
 - Secrets come from the environment; never write one into a file or a log.

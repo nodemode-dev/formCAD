@@ -16,4 +16,4 @@ pyinstaller --noconfirm --clean --onedir --name formcad-kernel \
 bin="dist/formcad-kernel/formcad-kernel${ext}"
 reply="$(printf '{"id":1,"method":"hello","params":{}}\n{"id":2,"method":"shutdown","params":{}}\n' | "$bin" | head -n 1)"
 printf '%s\n' "$reply" | grep -q '"result"' || fc_die "the frozen kernel did not answer hello: $reply"
-fc_say "kernel folder ready: $FORMCAD_ROOT/kernel/dist/formcad-kernel (ship it from formCAD-binaries, never inside the app)"
+fc_say "kernel folder ready: $FORMCAD_ROOT/kernel/dist/formcad-kernel (ship it from formai-binaries, never inside the app)"

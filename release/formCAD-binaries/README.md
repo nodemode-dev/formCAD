@@ -1,6 +1,6 @@
-# formCAD-binaries
+# formCAD binaries
 
-Binary releases of the two LGPL worker programs that FormCAD downloads on first use. Git holds text only; every binary lives on a GitHub Release. This folder is the layout of the `nodemode-dev/formCAD-binaries` repository, prepared inside the FormCAD repository and pushed by the owner.
+Binary releases of the two LGPL worker programs that FormCAD downloads on first use. Git holds text only; every binary lives on a GitHub Release. These files live in the `formcad/` folder of `nodemode-dev/formai-binaries`, a repository shared by the form apps, and `release/formCAD-binaries/` in the FormCAD repository mirrors that folder. It is prepared inside the FormCAD repository and pushed by the owner.
 
 | Program | Contains | Tag | Asset per platform |
 | --- | --- | --- | --- |
@@ -18,9 +18,9 @@ Triples: `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gn
 | `templates/` | the per-archive `THIRD-PARTY-NOTICES` and `README` texts |
 | `LGPL-OFFER.txt`, `SOURCES.md` | the written offer of source, and where each source lives |
 | `tools/` | `stage_notices.py`, `update_record.py`, `pack_release.py`, `merge_records.py`, `preflight.py` (standard library only, Python 3.12) |
-| `.github/workflows/preflight.yml` | record checks, including equality with the copies inside the app |
+| `.github/workflows/preflight.yml` | record checks, including equality with the copies inside the app; in formai-binaries it sits at `.github/workflows/formcad-preflight.yml` in the repository root |
 
-The build workflow lives in the FormCAD repository (`.github/workflows/binaries.yml`) because it freezes the programs from FormCAD's own source. It builds one archive per triple on native runners (ubuntu-22.04 for a glibc 2.35 floor), signs, records, merges the records, writes `SHA256SUMS`, the source asset and `RELEASE_NOTES.md`, and creates a draft release here.
+The build workflow lives in the FormCAD repository (`.github/workflows/binaries.yml`) because it freezes the programs from FormCAD's own source. It builds one archive per triple on native runners (ubuntu-22.04 for a glibc 2.35 floor), signs, records, merges the records, writes `SHA256SUMS`, the source asset and `RELEASE_NOTES.md`, and creates a draft release in `nodemode-dev/formai-binaries`.
 
 ## An archive
 
@@ -39,4 +39,4 @@ The schema 2 record is published as a release asset beside the archives, not ins
 
 ## Licence
 
-The files of this repository are Apache-2.0 (`LICENSE`). The programs in the releases carry their own licences, listed in `THIRD-PARTY-NOTICES.txt` inside each archive.
+The files of this folder are Apache-2.0 (`LICENSE`). The programs in the releases carry their own licences, listed in `THIRD-PARTY-NOTICES.txt` inside each archive.

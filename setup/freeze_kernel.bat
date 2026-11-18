@@ -9,5 +9,5 @@ if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist
 pyinstaller --noconfirm --clean --onedir --name formcad-kernel --distpath dist --workpath build --specpath build --collect-all OCP --collect-all build123d --hidden-import scipy.spatial formcad_kernel.py || exit /b 1
 (echo {"id":1,"method":"hello","params":{}}& echo {"id":2,"method":"shutdown","params":{}}) | dist\formcad-kernel\formcad-kernel.exe | findstr /c:"result" >nul || ( echo [formCAD] the frozen kernel did not answer hello & exit /b 1 )
-echo [formCAD] kernel folder ready: kernel\dist\formcad-kernel, ship it from formCAD-binaries, never inside the app
+echo [formCAD] kernel folder ready: kernel\dist\formcad-kernel, ship it from formai-binaries, never inside the app
 exit /b 0

@@ -33,7 +33,7 @@ Worker method tables live in `kernel/README.md` and `mesher/README.md`; method c
 
 ## Verification of downloads
 
-The desktop app downloads each worker release from formCAD-binaries and verifies every file against `backend/app/data/kernel-licence.json` (and `mesher-licence.json`). In the checkout those records carry a null `release` and an empty `files` list until the owner publishes a release; the record schema is `release/formCAD-binaries/records/SCHEMA.md`. A hash mismatch is a refusal, never a warning to skip. Do not edit a record to make a download pass, and never commit worker binaries.
+The desktop app downloads each worker release from formai-binaries and verifies every file against `backend/app/data/kernel-licence.json` (and `mesher-licence.json`). In the checkout those records carry a null `release` and an empty `files` list until the owner publishes a release; the record schema is `release/formCAD-binaries/records/SCHEMA.md`. A hash mismatch is a refusal, never a warning to skip. Do not edit a record to make a download pass, and never commit worker binaries.
 
 ## Failure patterns
 

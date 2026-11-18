@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fcbin
 
-REPO = "https://github.com/nodemode-dev/formCAD-binaries"
+REPO = "https://github.com/nodemode-dev/formai-binaries"
 
 
 def pack(args):

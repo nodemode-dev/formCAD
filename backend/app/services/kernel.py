@@ -350,7 +350,7 @@ def start_install() -> dict:
         release = os.environ.get("FORMCAD_KERNEL_RELEASE", "").strip() or rec.get("release")
         target = triple()
         if not release or not expected_files(rec, target):
-            _install["message"] = "No kernel build is published yet. Downloads come from the formCAD-binaries releases and are checked against the shipped record before they are installed."
+            _install["message"] = "No kernel build is published yet. Downloads come from the formai-binaries releases and are checked against the shipped record before they are installed."
             return status()
         if release != rec.get("release"):
             _install["message"] = f"Release {release} is not the one this app ships a record for ({rec.get('release')}). Nothing was installed."

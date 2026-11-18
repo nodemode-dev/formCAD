@@ -1,7 +1,7 @@
 Written offer of source code
 ===========================
 
-The programs in the releases of formCAD-binaries (formcad-kernel and formcad-mesher) contain
+The programs in the releases of formai-binaries (formcad-kernel and formcad-mesher) contain
 libraries that are free software under the GNU Lesser General Public License, version 2.1:
 
   - OpenCascade Technology (with the Open CASCADE exception, version 1.0)
@@ -13,7 +13,7 @@ You may obtain the complete corresponding source code of these libraries, the pi
 Python packages used to build the program (requirements.lock), and the source of the worker
 program itself, from the same release page that hosts the binary:
 
-  https://github.com/nodemode-dev/formCAD-binaries/releases
+  https://github.com/nodemode-dev/formai-binaries/releases
 
 Each release carries its source as an asset next to the binaries:
 
@@ -22,7 +22,7 @@ Each release carries its source as an asset next to the binaries:
 
 If you cannot reach that page, write to us through
 
-  https://github.com/nodemode-dev/formCAD-binaries/issues
+  https://github.com/nodemode-dev/formai-binaries/issues
 
 and we will send the source on a physical medium or by download for no more than the cost of
 performing the distribution. This offer is valid for at least three years after the last time

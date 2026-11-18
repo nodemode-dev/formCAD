@@ -12,7 +12,7 @@ on:
         description: Release number, for example 8.0.1 or 8.0.1-2 (kernel), 6.2.2608 (mesher)
         required: true
       publish:
-        description: Create a draft release in nodemode-dev/formCAD-binaries
+        description: Create a draft release in nodemode-dev/formai-binaries
         type: boolean
         default: false
 
@@ -178,14 +178,14 @@ jobs:
           name: release-${{ inputs.kind }}-${{ inputs.release }}
           path: dist
           retention-days: 30
-      - name: Draft release in formCAD-binaries
+      - name: Draft release in formai-binaries
         if: inputs.publish
         env:
           GH_TOKEN: ${{ secrets.BINARIES_REPO_TOKEN }}
         run: |
           case "$KIND" in kernel) tag="occt-$RELEASE" ;; mesher) tag="mesher-$RELEASE" ;; esac
-          if gh release view "$tag" --repo nodemode-dev/formCAD-binaries >/dev/null 2>&1; then
+          if gh release view "$tag" --repo nodemode-dev/formai-binaries>/dev/null 2>&1; then
             echo "tag $tag already exists; a published tag is never replaced, pick a new release number" >&2
             exit 1
           fi
-          gh release create "$tag" --repo nodemode-dev/formCAD-binaries --draft --title "$tag" --notes-file dist/RELEASE_NOTES.md dist/*.tar.gz dist/SHA256SUMS dist/requirements.lock dist/*licence.json dist/*.cdx.json
+          gh release create "$tag" --repo nodemode-dev/formai-binaries --draft --title "$tag" --notes-file dist/RELEASE_NOTES.md dist/*.tar.gz dist/SHA256SUMS dist/requirements.lock dist/*licence.json dist/*.cdx.json

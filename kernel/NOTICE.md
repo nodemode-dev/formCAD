@@ -1,6 +1,6 @@
 # Kernel worker notices
 
-The `formcad-kernel` worker is a separate program shipped only from the `formCAD-binaries` releases, never inside the FormCAD app or its installers. Licences below were read from the owners' repositories (R15), because several PyPI pages leave the licence field blank. The release archive must carry the full licence texts listed here.
+The `formcad-kernel` worker is a separate program shipped only from the `formai-binaries` releases, never inside the FormCAD app or its installers. Licences below were read from the owners' repositories (R15), because several PyPI pages leave the licence field blank. The release archive must carry the full licence texts listed here.
 
 | Work | Version | Licence | Read from |
 | --- | --- | --- | --- |
