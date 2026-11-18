@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -114,5 +115,67 @@ pub fn track(window: &tauri::Window, event: &WindowEvent) {
         }
         WindowEvent::Destroyed => flush(window.app_handle()),
         _ => {}
+    }
+}
+
+const CRASH_SCHEME: &str = "formcad-shell";
+#[cfg(target_os = "macos")]
+const CRASH_WINDOW: Duration = Duration::from_secs(120);
+#[cfg(target_os = "macos")]
+const CRASH_PAGE: &str = "<!doctype html><html><head><meta charset=\"utf-8\"><title>FormCAD</title><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0d0d0d;color:#e6e6e6;font:15px system-ui,sans-serif}main{max-width:30em;padding:24px}h1{font-size:20px;margin:0 0 12px}p{line-height:1.5;margin:0 0 20px;color:#b0b0b0}a{display:inline-block;margin-right:10px;padding:8px 18px;border-radius:6px;border:1px solid #444;color:#e6e6e6;text-decoration:none}a.go{background:#f97316;border-color:#f97316;color:#0d0d0d}</style></head><body><main><h1>The window stopped working</h1><p>Its web view stopped twice within two minutes, so FormCAD has not reloaded it again.</p><a class=\"go\" href=\"formcad-shell://restart\">Restart FormCAD</a><a href=\"formcad-shell://quit\">Quit</a></main></body></html>";
+
+#[cfg(target_os = "macos")]
+static STOPS: Mutex<Vec<Instant>> = Mutex::new(Vec::new());
+static LOOP_SHOWN: AtomicBool = AtomicBool::new(false);
+
+pub fn loop_page_shown() -> bool {
+    LOOP_SHOWN.load(Ordering::SeqCst)
+}
+
+pub enum Choice {
+    Restart,
+    Quit,
+}
+
+#[cfg(target_os = "macos")]
+fn crash_loop() -> bool {
+    let now = Instant::now();
+    let Ok(mut stops) = STOPS.lock() else { return true };
+    stops.retain(|at| now.duration_since(*at) < CRASH_WINDOW);
+    stops.push(now);
+    let looping = stops.len() > 1;
+    if looping {
+        LOOP_SHOWN.store(true, Ordering::SeqCst);
+    }
+    looping
+}
+
+pub fn shell_choice(url: &tauri::Url) -> Option<Choice> {
+    if url.scheme() != CRASH_SCHEME {
+        return None;
+    }
+    match url.host_str() {
+        Some("restart") => Some(Choice::Restart),
+        Some("quit") => Some(Choice::Quit),
+        _ => None,
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn on_renderer_stopped(webview: &tauri::Webview) {
+    if crash_loop() {
+        let mut encoded = String::from("data:text/html;charset=utf-8,");
+        for byte in CRASH_PAGE.bytes() {
+            if byte.is_ascii_alphanumeric() {
+                encoded.push(char::from(byte));
+            } else {
+                encoded.push_str(&format!("%{byte:02X}"));
+            }
+        }
+        if let Ok(url) = encoded.parse() {
+            let _ = webview.navigate(url);
+        }
+    } else {
+        let _ = webview.reload();
     }
 }
