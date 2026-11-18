@@ -88,6 +88,7 @@ ROUTERS = [
     ("app.routers.toolbox", "/api"),
     ("app.routers.inspection", "/api/docs"),
     ("app.routers.automation", "/api/automation"),
+    ("app.demos.router", "/api/demos"),
     ("app.routers.mcp", ""),
 ]
 
