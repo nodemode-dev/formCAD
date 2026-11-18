@@ -6,5 +6,8 @@ fc_rust_env
 "$FORMCAD_ROOT/setup/freeze_backend"
 cd "$FORMCAD_ROOT"
 [ -f src-tauri/icons/icon.icns ] || frontend/node_modules/.bin/tauri icon assets/formcad_icon.png
+if [ "$(fc_os)" = linux ] && [ -d src-tauri/engine/_internal/mujoco ]; then
+  export LD_LIBRARY_PATH="$FORMCAD_ROOT/src-tauri/engine/_internal/mujoco${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
 frontend/node_modules/.bin/tauri build "$@"
 fc_say "bundles are in src-tauri/target/release/bundle"

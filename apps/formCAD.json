@@ -9,47 +9,62 @@
     "pattern": ""
   },
   "checks": ["ci.yml"],
-  "platforms": ["macos-arm64", "linux-x64", "windows-x64"],
+  "platforms": ["macos-arm64", "macos-x64", "linux-x64", "windows-x64"],
   "toolchain": {
     "node": "22",
     "python": "3.12",
-    "rust": true
+    "rust": true,
+    "rust_targets": "",
+    "rust_cache": ["src-tauri"],
+    "go": "",
+    "linux_packages": "",
+    "windows_msvc": false
   },
   "build": {
-    "mode": "commands",
+    "mode": "contract",
     "cli": "formCAD",
+    "install": true,
+    "install_args": "--lite",
+    "install_desktop": true,
     "windows_shell": "cmd",
-    "macos": "./build_app --no-install $FORMCOMPILER_CONFIG_ARG",
-    "linux": "./build_app --no-install $FORMCOMPILER_CONFIG_ARG",
-    "windows": "call build_app.bat %FORMCOMPILER_CONFIG_ARG%"
+    "macos": "",
+    "linux": "",
+    "windows": "",
+    "tauri_config": "{\"bundle\":{\"linux\":{\"rpm\":{\"compression\":{\"type\":\"none\"}}}}}"
   },
+  "setup": {"macos": "", "linux": "", "windows": ""},
+  "post_build": {"macos": "", "linux": "", "windows": ""},
+  "artifacts": [],
+  "extras": [],
+  "assets": "",
+  "notes": "",
   "updater": {
     "tauri": false,
     "tag_json": false,
     "files": []
   },
   "signing": {
-    "macos": "apple",
+    "macos": "developer-id",
     "windows": "certificate"
   },
   "agents": {
-    "skills": ".claude/skills",
-    "mcp": true,
-    "mcp_launch": {
-      "command": "formcad-engine",
-      "args": ["mcp"]
-    }
+    "skills": "skills",
+    "mcp": true
   },
   "catalog": {
     "id": "formcad",
-    "name": "formCAD",
+    "name": "FormCAD",
     "kind": "cad",
+    "summary": "CAD studio: 2D drafting, parametric parts, NURBS surfaces and automation on OpenCascade.",
     "identifier": "ai.nodemode.formcad",
     "licence": "Apache-2.0",
     "state": "prelaunch",
     "project_extensions": [".fcad"],
     "minimum_os": {
-      "macos": "macOS 14"
+      "macos": "macOS 14",
+      "windows": "",
+      "linux": "glibc 2.35"
     }
-  }
+  },
+  "notes_for_owner": "The first formcompiler build of formCAD. The release stays a draft on the private repository. The app carries no kernel or mesher worker: it downloads them from the formai-binaries releases, so 3D and simulation wait for the first occt and mesher release there. signing.macos is developer-id like the rest of the family; apple turns notarization on. mcp_launch is left out until the bundle carries form-app.json beside the engine launcher."
 }

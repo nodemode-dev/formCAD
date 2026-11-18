@@ -97,7 +97,10 @@ case "$os" in
     tauri_args+=(--bundles "${FORMCAD_BUNDLES:-app}")
     [ -n "${APPLE_SIGNING_IDENTITY:-}" ] || tauri_args+=(--config '{"bundle":{"macOS":{"signingIdentity":"-"}}}')
     ;;
-  linux) [ -z "${FORMCAD_BUNDLES:-}" ] || tauri_args+=(--bundles "$FORMCAD_BUNDLES") ;;
+  linux)
+    [ -z "${FORMCAD_BUNDLES:-}" ] || tauri_args+=(--bundles "$FORMCAD_BUNDLES")
+    [ ! -d src-tauri/engine/_internal/mujoco ] || export LD_LIBRARY_PATH="$FORMCAD_ROOT/src-tauri/engine/_internal/mujoco${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    ;;
 esac
 tauri_args+=(${cfg[@]+"${cfg[@]}"})
 
