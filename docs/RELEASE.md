@@ -16,7 +16,7 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 
 1. Bump `version` in `src-tauri/tauri.conf.json`, `apps/form-app.json` (`version`) and `CHANGELOG.md`. The three must agree.
 2. Land it on main; `ci.yml` must pass.
-3. Push `compile_vX.Y.Z`. formcompiler gates it and runs the contract on each runner: `./formCAD install --lite`, `./formCAD install-desktop`, `./formCAD desktop build --config <file>` (`formCAD.bat` under cmd on Windows). It then leaves a draft release tagged `vX.Y.Z` on this repository. formCAD never holds a signing secret for the application; formcompiler does.
+3. Push `compile_vX.Y.Z`. formcompiler gates it and runs the contract on each runner: `./formCAD install --lite`, `./formCAD install-desktop`, `./formCAD desktop build --config <file>` (the same scripts in Git Bash on Windows; `windows_shell: "cmd"` in the registry file switches to `formCAD.bat`). It then leaves a draft release tagged `vX.Y.Z` on this repository. formCAD never holds a signing secret for the application; formcompiler does.
 4. While the repository is private, keep the release a draft and use a plain version. A `-beta.N` version is always published, and a published release is copied to the public download store. A private tester gets the installer file from the draft.
 5. Attach the SBOM files and `docs/DATA_PROVENANCE.md` to the release. Publish when the repository is public.
 
