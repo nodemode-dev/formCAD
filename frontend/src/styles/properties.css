@@ -65,7 +65,7 @@
 .qc-hexp, .qc-hres, .qc-vuse, .qc-uresult { min-width: 0; height: var(--ctl-md); padding: 0; overflow: hidden; border: 0; background: transparent; color: var(--text-secondary); font-family: var(--font-mono); font-size: var(--fs-11); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .qc-hres, .qc-uresult { color: var(--accent-color); text-align: right; }
 .qc-hexp:hover, .qc-vuse:hover { color: var(--text-primary); }
-.qc-hres:hover, .qc-uresult:hover { color: var(--accent-hover, var(--accent-color-hover)); }
+.qc-hres:hover, .qc-uresult:hover { color: var(--accent-color-hover); }
 .qc-uresult[hidden] { display: none; }
 .qc-vars { display: flex; flex-direction: column; }
 .qc-var { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }

@@ -1,26 +1,3 @@
-:root {
-  --ec-bg: color-mix(in srgb, var(--bg-primary) 88%, #000);
-  --ec-paper: color-mix(in srgb, var(--bg-primary) 94%, var(--text-primary));
-  --ec-grid: color-mix(in srgb, var(--text-muted) 55%, transparent);
-  --ec-wire: #3fb86a;
-  --ec-bus: #4f8fe0;
-  --ec-sym: #e0b050;
-  --ec-pin: #c06a6a;
-  --ec-label: #7fd0d8;
-  --ec-fcu: #d4483a;
-  --ec-bcu: #3a76d4;
-  --ec-fsilk: #e8e2b8;
-  --ec-bsilk: #b8c6e8;
-  --ec-edge: #e6d84a;
-  --ec-zone: #d4483a;
-  --ec-keepout: #d48a3a;
-  --ec-rat: #d8d8d8;
-  --ec-hole: #9a9a9a;
-  --ec-court: #8a8a8a;
-  --ec-board: #1f6b3a;
-  --ec-comp: #2b2f36;
-}
-
 .cv-stage > .ec-root {
   position: absolute;
   inset: 0 0 26px 0;
