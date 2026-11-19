@@ -128,7 +128,6 @@
 :root {
   --cv-titlebar-h: 40px;
   --cv-tabs-h: 34px;
-  --cv-options-h: 36px;
   --cv-status-h: 28px;
   --cv-cmdline-h: 96px;
   --cv-rail-w: 44px;
@@ -147,6 +146,7 @@
   --canvas-select-cross: rgba(63, 185, 80, 0.18);
   --canvas-snap: #fbbf24;
   --canvas-handle: #3b82f6;
+  --canvas-selection: #4a8fff;
   --canvas-paper: #ffffff;
   --canvas-paper-edge: rgba(0, 0, 0, 0.55);
   --v3d-edge-ink: #0d1014;
@@ -157,6 +157,37 @@
   --v3d-grid: #9aa4b2;
   --sm-bend-up: #34d399;
   --sm-bend-down: #f59e0b;
+
+  --ec-bg: color-mix(in srgb, var(--bg-primary) 88%, #000);
+  --ec-paper: color-mix(in srgb, var(--bg-primary) 94%, var(--text-primary));
+  --ec-grid: color-mix(in srgb, var(--text-muted) 55%, transparent);
+  --ec-wire: #3fb86a;
+  --ec-bus: #4f8fe0;
+  --ec-sym: #e0b050;
+  --ec-pin: #c06a6a;
+  --ec-label: #7fd0d8;
+  --ec-fcu: #d4483a;
+  --ec-bcu: #3a76d4;
+  --ec-fsilk: #e8e2b8;
+  --ec-bsilk: #b8c6e8;
+  --ec-edge: #e6d84a;
+  --ec-zone: #d4483a;
+  --ec-keepout: #d48a3a;
+  --ec-rat: #d8d8d8;
+  --ec-hole: #9a9a9a;
+  --ec-court: #8a8a8a;
+  --ec-board: #1f6b3a;
+  --ec-comp: #2b2f36;
+}
+
+:root[data-oled] {
+  --bg-hover: rgba(255, 255, 255, 0.1);
+  --border-soft: rgba(255, 255, 255, 0.12);
+  --surface-1: var(--bg-primary);
+  --line-0: var(--border-color);
+  --canvas-bg-model: #000000;
+  --canvas-grid: rgba(255, 255, 255, 0.1);
+  --canvas-grid-major: rgba(255, 255, 255, 0.22);
 }
 
 :root {
