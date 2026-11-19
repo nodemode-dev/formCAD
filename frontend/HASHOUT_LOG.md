@@ -2,6 +2,60 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## A23, v0.18.0 the family design-language audit (styles/tokens.css, styles/p14b.css, styles/u3.css, styles/properties.css, eleven 3D layer files)
+
+The family audit (`audit_design_lang.py` of the formai design-language pack, run on `frontend/`) went from 17 FAIL and 71 WARN to 0 FAIL and 67 WARN.
+
+The 17 failures were one block: `styles/p14b.css` opened with a `:root` rule declaring the ECAD colours (`--ec-wire`, `--ec-fcu`, `--ec-board` and the rest) as raw hex outside the token sheet. They are the app's own media colours, so they keep their values and their names and now sit in the canvas block of `styles/tokens.css`, where the audit accepts them; `p14b/view2d.ts` reads them from `html` as before. Two stray literals went with them: the layer colour swatch's fallback `#fff` in `u3.css` is `--canvas-paper`, and `properties.css` read `--accent-hover`, a name declared nowhere, with `--accent-color-hover` as its fallback; it reads `--accent-color-hover` directly.
+
+The 67 warnings that remain are all of one kind and are not defects: custom properties a component sets on its own element from code to carry a number or a per-instance value into its rule (`--p` for a progress fraction, `--pct`, `--dt-cols`, `--p11-rows`, `--gx-colour` for a node's own colour, `--u2-wf`, `--rn-cube-top`, `--vp1` and the like). The audit sees them read in a sheet and not declared in the token sheet; they are not tokens and must not be declared there.
+
+Eleven files outside the canvas folders read a token with `getPropertyValue` and handed the text to three.js or a 2D canvas: the simulation and toolpath layers (`p12`), the mold layer (`p15`), the analysis scene (`an1`), the PMI and form layers (`p10`), the joint and comment layers and the plot (`p11`), the flat-pattern layer (`sheet`) and the result layer (`p13`). They worked because those tokens are plain hex today and would have broken the day one became a `color-mix`. All go through `tokenHex`, `tokenCss` or `tokenHexCss` of `canvas/ink.ts` now, with the same token names, fallbacks and scope elements. The comment markup written into an exported SVG gets a hex string so the file stands alone. One behaviour note: `p13/result-layer.ts` used to leave its colour alone when a token was missing and now applies the fallback, which is the colour the material was built with.
+
+The pack's parity inventory script (`parity_inventory.py`) could not be run: it stops with a regular-expression error in its own pattern table on Python 3.12 and 3.13.
+
+## T22, v0.18.0 AMOLED Black and the oled flag (ui/themes.ts, index.html, styles/tokens.css)
+
+A 29th profile, id `amoled`, label AMOLED Black: the true-black theme formtxt added in 0.33.0, with the same values. `--bg-primary`, `--bg-secondary`, `--bg-node` and `--canvas-bg` are `#000000`, so on an OLED screen those pixels are off and panels are told apart by `--border-color` `#262626` and `--border-light` `#3a3a3a` alone. `--bg-tertiary` stays `#141414` because fields, menus and selected rows use it as their only fill. Text is `#ededed`, `#a6a6a6` and `#858585` (17.9, 8.6 and 5.7 to 1 on black), off-white to limit halation. High Contrast is not this theme: its panels are `#0a0a0a` and `#161616` and its borders are bright.
+
+The profile is in both tables that hold the profiles: `THEMES` in `ui/themes.ts` and the pre-paint `PROFILES` in `index.html`, so a reload paints black on the first frame; a theme in one table and not the other paints Studio Dark first and then switches. In formCAD a `PROFILES` row has eleven columns: the ten of `NAMES` (the tenth is `--grid-color`) and then `--bg-node`. The swatch grid and the Dark theme list in Preferences are built from `THEMES` and needed no change.
+
+`oled: true` on a profile makes `applyTheme` and the pre-paint script put `data-oled` on `html`; `applyTheme` takes it off for every other theme. CSS hangs the true-black exceptions on the attribute, not on the theme id, so another OLED profile needs only the flag. One block in `styles/tokens.css`, `:root[data-oled]`, holds them all:
+- `--bg-hover` and `--border-soft` go from white at 6% and 8% to 10% and 12%. Over black the old values gave 1.10 and 1.14 to 1 against the surface where Studio Dark gets 1.17 and 1.24 from the same tokens.
+- `--surface-1` is `--bg-primary`. Its mix of the window colour and `--bg-tertiary` came out `#090909`, lit pixels across every panel body.
+- `--line-0` is `--border-color`. It is the window colour mixed toward black, which on black is black, so every hairline between the tab strip, the rail, the dock and the canvas vanished.
+- `--canvas-bg-model` is `#000000` and the grid alphas go from 7% and 16% to 10% and 22%. The model-space canvas is `#212830` for every dark theme and does not come from the profile.
+
+Not done: the desktop window's own background before the page paints is the shell's fixed `10, 10, 10` (`src-tauri/src/main.rs`), and the splash is the same for every theme.
+
+## C21, v0.18.0 drawing surfaces resolve tokens through one probe (canvas/ink.ts new, canvas/media.ts new, canvas/*, view3d/*, render/*, p14b/*, p12/layer-preview.ts and the 3D layers)
+
+The console showed `THREE.Color: Unknown color color-mix(...)` on every document. `p12/layer-preview.ts` read `--lp-bridge` and `--lp-gap` (which are `--accent-ink` and `--accent-color-hover`, both `color-mix`) with `getPropertyValue` and handed the raw expression to three.js, which cannot parse it, so the colour silently became something else. The same raw read was in the ECAD 2D views (`--ec-bg`, `--ec-paper`, `--ec-grid` straight into `fillStyle`), the 3D tooltip ink, the analysis and board layers, and `view3d/kit.ts`, which read `--canvas-selection`, a token defined nowhere, so the 3D selection highlight was grey.
+
+`canvas/ink.ts` is now the one place a token becomes a colour: a hidden probe span per scope, created once, gets `color: var(--token)`, the browser computes it, and `parseCss` reads the `rgb()` or `color(srgb ...)` result. Results are cached per scope and token and the cache is dropped on a theme change. `tokenRgba`, `tokenCss`, `tokenHex` (for `setHex`) and `tokenHexCss` are the ways in. `--canvas-selection` is now declared in `tokens.css` as `#4a8fff`, the blue both canvases already fell back to.
+
+`onThemeChange(cb)` in the same file is the one theme signal: it listens to `nm:ui-settings-changed` in the capture phase (so the cache is cleared before anyone reads), to `formcad:prefs-changed`, and to a MutationObserver on the `html` and `body` attributes, and notifies only when that signature changed. Subscribers repaint in the same frame; before, the 2D canvas and the 3D viewport refreshed one animation frame late, the ECAD board layer never refreshed, and the ECAD 2D views had an observer that missed the body class. Nothing is rebuilt on a theme change: colours are re-read and surfaces marked dirty.
+
+The 2D grid takes its colour from `--text-primary` and its alpha from `--canvas-grid` and `--canvas-grid-major`: pixel-identical in Studio Dark (major grid 47, 54, 61 before and after) and visible on true black. The layout sheet's surround is the background colour under AMOLED. The app's own drawing colours (grips, snap and tooltip notes, constraint marks, view-cube ink, lights, the default body, render materials, ECAD fallbacks) are one named table, `MEDIA` in `canvas/media.ts`; axis, ACI, copper, silk and material colours stay where they were. ACI 7 already flips against the background through the `contrast` uniform.
+
+Left: `graph/ops.ts` group swatches read a raw property and keep only six-digit hex; those values are stored as group data, not drawn from the theme.
+
+Verified in headless Chrome against a running engine: the drafting, part and graph demos in Studio Dark, AMOLED Black and Light; background pixels 33, 40, 48, then exactly 0, 0, 0, then 223, 227, 232 on all three; the first animation frame after a live switch already in the new colours, also under 4x CPU throttling. Not verified: the render preview's live look, and the ECAD views on screen (their resolved values were read in the page).
+
+## S20, v0.18.0 grouped tools on the rail (ui/tool-rail.ts new, ui/draw-rail.ts, styles/shell.css)
+
+The rail was one flat column of 87 tool buttons. It now follows formvis's rail: 16 named groups in four clusters separated by dashes. Draw: Lines, Shapes, Circles and Arcs, Curves, Points. Modify: Transform, Trim and Corners, Edit Objects. Annotate: Hatch and Regions, Text and Tables, Leaders and Marks, Dimensions. 3D: Freeform Curves, Surfaces, Solid Edit and Check, Sheet Metal. Every tool keeps its command id, and a tool missing from the group map lands in an automatic More Tools group, so a later addition to the rail cannot disappear.
+
+A group is one button showing its current tool, with a corner mark when it holds more. A click runs the face tool; press and hold (350 ms) or a right click opens the flyout; from the keyboard ArrowRight, the context-menu key or Shift+F10 opens it with focus inside, arrows, Home and End move, Enter or Space picks, Escape or ArrowLeft returns focus to the button. The pick becomes the group's face and is remembered per group in localStorage `formCAD.railFaces`; a rail tool started from the command line, a shortcut or a menu also becomes its group's face, as in formvis. The group of the running command is lit with the existing active style; the sheet-metal tools report no running command and never light.
+
+Zero flash: each button holds every icon of its group, built once, and a face change toggles `hidden`; each flyout is built once in `#overlay-root`, fixed, glass, in the menu z band, so opening one moves nothing. The rail is the same in every workspace because nothing in the code varies it; per-workspace sets would be a separate decision. It fits a 757 px page without scrolling (content about 594 px).
+
+## S19, v0.18.0 the empty row under the tabs is gone (app.ts, ui/panels/array-bar.ts, ui/shell-part1.ts, ui/menu-spec.ts, styles/shell.css, styles/titlebar.css, styles/tokens.css)
+
+`.cv-options` was a 36 px grid row between the document tabs and the canvas. The only thing that ever mounted in it was the array bar, shown while an array is edited, so it was an empty band nearly always. The row is out of the `.cv-main` grid (rows are tabs, stage, command line) and the canvas starts under the tabs. The element now sits inside `.cv-stage` as an overlay strip on the stage's top edge: glass tokens, the chrome z band, hidden until a child is visible (`ArrayBar` sets `hidden` on the host; later content must do the same). The canvas host's rectangle is identical with the bar hidden and shown (x 44, y 74, 1096 by 533 in a 1440 by 900 headless window), in dark, light and under 4x CPU throttling.
+
+Removed with it: the Window > Tool Bar command (`win-toolbar`), its `options` view flag, the `is-options-hidden` rules and `--cv-options-h`. A toggle for a strip that shows itself only when it has something to show means nothing. An old `formCAD.view` value that still holds `options` is ignored.
+
 ## H18, v0.17.0 home in the family layout, with Templates, open drawings and Demos (ui/home.ts, ui/home-files.ts, ui/demos.ts new, styles/home.css, public/demos/)
 
 The home follows formdeck's home (0.39.0): brand line with formCAD's own mark and "formCAD by nodemode.ai" (marked `translate="no"`), a view switcher, and a Start page ordered greeting, hero, Recent, Demos, New from template. Templates is now a view of its own listing every entry of `TEMPLATES`; Projects and Outputs stay because they are existing features. An Open drawings group in the side nav lists the open documents, patched in place by document id (`patchList`), and a click switches to that document and closes the home; it stands where formdeck lists its open decks.

@@ -21,8 +21,8 @@ A new dependency that must be bundled is added to the requirements file and to t
 ## Releasing the app
 
 1. Bump the version at every version site by hand, and `CHANGELOG.md`. They must agree.
-2. Land it on main with CI green.
-3. Push the `compile_vX.Y.Z` branch; the family's compiler builds the draft release.
+2. Land it on main through a pull request, merged with a merge commit, with CI green.
+3. The owner starts the release with `formai-build`, which creates the `compile_vX.Y.Z` branch at `main`; the family's compiler builds the draft release. Nobody pushes that branch by hand.
 4. Attach the SBOM files. A person publishes.
 
 ## Releasing the kernel and mesher
