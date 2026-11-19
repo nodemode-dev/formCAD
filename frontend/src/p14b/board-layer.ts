@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { tokenHex } from '../canvas/ink';
+import { MEDIA } from '../canvas/media';
 import { token } from '../io/api';
 import type { ViewLayer } from '../view3d/layer';
 import type { Vec3 } from '../view3d/types';
@@ -36,8 +38,8 @@ async function fetchMesh(id: string, which: string): Promise<ArrayBuffer | null>
 export class BoardLayer implements ViewLayer {
   readonly group = new THREE.Group();
   readonly stats = { board: 0, components: 0, loads: 0 };
-  private readonly board = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ color: '#1f6b3a' }));
-  private readonly parts = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial({ color: '#2b2f36' }));
+  private readonly board = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial());
+  private readonly parts = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshLambertMaterial());
   private box: { min: Vec3; max: Vec3 } | null = null;
   private key = '';
   private busy = false;
@@ -50,11 +52,11 @@ export class BoardLayer implements ViewLayer {
   bounds(): { min: Vec3; max: Vec3 } | null { return this.group.visible ? this.box : null; }
 
   colors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    const b = cs.getPropertyValue('--ec-board').trim(), c = cs.getPropertyValue('--ec-comp').trim();
-    if (b) (this.board.material as THREE.MeshLambertMaterial).color.set(b);
-    if (c) (this.parts.material as THREE.MeshLambertMaterial).color.set(c);
+    (this.board.material as THREE.MeshLambertMaterial).color.setHex(tokenHex('--ec-board', MEDIA.boardSubstrate, host));
+    (this.parts.material as THREE.MeshLambertMaterial).color.setHex(tokenHex('--ec-comp', MEDIA.boardParts, host));
   }
+
+  palette(): void { this.colors(document.body); }
 
   setShown(on: boolean): void {
     if (this.group.visible !== on) { this.group.visible = on; this.vp.invalidate(); }

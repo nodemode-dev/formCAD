@@ -1,3 +1,6 @@
+import { onThemeChange, tokenCss } from '../canvas/ink';
+import { MEDIA } from '../canvas/media';
+
 export type Pt = [number, number];
 export interface Box { x0: number; y0: number; x1: number; y1: number }
 
@@ -18,13 +21,13 @@ let watching = false;
 
 export function ink(): Ink {
   if (cache) return cache;
-  const cs = getComputedStyle(document.querySelector('.ec-root') ?? document.body);
+  const scope = document.querySelector('.ec-root') ?? document.body;
   const out = {} as Ink;
-  for (const k of Object.keys(VARS) as Array<keyof Ink>) out[k] = cs.getPropertyValue(VARS[k]).trim() || '#888';
+  for (const k of Object.keys(VARS) as Array<keyof Ink>) out[k] = tokenCss(VARS[k], MEDIA.ecadFallback, scope);
   cache = out;
   if (!watching) {
     watching = true;
-    new MutationObserver(() => { cache = null; document.dispatchEvent(new CustomEvent('formcad:ec-ink')); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    onThemeChange(() => { cache = null; document.dispatchEvent(new CustomEvent('formcad:ec-ink')); });
   }
   return out;
 }

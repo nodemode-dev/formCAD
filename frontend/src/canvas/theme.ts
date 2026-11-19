@@ -1,4 +1,6 @@
 import { parseCss, type Rgba } from './color';
+import { isOled } from './ink';
+import { MEDIA } from './media';
 
 export interface Theme {
   bg: Rgba;
@@ -18,6 +20,7 @@ export interface Theme {
   panel: Rgba;
   line: Rgba;
   accent: Rgba;
+  surround: Rgba;
 }
 
 const NAMES: Array<[keyof Theme, string, Rgba]> = [
@@ -53,5 +56,9 @@ export function readTheme(host: HTMLElement, probe: HTMLElement): Theme {
     out[key] = parseCss(getComputedStyle(probe).color, fallback);
   }
   probe.style.color = '';
+  const ink = out.text;
+  out.grid = [ink[0], ink[1], ink[2], out.grid[3]];
+  out.gridMajor = [ink[0], ink[1], ink[2], out.gridMajor[3]];
+  out.surround = isOled() ? out.bg : MEDIA.sheetSurround;
   return out;
 }

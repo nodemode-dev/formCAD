@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { ViewLayer } from '../view3d/layer';
 import type { Vec3 } from '../view3d/types';
 import type { Viewport3D } from '../view3d/viewport';
@@ -107,11 +109,8 @@ export class ResultLayer implements ViewLayer {
   bounds(): { min: Vec3; max: Vec3 } | null { return this.group.visible ? this.box : null; }
 
   setColors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    const pin = cs.getPropertyValue('--text-primary').trim();
-    if (pin) (this.pins.material as THREE.PointsMaterial).color.set(pin);
-    const line = cs.getPropertyValue('--accent-color').trim();
-    if (line) (this.meshLines.material as THREE.LineBasicMaterial).color.set(line);
+    (this.pins.material as THREE.PointsMaterial).color.setHex(tokenHex('--text-primary', parseCss('#ffffff'), host));
+    (this.meshLines.material as THREE.LineBasicMaterial).color.setHex(tokenHex('--accent-color', parseCss('#4b9fe1'), host));
   }
 
   private fit(n: number, i: number): void {

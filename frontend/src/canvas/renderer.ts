@@ -13,6 +13,7 @@ import { newDyn, type DynLayer, type PaintView, type Painter } from './painter';
 import { distanceTo, distanceToInfinite, touchesRect } from './pick';
 import { DisplayStore, type BuildOptions } from './store';
 import { readTheme, type Theme } from './theme';
+import { onThemeChange } from './ink';
 import type { CanvasApi, CanvasDeps, CanvasEvents, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, MarkHit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
 
 const VIEW_KEY = 'formCAD.canvasView';
@@ -122,13 +123,7 @@ export class Renderer implements CanvasApi {
     }));
 
     this.off.push(deps.onSysvar(() => this.syncSysvars()));
-    const themeChanged = (): void => { requestAnimationFrame(() => this.refreshTheme()); };
-    document.addEventListener('nm:ui-settings-changed', themeChanged);
-    document.addEventListener('formcad:prefs-changed', themeChanged);
-    this.off.push(() => {
-      document.removeEventListener('nm:ui-settings-changed', themeChanged);
-      document.removeEventListener('formcad:prefs-changed', themeChanged);
-    });
+    this.off.push(onThemeChange(() => this.refreshTheme()));
     this.syncSysvars();
   }
 

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { Palette } from '../view3d/kit';
 import type { ViewLayer, Projector } from '../view3d/layer';
 import type { InkColors } from '../view3d/overlay';
@@ -101,12 +103,7 @@ export function glyph(type: JointType, s: number): Float32Array {
   return new Float32Array(o);
 }
 
-const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => {
-  const raw = getComputedStyle(host).getPropertyValue(name).trim();
-  const c = new THREE.Color();
-  try { c.set(raw || fallback); } catch { c.set(fallback); }
-  return c;
-};
+const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => new THREE.Color().setHex(tokenHex(name, parseCss(fallback), host));
 
 const frameMatrix = (f: { origin?: number[]; o?: number[]; z: number[]; x?: number[] }): THREE.Matrix4 => {
   const p = f.origin ?? f.o ?? [0, 0, 0];

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { ViewLayer } from '../view3d/layer';
 import type { Viewport3D } from '../view3d/viewport';
 
@@ -22,8 +24,7 @@ export class MoldLayer implements ViewLayer {
   }
 
   setColors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    for (const c of CLASSES) this.mats.get(c)?.color.set(cs.getPropertyValue(TOKEN[c][0]).trim() || TOKEN[c][1]);
+    for (const c of CLASSES) this.mats.get(c)?.color.setHex(tokenHex(TOKEN[c][0], parseCss(TOKEN[c][1]), host));
   }
 
   get shown(): boolean { return this.group.visible; }

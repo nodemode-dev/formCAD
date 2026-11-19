@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import { matrixOf } from '../u8/geo';
 import { DEFAULT_BODY_COLOR } from '../view3d/kit';
 import type { BodyView } from '../view3d/body-view';
@@ -21,12 +23,7 @@ interface Parts {
 interface Ink { ink: THREE.Color; paper: THREE.Color; bg: THREE.Color; soft: THREE.Color }
 
 function readInk(host: HTMLElement): Ink {
-  const cs = getComputedStyle(host);
-  const get = (name: string, fallback: string): THREE.Color => {
-    const c = new THREE.Color();
-    try { c.set(cs.getPropertyValue(name).trim() || fallback); } catch { c.set(fallback); }
-    return c;
-  };
+  const get = (name: string, fallback: string): THREE.Color => new THREE.Color().setHex(tokenHex(name, parseCss(fallback), host));
   const ink = get('--v3d-edge-ink', '#14171c');
   const paper = get('--canvas-paper', '#ffffff');
   return { ink, paper, bg: get('--canvas-bg-model', '#1b1e23'), soft: ink.clone().lerp(paper, 0.62) };

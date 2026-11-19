@@ -1,3 +1,5 @@
+import { parseCss } from '../canvas/color';
+import { tokenCss } from '../canvas/ink';
 import { el, q, setText } from '../ui/dom';
 
 export interface Series { name: string; t: number[]; v: number[]; unit: string }
@@ -52,8 +54,7 @@ export class PlotView {
     if (c.height !== h) c.height = h;
     const g = c.getContext('2d');
     if (!g) return;
-    const cs = getComputedStyle(this.el);
-    const col = (n: string, d: string): string => cs.getPropertyValue(n).trim() || d;
+    const col = (n: string, d: string): string => tokenCss(n, parseCss(d), this.el);
     g.clearRect(0, 0, w, h);
     g.save();
     g.scale(dpr, dpr);

@@ -1,6 +1,7 @@
 import type { Camera } from './camera';
 import { drawMarks } from './cmarks';
 import { css } from './color';
+import { MEDIA } from './media';
 import { itemRuns } from './pick';
 import type { DisplayStore } from './store';
 import type { Theme } from './theme';
@@ -36,7 +37,7 @@ export const SNAP_NAMES: Record<string, string> = {
 
 const FONT = '12px Inter, system-ui, sans-serif';
 
-export function tipBox(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, fill: string, ink: string, border = 'rgba(0,0,0,0.35)'): void {
+export function tipBox(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, fill: string, ink: string, border = css(MEDIA.tipBorder)): void {
   ctx.font = FONT;
   const w = Math.ceil(ctx.measureText(text).width) + 12;
   const h = 20;
@@ -64,7 +65,7 @@ function highlight(ctx: CanvasRenderingContext2D, e: OverlayEnv, marks: Highligh
   const vis = cam.visible(8 / cam.scale);
   for (const m of marks) {
     const sel = m.kind === 'selected';
-    stroke(ctx, sel ? css(e.th.selection) : 'rgb(156,198,255)', sel ? 1.5 : 1, sel ? [6, 4] : [6, 4]);
+    stroke(ctx, css(sel ? e.th.selection : MEDIA.previewEdge), sel ? 1.5 : 1, sel ? [6, 4] : [6, 4]);
     ctx.lineCap = 'butt';
     let budget = 6000;
     ctx.beginPath();
@@ -103,8 +104,8 @@ function selectionBox(ctx: CanvasRenderingContext2D, e: OverlayEnv, boxes: BoxMa
     const h = Math.round(Math.abs(by - ay));
     ctx.fillStyle = css(b.crossing ? e.th.selCross : e.th.selWindow);
     ctx.fillRect(x, y, w, h);
-    if (b.crossing) stroke(ctx, 'rgb(127,224,127)', 1, [5, 3]);
-    else stroke(ctx, 'rgb(111,168,255)', 1, []);
+    if (b.crossing) stroke(ctx, css(MEDIA.crossingEdge), 1, [5, 3]);
+    else stroke(ctx, css(MEDIA.windowEdge), 1, []);
     ctx.strokeRect(x, y, w, h);
     ctx.setLineDash([]);
   }
@@ -123,8 +124,8 @@ function grips(ctx: CanvasRenderingContext2D, e: OverlayEnv, list: GripMark[]): 
     const flat = g.kind === 'mid';
     const hh = flat ? half : side;
     const yy = flat ? Math.round(sy - half / 2) + 0.5 : y;
-    ctx.fillStyle = g.dyn ? 'rgb(38,198,232)' : g.state === 'hot' ? 'rgb(255,59,59)' : g.state === 'warm' ? 'rgb(255,127,159)' : 'rgb(47,107,255)';
-    ctx.strokeStyle = 'rgb(16,48,128)';
+    ctx.fillStyle = css(g.dyn ? MEDIA.gripDynamic : g.state === 'hot' ? MEDIA.gripHot : g.state === 'warm' ? MEDIA.gripWarm : MEDIA.gripCold);
+    ctx.strokeStyle = css(MEDIA.gripEdge);
     ctx.fillRect(x, yy, side, flat ? hh : side);
     ctx.strokeRect(x, yy, side, flat ? hh : side);
   }
@@ -204,10 +205,10 @@ function snapMarks(ctx: CanvasRenderingContext2D, e: OverlayEnv, list: SnapMark[
   const r = Math.max(3, e.marker / 2);
   for (const m of list) {
     const [sx, sy] = e.cam.toScreen(m.p[0], m.p[1]);
-    stroke(ctx, 'rgb(47,208,98)', 2, []);
+    stroke(ctx, css(MEDIA.trackPath), 2, []);
     snapGlyph(ctx, m.mode, Math.round(sx), Math.round(sy), r);
     const label = m.label ?? SNAP_NAMES[m.mode];
-    if (label) tipBox(ctx, sx + 10, sy + 10, label, 'rgb(255,250,205)', 'rgb(40,40,40)');
+    if (label) tipBox(ctx, sx + 10, sy + 10, label, css(MEDIA.noteFill), css(MEDIA.noteInk));
   }
 }
 
@@ -249,7 +250,7 @@ function tracking(ctx: CanvasRenderingContext2D, e: OverlayEnv, list: TrackMark[
       ctx.stroke();
     } else if (t.type === 'tip' && t.text) {
       const base = t.p ? e.cam.toScreen(t.p[0], t.p[1]) : e.pointer ? [e.pointer.px, e.pointer.py] : null;
-      if (base) tipBox(ctx, base[0] + 16, base[1] + 18, t.text, 'rgb(236,236,240)', 'rgb(40,40,48)');
+      if (base) tipBox(ctx, base[0] + 16, base[1] + 18, t.text, css(MEDIA.tipPaper), css(MEDIA.tipPaperInk));
     }
   }
   ctx.setLineDash([]);

@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { tokenHexCss } from '../canvas/ink';
+import { MEDIA } from '../canvas/media';
 import type { InkColors } from './overlay';
 import type { ViewLayer } from './layer';
 import type { SeamReport } from './nurbs-api';
@@ -36,9 +38,11 @@ interface Seam {
 interface Colors { ok: string; warn: string; danger: string }
 
 function readColors(host: HTMLElement): Colors {
-  const cs = getComputedStyle(host);
-  const get = (name: string, fallback: string): string => cs.getPropertyValue(name).trim() || fallback;
-  return { ok: get('--ok', '#22c55e'), warn: get('--warn', '#fbbf24'), danger: get('--danger', '#ef4444') };
+  return {
+    ok: tokenHexCss('--ok', MEDIA.analysisOk, host),
+    warn: tokenHexCss('--warn', MEDIA.analysisWarn, host),
+    danger: tokenHexCss('--danger', MEDIA.analysisDanger, host),
+  };
 }
 
 export class AnalysisLayer implements ViewLayer {

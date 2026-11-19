@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenCss, tokenHexCss } from '../canvas/ink';
 import { token } from '../io/api';
 import type { Palette } from '../view3d/kit';
 import type { ViewLayer, Projector } from '../view3d/layer';
@@ -28,8 +30,7 @@ export class CommentLayer implements ViewLayer {
   }
 
   palette(_pal: Palette): void {
-    const cs = getComputedStyle(this.vp.host);
-    this.ink = { open: cs.getPropertyValue('--accent-color').trim() || '#f97316', resolved: cs.getPropertyValue('--ok').trim() || '#22c55e' };
+    this.ink = { open: tokenCss('--accent-color', parseCss('#f97316'), this.vp.host), resolved: tokenCss('--ok', parseCss('#22c55e'), this.vp.host) };
     this.vp.invalidate();
   }
 
@@ -146,7 +147,7 @@ export class MarkupOverlay {
 
   svgText(): string {
     const r = this.root.getBoundingClientRect();
-    const stroke = getComputedStyle(this.vp.host).getPropertyValue('--accent-color').trim() || '#f97316';
+    const stroke = tokenHexCss('--accent-color', parseCss('#f97316'), this.vp.host);
     const paths = this.strokes.map((p) => `<path d="${p.getAttribute('d') ?? ''}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
     return `<svg xmlns="${NS}" viewBox="0 0 ${Math.round(r.width)} ${Math.round(r.height)}">${paths}</svg>`;
   }
