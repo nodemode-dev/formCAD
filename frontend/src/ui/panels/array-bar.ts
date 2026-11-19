@@ -17,7 +17,7 @@ export class ArrayBar {
   private readonly rows: Array<{ def: RowDef; row: PropRow }>;
   private shown = false;
 
-  constructor(host: HTMLElement) {
+  constructor(private readonly host: HTMLElement) {
     this.root = el<HTMLElement>('<div class="ab" role="group" aria-label="Array options" hidden><span class="ab-title">Array</span><span class="ab-shape"></span><div class="ab-fields"></div><button class="cv-btn ab-edit" type="button">Edit Array</button></div>');
     this.shape = q(this.root, '.ab-shape');
     const fields = q(this.root, '.ab-fields');
@@ -42,12 +42,16 @@ export class ArrayBar {
     const kinds = p ? Object.keys(p.kinds) : [];
     const array = fresh && kinds.length === 1 && kinds[0] === 'assoc_array' ? p?.kinds.assoc_array : undefined;
     if (!array) {
-      if (this.shown) { setHidden(this.root, true); this.shown = false; }
+      if (this.shown) { setHidden(this.root, true); this.shown = false; this.syncHost(); }
       return;
     }
     const shape = array.props.shape;
     setText(this.shape, shape && !shape.varies ? SHAPE_NAMES[String(shape.value)] ?? String(shape.value) : 'Mixed');
     for (const r of this.rows) r.row.paint(r.def.show(array.props));
-    if (!this.shown) { setHidden(this.root, false); this.shown = true; }
+    if (!this.shown) { setHidden(this.root, false); this.shown = true; this.syncHost(); }
+  }
+
+  private syncHost(): void {
+    setHidden(this.host, !Array.from(this.host.children).some((c) => c instanceof HTMLElement && !c.hidden));
   }
 }

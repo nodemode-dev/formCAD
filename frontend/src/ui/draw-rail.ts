@@ -1,10 +1,5 @@
 import { onShellMounted } from '../app';
-import { docStore } from './doc-store';
-import { el, setDisabled, setTitle } from './dom';
-import { onLanguage, t } from './i18n';
-import { icon } from './icons';
-
-interface Tool { cmd: string; icon: string; label: string }
+import { ToolRail, type RailGroupSpec, type RailTool as Tool } from './tool-rail';
 
 const GROUPS: Tool[][] = [
   [
@@ -124,26 +119,33 @@ const GROUPS: Tool[][] = [
   ],
 ];
 
+const CLUSTERS: RailGroupSpec[][] = [
+  [
+    { id: 'lines', name: 'Lines', cmds: ['x:line', 'x:pline', 'x:3dpoly', 'x:mline', 'x:xline', 'x:ray'] },
+    { id: 'shapes', name: 'Shapes', cmds: ['x:rectang', 'x:polygon', 'x:solid', 'x:donut'] },
+    { id: 'round', name: 'Circles and Arcs', cmds: ['x:circle', 'x:arc', 'x:ellipse'] },
+    { id: 'curves', name: 'Curves', cmds: ['x:spline', 'x:helix'] },
+    { id: 'points', name: 'Points', cmds: ['x:point', 'x:divide', 'x:measure'] },
+  ],
+  [
+    { id: 'transform', name: 'Transform', cmds: ['x:move', 'x:copy', 'x:rotate', 'x:scale', 'x:mirror', 'x:stretch', 'x:align', 'x:arrayrect'] },
+    { id: 'corners', name: 'Trim and Corners', cmds: ['x:trim', 'x:extend', 'x:offset', 'x:fillet', 'x:chamfer', 'x:blend', 'x:lengthen'] },
+    { id: 'edit', name: 'Edit Objects', cmds: ['x:erase', 'x:break', 'x:join', 'x:explode', 'x:matchprop'] },
+  ],
+  [
+    { id: 'fills', name: 'Hatch and Regions', cmds: ['x:hatch', 'x:gradient', 'x:boundary', 'x:region', 'x:wipeout'] },
+    { id: 'text', name: 'Text and Tables', cmds: ['x:mtext', 'x:text', 'x:table'] },
+    { id: 'marks', name: 'Leaders and Marks', cmds: ['x:mleader', 'x:leader', 'x:revcloud', 'x:centermark', 'x:centerline', 'x:breakline'] },
+    { id: 'dims', name: 'Dimensions', cmds: ['x:dimlinear', 'x:dimaligned', 'x:dimradius', 'x:dimdiameter', 'x:dimangular', 'x:dimarc', 'x:dimbaseline', 'x:dimcontinue', 'x:qdim'] },
+  ],
+  [
+    { id: 'freeform', name: 'Freeform Curves', cmds: ['x:crv', 'x:crvinterp', 'x:crvblend', 'x:crvmatch', 'x:crvrebuild', 'x:crvoffset'] },
+    { id: 'surfaces', name: 'Surfaces', cmds: ['x:srfloft', 'x:srfsweep', 'x:srfnetwork', 'x:srfpatch', 'x:srfplanar', 'x:srfblend', 'x:srfmatch'] },
+    { id: 'solids', name: 'Solid Edit and Check', cmds: ['x:boolop', 'x:filletedge', 'x:seamcheck', 'x:nakededges'] },
+    { id: 'sheet', name: 'Sheet Metal', cmds: ['sm-base', 'sm-edge', 'sm-miter', 'sm-hem', 'sm-jog', 'sm-sketched', 'sm-relief', 'sm-convert', 'sm-flat'] },
+  ],
+];
+
 onShellMounted((ctx) => {
-  const rail = ctx.hosts.rail;
-  const buttons: Array<{ node: HTMLButtonElement; tool: Tool }> = [];
-  GROUPS.forEach((group, i) => {
-    if (i > 0) rail.append(el('<span class="cv-rail-sep" role="separator"></span>'));
-    for (const tool of group) {
-      const node = el<HTMLButtonElement>(`<button class="cv-tool" type="button" data-cmd="${tool.cmd}">${icon(tool.icon, 18)}</button>`);
-      node.addEventListener('mousedown', (e) => e.preventDefault());
-      rail.append(node);
-      buttons.push({ node, tool });
-    }
-  });
-  const paint = (): void => {
-    const on = !!docStore.current();
-    for (const b of buttons) {
-      setDisabled(b.node, !on);
-      setTitle(b.node, t(b.tool.label));
-    }
-  };
-  paint();
-  docStore.onChange(paint);
-  onLanguage(paint);
+  new ToolRail(ctx.hosts.rail, CLUSTERS, GROUPS.flat());
 });
