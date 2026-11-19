@@ -64,11 +64,11 @@ The third-party notices of the worker are in `NOTICE.md`.
 
 ## Why it is separate
 
-The worker carries OpenCascade (OCCT), which is LGPL-2.1 with the OCCT exception. FormCAD itself stays permissively licensed, so the worker is never bundled in the app, the installers or the engine. It ships from the `formCAD-binaries` repository as release archives, one per platform, and the app downloads the one for its machine on first run, the way formcut fetches ffmpeg from `formcut-binaries`.
+The worker carries OpenCascade (OCCT), which is LGPL-2.1 with the OCCT exception. FormCAD itself stays permissively licensed, so the worker is never bundled in the app, the installers or the engine. It ships from the `formai-binaries` repository (shared by the form apps) as release archives, one per platform, and the app downloads the one for its machine on first run, the way formcut fetches ffmpeg from the same repository.
 
 - Release tag: `occt-<release>`
 - Archive: `occt-lgpl-<release>-<triple>.tar.gz`, holding one folder `occt-lgpl-<release>-<triple>/` with `formcad-kernel` (`formcad-kernel.exe` on Windows), the shared OpenCascade libraries beside it so they can be replaced, the LGPL text and the third-party notices
-- Address: `https://github.com/nodemode-dev/formCAD-binaries/releases/download/occt-<release>/occt-lgpl-<release>-<triple>.tar.gz`
+- Address: `https://github.com/nodemode-dev/formai-binaries/releases/download/occt-<release>/occt-lgpl-<release>-<triple>.tar.gz`
 - The engine checks every file against the SHA-256 in `backend/app/data/kernel-licence.json` and installs to `<data>/kernel/<release>/` only if all of them match. No build is published yet, so the record holds `"release": null` and an empty file list.
 
 ## Dependencies

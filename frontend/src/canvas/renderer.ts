@@ -13,6 +13,7 @@ import { newDyn, type DynLayer, type PaintView, type Painter } from './painter';
 import { distanceTo, distanceToInfinite, touchesRect } from './pick';
 import { DisplayStore, type BuildOptions } from './store';
 import { readTheme, type Theme } from './theme';
+import { onThemeChange } from './ink';
 import type { CanvasApi, CanvasDeps, CanvasEvents, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, MarkHit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
 
 const VIEW_KEY = 'formCAD.canvasView';
@@ -122,13 +123,7 @@ export class Renderer implements CanvasApi {
     }));
 
     this.off.push(deps.onSysvar(() => this.syncSysvars()));
-    const themeChanged = (): void => { requestAnimationFrame(() => this.refreshTheme()); };
-    document.addEventListener('nm:ui-settings-changed', themeChanged);
-    document.addEventListener('formcad:prefs-changed', themeChanged);
-    this.off.push(() => {
-      document.removeEventListener('nm:ui-settings-changed', themeChanged);
-      document.removeEventListener('formcad:prefs-changed', themeChanged);
-    });
+    this.off.push(onThemeChange(() => this.refreshTheme()));
     this.syncSysvars();
   }
 
@@ -553,14 +548,21 @@ export class Renderer implements CanvasApi {
       return;
     }
     this.pulling = true;
-    const id = this.docId;
     try {
       do {
         this.pullAgain = false;
+        const id: string | null = this.docId;
+        if (!id) break;
         const since = full || this.store.rev < 0 ? undefined : this.store.rev;
         full = false;
-        const p = await this.deps.fetchDisplay(id, since, this.space === 'model' ? undefined : this.space);
-        if (this.docId !== id) break;
+        let p: Awaited<ReturnType<CanvasDeps['fetchDisplay']>>;
+        try {
+          p = await this.deps.fetchDisplay(id, since, this.space === 'model' ? undefined : this.space);
+        } catch {
+          if (this.docId !== id || this.pullAgain) continue;
+          return;
+        }
+        if (this.docId !== id) continue;
         this.store.apply(p);
         if (this.needFit && this.hasSize) this.fitNow();
         this.dirtyScene = true;

@@ -23,9 +23,8 @@ const SHELL = `<div class="cv-app">
 <button class="cv-brand" type="button" data-cmd="home" title="Home" aria-label="Home">${icon('home', 18)}</button>
 <div class="cv-tabs"><div class="cv-tab-strip" role="tablist"></div><button class="cv-icon-btn" type="button" data-cmd="new" title="New" aria-label="New">${icon('add', 16)}</button></div>
 </div>
-<div class="cv-options" aria-label="Tool options"></div>
 <aside class="cv-rail" aria-label="Tools"></aside>
-<main class="cv-stage"><div class="cv-canvas-host" aria-label="Drawing area"></div></main>
+<main class="cv-stage"><div class="cv-canvas-host" aria-label="Drawing area"></div><div class="cv-options" aria-label="Tool options" hidden></div></main>
 <section class="cv-dock" aria-label="Panels"></section>
 <section class="cv-cmdline" aria-label="Command line"></section>
 </div>

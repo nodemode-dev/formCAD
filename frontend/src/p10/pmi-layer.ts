@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { Palette } from '../view3d/kit';
 import type { ViewLayer, Projector } from '../view3d/layer';
 import type { InkColors } from '../view3d/overlay';
@@ -19,12 +21,7 @@ const CHAR_WORD: Record<string, string> = {
 
 export const charWord = (c: string): string => CHAR_WORD[c] ?? c;
 
-const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => {
-  const raw = getComputedStyle(host).getPropertyValue(name).trim();
-  const c = new THREE.Color();
-  try { c.set(raw || fallback); } catch { c.set(fallback); }
-  return c;
-};
+const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => new THREE.Color().setHex(tokenHex(name, parseCss(fallback), host));
 
 const GROUPS = ['ok', 'lost', 'unsupported'] as const;
 type Group = (typeof GROUPS)[number];

@@ -1,0 +1,29 @@
+# HASHOUT_LOG · browser demo (demo/)
+
+Living record of decisions for the 2D drafting demo, its replay shim and its recorder, newest first. Read before editing.
+
+## D2, the recorder serves three demos (tools/record)
+
+`--script <file.mjs>` runs a module's default export after the built-in steps with `{ cdp, click, key, rects, idle, sleep, log }`, so the part and graph demos drive the views they need (the 3D view and feature tree, the graph editor) from a small steps file of their own instead of a second recorder. `--script` and `--screenshot` are resolved against the folder the recorder was started in, like `--doc` and `--out`; before, they were resolved after the recorder had changed into `frontend/` to start Vite, so a relative path pointed there.
+
+The engine answers `/api/docs` with the document's absolute path, which put the recording machine's folder into a tracked file. The engine also reports its data folder and the repository folder (`/api/capabilities`, `/api/vault`, the automation routes), which Preferences shows. The recorder now replaces the document's folder with `/demo`, its temporary data folder with `/demo/data` and the repository folder with `/demo/formCAD` in everything it writes, so a recorded path reads `/demo/drafting.fcad` whoever records it. The page takes the path only from these answers, so matching is unaffected.
+
+## D1, the first family demo: the real window over a recorded engine (demo/ new)
+
+What it is. The demo is the real formCAD window bundled by Vite from `frontend/` as it is, with the engine replaced by a replay of a recording made against the real engine. formvis and formdeck run their engines in the page; formCAD's engine is Python and owns all geometry, so the page cannot compute anything. Every piece of document state already reaches the interface through `/api` over fetch and the events socket, which makes a recording the honest stand-in: what the page shows is exactly what the engine answered for that document.
+
+Entry without touching `frontend/`. The config loads `frontend/index.html` as a virtual `shell.html` (formvis's retouch demo pattern), points its script at `demo/src/main.ts` and its stylesheets at `../frontend/src/styles/`, drops the icon and font preload links (their `/node_modules` paths do not exist from `file://`), and renames the output to `index.html`. `main.ts` imports `boot.ts` first, then `frontend/src/main`; module evaluation order guarantees the shim is in place before any app module runs. No frontend edit was needed.
+
+Opening on the document. The recorder opens the document in the engine before the interface loads, so the recorded `GET /api/docs` lists it and the document store activates it when the socket reports open; the replay socket opens at once, which drives the same path. The home screen is not shown because a document is open. The home's Demos cards answer with the toast: answering `POST /api/demos/drafting/open` with the recorded summary was tried and did nothing visible, because the home then calls `switchTo` with the id that is already active; the engine's real answer is a fresh copy under a new id, which a recording keyed by document id cannot serve.
+
+One script from `file://`. Output is `iife` with `inlineDynamicImports`, the module script tag is rewritten to a classic `defer` script and `crossorigin` is dropped (formdeck and formvis). The recording is imported as JSON with `json.stringify`, so it lands in the bundle as one `JSON.parse` string and nothing is fetched at run time. Symbol code points U+2600 to U+27BF and U+1F000 to U+1FAFF are escaped in the script because CI scans tracked text for them.
+
+Matching. Method, decoded path, query with sorted parameters and without `token`, and the JSON body with sorted keys. The same request recorded several times answers in recorded order, then repeats the last; that keeps boot-time answers first. GETs replay; POST and PUT replay only for a short list of read paths (`/preview`, `/find`, `/qselect`, `/api/calc`, `/dimstyle-preview`, `/grid`), because a recorded write answered again would pretend the document changed. Selection is the one write kept in the page: the canvas highlights locally and then sends `PUT /selection`, and an error there would toast on every click.
+
+Error answer. Status 503 with `{"detail": ...}`, the engine's own error shape, so `call()` raises `ApiError` with that text and the interface shows its normal toast. 503 was chosen because the interface special-cases 404, 405 and 501 in places and none of them is the truth here.
+
+Recorder. Node 22 standard library (its built-in `WebSocket` speaks the DevTools protocol) plus the `vite` already in `frontend/node_modules`, started through the frontend's own `vite.config.ts` so the token meta and the proxy are the real ones; the engine gets a private data folder and `FORMCAD_CORS_ORIGINS` for the reserved interface port. Request and response bodies come from the Network domain; identical response bodies are stored once (the 160 KB command list is fetched several times at boot). The pick step reads the display store through the development-only `window.formcadCanvas` to click one object of each kind, then makes a window selection over the whole canvas, so the properties of real picks are in the recording.
+
+Document. `backend/app/data/demos/drafting.fcad`, the document the home screen's demo card opens, is the recorded document. Before it appeared, `fixtures/leaders-tables.fcad` was the fallback; `fixtures/mechanism-drawing.fcad` was rejected because its drawing lives in `Layout1` and the window opens on an empty model space.
+
+Not done. No loading veil: the app's own `#app` stays hidden until `app-ready`. The dev server (port 5391) is configured but the virtual page is a build-time entry; use `vite preview` (5491) or `file://`. Socket frames recorded after boot are kept in the file but not played, because they belong to the recorder's own selection writes.

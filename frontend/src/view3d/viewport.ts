@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MEDIA } from '../canvas/media';
 import { t } from '../ui/i18n';
 import { BodyView } from './body-view';
 import { ViewCube } from './cube';
@@ -49,8 +50,8 @@ export class Viewport3D {
   private refItems: RefItem[] = [];
   private readonly layers: ViewLayer[] = [];
   private readonly views = new Map<number, BodyView>();
-  private readonly hemi = new THREE.HemisphereLight(0xffffff, 0x70767f, 1.25);
-  private readonly key = new THREE.DirectionalLight(0xffffff, 2.1);
+  private readonly hemi = new THREE.HemisphereLight(MEDIA.skyLight, MEDIA.groundLight, 1.25);
+  private readonly key = new THREE.DirectionalLight(MEDIA.keyLight, 2.1);
   private readonly grid: ConstructionGrid;
   private readonly cube: ViewCube;
   private readonly picker: Picker;

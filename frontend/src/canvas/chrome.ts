@@ -1,4 +1,5 @@
 import { css, luminance } from './color';
+import { MEDIA } from './media';
 import { tipBox } from './overlay';
 import type { Theme } from './theme';
 import type { CursorMode } from './types';
@@ -110,11 +111,12 @@ export class Chrome {
   }
 
   draw(ctx: CanvasRenderingContext2D, th: Theme, pointer: { px: number; py: number } | null): void {
-    const ink = luminance(th.bg) < 0.5 ? 'rgba(232,232,236,' : 'rgba(30,32,38,';
+    const base = luminance(th.bg) < 0.5 ? MEDIA.chromeInkDark : MEDIA.chromeInkLight;
+    const ink = `rgba(${base[0]},${base[1]},${base[2]},`;
     if (this.cube && this.width > 320 && this.height > 240) this.drawCube(ctx, ink);
     if (this.ucs && this.height > 160) this.drawUcs(ctx, th, ink);
     if (this.menu) this.drawMenu(ctx, th);
-    else if (this.hover && this.hover !== 'menu' && pointer) tipBox(ctx, pointer.px + 14, pointer.py + 16, TIPS[this.hover], 'rgb(236,236,240)', 'rgb(40,40,48)');
+    else if (this.hover && this.hover !== 'menu' && pointer) tipBox(ctx, pointer.px + 14, pointer.py + 16, TIPS[this.hover], css(MEDIA.tipPaper), css(MEDIA.tipPaperInk));
   }
 
   private drawCube(ctx: CanvasRenderingContext2D, ink: string): void {
@@ -256,7 +258,7 @@ export function drawCursor(ctx: CanvasRenderingContext2D, o: CursorOptions): voi
     const r = Math.max(12, (o.sizePct / 100) * o.height);
     ctx.setLineDash([]);
     ctx.lineWidth = 1;
-    ctx.strokeStyle = o.dark ? 'rgb(232,232,232)' : 'rgb(32,32,32)';
+    ctx.strokeStyle = css(o.dark ? MEDIA.glyphDark : MEDIA.glyphLight);
     ctx.beginPath();
     for (const a of o.iso) {
       const dx = Math.cos((a * Math.PI) / 180) * r;
@@ -273,7 +275,7 @@ export function drawCursor(ctx: CanvasRenderingContext2D, o: CursorOptions): voi
   const y = Math.round(o.y) + 0.5;
   ctx.setLineDash([]);
   ctx.lineWidth = 1;
-  ctx.strokeStyle = o.dark ? 'rgb(232,232,232)' : 'rgb(32,32,32)';
+  ctx.strokeStyle = css(o.dark ? MEDIA.glyphDark : MEDIA.glyphLight);
   ctx.beginPath();
   if (half >= 1) {
     ctx.moveTo(x - arm, y);

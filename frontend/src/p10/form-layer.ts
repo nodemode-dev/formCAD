@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import { el, q, setClass, setHidden, setTitle } from '../ui/dom';
 import { icon } from '../ui/icons';
 import { t } from '../ui/i18n';
@@ -41,12 +43,7 @@ function inPoly(px: number, py: number, pts: Array<{ x: number; y: number }>): b
   return hit;
 }
 
-const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => {
-  const raw = getComputedStyle(host).getPropertyValue(name).trim();
-  const c = new THREE.Color();
-  try { c.set(raw || fallback); } catch { c.set(fallback); }
-  return c;
-};
+const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => new THREE.Color().setHex(tokenHex(name, parseCss(fallback), host));
 
 export interface DragOp { command: 'subdmove' | 'subdrotate' | 'subdscale'; args: Record<string, unknown>; label: string }
 

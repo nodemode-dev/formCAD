@@ -1,4 +1,5 @@
 import { onShellMounted } from '../app';
+import { onThemeChange } from '../canvas/ink';
 import { call, token, type CommandLineState } from '../io/api';
 import { api } from '../io/api';
 import { events } from '../io/events';
@@ -208,9 +209,7 @@ export class View3dController {
       this.sync();
     });
     layoutState.onChange(() => { if (this.on && layoutState.inLayout) void this.leave(); });
-    const retheme = (): void => { requestAnimationFrame(() => this.vp?.refreshTheme()); };
-    document.addEventListener('nm:ui-settings-changed', retheme);
-    document.addEventListener('formcad:prefs-changed', retheme);
+    onThemeChange(() => this.vp?.refreshTheme());
     document.addEventListener('formcad:command-state', (e) => {
       const d = (e as CustomEvent<{ doc: string; state: CommandLineState }>).detail;
       if (d.doc === docStore.activeId) this.expectPoint = !!d.state.active && (d.state.expect === 'point' || d.state.expect === 'distance' || d.state.expect === 'angle');

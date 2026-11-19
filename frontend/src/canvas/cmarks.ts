@@ -1,5 +1,6 @@
 import type { Camera } from './camera';
 import { css } from './color';
+import { MEDIA } from './media';
 import { itemRuns } from './pick';
 import type { DisplayStore } from './store';
 import type { Theme } from './theme';
@@ -10,8 +11,8 @@ const GAP = 2;
 const LABEL_H = 18;
 const MAX_MARKS = 600;
 const FONT = '11px Inter, system-ui, sans-serif';
-const RED = 'rgb(239,68,68)';
-const YELLOW = 'rgb(234,179,8)';
+const RED = css(MEDIA.markError);
+const YELLOW = css(MEDIA.markWarn);
 
 export interface Placed {
   kind: 'glyph' | 'dim';

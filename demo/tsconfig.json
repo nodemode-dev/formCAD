@@ -1,0 +1,14 @@
+{
+  "extends": "../frontend/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": ["../frontend/node_modules/@types", "../frontend/node_modules"],
+    "types": ["vite/client"],
+    "resolveJsonModule": true,
+    "paths": {
+      "three": ["../frontend/node_modules/@types/three"],
+      "three/*": ["../frontend/node_modules/@types/three/*"],
+      "@tauri-apps/*": ["../frontend/node_modules/@tauri-apps/*"]
+    }
+  },
+  "include": ["src"]
+}

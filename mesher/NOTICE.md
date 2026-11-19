@@ -1,6 +1,6 @@
 # Mesher worker notices
 
-The `formcad-mesher` worker is a separate program shipped only from the `formCAD-binaries` releases, never inside the FormCAD app or its installers, and never in the same process as the kernel worker (its OpenCascade 7.8.1 build is not the 8.0.1 build of the kernel). Everything below was read from the installed wheels of the release pins (`mesher/requirements_mesher.txt`) on Linux x86_64, CPython 3.13. The release archive must carry the full licence texts named here.
+The `formcad-mesher` worker is a separate program shipped only from the `formai-binaries` releases, never inside the FormCAD app or its installers, and never in the same process as the kernel worker (its OpenCascade 7.8.1 build is not the 8.0.1 build of the kernel). Everything below was read from the installed wheels of the release pins (`mesher/requirements_mesher.txt`) on Linux x86_64, CPython 3.13. The release archive must carry the full licence texts named here.
 
 | Work | Version | Licence | Read from |
 | --- | --- | --- | --- |

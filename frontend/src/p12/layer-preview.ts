@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { ViewLayer } from '../view3d/layer';
 import type { Vec3 } from '../view3d/types';
 import type { Viewport3D } from '../view3d/viewport';
@@ -74,12 +76,7 @@ export class LayerPreview implements ViewLayer {
   }
 
   setColors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    this.colors = FEATURE_TOKENS.map((tok, i) => {
-      const c = new THREE.Color();
-      try { c.set(cs.getPropertyValue(tok).trim() || FALLBACK[i]); } catch { c.set(FALLBACK[i]); }
-      return c;
-    });
+    this.colors = FEATURE_TOKENS.map((tok, i) => new THREE.Color().setHex(tokenHex(tok, parseCss(FALLBACK[i]), host)));
   }
 
   colorOf(f: number): string { return `#${(this.colors[f] ?? this.colors[1]).getHexString()}`; }

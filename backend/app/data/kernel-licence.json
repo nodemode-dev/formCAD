@@ -4,8 +4,8 @@
   "release": null,
   "occt": null,
   "licence": "LGPL-2.1-only WITH OCCT-exception-1.0",
-  "source": "https://github.com/nodemode-dev/formCAD-binaries",
-  "url": "https://github.com/nodemode-dev/formCAD-binaries/releases/download/occt-{release}/occt-lgpl-{release}-{triple}.tar.gz",
+  "source": "https://github.com/nodemode-dev/formai-binaries",
+  "url": "https://github.com/nodemode-dev/formai-binaries/releases/download/occt-{release}/occt-lgpl-{release}-{triple}.tar.gz",
   "folder": "occt-lgpl-{release}-{triple}",
   "triples": [
     "aarch64-apple-darwin",

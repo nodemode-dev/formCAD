@@ -18,7 +18,7 @@ if /i "%CMD%"=="freeze" ( call setup\freeze_backend.bat & goto :done )
 if /i "%CMD%"=="freeze-kernel" ( call setup\freeze_kernel.bat & goto :done )
 if /i "%CMD%"=="freeze-mesher" ( call setup\freeze_mesher.bat & goto :done )
 if /i "%CMD%"=="desktop" (
-  if /i "%ARG%"=="build" ( call setup\desktop_build.bat ) else ( call setup\desktop_dev.bat )
+  if /i "%ARG%"=="build" ( call setup\desktop_build.bat %3 %4 %5 %6 %7 %8 %9 ) else ( call setup\desktop_dev.bat )
   goto :done
 )
 if /i "%CMD%"=="doctor" ( call setup\doctor.bat & goto :done )

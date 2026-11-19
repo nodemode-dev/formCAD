@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { ViewLayer } from '../view3d/layer';
 import type { Vec3 } from '../view3d/types';
 import type { Viewport3D } from '../view3d/viewport';
@@ -52,9 +54,8 @@ export class SimLayer implements ViewLayer {
   get info(): GridInfo | null { return this.grid; }
 
   setColors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    this.clear.set(cs.getPropertyValue('--cam-stock').trim() || CLEAR);
-    this.gouge.set(cs.getPropertyValue('--cam-gouge').trim() || GOUGE);
+    this.clear.setHex(tokenHex('--cam-stock', parseCss(CLEAR), host));
+    this.gouge.setHex(tokenHex('--cam-gouge', parseCss(GOUGE), host));
   }
 
   setWcs(w: Wcs | null): void { this.wcsGroup.matrix.copy(wcsMatrix(w)); this.vp.invalidate(); }

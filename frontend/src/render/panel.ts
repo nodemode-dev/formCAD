@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { MEDIA } from '../canvas/media';
 import { docStore } from '../ui/doc-store';
 import type { DockPanel } from '../ui/dock';
 import { el, patchList, q, setChecked, setClass, setDisabled, setHidden, setText, setValue } from '../ui/dom';
@@ -88,7 +89,7 @@ export function renderPanel(api: PanelApi): DockPanel {
       const sNew = section('New appearance');
       const nName = el<HTMLInputElement>('<input class="cv-input" type="text" maxlength="80" spellcheck="false" autocomplete="off" aria-label="Appearance name">');
       const nColor = colorInput(() => undefined);
-      nColor.value = '#9a9ca0';
+      nColor.value = MEDIA.renderNeutralHex;
       const nMetal = numberCtl('Metallic (0 to 1)', 0);
       const nRough = numberCtl('Roughness (0 to 1)', 0.5);
       const nAdd = button('Add to the library', () => void addAppearance(), 'primary');
@@ -98,7 +99,7 @@ export function renderPanel(api: PanelApi): DockPanel {
       const dList = el('<div class="u8-list rn-decals is-scroll" role="listbox" aria-label="Decals"></div>');
       const dKind = selectCtl('Kind', [['color', 'Colour patch'], ['image', 'Image']], () => syncDecalForm());
       const dColor = colorInput(() => undefined);
-      dColor.value = '#e63b2e';
+      dColor.value = MEDIA.renderAccentHex;
       const dImage = el<HTMLInputElement>('<input type="file" accept="image/png,image/jpeg,image/webp" class="rn-file" aria-label="Decal image">');
       const dW = numberCtl('Width', 20);
       const dH = numberCtl('Height', 10);

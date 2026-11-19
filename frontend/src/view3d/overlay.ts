@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { css, parseCss } from '../canvas/color';
 import type { Palette } from './kit';
 import type { SnapKind } from './types';
 
@@ -15,7 +16,7 @@ export function resolveInk(probe: HTMLElement): InkColors {
     probe.style.color = `var(${prop})`;
     const c = getComputedStyle(probe).color;
     probe.style.color = '';
-    return c || fallback;
+    return css(parseCss(c, parseCss(fallback)));
   };
   return {
     tipBg: read('--surface-1', '#1e1e22'),

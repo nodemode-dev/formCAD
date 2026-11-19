@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type { DisplayMode } from './types';
+import type { Rgba } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
+import { MEDIA } from '../canvas/media';
 
 export interface Palette {
   bg: THREE.Color;
@@ -20,22 +23,22 @@ export interface Palette {
   cubeInk: THREE.Color;
 }
 
-export const DEFAULT_BODY_COLOR = 0xb4bcc6;
+export const DEFAULT_BODY_COLOR = MEDIA.body3d;
 const FACE_OFFSET = { factor: 1, units: 1 };
 
 function luminance(c: THREE.Color): number {
   return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
 }
 
+const GRAY: Rgba = [128, 128, 128, 1];
+
+export function tokenColor(name: string, fallback: Rgba = GRAY, scope?: Element): THREE.Color {
+  return new THREE.Color().setHex(tokenHex(name, fallback, scope));
+}
+
 export function readPalette(host: HTMLElement): Palette {
-  const cs = getComputedStyle(host);
-  const get = (name: string, fallback = 'gray'): THREE.Color => {
-    const raw = cs.getPropertyValue(name).trim();
-    const c = new THREE.Color();
-    try { c.set(raw || fallback); } catch { c.set(fallback); }
-    return c;
-  };
-  const bg = get('--canvas-bg-model', 'black');
+  const get = (name: string, fallback: Rgba = GRAY): THREE.Color => tokenColor(name, fallback, host);
+  const bg = get('--canvas-bg-model', [0, 0, 0, 1]);
   const dark = luminance(bg) < 0.45;
   return {
     bg,
@@ -44,7 +47,7 @@ export function readPalette(host: HTMLElement): Palette {
     edgeSoft: get('--v3d-edge-soft'),
     accent: get('--accent-color'),
     hover: get('--canvas-handle'),
-    select: get('--canvas-selection'),
+    select: get('--canvas-selection', [74, 143, 255, 1]),
     snap: get('--canvas-snap'),
     axisX: get('--canvas-axis-x'),
     axisY: get('--canvas-axis-y'),

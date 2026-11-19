@@ -227,7 +227,7 @@ def start_install() -> dict:
         release = os.environ.get("FORMCAD_MESHER_RELEASE", "").strip() or rec.get("release")
         target = kernel.triple()
         if not release or not kernel.expected_files(rec, target):
-            _install["message"] = "No mesher build is published yet. Downloads come from the formCAD-binaries releases and are checked against the shipped record before they are installed."
+            _install["message"] = "No mesher build is published yet. Downloads come from the formai-binaries releases and are checked against the shipped record before they are installed."
             return status()
         _install.update(installing=True, progress=0.0, message="Starting the download.")
     threading.Thread(target=run_install, args=(rec, str(release), target), name="formcad-mesher-install", daemon=True).start()

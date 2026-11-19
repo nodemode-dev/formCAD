@@ -1,5 +1,6 @@
 import type { Camera } from './camera';
 import { css } from './color';
+import { MEDIA } from './media';
 import type { Theme } from './theme';
 import type { Rect } from './types';
 
@@ -28,7 +29,7 @@ function crisp(v: number): number {
 export function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, dpr: number, cam: Camera, th: Theme, g: GridOptions, sheet: Rect | null, printable: Rect | null): void {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const paper = !!sheet;
-  ctx.fillStyle = css(paper ? [80, 87, 99, 1] : th.bg);
+  ctx.fillStyle = css(paper ? th.surround : th.bg);
   ctx.fillRect(0, 0, w, h);
   if (sheet) {
     const [ax, ay] = cam.toScreen(sheet[0], sheet[3]);
@@ -45,7 +46,7 @@ export function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: numb
       ctx.rect(0, 0, w, h);
       ctx.clip();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = 'rgba(128,128,128,1)';
+      ctx.strokeStyle = css(MEDIA.printableEdge);
       ctx.lineWidth = 1;
       ctx.strokeRect(crisp(px), crisp(py), Math.round(qx - px), Math.round(qy - py));
       ctx.restore();

@@ -40,8 +40,6 @@ html:not(.has-native-menus) .cv-titlebar { grid-template-columns: minmax(0, 1fr)
 
 .cv-app.is-tabs-hidden { --cv-tabs-h: 0px; }
 .cv-app.is-tabs-hidden .cv-doc-tabs { display: none; }
-.cv-app.is-options-hidden { --cv-options-h: 0px; }
-.cv-app.is-options-hidden .cv-options { display: none; }
 .cv-app.is-rail-hidden { --cv-rail-w: 0px; }
 .cv-app.is-rail-hidden .cv-rail { display: none; }
 .cv-app.is-status-hidden { --cv-status-h: 0px; }

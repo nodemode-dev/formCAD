@@ -29,7 +29,7 @@ When the sprint gives an agent its own ports (for example 84xx for the engine an
 | `FORMCAD_DIST` | `setup/serve` | A built interface folder for the engine to serve instead of `frontend/dist`. |
 | `FORMCAD_CONTROL_PORT` | engine runtime | Turns on the local control protocol on this loopback port. |
 | `FORMCAD_CORS_ORIGINS` | engine guard | Extra interface origins accepted (development only). |
-| `FORMCAD_KERNEL`, `FORMCAD_KERNEL_RELEASE` | kernel service | A worker path to use instead of the downloaded one; the formCAD-binaries release to download and verify. |
+| `FORMCAD_KERNEL`, `FORMCAD_KERNEL_RELEASE` | kernel service | A worker path to use instead of the downloaded one; the formai-binaries release to download and verify. |
 | `FORMCAD_MESHER`, `FORMCAD_MESHER_RELEASE` | mesher service | The same pair for the mesher. |
 | `FORMCAD_FONTS` | text engine | Extra font folders. |
 | `FORMCAD_LOG_LEVEL`, `FORMCAD_LOG_BYTES` | engine | Log level and log file size cap. |

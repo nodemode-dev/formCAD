@@ -23,7 +23,7 @@ import { TitleTools, WORKSPACE_LOCK_KEY, WORKSPACES } from './titlebar-tools';
 import { onLanguage } from './i18n';
 
 const VIEW_KEY = 'formCAD.view';
-const VIEW_FLAGS = ['tabs', 'status', 'options', 'rail', 'menubar'] as const;
+const VIEW_FLAGS = ['tabs', 'status', 'rail', 'menubar'] as const;
 type ViewFlag = (typeof VIEW_FLAGS)[number];
 
 const NO_DOC = new Set(['newfromtemplate', 'import', 'opensample', 'checkupdates', 'appload', 'mouse3d', 'plottermanager', 'stylesmanager', 'aliasedit', 'recover', 'drawingrecovery', 'publish', 'sheetbooks']);
@@ -44,7 +44,7 @@ function addOnce(cmd: Command): void {
 }
 
 function viewFlags(): Record<ViewFlag, boolean> {
-  const out = { tabs: false, status: false, options: false, rail: false, menubar: false };
+  const out = { tabs: false, status: false, rail: false, menubar: false };
   try {
     const v: unknown = JSON.parse(stored(VIEW_KEY) ?? '{}');
     if (v && typeof v === 'object') for (const k of VIEW_FLAGS) out[k] = (v as Record<string, unknown>)[k] === true;
@@ -141,7 +141,6 @@ function registerCommands(): void {
     { id: 'win-toolsets', label: 'Tool Sets', keys: ['Mod+3'], group: 'Window', checked: () => !viewFlags().rail, run: () => flipView('rail') },
     { id: 'win-properties', label: 'Properties Inspector', keys: ['Mod+1'], group: 'Window', checked: () => loadPrefs().showDock, run: () => { updatePrefs({ showDock: !loadPrefs().showDock }); applyChrome(); ui('palette:properties'); } },
     { id: 'win-layers', label: 'Layers Palette', group: 'Window', run: () => { updatePrefs({ showDock: true }); applyChrome(); ui('palette:properties'); } },
-    { id: 'win-toolbar', label: 'Tool Bar', group: 'Window', checked: () => !viewFlags().options, run: () => flipView('options') },
     { id: 'win-filetabs', label: 'File Tab', group: 'Window', checked: () => !viewFlags().tabs, run: () => flipView('tabs') },
     { id: 'win-statusbar', label: 'Status Bar', group: 'Window', checked: () => !viewFlags().status, run: () => flipView('status') },
     { id: 'win-cmdline', label: 'Command Line', keys: ['Mod+9'], group: 'Window', checked: () => loadPrefs().showCommandLine, run: () => { updatePrefs({ showCommandLine: !loadPrefs().showCommandLine }); applyChrome(); } },

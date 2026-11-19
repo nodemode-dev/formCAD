@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry.js';
+import { MEDIA } from '../canvas/media';
 import type { BodyData, CameraSpec } from '../view3d/types';
 import { applyAppearance, appearanceKey, physicalFrom } from './materials';
 import type { Appearance, Decal, RenderBodyRow, RenderSettings } from './net';
@@ -65,7 +66,7 @@ export class RenderScene {
   private fallback(): THREE.MeshPhysicalMaterial {
     let m = this.mats.get('@fallback');
     if (!m) {
-      m = new THREE.MeshPhysicalMaterial({ color: 0x9a9ca0, roughness: 0.55, metalness: 0 });
+      m = new THREE.MeshPhysicalMaterial({ color: MEDIA.renderNeutral, roughness: 0.55, metalness: 0 });
       this.mats.set('@fallback', m);
     }
     return m;

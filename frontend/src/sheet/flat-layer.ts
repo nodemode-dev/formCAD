@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { parseCss } from '../canvas/color';
+import { tokenHex } from '../canvas/ink';
 import type { Palette } from '../view3d/kit';
 import type { ViewLayer } from '../view3d/layer';
 import type { InkColors } from '../view3d/overlay';
@@ -66,12 +68,7 @@ function pairs(polys: Pt2[][], closed: boolean): number[] {
   return out;
 }
 
-const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => {
-  const raw = getComputedStyle(host).getPropertyValue(name).trim();
-  const c = new THREE.Color();
-  try { c.set(raw || fallback); } catch { c.set(fallback); }
-  return c;
-};
+const cssColor = (host: HTMLElement, name: string, fallback: string): THREE.Color => new THREE.Color().setHex(tokenHex(name, parseCss(fallback), host));
 
 export class FlatLayer implements ViewLayer {
   readonly group = new THREE.Group();

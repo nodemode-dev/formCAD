@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { parseCss } from '../canvas/color';
+import { tokenHexCss } from '../canvas/ink';
 import type { ViewLayer } from '../view3d/layer';
 import type { Vec3 } from '../view3d/types';
 import type { Viewport3D } from '../view3d/viewport';
@@ -49,8 +51,7 @@ export class ToolpathLayer implements ViewLayer {
   get playFraction(): number { return this.fraction; }
 
   setColors(host: HTMLElement): void {
-    const cs = getComputedStyle(host);
-    const pick = (n: string, d: string): string => cs.getPropertyValue(n).trim() || d;
+    const pick = (n: string, d: string): string => tokenHexCss(n, parseCss(d), host);
     this.colors = { cut: pick('--cam-cut', FALLBACK.cut), rapid: pick('--cam-rapid', FALLBACK.rapid), pick: pick('--cam-pick', FALLBACK.pick), stale: pick('--cam-stale', FALLBACK.stale), tool: pick('--cam-tool', FALLBACK.tool) };
     (this.marker.material as THREE.MeshBasicMaterial).color.set(this.colors.tool);
     for (const [id, it] of this.items) this.paint(id, it);

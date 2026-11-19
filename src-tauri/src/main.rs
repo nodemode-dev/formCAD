@@ -58,6 +58,17 @@ fn kill_backend(handle: &tauri::AppHandle) {
     }
 }
 
+fn renderer_choice(handle: &tauri::AppHandle, choice: window_state::Choice) {
+    open_exit_gate(handle);
+    match choice {
+        window_state::Choice::Restart => {
+            kill_backend(handle);
+            handle.restart();
+        }
+        window_state::Choice::Quit => handle.exit(0),
+    }
+}
+
 fn close_splash(handle: &tauri::AppHandle) {
     if let Some(splash) = handle.get_webview_window("splash") {
         let _ = splash.close();
@@ -69,7 +80,7 @@ fn open_exit_gate(handle: &tauri::AppHandle) {
 }
 
 fn ask_page_to_quit(handle: &tauri::AppHandle) -> bool {
-    if handle.state::<ExitGate>().0.load(Ordering::SeqCst) {
+    if handle.state::<ExitGate>().0.load(Ordering::SeqCst) || window_state::loop_page_shown() {
         return false;
     }
     let ready = handle.state::<OpenQueue>().0.lock().map(|opens| opens.ready).unwrap_or(false);
@@ -208,7 +219,10 @@ fn main() {
     reveal::mark_launch();
     #[cfg(windows)]
     portable_web_view_data();
-    let app = tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(target_os = "macos")]
+    let builder = builder.on_web_content_process_terminate(window_state::on_renderer_stopped);
+    let app = builder
         .plugin(single_instance())
         .manage(OpenQueue(Mutex::new(Opens::default())))
         .manage(ExitGate(AtomicBool::new(false)))
@@ -255,7 +269,10 @@ fn main() {
                     return Ok(());
                 }
             };
-            let mut engine = engine.env("FORMCAD_PORT", "0").env("FORMCAD_DESKTOP", "1");
+            let mut engine = engine
+                .env("FORMCAD_PORT", "0")
+                .env("FORMCAD_DESKTOP", "1")
+                .env("FORMCAD_SHELL_PID", std::process::id().to_string());
             if let Some(dir) = user_data_dir_arg(&launch_args) {
                 engine = engine.env("FORMCAD_DATA_DIR", dir);
             }
@@ -302,7 +319,17 @@ fn main() {
                             .background_color(reveal::BACKGROUND)
                             .inner_size(width, height)
                             .min_inner_size(MIN_SIZE.0, MIN_SIZE.1)
-                            .disable_drag_drop_handler();
+                            .disable_drag_drop_handler()
+                            .on_navigation({
+                                let handle = handle.clone();
+                                move |url| match window_state::shell_choice(url) {
+                                    Some(choice) => {
+                                        renderer_choice(&handle, choice);
+                                        false
+                                    }
+                                    None => true,
+                                }
+                            });
                         let builder = if place.width > 0.0 {
                             builder.position(place.x, place.y)
                         } else {
