@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## M25, v0.19.0 the menu bar has 13 menus, not 28 (ui/menu-spec.ts)
+
+The owner's first look at the Mac build: the native menu bar ran off both sides of the screen, with most titles cut to two letters ("Mo...", "Di...", "Pa..."). `buildMenus` returned 28 top-level menus, one per command section, which is a list of the engine's modules and not a menu bar.
+
+It now returns 13: File, Edit, View, Insert, Format, Draw, Modify, Annotate, Model, Engineer, Tools, Window, Help. The first seven and the last three are unchanged. Three new menus hold the other 18 as submenus under their old names, so nothing a user knew is renamed, only moved one level down:
+
+- Annotate: Dimension, Drawing.
+- Model: Sketch, Parametric; Part, Solid, Assembly; Curve, Surface, Form, Mesh; Graph. "Solid" is the old Model menu (direct solid modelling), renamed only because its parent now carries that word.
+- Engineer: Simulate, Generate; Manufacture, Produce; Routing, Electronics.
+
+Rules kept: every section function is untouched and still calls `section(name, ...)`, so each engine command keeps its group for the command palette and the shortcut list; the new menus only wrap them in `S(label, ...items)`. Checked by bundling the file as it was and as it is and comparing: 28 against 13 top-level menus, the same 646 leaf items, the same 412 engine commands with the same groups, the same deepest nesting. `NativeMenus` and the in-window `MenuBar` read the list generically, so neither changed; with 13 entries the in-window bar no longer needs its "More" overflow at ordinary widths.
+
+Not done, on purpose: hiding menus by workspace. It would make the bar shorter still in Drafting, but a command that vanishes when the workspace changes is harder to find than one that is one level down.
+
 ## R24, v0.18.0 the display pull follows the active document (canvas/renderer.ts)
 
 Found while chasing the open defect below; it is a real fault of its own and not that defect's cause. `Renderer.pull` read the document id once, before its loop. When the active document changed while a display request for the earlier one was still waiting on a slow engine, `setDocument` could only queue a second pass; the loop then saw that the id no longer matched, stopped, and dropped the queued pass. Nothing was fetched for the new document and its pending fit never ran, until some later engine event started a pull. A failed request dropped a queued pass the same way.
