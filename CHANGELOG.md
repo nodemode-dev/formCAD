@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.18.0 · 2026-11-19
+
+- AMOLED Black, a true-black theme for OLED screens: the window, the panels, the drawing canvas and the 3D view are `#000000`, and panels are told apart by their borders. It is in Preferences with the other themes and paints black from the first frame of a reload.
+- The tools on the left rail are grouped as in the rest of the family: 16 groups in four clusters, one button per group showing its current tool, and a flyout on press and hold or right click that lists the group's tools with their shortcuts. The chosen tool is remembered per group. Every tool that was on the rail is still there.
+- The empty row between the document tabs and the canvas is gone. The array bar that used it now floats over the top edge of the canvas only while an array is edited, and the canvas no longer moves when it appears. Window > Tool Bar, which toggled that row, is removed.
+- Drawing surfaces follow the theme properly: the 2D canvas, the 3D view, the render preview and the ECAD views repaint in the same frame as a theme change, the grid stays visible on black, the 3D selection highlight is the same blue as in 2D, and the `THREE.Color` warnings on every document are gone.
+- The interface passes the family design-language audit: the ECAD colours moved into the token sheet and two stray literals are tokens.
+- A drawing opened while the engine was still answering for another document could show an empty canvas until the next zoom: the request for the new document was dropped. The canvas now always goes on to the document that is active.
+- The registry entry signs Mac builds with `apple` (Developer ID signature plus notarization), as formcompiler 0.16.0 requires of every app. The first Mac builds of this app are therefore also its first notarization.
+- Known and open: in the packaged Linux build on a virtual display with software rendering, a demo opened from the home shows the grid only until the first wheel step or zoom extents. The cause is not found; it is not the fault above. `frontend/HASHOUT_LOG.md`, entry R24, has what is known.
+
 ## 0.17.0 · 2026-11-18
 
 - The first build through formcompiler. The registry file passes its check and builds in contract mode for Apple silicon, Intel Macs, Linux and Windows; the release stays a draft on this repository. The Linux AppImage no longer stops on the physics library's plugin files, and `formCAD.bat desktop build` passes its arguments on.
