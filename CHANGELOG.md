@@ -2,6 +2,11 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.18.1 · 2026-11-19
+
+- The Mac builds are accepted by Apple's notary. Both Mac builds of 0.18.0 were refused for two files, the engine's Python library as it was reached through two links: the library was signed inside its framework and then shipped as two plain copies outside it. The engine now leaves the freeze on macOS with the library as one regular file, no framework and no links, and is signed after that. Linux and Windows builds are unchanged.
+- Nothing in the app itself changed since 0.18.0.
+
 ## 0.18.0 · 2026-11-19
 
 - AMOLED Black, a true-black theme for OLED screens: the window, the panels, the drawing canvas and the 3D view are `#000000`, and panels are told apart by their borders. It is in Preferences with the other themes and paints black from the first frame of a reload.
