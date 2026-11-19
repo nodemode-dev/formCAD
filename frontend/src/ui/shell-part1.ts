@@ -226,8 +226,9 @@ function mount(ctx: AppContext): void {
     newFromTemplate: (template) => void docStore.create(template),
     openPath: (path) => void docStore.openPath(path),
   });
-  home.onVisibility((shown) => tabs.setHome(shown));
+  home.onVisibility((shown) => { tabs.setHome(shown); setClass(document.body, 'cv-home-open', shown); });
   tabs.setHome(home.isShown);
+  setClass(document.body, 'cv-home-open', home.isShown);
   new DropOverlay(hosts.stage, (path) => void docStore.openPath(path));
 
   status = new StatusBar(hosts.status, { commands, sysvars, docs: docStore, jobs });

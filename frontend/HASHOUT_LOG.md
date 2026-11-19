@@ -2,6 +2,22 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## H26, v0.19.0 the home is a port of formdeck's home, not an approximation of it (ui/home.ts, styles/home.css, ui/shell-part1.ts)
+
+The home written in 0.17.0 took formdeck's layout by eye. On the owner's Mac it did not look like formdeck: a 320 px side panel against formdeck's 232, flat boxes, four fixed columns of wide tiles, section links pushed to the far right, a dashed empty box, and the status bar still showing under it. This entry is the port, measured against formdeck running beside it.
+
+Side panel. 232 px by default; a 6 px strip on its edge resizes it between 180 and 420 px and collapses it below 120; a 14 by 56 px tab on the edge hides and shows it, and when it is hidden the tab sits alone on the window's left edge and the content re-centres, as in formdeck. Width and hidden state are stored (`formCAD.homeNav`, `formCAD.homeNavHidden`, under the prefix Reset Settings clears) and applied before the home is mounted. Items, the active item, count badges, section titles, the separator and the pinned foot carry formdeck's measurements and states on formCAD's tokens.
+
+Content. Padding 32/40/56; the hero has formdeck's dashed line, faint accent glow, raised icon tile, mono format tags and 36 px actions; "See all" and the notes sit beside each section title. One card class, `cv-card`, for demos, templates, recent files, projects and outputs, in grids that fill the width from 208 px columns. Templates have category chips (Drawing, Model, Graph) and a search box, on Start and on the Templates page, kept in step; filtering hides cards in place. Recent holds its place with a skeleton card that becomes a same-size "No drawings yet" card, so nothing jumps. The narrow tab row appears below 720 px (it was 1100).
+
+Window. While the home is open, `body.cv-home-open` hides the status bar and the home reaches the bottom of the window. The bar keeps its box and is only made invisible, so the editor underneath does not move when the home opens or closes. The title bar stays: it carries the window controls and the drag area.
+
+Left out because formCAD has no data for them: formdeck's trash, the per-card menu (pin, hide, delete with undo), its agents group, its template preview. formdeck's two head buttons touch; formCAD keeps its 8 px gap.
+
+formdeck has no minirail: no rail class anywhere but its preferences dialog. The nearest thing on its home is the hide and show tab, which is ported.
+
+Measured with the processor slowed 4 times: layout shift 0 on a cold load, a hard reload, switching between the five sections, and opening the home over a drawing and going back; 0.00003 on opening a demo, from the editor; no node added or removed when the panel collapses. Collapsing or expanding the panel moves the content (0.306 when the click comes from a script), which is the re-centring formdeck does and the direct answer to the click. Looked at in Studio Dark, AMOLED Black and Light, at 1440, 1920, 900 and 700 px wide.
+
 ## M25, v0.19.0 the menu bar has 13 menus, not 28 (ui/menu-spec.ts)
 
 The owner's first look at the Mac build: the native menu bar ran off both sides of the screen, with most titles cut to two letters ("Mo...", "Di...", "Pa..."). `buildMenus` returned 28 top-level menus, one per command section, which is a list of the engine's modules and not a menu bar.
