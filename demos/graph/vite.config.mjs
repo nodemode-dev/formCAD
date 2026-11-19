@@ -20,6 +20,7 @@ const appShell = () => ({
       .replace('<script type="module" src="/src/main.ts"></script>', '<script type="module" src="./src/main.ts"></script>')
       .replace(/\s*<link rel="(?:icon|apple-touch-icon|preload)"[^>]*>/g, '')
       .replace(/href="\/src\/styles\//g, 'href="../../frontend/src/styles/')
+      .replace('body.app-ready #app { visibility: visible; }', 'body.app-ready.demo-ready #app { visibility: visible; }')
       .replace(/<title>[^<]*<\/title>/, '<title>FormCAD demo: node graph</title>\n  <link rel="icon" href="favicon.png" type="image/png">');
   },
 });

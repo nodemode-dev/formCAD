@@ -2,6 +2,10 @@
 
 Living record of decisions for the node graph demo, newest first. Read before editing. The shim and the recorder are `demo/`'s; see `demo/HASHOUT_LOG.md`.
 
+## G6, one reveal after the editor has painted
+
+Under 4x CPU the page showed a layout shift of 0.00386 (`div.gx-grid`) on both load and reload. The app revealed `#app` at `body.app-ready`, and `gr-open` then opened the editor about 100 ms later. The demo page's head rule is now `body.app-ready.demo-ready #app { visibility: visible; }`, rewritten in `vite.config.mjs`. `src/main.ts` runs `gr-open` once the app is ready and adds `demo-ready` two animation frames after the editor has a graph record and a `.gx-node` in the layout. If the editor has not painted 4 s after app-ready, the class is added anyway, and a 30 s timer adds it in any case, so the page never stays blank. Measured with the throttle check (`--cpu 4 --reload`): 0 on load and on reload, no console errors.
+
 ## G5, the layout now lives in the document
 
 The engine baked the G2 layout into `backend/app/data/demos/graph.fcad`. The engine opened the file, a `PUT /api/docs/{id}/graphs/G1` with `solve: false` set node x and y (columns by wire depth, 300 apart, stacked by estimated height and centred), and `POST /api/docs/{id}/save` wrote the file back to the same path. Positions: box 0,100; hole 0,348; ring 300,200; cut 600,236; tag 900,0; mass 900,224; sec 900,472; secl 1200,248. The part brep and the cached display mesh are byte for byte the same, `/scene` answers 200 from a fresh engine, and the file is 0644. Through the engine's save, the manifest `title` becomes the file stem `graph` (it was "Plate with bolt holes") and `app.version` becomes 0.17.0. The origin-layout step is gone from `src/boot.ts`, the recording was redone, and the fitted graph has the same bounds, so `graph.webp` was not captured again.
