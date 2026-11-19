@@ -18,6 +18,29 @@ sign_engine() {
   if [ "$identity" = "-" ]; then fc_say "engine signed ad hoc: $signed Mach-O files"; else fc_say "engine signed: $signed Mach-O files"; fi
 }
 
+flatten_engine() {
+  local dir="$1" fw="$1/_internal/Python.framework" lib="$1/_internal/Python" link f links=0
+  if [ -d "$fw" ]; then
+    [ -f "$fw/Python" ] || fc_die "Python.framework has no Python library: $fw"
+    rm -f "$lib"
+    cp "$fw/Python" "$lib"
+    rm -rf "$fw"
+    codesign --force --sign - "$lib"
+  fi
+  while IFS= read -r link; do
+    cp -RL "$link" "$link.flat" && rm -f "$link" && mv "$link.flat" "$link"
+    links=$((links + 1))
+  done < <(find "$dir" -type l)
+  [ -z "$(find "$dir" -type l | head -1)" ] || fc_die "engine still holds symbolic links after flattening: $dir"
+  f="$(find "$dir" -name '*.framework' | head -1)"
+  [ -z "$f" ] || fc_die "engine holds a .framework that cannot ship as Tauri resources: $f"
+  while IFS= read -r f; do
+    [ "$f" = "$lib" ] && continue
+    if file -b "$f" | grep -q 'Mach-O' && otool -L "$f" | grep -q 'Python.framework'; then fc_die "$f links Python.framework, which the engine no longer ships"; fi
+  done < <(find "$dir" -type f)
+  fc_say "engine flattened: Python library at _internal/Python, $links links replaced by copies"
+}
+
 fc_venv
 python -c "import PyInstaller" 2>/dev/null || fc_die "PyInstaller missing, run ./formCAD install-desktop"
 [ -f "$FORMCAD_ROOT/frontend/dist/index.html" ] || "$FORMCAD_ROOT/setup/build_frontend"
@@ -41,6 +64,7 @@ PYTHONPATH="$src/backend${PYTHONPATH:+$sep$PYTHONPATH}" pyinstaller --noconfirm 
 out="$FORMCAD_ROOT/src-tauri/engine"
 rm -rf "$out"
 cp -R dist-engine/formcad-engine "$out"
+[ "$(fc_os)" != macos ] || flatten_engine "$out"
 [ "$(fc_os)" != macos ] || sign_engine "$out"
 "$out/formcad-engine${ext}" --selfcheck
 fc_say "engine folder ready: $out"

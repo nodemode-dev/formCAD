@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## FZ1 v0.18.1 the macOS engine leaves the freeze with no links and no framework (setup/freeze_backend)
+
+The first two Mac builds of 0.18.0 through formcompiler (Apple silicon and Intel, 2026-11-19) built, signed and reached Apple's notary, and both were refused with status Invalid for the same two files and nothing else: `Contents/Resources/engine/_internal/Python` and `Contents/Resources/engine/_internal/Python.framework/Python`, "The signature of the binary is invalid". The other 200 or so Mach-O files of the engine passed.
+
+Cause. PyInstaller 6 keeps a framework Python as `_internal/Python.framework/Versions/3.14/Python` and adds links to it: `_internal/Python`, `Python.framework/Python`, `Python.framework/Resources` and `Versions/Current`. `sign_engine` signs regular files only, so it signed the library once, inside the framework, where codesign binds the signature to that framework (its Info.plist and resource seal). Tauri copies resources one file at a time: a linked file arrives in the app as a plain copy and a linked folder is left out. The two copies of the library therefore sat outside the version folder their signature names, and Apple refused them.
+
+Fix, ported from formvis (`flatten_engine` in its `setup/freeze_backend`, Apache-2.0, in use there since 1.99.5 with the same PyInstaller pin, 6.22.3). On macOS, after the engine is copied to `src-tauri/engine` and before it is signed: the library is copied to `_internal/Python` as a regular file and signed ad hoc to drop the framework binding, `Python.framework` is removed, and every remaining link is replaced by a copy of what it points at. The step stops the build if a link is left, if any other `.framework` is in the engine, or if a Mach-O file still names `Python.framework` in its load commands. `sign_engine` then signs the library like any other file, and `--selfcheck` runs the flattened and signed engine, so a library the bootloader cannot find fails the build here and not on a user's machine. The bootloader is given the base name `Python` (PyInstaller `building/api.py`, `python_lib_name=os.path.basename(...)`), which is why `_internal/Python` is the one place it must be.
+
+Linux and Windows are untouched: they have no framework and no notary, and the Linux bundles were built with the links as they are.
+
+Not a fault: the Intel log's `Hidden import 'mujoco' not found` and `"mujoco": "missing"`. `requirements.txt` leaves mujoco out on Intel Macs by a marker, because it has no wheel there.
+
+Checked here, on Linux only: `bash -n`, and the function run against a hand-made copy of PyInstaller's framework layout with stand-in `codesign` and `otool` (no link left, the framework gone, `_internal/Python` a regular copy, linked files and folders kept as copies, a second framework and a dangling link each stop it). Real `codesign`, `otool` and the notary run for the first time in the next Mac build.
+
 ## DM1 v0.17.0 demo documents and their routes (demos/router.py new, data/demos/*.fcad new, main.py ROUTERS)
 
 Three demo documents ship in `app/data/demos`, so the frozen engine carries them through the existing `--add-data backend/app/data` and `router.py` finds the folder the way `services/kernel.py` finds `kernel-licence.json`, relative to the module file. `GET /api/demos` lists `{id, title, line, kind}`. `POST /api/demos/{id}/open` goes through `service.new(name, path)`, the call `POST /api/docs` makes with a template, and answers `doc.summary()`: the document is an untitled copy with an empty path, so Save asks for one and the shipped file is never written. An unknown id is 404 `{"detail": "Unknown demo <id>."}`; the token guard applies as everywhere. The files are mode 0644 because the engine's own save writes 0600.
