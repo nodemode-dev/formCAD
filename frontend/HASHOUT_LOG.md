@@ -2,6 +2,16 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## R24, v0.18.0 the display pull follows the active document (canvas/renderer.ts)
+
+Found while chasing the open defect below; it is a real fault of its own and not that defect's cause. `Renderer.pull` read the document id once, before its loop. When the active document changed while a display request for the earlier one was still waiting on a slow engine, `setDocument` could only queue a second pass; the loop then saw that the id no longer matched, stopped, and dropped the queued pass. Nothing was fetched for the new document and its pending fit never ran, until some later engine event started a pull. A failed request dropped a queued pass the same way.
+
+The loop now reads the active document at the start of every pass and, when the document changed during a request, goes on to the queued pass for the new one. A failed request goes on when the document changed or a pass is queued and stops otherwise. No delay, no second fit and no extra request in the ordinary case; `setDocument`, `fitNow` and the per-document view are untouched, so a tab keeps the view the user left it with. The outer catch stays, so an error while applying a payload is swallowed as before.
+
+Evidence: in headless Chrome with every engine request held for two seconds, a switch forced during a request in flight left the store empty before the change and showed the fitted plan after it. A plain click on a demo card did not hit the fault in that setup with requests held and the processor slowed 12 times.
+
+OPEN, not fixed in 0.18.0: in the packaged Linux build of 0.17.0 and of 0.18.0, run on a virtual display with software rendering, a click on the 2D drafting card opens "Studio plan" with the grid and the axes only. The drawing appears on the first wheel step or zoom extents. What is known: the engine log shows one `GET /api/docs/<id>/display` answered 200 right after the open; the grid is already drawn at the fitted view (eight wheel steps back from the later picture give the same origin), so the store holds the drawing and the fit ran; moving the pointer, which repaints only the top layer, does not bring the drawing; a build with this entry's change and a build that also repainted all layers when the home closed (tried, then taken out) both still show it. Not reproduced in headless Chrome against the dev server, nor against the packaged engine's own interface with WebGL switched off. So the scene layer is not painted, or not presented, on the first frames after the data arrives in WebKitGTK there; whether a real Linux desktop or macOS shows it is not known. Next step: run the package with the web inspector on (`WEBKIT_INSPECTOR_SERVER`) and read `Renderer.runFrame`, `Store.work` and the painter on the first frames.
+
 ## A23, v0.18.0 the family design-language audit (styles/tokens.css, styles/p14b.css, styles/u3.css, styles/properties.css, eleven 3D layer files)
 
 The family audit (`audit_design_lang.py` of the formai design-language pack, run on `frontend/`) went from 17 FAIL and 71 WARN to 0 FAIL and 67 WARN.

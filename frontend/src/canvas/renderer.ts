@@ -548,14 +548,21 @@ export class Renderer implements CanvasApi {
       return;
     }
     this.pulling = true;
-    const id = this.docId;
     try {
       do {
         this.pullAgain = false;
+        const id: string | null = this.docId;
+        if (!id) break;
         const since = full || this.store.rev < 0 ? undefined : this.store.rev;
         full = false;
-        const p = await this.deps.fetchDisplay(id, since, this.space === 'model' ? undefined : this.space);
-        if (this.docId !== id) break;
+        let p: Awaited<ReturnType<CanvasDeps['fetchDisplay']>>;
+        try {
+          p = await this.deps.fetchDisplay(id, since, this.space === 'model' ? undefined : this.space);
+        } catch {
+          if (this.docId !== id || this.pullAgain) continue;
+          return;
+        }
+        if (this.docId !== id) continue;
         this.store.apply(p);
         if (this.needFit && this.hasSize) this.fitNow();
         this.dirtyScene = true;
