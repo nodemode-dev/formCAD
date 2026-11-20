@@ -12,7 +12,7 @@ def main():
         name = dist.metadata["Name"]
         if name and name.lower().replace("_", "-") not in SKIP:
             rows[name.lower().replace("_", "-")] = f"{name}=={dist.version}"
-    with open(target, "w", encoding="utf-8") as out:
+    with open(target, "w", encoding="utf-8", newline="\n") as out:
         out.write("# pins of the installed build environment, no hashes; CI replaces this with pip-compile --generate-hashes output\n")
         for key in sorted(rows):
             out.write(rows[key] + "\n")
