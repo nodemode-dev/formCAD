@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.0 · 2026-11-19
+
+- The menu bar has 13 menus where it had 28: File, Edit, View, Insert, Format, Draw, Modify, Annotate, Model, Engineer, Tools, Window, Help. Annotate holds Dimension and Drawing; Model holds Sketch, Parametric, Part, Solid (the old Model menu), Assembly, Curve, Surface, Form, Mesh and Graph; Engineer holds Simulate, Generate, Manufacture, Produce, Routing and Electronics. Every command is where it was, one level down, and keeps its group in the command palette.
+- The home is a port of formdeck's home. The side panel is narrower, can be resized by its edge and hidden with a tab, and remembers both. Demos, templates and recent files are cards in grids that fill the width; templates have category chips and a search box; an empty Recent shows a card, not a box. While the home is open it fills the window and the status bar is hidden.
+- The tool rail and the panel column on the right take formvis's measurements: a 52 px rail with its tinted surface, smaller tool buttons with a dot for variants, a glass flyout; panel heads with the name in a tab chip. The column collapses to a strip of icons, each opening its panel in a flyout beside the strip, and remembers it.
+- The three browser demos carry the new interface.
+- Known: the panel column still stacks every panel of every workspace, so its strip is long. Showing a panel only in the workspaces it belongs to is the next step. The drawing that stays hidden until the first zoom in the packaged Linux build on a virtual display (0.18.0) is still open.
+
 ## 0.18.1 · 2026-11-19
 
 - The Mac builds are accepted by Apple's notary. Both Mac builds of 0.18.0 were refused for two files, the engine's Python library as it was reached through two links: the library was signed inside its framework and then shipped as two plain copies outside it. The engine now leaves the freeze on macOS with the library as one regular file, no framework and no links, and is signed after that. Linux and Windows builds are unchanged.
