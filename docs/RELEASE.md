@@ -32,17 +32,19 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 
 | Platform | Variables |
 | --- | --- |
-| macOS | `APPLE_SIGNING_IDENTITY`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_B64` (the .p8, written to `APPLE_API_KEY_PATH` by the workflow), or `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` |
+| macOS | `APPLE_SIGNING_IDENTITY`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_PRIVATE_KEY` (base64 of the .p8 on one line, written to `APPLE_API_KEY_PATH` by the workflow), or `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` |
 | Windows | Azure Artifact Signing: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `ARTIFACT_SIGNING_ENDPOINT`, `ARTIFACT_SIGNING_ACCOUNT`, `ARTIFACT_SIGNING_PROFILE`; or `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` |
 | Linux AppImage | `APPIMAGE_GPG_PRIVATE_KEY`, `APPIMAGE_GPG_KEY_ID`, `APPIMAGETOOL_SIGN_PASSPHRASE` |
 | Publishing | `BINARIES_REPO_TOKEN` (create releases in formai-binaries) |
+
+The names and the formats are the ones formcompiler's `signing` environment uses, so the same values serve both. Those values cannot be read from another repository: the `binaries` workflow runs in this repository, so each one is set here again as a repository secret (the three `ARTIFACT_SIGNING` names may be repository variables, as they are in formcompiler). With `publish` checked the workflow's first job, `credentials`, lists every missing name, checks that the release tag is free and that `BINARIES_REPO_TOKEN` can create a release in formai-binaries (it makes a draft named `probe-<run>` and deletes it), and stops the run in seconds, before any macOS or Windows runner starts.
 
 Without the Apple identity the macOS files are signed ad hoc. Signing happens before hashing, so the recorded hashes are of the signed bytes.
 
 ### Scripts
 
 - `release/sign/macos_sign.sh sign DIR` signs every Mach-O innermost first with the hardened runtime and a timestamp, then verifies each. `notarize-folder DIR` zips with `ditto` and submits; `notarize FILE` and `staple FILE` handle a dmg.
-- `release/sign/windows_sign.ps1 -Path DIR` signs `.exe .dll .pyd .msi .sys` with Azure Artifact Signing or a pfx, and stops when no credentials are present.
+- `release/sign/windows_sign.ps1 -Path DIR` signs `.exe .dll .pyd .msi .sys` with a pfx (`WINDOWS_CERTIFICATE`), and stops when it is not present. Azure Artifact Signing is done by the workflow itself with Microsoft's `azure/artifact-signing-action`.
 - `release/sign/linux_appimage_sign.sh sign FILE` writes a detached `.asc` and, when `appimagetool` exists, an embedded signature. Publish the key id and fingerprint in the release notes; `SHA256SUMS` stays the primary check.
 
 ## Dry run
