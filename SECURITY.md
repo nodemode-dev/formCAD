@@ -32,6 +32,10 @@ something outside it could get in:
 - **Agents**: the MCP server (`./formCAD mcp`), the command line and the control
   port (off unless it is asked for) running a command that touches files, processes
   or settings in a way its classification for macros and agents does not allow.
+- **The agent dock**: its terminal and its Claude Code, Codex, Cursor and Antigravity
+  tabs. A tab's token reaching anything but the MCP server, a token outliving its
+  tab, the window's own token or the engine's settings reaching a program's
+  environment or command line, or the terminal routes accepting a tab's or a macro's token.
 - **Scripting**: the LISP dialect, macros and Python macros reaching outside the
   isolated process they run in, and a plug-in loading when its recorded hash does
   not match.

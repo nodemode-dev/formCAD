@@ -90,13 +90,17 @@
 727 commands live in one registry; the window, the CLI and the MCP server all call the same ones.
 
 ```sh
-./formCAD mcp                                  # MCP server on stdio for Claude Code, Codex and Cursor
+./formCAD mcp                                  # MCP server on stdio for Claude Code, Codex, Cursor and Antigravity
+./formCAD agents install [--dry-run]           # register that server with all four programs for this user
+./formCAD agents sync | check                  # mirror skills/ into .claude/skills and .agents/skills, check the kit
 python backend/formcad_engine.py commands      # print the command catalogue as JSON
 python backend/formcad_engine.py info FILE     # JSON summary of a drawing, headless
 python backend/formcad_engine.py graph run FILE.graph   # solve a node graph without the interface
 ```
 
 Agent rules are in [`AGENTS.md`](AGENTS.md); two skill packs live in [`skills/`](skills): `formcad-harness` and `formcad-driving`. A checkout already names the server for Claude Code ([`.mcp.json`](.mcp.json)), Cursor ([`.cursor/mcp.json`](.cursor/mcp.json)) and Codex ([`.codex/config.toml`](.codex/config.toml)); open the folder in any of them after `./formCAD install`.
+
+**The agent dock** (Window, Agent Dock, or Ctrl+J; Cmd+J on a Mac) runs the real programs inside the window: a terminal, Claude Code, Codex, Cursor and Antigravity, each tab already connected to this window's engine over MCP with a token made for that tab and ended when the tab closes. A program that is not installed shows its install line. The dock sits at the bottom or at the right, and stays beside the home screen when that is open.
 
 ## Under the hood
 

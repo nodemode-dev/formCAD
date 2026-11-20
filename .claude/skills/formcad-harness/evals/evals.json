@@ -1,0 +1,72 @@
+{
+  "skill_name": "formcad-harness",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fresh-clone-to-green",
+      "prompt": "I just cloned FormCAD, get the engine booting and prove it works.",
+      "files": [],
+      "expected_behavior": [
+        "Runs ./formCAD doctor, install, selfcheck, boot, health_probe.py in order",
+        "Reports each exit code",
+        "Edits no tracked file to pass a check"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "kernel-absent",
+      "prompt": "3D commands say the kernel is missing; fix it without touching backend code.",
+      "files": [],
+      "expected_behavior": [
+        "Checks FORMCAD_KERNEL and kernel/venv",
+        "Runs ./formCAD install-kernel and GET /api/kernel/status",
+        "No change under backend/"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "add-command",
+      "prompt": "Add a new command to the engine for the agent surface.",
+      "files": [],
+      "expected_behavior": [
+        "Loads laws-and-logs, hand edits a new module under backend/app/cmd/commands",
+        "Adds @executes form, runs --selfcheck, logs in HASHOUT_LOG.md",
+        "Writes no tests"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "run the formcad engine and tell me if it boots",
+      "should_trigger": true
+    },
+    {
+      "query": "formcad selfcheck says mesher_record missing, why",
+      "should_trigger": true
+    },
+    {
+      "query": "freeze the formcad engine with pyinstaller",
+      "should_trigger": true
+    },
+    {
+      "query": "add a graph node plugin to formCAD",
+      "should_trigger": true
+    },
+    {
+      "query": "draw a 40 by 20 plate in FormCAD",
+      "should_trigger": false
+    },
+    {
+      "query": "register the formcad mcp server in my client",
+      "should_trigger": false
+    },
+    {
+      "query": "set up a new Vite project",
+      "should_trigger": false
+    },
+    {
+      "query": "explain how CAD kernels work",
+      "should_trigger": false
+    }
+  ]
+}

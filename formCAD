@@ -23,6 +23,9 @@ usage: ./formCAD [command] [options]
   desktop dev|build     run or bundle the desktop app
   doctor                check the toolchain, installs and ports
   mcp                   the engine's MCP server over stdio
+  agents sync|check|install [--dry-run]
+                        mirror skills into .claude/skills and .agents/skills and write agents/manifest.json;
+                        check the kit; register FormCAD with Claude Code, Codex, Cursor and Antigravity
   clean [--all]         remove build output (--all also venvs and node_modules)
   version               the version and build (also --version)
   help                  this text
@@ -53,6 +56,7 @@ case "$cmd" in
     esac ;;
   doctor) exec setup/doctor "$@" ;;
   mcp) exec setup/mcp "$@" ;;
+  agents) exec setup/agents "$@" ;;
   clean) exec setup/clean "$@" ;;
   version|--version|-V)
     printf 'FormCAD %s' "$(version)"
