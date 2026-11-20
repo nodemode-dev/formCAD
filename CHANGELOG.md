@@ -2,6 +2,11 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.1 · 2026-11-20
+
+- The worker build (`binaries` workflow) asks for the `macos-15` runner for Apple silicon. GitHub retired the macOS 14 image on 2026-11-02, so the first run lost that job before it started. The Apple silicon worker's recorded minimum is macOS 15, as the Intel one already was.
+- Nothing in the app itself changed since 0.19.0.
+
 ## 0.19.0 · 2026-11-19
 
 - The menu bar has 13 menus where it had 28: File, Edit, View, Insert, Format, Draw, Modify, Annotate, Model, Engineer, Tools, Window, Help. Annotate holds Dimension and Drawing; Model holds Sketch, Parametric, Part, Solid (the old Model menu), Assembly, Curve, Surface, Form, Mesh and Graph; Engineer holds Simulate, Generate, Manufacture, Produce, Routing and Electronics. Every command is where it was, one level down, and keeps its group in the command palette.
