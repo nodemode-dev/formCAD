@@ -2,6 +2,12 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.4 · 2026-11-20
+
+- The worker build moved to formcompiler, where the family's signing values are. This repository's `binaries` workflow is removed; formcompiler's `binaries` workflow checks this repository out and runs the same scripts. Nothing has to be set in this repository, and anything 0.19.3 asked to be set here is not needed.
+- `docs/RELEASE.md` says how to start it and lists the scripts formcompiler calls here by path.
+- Nothing in the app itself changed since 0.19.0.
+
 ## 0.19.3 · 2026-11-20
 
 - A publishing run of the worker build (`binaries` workflow, `publish` checked) checks every credential in its first few seconds: it names everything that is missing at once, checks that the release tag is free and that it can create a release in formai-binaries, and only then starts the four builds.
