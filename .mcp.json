@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "formcad": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/formCAD",
+      "args": ["mcp"]
+    }
+  }
+}
