@@ -53,7 +53,9 @@ export function studyPanel(): DockPanel {
       const empty = el('<p class="u8-note cm-empty"></p>');
       const typeSel = selectCtl('Study type', []);
       const mesherNote = el('<p class="u8-note sm-mesher"></p>');
-      sTree.body.append(list, empty, typeSel.el, buttons(button('New study', () => { void newStudy(); }, 'primary'), button('Delete', () => { void deleteSelected(); })), mesherNote);
+      const mesherRow = buttons(button('Install mesher', () => { void sim.installMesher(); }, 'primary'));
+      mesherRow.hidden = true;
+      sTree.body.append(list, empty, typeSel.el, buttons(button('New study', () => { void newStudy(); }, 'primary'), button('Delete', () => { void deleteSelected(); })), mesherNote, mesherRow);
 
       const sAdd = section('Study parts');
       const loadType = selectCtl('Load', LOAD_TYPES);
@@ -314,8 +316,9 @@ export function studyPanel(): DockPanel {
         fillSelect(typeSel.input as HTMLSelectElement, solvers.length ? solvers : [['static', 'Linear static']]);
         const m = sim.mesher;
         const msg = m.available === false ? `${t('The mesher is not installed')}${m.message ? `: ${m.message}` : ''}` : m.available ? `${t('Mesher')} ${m.version ?? ''}` : '';
-        setText(mesherNote, msg);
-        setClass(mesherNote, 'is-bad', m.available === false);
+        setText(mesherNote, m.installing ? `${m.message ?? t('Installing the mesher')} ${Math.round((m.progress ?? 0) * 100)}%` : msg);
+        setClass(mesherNote, 'is-bad', m.available === false && !m.installing);
+        setHidden(mesherRow, m.available !== false || !!m.installing);
       }
 
       function paintRun(): void {

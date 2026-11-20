@@ -238,7 +238,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **What it does.** Studies on parts and assemblies: materials that cite their sources, loads, fixtures, contacts and mesh controls, meshed by a separate Netgen-based mesher program, then linear static, modal, thermal, thermal stress and linear buckling on second-order elements, and first versions of nonlinear statics, contact, events, fatigue and laminates. Results as contour plots, deformed shapes, animation, probes, sections and reports. Flow: laminar duct flow on FormCAD's own solver, electronics cooling and injection fill estimates, with an optional link to a flow solver you install yourself.
 
-**How to start.** `simmaterial`, `simload`, `simfixture`, then `simstudy`, `simrun`.
+**How to start.** `simmaterial`, `simload`, `simfixture`, then `simstudy`, `simrun`. The mesher is a separate download, like the kernel: when the Studies panel says the mesher is not installed, press Install mesher there. The app fetches it from formai-binaries, checks every file against the record it ships and installs it; nothing is installed if a file differs.
 
 **Main commands.** `simmaterial`, `simload`, `simfixture`, `simcontact`, `simcontrol`, `simstudy`, `simrun`, `simreport`, `simprobe`, `toporun`, `topoapply`, `toposhape`. Routes: `POST /api/docs/{doc_id}/sim/studies/{sid}/mesh`, `.../run`, `GET /api/flow`.
 
