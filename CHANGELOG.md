@@ -2,6 +2,12 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.2 · 2026-11-20
+
+- The worker build (`binaries` workflow) can finish. Its last job stopped because the Windows build wrote the notices file with Windows line ends, so its record disagreed with the other three. The notices are written the same on every platform now.
+- Three more stops behind that one are fixed before they were reached. All four platforms install the worker from one committed lock on Python 3.12 (they were making four different locks, and the Mac builds were using Python 3.14). The pre-release check accepts a release of one worker while the other has none yet, and no longer asks for a checksum on a source that is a PyPI page.
+- Nothing in the app itself changed since 0.19.0.
+
 ## 0.19.1 · 2026-11-20
 
 - The worker build (`binaries` workflow) asks for the `macos-15` runner for Apple silicon. GitHub retired the macOS 14 image on 2026-11-02, so the first run lost that job before it started. The Apple silicon worker's recorded minimum is macOS 15, as the Intel one already was.
