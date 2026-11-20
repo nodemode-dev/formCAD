@@ -152,8 +152,8 @@ export class ToolRail {
     fly.style.visibility = 'hidden';
     setHidden(fly, false);
     const h = fly.offsetHeight;
-    fly.style.left = `${Math.round(r.right + 6)}px`;
-    fly.style.top = `${Math.round(Math.max(4, Math.min(r.top - 4, window.innerHeight - h - 4)))}px`;
+    fly.style.left = `${Math.round(r.right + 4)}px`;
+    fly.style.top = `${Math.round(Math.max(4, Math.min(r.top, window.innerHeight - h - 4)))}px`;
     fly.style.visibility = '';
     slot.node.setAttribute('aria-expanded', 'true');
     setClass(slot.node, 'is-open', true);

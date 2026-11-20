@@ -62,7 +62,7 @@ export const DEFAULT_PREFS: Prefs = {
   recentFileCount: 20,
   showCommandLine: true,
   showDock: true,
-  dockWidth: 300,
+  dockWidth: 288,
   units: 'mm',
   precision: 3,
   angleUnit: 'deg',

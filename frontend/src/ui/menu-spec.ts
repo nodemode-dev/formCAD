@@ -309,6 +309,23 @@ const help = (): MenuItem[] => section('Help', () => [
   'help', E('Open Sample Drawing', 'opensample'), E('Check for Updates...', 'checkupdates'), SEP, 'about',
 ]);
 
+const annotateMenu = (): MenuItem[] => [
+  S('Dimension', ...dimension()), S('Drawing', ...drawing()),
+];
+
+const modelMenu = (): MenuItem[] => [
+  S('Sketch', ...sketch()), S('Parametric', ...parametric()), SEP,
+  S('Part', ...partMenu()), S('Solid', ...model()), S('Assembly', ...assembly()), SEP,
+  S('Curve', ...curve()), S('Surface', ...surface()), S('Form', ...formMenu()), S('Mesh', ...meshMenu()), SEP,
+  S('Graph', ...graph()),
+];
+
+const engineerMenu = (): MenuItem[] => [
+  S('Simulate', ...simulate()), S('Generate', ...generate()), SEP,
+  S('Manufacture', ...manufacture()), S('Produce', ...produce()), SEP,
+  S('Routing', ...routing()), S('Electronics', ...electronics()),
+];
+
 export function buildMenus(recentCount: () => number): MenuDef[] {
   return [
     { label: 'File', items: () => file(recentCount) },
@@ -318,24 +335,9 @@ export function buildMenus(recentCount: () => number): MenuDef[] {
     { label: 'Format', items: format },
     { label: 'Draw', items: draw },
     { label: 'Modify', items: modify },
-    { label: 'Dimension', items: dimension },
-    { label: 'Parametric', items: parametric },
-    { label: 'Sketch', items: sketch },
-    { label: 'Part', items: partMenu },
-    { label: 'Model', items: model },
-    { label: 'Curve', items: curve },
-    { label: 'Surface', items: surface },
-    { label: 'Form', items: formMenu },
-    { label: 'Mesh', items: meshMenu },
-    { label: 'Assembly', items: assembly },
-    { label: 'Manufacture', items: manufacture },
-    { label: 'Simulate', items: simulate },
-    { label: 'Produce', items: produce },
-    { label: 'Generate', items: generate },
-    { label: 'Routing', items: routing },
-    { label: 'Electronics', items: electronics },
-    { label: 'Drawing', items: drawing },
-    { label: 'Graph', items: graph },
+    { label: 'Annotate', items: annotateMenu },
+    { label: 'Model', items: modelMenu },
+    { label: 'Engineer', items: engineerMenu },
     { label: 'Tools', items: tools },
     { label: 'Window', items: windowMenu },
     { label: 'Help', items: help },

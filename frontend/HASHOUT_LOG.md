@@ -2,6 +2,50 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## E27, v0.19.0 the tool rail and the panel column take formvis's measurements, and the column collapses to a strip (styles/shell.css, styles/dock.css, styles/tokens.css, ui/dock.ts, ui/tool-rail.ts, ui/prefs.ts)
+
+The rail was grouped like formvis in 0.18.0 but not sized or drawn like it, and the right column had none of formvis's chrome. Both were measured from computed styles with formvis 2.3.6 and formCAD running side by side at 1440 by 900.
+
+Rail. 52 px wide (was 44; `--cv-rail-w`), formvis's accent-tinted gradient over the rail surface, no gap between tools. A tool is 34 by 28 with radius 7 and a 1.75 stroke icon (was 36 by 32, radius 8, 1.6). The active tool is 32 wide with radius 8, the soft accent fill, the accent line and a faint top highlight (`--rail-active-highlight`, the one token added). A tool with variants carries a 4 px dot in its corner where it had a triangle. The flyout is a glass card: padding 6, radius 12, 34 px rows, 14 px labels, 24 px key caps, opening 4 px beside the button and level with it. The flyout's title row stays; it is formCAD's own. The 2 px focus outline stays, although formvis draws none on tools: it is an accessibility state.
+
+Column. 288 px by default (was 300; `--cv-panel-w`, the `dockWidth` preference default and the grip's double-click). Group heads are 40 px, the panel name sits in formvis's tab chip, the fold chevron is a 22 px round button, body padding is 6/10/8, and the hairlines use formvis's line colours. New: the column collapses to a 46 px strip of 34 px icon buttons (a button on the first group head collapses it, a button on top of the strip expands it); a strip button opens its panel in a 288 px glass flyout beside the strip. The panel's own node is moved into the flyout and back, never rebuilt, so its state and its scroll survive. The choice is stored in `formCAD.dockCollapsed`. Asking for a panel from a menu expands the column first.
+
+Known and not solved here: the column holds every panel group of every workspace, 49 of them, one under another, so the strip lists 49 icons and scrolls. formvis's column holds about nine. The fix is to show a panel group only in the workspaces it belongs to, which needs a workspace-to-panel table that does not exist yet; it is the next step, and a decision for the owner on which panels each workspace shows.
+
+Not ported: formvis's dragging and merging of groups and the extra buttons on its group heads.
+
+Measured with the processor slowed 4 times: no panel rebuilt in any path, 49 groups before and after each; layout shift 0.00007 on editor load; opening a rail flyout and picking a tool moves only the command line prompt (0.0015, as before); folding a group and collapsing the column move what the click asks to move. Looked at in Studio Dark, AMOLED Black and Light. Design-language audit: 0 FAIL, 67 WARN, as before.
+
+## H26, v0.19.0 the home is a port of formdeck's home, not an approximation of it (ui/home.ts, styles/home.css, ui/shell-part1.ts)
+
+The home written in 0.17.0 took formdeck's layout by eye. On the owner's Mac it did not look like formdeck: a 320 px side panel against formdeck's 232, flat boxes, four fixed columns of wide tiles, section links pushed to the far right, a dashed empty box, and the status bar still showing under it. This entry is the port, measured against formdeck running beside it.
+
+Side panel. 232 px by default; a 6 px strip on its edge resizes it between 180 and 420 px and collapses it below 120; a 14 by 56 px tab on the edge hides and shows it, and when it is hidden the tab sits alone on the window's left edge and the content re-centres, as in formdeck. Width and hidden state are stored (`formCAD.homeNav`, `formCAD.homeNavHidden`, under the prefix Reset Settings clears) and applied before the home is mounted. Items, the active item, count badges, section titles, the separator and the pinned foot carry formdeck's measurements and states on formCAD's tokens.
+
+Content. Padding 32/40/56; the hero has formdeck's dashed line, faint accent glow, raised icon tile, mono format tags and 36 px actions; "See all" and the notes sit beside each section title. One card class, `cv-card`, for demos, templates, recent files, projects and outputs, in grids that fill the width from 208 px columns. Templates have category chips (Drawing, Model, Graph) and a search box, on Start and on the Templates page, kept in step; filtering hides cards in place. Recent holds its place with a skeleton card that becomes a same-size "No drawings yet" card, so nothing jumps. The narrow tab row appears below 720 px (it was 1100).
+
+Window. While the home is open, `body.cv-home-open` hides the status bar and the home reaches the bottom of the window. The bar keeps its box and is only made invisible, so the editor underneath does not move when the home opens or closes. The title bar stays: it carries the window controls and the drag area.
+
+Left out because formCAD has no data for them: formdeck's trash, the per-card menu (pin, hide, delete with undo), its agents group, its template preview. formdeck's two head buttons touch; formCAD keeps its 8 px gap.
+
+formdeck has no minirail: no rail class anywhere but its preferences dialog. The nearest thing on its home is the hide and show tab, which is ported.
+
+Measured with the processor slowed 4 times: layout shift 0 on a cold load, a hard reload, switching between the five sections, and opening the home over a drawing and going back; 0.00003 on opening a demo, from the editor; no node added or removed when the panel collapses. Collapsing or expanding the panel moves the content (0.306 when the click comes from a script), which is the re-centring formdeck does and the direct answer to the click. Looked at in Studio Dark, AMOLED Black and Light, at 1440, 1920, 900 and 700 px wide.
+
+## M25, v0.19.0 the menu bar has 13 menus, not 28 (ui/menu-spec.ts)
+
+The owner's first look at the Mac build: the native menu bar ran off both sides of the screen, with most titles cut to two letters ("Mo...", "Di...", "Pa..."). `buildMenus` returned 28 top-level menus, one per command section, which is a list of the engine's modules and not a menu bar.
+
+It now returns 13: File, Edit, View, Insert, Format, Draw, Modify, Annotate, Model, Engineer, Tools, Window, Help. The first seven and the last three are unchanged. Three new menus hold the other 18 as submenus under their old names, so nothing a user knew is renamed, only moved one level down:
+
+- Annotate: Dimension, Drawing.
+- Model: Sketch, Parametric; Part, Solid, Assembly; Curve, Surface, Form, Mesh; Graph. "Solid" is the old Model menu (direct solid modelling), renamed only because its parent now carries that word.
+- Engineer: Simulate, Generate; Manufacture, Produce; Routing, Electronics.
+
+Rules kept: every section function is untouched and still calls `section(name, ...)`, so each engine command keeps its group for the command palette and the shortcut list; the new menus only wrap them in `S(label, ...items)`. Checked by bundling the file as it was and as it is and comparing: 28 against 13 top-level menus, the same 646 leaf items, the same 412 engine commands with the same groups, the same deepest nesting. `NativeMenus` and the in-window `MenuBar` read the list generically, so neither changed; with 13 entries the in-window bar no longer needs its "More" overflow at ordinary widths.
+
+Not done, on purpose: hiding menus by workspace. It would make the bar shorter still in Drafting, but a command that vanishes when the workspace changes is harder to find than one that is one level down.
+
 ## R24, v0.18.0 the display pull follows the active document (canvas/renderer.ts)
 
 Found while chasing the open defect below; it is a real fault of its own and not that defect's cause. `Renderer.pull` read the document id once, before its loop. When the active document changed while a display request for the earlier one was still waiting on a slow engine, `setDocument` could only queue a second pass; the loop then saw that the id no longer matched, stopped, and dropped the queued pass. Nothing was fetched for the new document and its pending fit never ran, until some later engine event started a pull. A failed request dropped a queued pass the same way.
