@@ -96,7 +96,7 @@ python backend/formcad_engine.py info FILE     # JSON summary of a drawing, head
 python backend/formcad_engine.py graph run FILE.graph   # solve a node graph without the interface
 ```
 
-Agent rules are in [`AGENTS.md`](AGENTS.md); two skill packs live in [`skills/`](skills): `formcad-harness` and `formcad-driving`.
+Agent rules are in [`AGENTS.md`](AGENTS.md); two skill packs live in [`skills/`](skills): `formcad-harness` and `formcad-driving`. A checkout already names the server for Claude Code ([`.mcp.json`](.mcp.json)), Cursor ([`.cursor/mcp.json`](.cursor/mcp.json)) and Codex ([`.codex/config.toml`](.codex/config.toml)); open the folder in any of them after `./formCAD install`.
 
 ## Under the hood
 
@@ -152,7 +152,7 @@ Set `FORMCAD_DATA_DIR`, `FORMCAD_PORT` or `FORMCAD_KERNEL` in the shell to move 
 
 `frontend/` the interface · `backend/` the engine · `kernel/` the OpenCascade worker · `mesher/` the Netgen mesher · `src-tauri/` the desktop shell · `setup/` install and boot scripts · `fixtures/` sample documents · `skills/` agent skill packs · `docs/` the manual and format contracts
 
-Docs: [`.docs/wiki`](.docs/wiki) · Manual: [`docs/MANUAL.md`](docs/MANUAL.md) · Agents: [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md) · Contributing: [`BRANCHING.md`](BRANCHING.md)
+Docs: [`.docs/wiki`](.docs/wiki) · Manual: [`docs/MANUAL.md`](docs/MANUAL.md) · Agents: [`CLAUDE.md`](CLAUDE.md), [`AGENTS.md`](AGENTS.md) · Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md), [`BRANCHING.md`](BRANCHING.md) · Conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · Security: [`SECURITY.md`](SECURITY.md)
 
 <br>
 
