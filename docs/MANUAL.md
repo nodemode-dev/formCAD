@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.19.4. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.19.5. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
