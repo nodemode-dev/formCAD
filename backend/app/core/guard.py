@@ -105,6 +105,10 @@ def _scoped(given: str | None, path: str, method: str = "") -> bool:
     return False
 
 
+def is_run_token(given: str | None) -> bool:
+    return bool(given) and any(hmac.compare_digest(given.encode("utf-8"), token.encode("utf-8")) for token in list(RUN_TOKENS))
+
+
 class Guard:
     def __init__(self, app, origins: list[str]) -> None:
         self.app = app
@@ -156,6 +160,10 @@ class Guard:
             await self.deny(scope, send, 403, 4403, "FormCAD answers this computer's own window and agents only")
             return
         if needs_token(scope.get("path", "")) and not self.token_ok(scope, headers):
+            query = parse_qs(scope.get("query_string", b"").decode("latin-1")) if scope["type"] == "websocket" else {}
+            if is_run_token(headers.get(HEADER)) or is_run_token((query.get("token") or [None])[0]):
+                await self.deny(scope, send, 403, 4403, "This token is a macro's or an agent tab's and is good only for its own routes")
+                return
             await self.deny(scope, send, 401, 4401, "A valid X-FormCAD-Token is required")
             return
         mark = CALLER.set(scope.get("formcad_caller", ""))
