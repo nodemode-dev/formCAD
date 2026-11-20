@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## E27, v0.19.0 the tool rail and the panel column take formvis's measurements, and the column collapses to a strip (styles/shell.css, styles/dock.css, styles/tokens.css, ui/dock.ts, ui/tool-rail.ts, ui/prefs.ts)
+
+The rail was grouped like formvis in 0.18.0 but not sized or drawn like it, and the right column had none of formvis's chrome. Both were measured from computed styles with formvis 2.3.6 and formCAD running side by side at 1440 by 900.
+
+Rail. 52 px wide (was 44; `--cv-rail-w`), formvis's accent-tinted gradient over the rail surface, no gap between tools. A tool is 34 by 28 with radius 7 and a 1.75 stroke icon (was 36 by 32, radius 8, 1.6). The active tool is 32 wide with radius 8, the soft accent fill, the accent line and a faint top highlight (`--rail-active-highlight`, the one token added). A tool with variants carries a 4 px dot in its corner where it had a triangle. The flyout is a glass card: padding 6, radius 12, 34 px rows, 14 px labels, 24 px key caps, opening 4 px beside the button and level with it. The flyout's title row stays; it is formCAD's own. The 2 px focus outline stays, although formvis draws none on tools: it is an accessibility state.
+
+Column. 288 px by default (was 300; `--cv-panel-w`, the `dockWidth` preference default and the grip's double-click). Group heads are 40 px, the panel name sits in formvis's tab chip, the fold chevron is a 22 px round button, body padding is 6/10/8, and the hairlines use formvis's line colours. New: the column collapses to a 46 px strip of 34 px icon buttons (a button on the first group head collapses it, a button on top of the strip expands it); a strip button opens its panel in a 288 px glass flyout beside the strip. The panel's own node is moved into the flyout and back, never rebuilt, so its state and its scroll survive. The choice is stored in `formCAD.dockCollapsed`. Asking for a panel from a menu expands the column first.
+
+Known and not solved here: the column holds every panel group of every workspace, 49 of them, one under another, so the strip lists 49 icons and scrolls. formvis's column holds about nine. The fix is to show a panel group only in the workspaces it belongs to, which needs a workspace-to-panel table that does not exist yet; it is the next step, and a decision for the owner on which panels each workspace shows.
+
+Not ported: formvis's dragging and merging of groups and the extra buttons on its group heads.
+
+Measured with the processor slowed 4 times: no panel rebuilt in any path, 49 groups before and after each; layout shift 0.00007 on editor load; opening a rail flyout and picking a tool moves only the command line prompt (0.0015, as before); folding a group and collapsing the column move what the click asks to move. Looked at in Studio Dark, AMOLED Black and Light. Design-language audit: 0 FAIL, 67 WARN, as before.
+
 ## H26, v0.19.0 the home is a port of formdeck's home, not an approximation of it (ui/home.ts, styles/home.css, ui/shell-part1.ts)
 
 The home written in 0.17.0 took formdeck's layout by eye. On the owner's Mac it did not look like formdeck: a 320 px side panel against formdeck's 232, flat boxes, four fixed columns of wide tiles, section links pushed to the far right, a dashed empty box, and the status bar still showing under it. This entry is the port, measured against formdeck running beside it.

@@ -89,6 +89,7 @@
   --accent-glow: color-mix(in srgb, var(--accent-color) calc(30% * var(--accent-intensity)), var(--surface-2));
   --accent-ink: color-mix(in srgb, var(--accent-color) calc(80% * var(--accent-intensity)), var(--text-primary));
   --accent-wash: color-mix(in srgb, var(--accent-color) calc(10% * var(--accent-intensity)), transparent);
+  --rail-active-highlight: rgba(255, 255, 255, 0.06);
 
   --ok: #22c55e;
   --ok-soft: #86efac;
@@ -130,8 +131,8 @@
   --cv-tabs-h: 34px;
   --cv-status-h: 28px;
   --cv-cmdline-h: 96px;
-  --cv-rail-w: 44px;
-  --cv-panel-w: 300px;
+  --cv-rail-w: 52px;
+  --cv-panel-w: 288px;
   --cv-traffic-w: 78px;
   --cv-row-h: 32px;
 
