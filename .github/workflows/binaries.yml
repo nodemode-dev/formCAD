@@ -73,7 +73,8 @@ jobs:
           python-version: '3.12'
       - name: Install and freeze the program
         run: |
-          setup/install_${KIND}
+          python -m venv "$KIND/venv"
+          FORMCAD_LOCKED=1 setup/install_${KIND}
           setup/freeze_${KIND}
       - name: Stage the archive folder
         run: |
@@ -118,9 +119,8 @@ jobs:
         run: |
           T=release/formCAD-binaries/tools
           case "$KIND" in kernel) rec=occt-licence.json ;; mesher) rec=mesher-licence.json ;; esac
-          py="$KIND/venv/bin/python"; [ -x "$py" ] || py="$KIND/venv/Scripts/python.exe"
           python $T/stage_notices.py --kind "$KIND" --stage "$RUNNER_TEMP/stage/$FOLDER" --release "$RELEASE" --triple "$TRIPLE"
-          "$py" release/sbom/make_lock.py "$RUNNER_TEMP/out/requirements.lock"
+          cp "$KIND/requirements_$KIND.lock" "$RUNNER_TEMP/out/requirements.lock"
           mkdir -p "$RUNNER_TEMP/rec"
           cp "release/formCAD-binaries/records/$rec" "$RUNNER_TEMP/rec/$rec"
           python $T/update_record.py --kind "$KIND" --record "$RUNNER_TEMP/rec/$rec" --triple "$TRIPLE" \
@@ -172,7 +172,7 @@ jobs:
           python $T/pack_release.py check --kind "$KIND" --record "dist/$rec" --out dist
           python $T/pack_release.py app-record --kind "$KIND" --record "dist/$rec" --out "dist/app-$rec"
           cp "dist/$rec" "release/formCAD-binaries/records/$rec"
-          python $T/preflight.py --records release/formCAD-binaries/records --published
+          python $T/preflight.py --records release/formCAD-binaries/records --published --kind "$KIND"
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ inputs.kind }}-${{ inputs.release }}

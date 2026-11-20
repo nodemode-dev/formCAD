@@ -23,8 +23,8 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 ## Kernel and mesher
 
 1. Run `release/dry_run` first (below).
-2. Run the `binaries` workflow with the kind and release number (`8.0.1`, `8.0.1-2`, `6.2.2608`). Four native runners build and sign, the assemble job merges the records, pins the upstream sources, writes `SHA256SUMS`, `RELEASE_NOTES.md` and the source asset, and with `publish` checked creates a draft release `occt-<release>` or `mesher-<release>`. An existing tag stops the run; a published tag is never replaced.
-3. Copy `dist/app-<record>.json` over `backend/app/data/kernel-licence.json` (or `mesher-licence.json`) in FormCAD, and the merged record over `release/formCAD-binaries/records/` (and over `formcad/records/` in formai-binaries). `tools/preflight.py --app-data backend/app/data --published` must pass in both repositories.
+2. Run the `binaries` workflow with the kind and release number (`8.0.1`, `8.0.1-2`, `6.2.2608`). Four native runners install the worker from its committed lock (`kernel/requirements_kernel.lock`, `mesher/requirements_mesher.lock`) on Python 3.12, build and sign, the assemble job merges the records, pins the upstream sources, writes `SHA256SUMS`, `RELEASE_NOTES.md` and the source asset, and with `publish` checked creates a draft release `occt-<release>` or `mesher-<release>`. An existing tag stops the run; a published tag is never replaced.
+3. Copy `dist/app-<record>.json` over `backend/app/data/kernel-licence.json` (or `mesher-licence.json`) in FormCAD, and the merged record over `release/formCAD-binaries/records/` (and over `formcad/records/` in formai-binaries). `tools/preflight.py --app-data backend/app/data --published` must pass in both repositories; while only one of the two workers has been released, add `--kind kernel` or `--kind mesher`.
 4. Read the `needs_review` list in the record's `licence_gates` and settle every entry before publishing (see Open decisions).
 5. Keep the source asset on the release for at least three years after the last distribution.
 
