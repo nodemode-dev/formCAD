@@ -309,12 +309,12 @@ def run_install(rec: dict, release: str, target: str) -> None:
     try:
         root = kernel_root()
         root.mkdir(parents=True, exist_ok=True)
-        work = Path(tempfile.mkdtemp(prefix=".partial-", dir=root))
+        work = Path(tempfile.mkdtemp(prefix=".p-", dir=root))
         try:
             archive = work / "kernel.tar.gz"
             download(str(rec["url"]).format(release=release, triple=target), archive)
             _set("Checking every file.", 0.92)
-            unpacked = work / "unpacked"
+            unpacked = work / "u"
             unpacked.mkdir()
             with tarfile.open(archive) as bundle:
                 bundle.extractall(unpacked, filter="data")

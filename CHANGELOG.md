@@ -2,6 +2,12 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.5 · 2026-11-20
+
+- The app can install its 3D kernel. Kernel 8.0.1 (OpenCascade 8.0.1) is published in formai-binaries for Apple silicon, Intel Macs, Windows and Linux, and the app now carries the record of that release, so "Install kernel" downloads it, checks every file and installs it. Before, the app said no kernel was published.
+- On Windows the install unpacks into a shorter temporary folder, so a long user name does not push a file past the system's path limit.
+- The mesher is not released yet; meshing stays unavailable until it is.
+
 ## 0.19.4 · 2026-11-20
 
 - The worker build moved to formcompiler, where the family's signing values are. This repository's `binaries` workflow is removed; formcompiler's `binaries` workflow checks this repository out and runs the same scripts. Nothing has to be set in this repository, and anything 0.19.3 asked to be set here is not needed.
