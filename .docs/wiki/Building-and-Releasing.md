@@ -27,6 +27,6 @@ A new dependency that must be bundled is added to the requirements file and to t
 
 ## Releasing the kernel and mesher
 
-Run `release/dry_run`, then the `binaries` workflow by hand with the release number. Copy the resulting record over the licence data file in FormCAD. Settle every entry in the record's `needs_review` list before publishing. Keep the source asset on the release for at least three years after the last distribution.
+Run `release/dry_run`, then the `binaries` workflow in formcompiler by hand with the release number (it checks this repository out, builds and signs the worker on four runners and opens a draft release in formai-binaries). Copy the resulting record over the licence data file in FormCAD. Settle every entry in the record's `needs_review` list before publishing. Keep the source asset on the release for at least three years after the last distribution.
 
 Nothing is pushed or published by the repository's files; the owner does that.

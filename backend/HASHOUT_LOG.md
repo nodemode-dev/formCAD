@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## WB5 v0.19.4 the worker build moved to formcompiler (.github/workflows/binaries.yml removed, docs/RELEASE.md, .docs/wiki/Building-and-Releasing.md, release/formCAD-binaries/README.md)
+
+WB4 made this repository's `binaries` workflow ask for the family's signing values as repository secrets. That was the wrong direction: the family's rule, written in formcompiler's own rules file, is that signing identities and keys are formcompiler secrets only and no app repository is ever asked for one. The owner said so the same evening ("update formcompiler to include the binaries ci (it should be there anyways)"). formcompiler v0.19.0 carries the workflow now, and this repository's copy is deleted so there is one.
+
+What moved and what stayed. formcompiler owns the runners, the values, the keychain and notary key, Windows signing with its own tool, and the draft release in formai-binaries with its release credential. Everything that knows what a worker is stayed here and is called by path from there: `setup/install_<kind>` with `FORMCAD_LOCKED=1`, `setup/freeze_<kind>`, `release/sign/macos_sign.sh` (`sign`, `notarize-folder`), the tools in `release/formCAD-binaries/tools/`, `release/sbom/formcad_sbom.py`, the two lock files and the records. docs/RELEASE.md lists them so a rename here is known to be a change there. Everything WB3 and WB4 fixed in those scripts still applies; only the WB4 items that lived in the workflow file itself (the `credentials` job, the secret names, the Azure action, the signature step, the handshake step) are gone from here, and formcompiler's workflow has its own form of each.
+
+Two differences from WB4 on the formcompiler side, by its house practice: on Windows only the worker's own `.exe` is signed, not every library beside it; and `BINARIES_REPO_TOKEN` is not used, the release credential is formcompiler's GitHub App installed on formai-binaries.
+
+`release/sign/windows_sign.ps1` is no longer called by any workflow. It stays as the certificate-file route for a person signing by hand.
+
+A second gain: formcompiler is a public repository, so worker builds there do not draw on the private repository's Actions minutes.
+
+Not verified: formcompiler's workflow has not run. Until its first run completes, no worker has been signed, notarized or released by anything.
+
 ## WB4 v0.19.3 the publishing run checks its credentials first, and the signing path is made to match what exists (.github/workflows/binaries.yml, setup/lib.sh, setup/freeze_kernel, setup/freeze_mesher, release/sign/macos_sign.sh, release/sign/windows_sign.ps1, docs/RELEASE.md)
 
 Run 3 of the `binaries` workflow (kernel 8.0.1, `publish` checked for the first time, 2026-11-19 about 21:32 EST) lost three of its four build jobs in 2 to 6 seconds at the "Refuse to publish without signing credentials" steps; Linux built. Nothing was wrong with the builds: the formCAD repository has no signing secrets. The family's Apple and Azure values live in formcompiler's `signing` environment, and a secret of one repository cannot be read from another. They have to be set again here.
