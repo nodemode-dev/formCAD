@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+fc_venv
+cd "$FORMCAD_ROOT"
+exec python setup/agents.py "$@"

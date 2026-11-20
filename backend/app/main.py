@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core import config, guard, runtime
 from app.routers.events import hub
-from app.services import kernel
+from app.services import kernel, terminal
 
 mimetypes.add_type("text/javascript", ".js")
 mimetypes.add_type("text/javascript", ".mjs")
@@ -88,6 +88,7 @@ ROUTERS = [
     ("app.routers.toolbox", "/api"),
     ("app.routers.inspection", "/api/docs"),
     ("app.routers.automation", "/api/automation"),
+    ("app.routers.terminal", "/api"),
     ("app.demos.router", "/api/demos"),
     ("app.routers.mcp", ""),
 ]
@@ -100,8 +101,10 @@ async def lifespan(_: FastAPI):
     guard.write_token(data)
     loop = asyncio.get_running_loop()
     hub.bind(loop)
+    terminal.bind(loop)
     loop.run_in_executor(None, kernel.probe)
     yield
+    terminal.close_all()
     kernel.stop()
     runtime.stop_logging()
     runtime.release(data)

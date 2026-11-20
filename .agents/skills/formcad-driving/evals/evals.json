@@ -1,0 +1,70 @@
+{
+  "skill_name": "formcad-driving",
+  "evals": [
+    {
+      "id": 1,
+      "name": "part-and-mass",
+      "prompt": "Model a 40 x 20 x 10 mm block in FormCAD and tell me its volume.",
+      "files": [],
+      "expected_behavior": [
+        "Uses template part, cmd_partsketch, cmd_partsketchdone, cmd_featextrude, cmd_bodymass",
+        "Reports 8000 mm3",
+        "Reads feature state after each step"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "refused-path",
+      "prompt": "Export my drawing to /home/me/out.pdf.",
+      "files": [],
+      "expected_behavior": [
+        "Hits the granted-folder refusal, reports it",
+        "Asks the user to grant the folder, does not edit automation.json itself"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "drawing-views",
+      "prompt": "Make a three view drawing of my part.",
+      "files": [],
+      "expected_behavior": [
+        "Opens the part, passes layout Layout1 to cmd_viewbase, adds projected and section views",
+        "Exports a PDF inside a granted folder, no source.doc"
+      ]
+    }
+  ],
+  "trigger_evals": [
+    {
+      "query": "model a bracket in formcad and export a pdf",
+      "should_trigger": true
+    },
+    {
+      "query": "connect claude to the formcad mcp server",
+      "should_trigger": true
+    },
+    {
+      "query": "run a .graph file headless in formcad",
+      "should_trigger": true
+    },
+    {
+      "query": "make a sheet metal flat pattern dxf in formcad",
+      "should_trigger": true
+    },
+    {
+      "query": "install formcad and run its doctor",
+      "should_trigger": false
+    },
+    {
+      "query": "add a router to the formcad backend",
+      "should_trigger": false
+    },
+    {
+      "query": "draw a part in some other cad program",
+      "should_trigger": false
+    },
+    {
+      "query": "write a python script to parse dxf",
+      "should_trigger": false
+    }
+  ]
+}

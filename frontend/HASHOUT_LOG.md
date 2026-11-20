@@ -2,6 +2,22 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## AD1, v0.20.0 the agent dock: the family's shared dock module 2.2.0 (dock/, agent-dock.ts, io/terminal-api.ts, styles/agent-dock.css, index.html, main.ts, ui/menu-spec.ts)
+
+`frontend/src/dock/` is formvis's folder at 9480a07, copied with `cp` and never edited here: 16 files, every hash equal to its `MANIFEST.json` (`./formCAD agents check` fails on a changed, missing or extra file).
+
+Names. formCAD already says "dock" for its right-hand panel column (`ui/dock.ts`, `styles/dock.css`, `registerDockPanel`, `dockWidth`, `formCAD.dockCollapsed`, the command `toggle-dock` "Side Dock"). None of that changed. The new feature is the "agent dock" in formCAD's own files: `agent-dock.ts`, `styles/agent-dock.css`, the commands `agent-dock`, `agent-dock-terminal`, `agent-dock-claude`, the storage key `formCAD.agentDock`, the grid variables `--cv-agent-h` and `--cv-agent-w`. The module's own names (`ft-dock*`, `data-ft-dock*`, `--dock-*`, `--ft-dock-size`) clash with nothing in formCAD; its `.is-on` is scoped under `.ft-dock`.
+
+Adapter (`agent-dock.ts`). Tabs: shell, Claude Code, Codex, Cursor, Antigravity (`DockAdapter<'antigravity'>`). No Chat (formCAD has no chat pane, and the module's Chat needs an engine side that was not ported), no Activity (no feed), no consent or stored choice (formCAD gates outside agents by token and trust class). Errors by status code: 0, 502, 503, 504 unreachable; 401, 403 refused; 424 not installed; 409 busy; a bare 404 or 405 old engine. Classes map to `cv-tt-btn`, `cv-btn`, `cv-btn cv-btn-primary`, `cv-input`, `cv-note`. Theme changes come from `nm:ui-settings-changed`.
+
+Layout. The dock root is mounted once, at shell mount and before the reveal, as a child of `.cv-app` before the status bar. `.cv-app` gains a row (`--cv-agent-h`) between the main area and the status bar and a column (`--cv-agent-w`), both 0 px until `data-ft-dock="open"`, so opening, closing and resizing only change two grid tracks. Chrome-hidden mode hides the dock with the rest of the chrome. Tokens: `--dock-*` map onto formCAD's surfaces, lines, text, accent, danger, spacing, radius and font tokens in `styles/agent-dock.css`, linked after every other sheet; the module's `dock.css` is linked last.
+
+The home. `.cv-home` is fixed over the window; while the agent dock is open the home ends at the dock's edge (bottom or right) and the status bar under a bottom dock stays visible, so the dock can be used with the home open. Closed, the home is as before.
+
+Menu: Window, Agent Dock (after Menu Bar), checked while open. The chord is the module's own, Ctrl+J (Cmd+J), which was free; it is not also bound in the command registry, so a rebinding in Preferences cannot disagree with it.
+
+Checked in headless Chrome against the built interface served by the engine, CPU throttled 4 times: Ctrl+J opened the dock at 280 px with the home showing; a terminal tab opened and `echo ui-$((40+2))-ok` printed `ui-42-ok`; the head showed new, Claude Code, Antigravity (found by a stand-in), more, restart, side, hide; More listed Codex, Cursor and Antigravity; Ctrl+J closed it. A MutationObserver on `.cv-app`'s children saw no node added or removed in open and close, the other children were the same nodes, and `.cv-main`'s children saw 0 mutations. Console: no errors. `tsc` with the module's strict flags passes on `dock/`, `agent-dock.ts` and `io/terminal-api.ts`. Not checked: the right-hand side, light themes, macOS and Windows webviews.
+
 ## SM28, v0.19.6 the Studies panel can install the mesher (p13/study-panel.ts, p13/sim-store.ts)
 
 The mesher worker is published (formai-binaries, `mesher-6.2.2608`) and the engine could always install it, but nothing in the window asked it to: the Studies panel only said "The mesher is not installed". A row with one button, Install mesher, now sits under that note.

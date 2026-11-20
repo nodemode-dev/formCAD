@@ -43,3 +43,9 @@ A plugin folder has `plugin.json` with a hash for every file. Nothing is importe
 ## Agents over MCP
 
 Register the server with the line from `GET /api/automation/status`. Tools are named `formcad_*` plus one `cmd_<id>` per command that takes arguments, each with read-only, destructive and idempotent hints. Results are text plus structured content. Agents get the lower trust class, always.
+
+`./formCAD agents install` registers the server (`./formCAD mcp`) with Claude Code, Codex, Cursor and Antigravity for the current user; `--dry-run` says what it would change. A second run changes nothing, every other entry in each program's settings is kept, and a server named `formcad` that FormCAD did not write is left alone. `./formCAD agents sync` copies `skills/` into `.claude/skills` and `.agents/skills` and writes `agents/manifest.json`; `./formCAD agents check` checks all of it. Windows has no `agents` command yet.
+
+## The agent dock
+
+Window, Agent Dock (Ctrl+J, Cmd+J on a Mac) opens a panel at the bottom or the right of the window with a terminal and tabs that run Claude Code, Codex, Cursor and Antigravity. Each program tab reaches this window's engine at `POST /mcp` with a token made for that tab: it is good only for `/mcp`, it is passed in the program's environment (Antigravity reads it from `.agents/mcp_config.json` in its own folder under the data folder, mode 0600), never on its command line, and it stops working when the tab closes. A plain terminal gets no token. Tabs start in the projects folder. The panel is the shared agent dock module 2.2.0 of the form family, `frontend/src/dock/`, kept byte for byte.

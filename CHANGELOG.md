@@ -2,6 +2,13 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.20.0 · 2026-11-20
+
+- The agent dock: Window, Agent Dock (Ctrl+J, Cmd+J on a Mac) opens a panel at the bottom or the right of the window with a terminal and tabs that run the real Claude Code, Codex, Cursor and Antigravity, each already connected to this window's engine over MCP with a token made for that tab and ended when the tab closes. A program that is not installed shows the line that installs it. While the home screen is open the dock stays beside it and the home makes room. It is the form family's shared agent dock module 2.2.0, copied unchanged.
+- `./formCAD agents install [--dry-run]` registers FormCAD's MCP server with Claude Code, Codex, Cursor and Antigravity for the current user, keeping every other entry and leaving alone a `formcad` server it did not write. `./formCAD agents sync` copies `skills/` into `.claude/skills` and `.agents/skills` and writes `agents/manifest.json`; `./formCAD agents check` checks the kit.
+- New dependencies: `@xterm/xterm` 6.0.0 and `@xterm/addon-fit` 0.11.0 (MIT), `ptyprocess` 0.7.0 (ISC, macOS and Linux) and `pywinpty` 3.0.5 (MIT, Windows). The frozen engine collects the pseudo-terminal library.
+- Not in this version: a Chat tab, and an `agents` command on Windows.
+
 ## 0.19.6 · 2026-11-20
 
 - Simulation can mesh. Mesher 6.2.2608 (Netgen) is published in formai-binaries for Apple silicon, Intel Macs, Windows and Linux, and the app carries the record of that release. The Studies panel has an Install mesher button where it used to say only that the mesher was not installed; it downloads the mesher, checks every file and installs it, showing progress.

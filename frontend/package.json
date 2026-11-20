@@ -1,7 +1,7 @@
 {
   "name": "formcad",
   "private": true,
-  "version": "0.19.6",
+  "version": "0.20.0",
   "description": "FormCAD · drafting and modelling in the NodeMode style",
   "license": "Apache-2.0",
   "type": "module",
@@ -20,6 +20,8 @@
     "@fontsource/jetbrains-mono": "5.3.0",
     "@tauri-apps/api": "2.12.4",
     "@tauri-apps/plugin-dialog": "2.8.4",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
     "mediabunny": "1.65.0",
     "three": "0.186.1",
     "three-gpu-pathtracer": "0.0.27",
