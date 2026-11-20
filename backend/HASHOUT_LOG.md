@@ -2,6 +2,14 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## WB2 v0.19.1 the worker build asks for a Mac runner that still exists (.github/workflows/binaries.yml)
+
+The first run ever of the `binaries` workflow (kernel 8.0.1, `publish` off, 2026-11-19 about 20:25 EST) lost its Apple silicon job before it started: "The configuration 'macos-14-arm64-us-xl' is not supported". GitHub retired the macOS 14 runner image on 2026-11-02, and the matrix asked for `macos-14`. The other three jobs (macos-15-intel, ubuntu-22.04, windows-2022) were accepted and started.
+
+The Apple silicon entry now asks for `macos-15`, the oldest Apple silicon image GitHub still runs, and records `macOS 15` as the worker's minimum, the same floor the Intel entry already had. `macos-latest` was not used: it is macOS 26, and the label moves when GitHub moves it, which would raise the floor without a commit. The minimum is recorded in the release record and notes and is not enforced by the app.
+
+Left as it is and worth knowing: the app's own entry and `tauri.conf.json` still say macOS 14 for the application, while the worker says 15. Nothing was checked on a real macOS 14 or 15 machine.
+
 ## FZ1 v0.18.1 the macOS engine leaves the freeze with no links and no framework (setup/freeze_backend)
 
 The first two Mac builds of 0.18.0 through formcompiler (Apple silicon and Intel, 2026-11-19) built, signed and reached Apple's notary, and both were refused with status Invalid for the same two files and nothing else: `Contents/Resources/engine/_internal/Python` and `Contents/Resources/engine/_internal/Python.framework/Python`, "The signature of the binary is invalid". The other 200 or so Mach-O files of the engine passed.
