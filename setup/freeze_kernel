@@ -14,6 +14,7 @@ pyinstaller --noconfirm --clean --onedir --name formcad-kernel \
   --collect-all OCP --collect-all build123d --hidden-import scipy.spatial \
   "$src/kernel/formcad_kernel.py"
 bin="dist/formcad-kernel/formcad-kernel${ext}"
+[ "$(fc_os)" != macos ] || fc_flatten_frozen "dist/formcad-kernel"
 reply="$(printf '{"id":1,"method":"hello","params":{}}\n{"id":2,"method":"shutdown","params":{}}\n' | "$bin" | head -n 1)"
 printf '%s\n' "$reply" | grep -q '"result"' || fc_die "the frozen kernel did not answer hello: $reply"
 fc_say "kernel folder ready: $FORMCAD_ROOT/kernel/dist/formcad-kernel (ship it from formai-binaries, never inside the app)"
