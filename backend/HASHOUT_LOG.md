@@ -2,6 +2,18 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing.
 
+## MR1 v0.19.6 the app carries the record of the published mesher 6.2.2608 and can be asked to install it (app/data/mesher-licence.json, release/formCAD-binaries/records/mesher-licence.json, app/routers/sim.py)
+
+formcompiler's `binaries` workflow released the mesher on 2026-11-20: `mesher-6.2.2608` in `nodemode-dev/formai-binaries`, published, four archives (Netgen 6.2.2608 with the OpenCascade 7.8.1 build of netgen-occt). As with the kernel in KR1, the two records of that release are in the tree byte for byte: `app-mesher-licence.json` as `backend/app/data/mesher-licence.json` (1,723 file rows) and `mesher-licence.json` as `release/formCAD-binaries/records/mesher-licence.json`, whose SHA-256 dfcc3141...60c7 is the one in the release's `SHA256SUMS`. Both workers are released now, so `preflight.py --app-data backend/app/data --published` passes without `--kind`. The old record's `netgen` and `occt` fields are gone with the copy; nothing reads them (the versions shown come from the worker's hello).
+
+The record alone would not have been enough. `mesher.start_install()` existed and nothing called it: no route and no control. `POST /api/docs/{doc_id}/sim/mesher/install` now starts it, beside `GET /api/docs/{doc_id}/sim/status`, which already reported the mesher with `installing` and `progress`. The route needs the session token and an open document like its neighbours. The interface's side is in `frontend/HASHOUT_LOG.md` SM28.
+
+The staging folder names in `mesher.py` stay `.partial-<random>/unpacked/`: the longest path in the mesher archives is 89 characters, so the Windows limit KR1 dealt with is not near (a user name would need 59 characters).
+
+Verified on Linux against the public release: an engine with a fresh data folder reported "No mesher is installed", took the install request, downloaded the archive, checked every file and reported the mesher available, version 6.2.2608, source `installed`. The installed frozen worker meshed a 10 by 20 by 30 box from a BREP file into 1,234 nodes and 5,025 tetrahedra with a volume of 6,000.0. Not verified on macOS or Windows.
+
+Still open: each record's `licence_gates.needs_review` list.
+
 ## KR1 v0.19.5 the app carries the record of the published kernel 8.0.1 (app/data/kernel-licence.json, release/formCAD-binaries/records/occt-licence.json, app/services/kernel.py)
 
 formcompiler's `binaries` workflow built, signed, notarized and released the kernel on 2026-11-19: release `occt-8.0.1` in `nodemode-dev/formai-binaries`, published, four archives. The app installs a worker only when every file of the download matches the record it shipped with, and until now that record said `release: null` with no files, so the app answered "No kernel build is published yet". The two records of that release are now in the tree, byte for byte as the release holds them: `app-occt-licence.json` as `backend/app/data/kernel-licence.json` (27,147 file rows for four platforms, 6.2 MB) and `occt-licence.json` as `release/formCAD-binaries/records/occt-licence.json`. Both files are machine-written by the release tools and were copied, not edited; their SHA-256 values are 34ebf698...a427 and 78817041...b621, the second being the one in the release's `SHA256SUMS`. `preflight.py --app-data backend/app/data --published --kind kernel` passes. The old record's `occt` field is gone with the copy; nothing reads it (the OpenCascade version shown in the app comes from the worker's own hello).

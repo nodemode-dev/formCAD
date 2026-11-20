@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.19.5. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.19.6. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -238,7 +238,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **What it does.** Studies on parts and assemblies: materials that cite their sources, loads, fixtures, contacts and mesh controls, meshed by a separate Netgen-based mesher program, then linear static, modal, thermal, thermal stress and linear buckling on second-order elements, and first versions of nonlinear statics, contact, events, fatigue and laminates. Results as contour plots, deformed shapes, animation, probes, sections and reports. Flow: laminar duct flow on FormCAD's own solver, electronics cooling and injection fill estimates, with an optional link to a flow solver you install yourself.
 
-**How to start.** `simmaterial`, `simload`, `simfixture`, then `simstudy`, `simrun`.
+**How to start.** `simmaterial`, `simload`, `simfixture`, then `simstudy`, `simrun`. The mesher is a separate download, like the kernel: when the Studies panel says the mesher is not installed, press Install mesher there. The app fetches it from formai-binaries, checks every file against the record it ships and installs it; nothing is installed if a file differs.
 
 **Main commands.** `simmaterial`, `simload`, `simfixture`, `simcontact`, `simcontrol`, `simstudy`, `simrun`, `simreport`, `simprobe`, `toporun`, `topoapply`, `toposhape`. Routes: `POST /api/docs/{doc_id}/sim/studies/{sid}/mesh`, `.../run`, `GET /api/flow`.
 

@@ -8,7 +8,7 @@ import type { ResultLayer } from './result-layer';
 export type Json = Record<string, unknown>;
 export interface Rec { id: string; kind: string; name?: string; type?: string; [k: string]: unknown }
 export interface Solver { type: string; label: string; options: unknown; order: number }
-export interface MesherInfo { available?: boolean; version?: string; message?: string }
+export interface MesherInfo { available?: boolean; version?: string; message?: string; installing?: boolean; progress?: number }
 export interface ResultField { name: string; unit?: string; location?: string; components?: number; modes?: number }
 export interface SimJob { job: string; study: string; state: string; phase: string; progress: number; message: string; mode: string }
 export interface Probe { point: number[]; values: Array<[string, string]> }
@@ -132,6 +132,22 @@ class SimStore {
     } finally {
       this.busy = false;
       this.emit();
+    }
+  }
+
+  async installMesher(): Promise<void> {
+    const doc = this.docId();
+    if (!doc || this.mesher.installing) return;
+    try {
+      this.mesher = asObj(await req<Json>('POST', this.url('/mesher/install'))) ?? this.mesher;
+      this.emit();
+      while (this.mesher.installing && doc === this.docId()) {
+        await new Promise((done) => window.setTimeout(done, 1000));
+        this.mesher = asObj(await req<Json>('GET', this.url('/status'))) ?? this.mesher;
+        this.emit();
+      }
+    } catch (e) {
+      toast(text(e), 'error');
     }
   }
 

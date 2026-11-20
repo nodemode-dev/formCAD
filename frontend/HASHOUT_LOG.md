@@ -2,6 +2,18 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## SM28, v0.19.6 the Studies panel can install the mesher (p13/study-panel.ts, p13/sim-store.ts)
+
+The mesher worker is published (formai-binaries, `mesher-6.2.2608`) and the engine could always install it, but nothing in the window asked it to: the Studies panel only said "The mesher is not installed". A row with one button, Install mesher, now sits under that note.
+
+The row and its button are made once when the panel mounts, with `hidden` set, and `paintParts` only flips `hidden` and patches the note's text: shown when the engine says the mesher is not available and no install is running, hidden otherwise. While an install runs the note shows the engine's own message with the percentage and loses its error colour. `sim.installMesher()` posts to `/api/docs/{id}/sim/mesher/install`, then reads `/sim/status` once a second until `installing` is false, emitting after each read; it stops if the active document changes. Nothing is rebuilt.
+
+The note keeps its reserved `min-height`; the button row adds height only in the not-installed state, which is the state the panel opens in on a machine without the mesher, so nothing shifts later except when the install finishes and the row goes away.
+
+Checked in headless Chrome against a live engine and the public release, without CPU or network throttling: before the click the note reads "The mesher is not installed: No mesher is installed." and the row is shown; during the download the note reads "Downloading the mesher. 23%" and the row is hidden; afterwards the note reads "Mesher 6.2.2608". The note and the row were the same two nodes throughout, no sibling was added or removed, and the console stayed empty. Not checked under 4x CPU and slow network: the change is one `hidden` flag and one text node, with nothing that loads late. Not seen on macOS or Windows.
+
+Known and left: the not-installed sentence says it twice ("The mesher is not installed: No mesher is installed."), because the panel's prefix and the engine's message say the same thing.
+
 ## E27, v0.19.0 the tool rail and the panel column take formvis's measurements, and the column collapses to a strip (styles/shell.css, styles/dock.css, styles/tokens.css, ui/dock.ts, ui/tool-rail.ts, ui/prefs.ts)
 
 The rail was grouped like formvis in 0.18.0 but not sized or drawn like it, and the right column had none of formvis's chrome. Both were measured from computed styles with formvis 2.3.6 and formCAD running side by side at 1440 by 900.

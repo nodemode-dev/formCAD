@@ -2,6 +2,13 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.6 · 2026-11-20
+
+- Simulation can mesh. Mesher 6.2.2608 (Netgen) is published in formai-binaries for Apple silicon, Intel Macs, Windows and Linux, and the app carries the record of that release. The Studies panel has an Install mesher button where it used to say only that the mesher was not installed; it downloads the mesher, checks every file and installs it, showing progress.
+- The repository has the family's community pages: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` and `SECURITY.md`, linked from the README. `BRANCHING.md` says work reaches `main` through pull requests.
+- A checkout names FormCAD's MCP server for Claude Code (`.mcp.json`), Cursor (`.cursor/mcp.json`) and Codex (`.codex/config.toml`), so opening the folder in any of them connects it.
+- Not in this version: the agent panel inside the app, with its terminal and its Claude Code, Codex, Cursor and Antigravity tabs.
+
 ## 0.19.5 · 2026-11-20
 
 - The app can install its 3D kernel. Kernel 8.0.1 (OpenCascade 8.0.1) is published in formai-binaries for Apple silicon, Intel Macs, Windows and Linux, and the app now carries the record of that release, so "Install kernel" downloads it, checks every file and installs it. Before, the app said no kernel was published.

@@ -80,6 +80,12 @@ def mesher_status(doc_id: str) -> dict:
     return mesher.status()
 
 
+@router.post("/{doc_id}/sim/mesher/install")
+def mesher_install(doc_id: str) -> dict:
+    _doc(doc_id)
+    return mesher.start_install()
+
+
 @router.get("/{doc_id}/sim/materials/library")
 def library(doc_id: str) -> dict:
     _doc(doc_id)
