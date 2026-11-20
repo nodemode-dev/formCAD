@@ -1,0 +1,56 @@
+:root, .ft-dock {
+  --dock-bg: var(--surface-0);
+  --dock-bar-bg: var(--surface-1);
+  --dock-raised: var(--surface-raised);
+  --dock-hover: var(--bg-hover);
+  --dock-input-bg: var(--surface-field);
+  --dock-border: var(--line-1);
+  --dock-edge: var(--line-0);
+  --dock-tab-border: var(--line-2);
+  --dock-scrim: var(--bg-scrim);
+  --dock-text: var(--text-primary);
+  --dock-text-dim: var(--text-secondary);
+  --dock-text-muted: var(--text-muted);
+  --dock-accent: var(--accent-color);
+  --dock-accent-line: var(--accent-line);
+  --dock-accent-ink: var(--accent-ink);
+  --dock-danger: var(--danger);
+  --dock-danger-text: var(--danger-soft);
+  --dock-space-1: var(--space-1);
+  --dock-space-2: var(--space-2);
+  --dock-space-3: var(--space-3);
+  --dock-space-4: var(--space-4);
+  --dock-radius-xs: var(--radius-xs);
+  --dock-radius-sm: var(--radius-sm);
+  --dock-radius: var(--radius);
+  --dock-radius-md: var(--radius-md);
+  --dock-head-h: var(--ctl-lg);
+  --dock-fs-xs: var(--fs-11);
+  --dock-fs-sm: var(--fs-12);
+  --dock-fs-md: var(--fs-14);
+  --dock-font-mono: var(--font-mono);
+  --dock-term-bg: var(--surface-0);
+  --dock-term-fg: var(--text-primary);
+  --dock-term-cursor: var(--accent-color);
+  --dock-term-selection: var(--accent-color-dim);
+  --dock-term-font-size: var(--fs-13);
+}
+
+:root { --ft-dock-size: 280px; --ft-dock-wsize: 440px; --cv-agent-h: 0px; --cv-agent-w: 0px; }
+:root[data-ft-dock="open"]:not([data-ft-dock-side="right"]) { --cv-agent-h: min(var(--ft-dock-size), 70vh); }
+:root[data-ft-dock="open"][data-ft-dock-side="right"] { --cv-agent-w: min(var(--ft-dock-wsize), 60vw); }
+
+.cv-app { grid-template-rows: var(--cv-titlebar-h) minmax(0, 1fr) var(--cv-agent-h) var(--cv-status-h); grid-template-columns: minmax(0, 1fr) var(--cv-agent-w); }
+.cv-app > .cv-titlebar { grid-area: 1 / 1 / 2 / -1; }
+.cv-app > .cv-main { grid-area: 2 / 1 / 3 / 2; }
+.cv-app > .ft-dock { grid-area: 3 / 1 / 4 / 2; }
+.cv-app > .cv-status { grid-area: 4 / 1 / 5 / -1; }
+:root[data-ft-dock-side="right"] .cv-app > .cv-main { grid-area: 2 / 1 / 4 / 2; }
+:root[data-ft-dock-side="right"] .cv-app > .ft-dock { grid-area: 2 / 2 / 4 / 3; }
+
+:root[data-ft-dock="open"] .cv-home { bottom: calc(var(--cv-agent-h) + var(--cv-status-h)); right: var(--cv-agent-w); }
+:root[data-ft-dock="open"] body.cv-home-open .cv-status { visibility: visible; }
+.cv-app.is-chrome-hidden > .ft-dock { display: none; }
+.cv-app.is-chrome-hidden { --cv-agent-h: 0px; --cv-agent-w: 0px; }
+
+.ft-dock .cv-input { width: auto; min-height: 0; }

@@ -299,7 +299,7 @@ const tools = (): MenuItem[] => section('Tools', () => [
 
 const windowMenu = (): MenuItem[] => section('Window', () => [
   'win-toolsets', 'win-properties', 'win-layers', 'win-quickcalc', 'toggle-quickprops', E('Reference Manager', 'xref'), SEP,
-  'win-filetabs', 'win-statusbar', 'win-cmdline', 'win-cmdhistory', 'win-menubar', SEP,
+  'win-filetabs', 'win-statusbar', 'win-cmdline', 'win-cmdhistory', 'win-menubar', 'agent-dock', SEP,
   'win-hide-palettes', 'win-reset-palettes', 'win-reset-layout', SEP,
   S('Workspace', ...WORKSPACES.map((w) => `workspace-${w.id}`)),
   'home', E('Layer Manager...', 'layer', 'manager'), E('Blocks', 'blocks'), E('Parameters Manager', 'parameters'), 'jobs', 'p11-vault-panel',

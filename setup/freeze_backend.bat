@@ -7,7 +7,7 @@ call backend\venv\Scripts\activate.bat
 python -c "import PyInstaller" >nul 2>nul || ( echo [formCAD] PyInstaller missing, run formCAD.bat install-desktop & exit /b 1 )
 if not exist frontend\dist\index.html ( call setup\build_frontend.bat || exit /b 1 )
 cd backend
-set "EXTRA="
+set "EXTRA= --hidden-import winpty --collect-binaries winpty"
 if exist "%ROOT%\setup\pyi_hooks" set EXTRA=%EXTRA% --additional-hooks-dir "%ROOT%\setup\pyi_hooks"
 if exist "%ROOT%\backend\app\data" set EXTRA=%EXTRA% --add-data "%ROOT%\backend\app\data;app\data"
 if exist build\pyinstaller rmdir /s /q build\pyinstaller

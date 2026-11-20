@@ -27,5 +27,6 @@ import './p14b/register';
 import './p15/register';
 import './an1/register';
 import './render/register';
+import './agent-dock';
 
 void startLanguage().finally(() => { startApp(); startPageTranslator(); });

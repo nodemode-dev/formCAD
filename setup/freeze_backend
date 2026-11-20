@@ -50,6 +50,7 @@ sep=":"
 ext="$(fc_exe)"
 src="$(fc_native_path "$FORMCAD_ROOT")"
 extra=()
+if [ "$(fc_os)" = windows ]; then extra+=(--hidden-import winpty --collect-binaries winpty); else extra+=(--hidden-import ptyprocess); fi
 [ -z "${FORMCAD_PYI_ARCH:-}" ] || extra+=(--target-arch "$FORMCAD_PYI_ARCH")
 [ ! -d "$FORMCAD_ROOT/setup/pyi_hooks" ] || extra+=(--additional-hooks-dir "$src/setup/pyi_hooks")
 [ ! -d "$FORMCAD_ROOT/backend/app/data" ] || extra+=(--add-data "$src/backend/app/data${sep}app/data")
