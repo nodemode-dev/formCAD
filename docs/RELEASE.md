@@ -7,7 +7,7 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 | Piece | Where | Who runs it |
 | --- | --- | --- |
 | Application release (dmg, app tar, msi, setup exe, AppImage, deb, rpm, `SHA256SUMS.txt`) | formcompiler, from `apps/formCAD.json` | formcompiler, after `ci.yml` is green on a `compile_vX.Y.Z` branch |
-| Kernel and mesher archives | `.github/workflows/binaries.yml`, published to `nodemode-dev/formai-binaries` | a maintainer, by hand (`workflow_dispatch`) |
+| Kernel and mesher archives | formcompiler's `binaries` workflow, which checks this repository out and runs its scripts; published to `nodemode-dev/formai-binaries` | the owner, by hand (`workflow_dispatch` in formcompiler) |
 | SBOMs | `.github/workflows/sbom.yml` or `release/sbom/formcad_sbom.py` | a maintainer, attached to the application release |
 | Registry entries | `apps/formCAD.json` (formcompiler), `apps/products-row.json` and `apps/form-app.json` (formportal) | copied by hand into those repositories |
 | Signing scripts | `release/sign/` | the workflows, with secrets from the environment only |
@@ -23,7 +23,7 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 ## Kernel and mesher
 
 1. Run `release/dry_run` first (below).
-2. Run the `binaries` workflow with the kind and release number (`8.0.1`, `8.0.1-2`, `6.2.2608`). Four native runners install the worker from its committed lock (`kernel/requirements_kernel.lock`, `mesher/requirements_mesher.lock`) on Python 3.12, build and sign, the assemble job merges the records, pins the upstream sources, writes `SHA256SUMS`, `RELEASE_NOTES.md` and the source asset, and with `publish` checked creates a draft release `occt-<release>` or `mesher-<release>`. An existing tag stops the run; a published tag is never replaced.
+2. Run the `binaries` workflow in formcompiler (`gh workflow run binaries.yml --repo nodemode-dev/formcompiler -f kind=kernel -f release=8.0.1 -f publish=true`) with the kind and release number (`8.0.1`, `8.0.1-2`, `6.2.2608`). Four native runners install the worker from its committed lock (`kernel/requirements_kernel.lock`, `mesher/requirements_mesher.lock`) on Python 3.12, build and sign, the assemble job merges the records, pins the upstream sources, writes `SHA256SUMS`, `RELEASE_NOTES.md` and the source asset, and with `publish` checked creates a draft release `occt-<release>` or `mesher-<release>`. An existing tag stops the run; a published tag is never replaced.
 3. Copy `dist/app-<record>.json` over `backend/app/data/kernel-licence.json` (or `mesher-licence.json`) in FormCAD, and the merged record over `release/formCAD-binaries/records/` (and over `formcad/records/` in formai-binaries). `tools/preflight.py --app-data backend/app/data --published` must pass in both repositories; while only one of the two workers has been released, add `--kind kernel` or `--kind mesher`.
 4. Read the `needs_review` list in the record's `licence_gates` and settle every entry before publishing (see Open decisions).
 5. Keep the source asset on the release for at least three years after the last distribution.
@@ -32,17 +32,21 @@ Everything here is prepared in the repository. Nothing is pushed or published by
 
 | Platform | Variables |
 | --- | --- |
-| macOS | `APPLE_SIGNING_IDENTITY`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_B64` (the .p8, written to `APPLE_API_KEY_PATH` by the workflow), or `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` |
+| macOS | `APPLE_SIGNING_IDENTITY`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_PRIVATE_KEY` (base64 of the .p8 on one line, written to `APPLE_API_KEY_PATH` by the workflow), or `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` |
 | Windows | Azure Artifact Signing: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `ARTIFACT_SIGNING_ENDPOINT`, `ARTIFACT_SIGNING_ACCOUNT`, `ARTIFACT_SIGNING_PROFILE`; or `WINDOWS_CERTIFICATE`, `WINDOWS_CERTIFICATE_PASSWORD` |
 | Linux AppImage | `APPIMAGE_GPG_PRIVATE_KEY`, `APPIMAGE_GPG_KEY_ID`, `APPIMAGETOOL_SIGN_PASSPHRASE` |
-| Publishing | `BINARIES_REPO_TOKEN` (create releases in formai-binaries) |
+| Publishing | none here: formcompiler's release credential creates the draft in formai-binaries |
+
+This repository holds none of these values and must not be given any: signing identities and keys are formcompiler's only. The table lists what the scripts in `release/sign/` read from the environment when formcompiler runs them. formcompiler's `binaries` workflow runs in its `signing` environment, makes the keychain and the notary key file itself, signs the Windows program with its own tool, and calls `macos_sign.sh sign` and `notarize-folder` here with `APPLE_SIGNING_IDENTITY`, `APPLE_API_KEY`, `APPLE_API_ISSUER` and `APPLE_API_KEY_PATH` set. Its first two jobs check every value and the release credential in seconds, before any macOS or Windows runner starts.
+
+What formcompiler calls in this repository, by path, so a rename here is a change there too: `setup/install_kernel`, `setup/install_mesher` (with `FORMCAD_LOCKED=1`), `setup/freeze_kernel`, `setup/freeze_mesher`, `release/sign/macos_sign.sh`, `release/formCAD-binaries/tools/` (`stage_notices.py`, `update_record.py`, `pack_release.py`, `merge_records.py`, `preflight.py`), `release/sbom/formcad_sbom.py`, the two lock files and `release/formCAD-binaries/records/`.
 
 Without the Apple identity the macOS files are signed ad hoc. Signing happens before hashing, so the recorded hashes are of the signed bytes.
 
 ### Scripts
 
 - `release/sign/macos_sign.sh sign DIR` signs every Mach-O innermost first with the hardened runtime and a timestamp, then verifies each. `notarize-folder DIR` zips with `ditto` and submits; `notarize FILE` and `staple FILE` handle a dmg.
-- `release/sign/windows_sign.ps1 -Path DIR` signs `.exe .dll .pyd .msi .sys` with Azure Artifact Signing or a pfx, and stops when no credentials are present.
+- `release/sign/windows_sign.ps1 -Path DIR` signs `.exe .dll .pyd .msi .sys` with a pfx (`WINDOWS_CERTIFICATE`), and stops when it is not present. Azure Artifact Signing is done by the workflow itself with Microsoft's `azure/artifact-signing-action`.
 - `release/sign/linux_appimage_sign.sh sign FILE` writes a detached `.asc` and, when `appimagetool` exists, an embedded signature. Publish the key id and fingerprint in the release notes; `SHA256SUMS` stays the primary check.
 
 ## Dry run

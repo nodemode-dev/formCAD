@@ -76,3 +76,28 @@ fc_rust_fresh() {
   mkdir -p "$target"
   printf '%s' "$now" > "$target/.formcad-rustc"
 }
+fc_flatten_frozen() {
+  local dir="$1" fw="$1/_internal/Python.framework" lib="$1/_internal/Python" link f links=0
+  while IFS= read -r f; do
+    case "$f" in "$fw"/*) continue ;; esac
+    if file -b "$f" | grep -q 'Mach-O' && otool -L "$f" 2>/dev/null | grep -q 'Python.framework'; then
+      fc_say "left as PyInstaller made it: $f links Python.framework"
+      return 0
+    fi
+  done < <(find "$dir" -type f)
+  if [ -d "$fw" ]; then
+    if [ ! -f "$fw/Python" ]; then
+      fc_say "left as PyInstaller made it: Python.framework has no Python library"
+      return 0
+    fi
+    rm -f "$lib"
+    cp "$fw/Python" "$lib"
+    rm -rf "$fw"
+    codesign --force --sign - "$lib"
+  fi
+  while IFS= read -r link; do
+    cp -RL "$link" "$link.flat" && rm -f "$link" && mv "$link.flat" "$link"
+    links=$((links + 1))
+  done < <(find "$dir" -type l)
+  fc_say "frozen folder flattened: Python library at _internal/Python, $links links replaced by copies"
+}

@@ -18,6 +18,7 @@ pyinstaller --noconfirm --clean --onedir --name formcad-mesher \
   --exclude-module netgen.gui --exclude-module netgen.webgui --exclude-module tkinter \
   "$src/mesher/formcad_mesher.py"
 bin="dist/formcad-mesher/formcad-mesher${ext}"
+[ "$(fc_os)" != macos ] || fc_flatten_frozen "dist/formcad-mesher"
 "$bin" --selfcheck || fc_die "the frozen mesher failed its selfcheck"
 reply="$(printf '{"id":1,"method":"hello","params":{}}\n{"id":2,"method":"shutdown","params":{}}\n' | "$bin" | head -n 1)"
 printf '%s\n' "$reply" | grep -q '"result"' || fc_die "the frozen mesher did not answer hello: $reply"

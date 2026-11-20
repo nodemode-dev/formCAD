@@ -2,6 +2,20 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.19.4 · 2026-11-20
+
+- The worker build moved to formcompiler, where the family's signing values are. This repository's `binaries` workflow is removed; formcompiler's `binaries` workflow checks this repository out and runs the same scripts. Nothing has to be set in this repository, and anything 0.19.3 asked to be set here is not needed.
+- `docs/RELEASE.md` says how to start it and lists the scripts formcompiler calls here by path.
+- Nothing in the app itself changed since 0.19.0.
+
+## 0.19.3 · 2026-11-20
+
+- A publishing run of the worker build (`binaries` workflow, `publish` checked) checks every credential in its first few seconds: it names everything that is missing at once, checks that the release tag is free and that it can create a release in formai-binaries, and only then starts the four builds.
+- The signing values have the same names and formats as in formcompiler, so the same values serve both. They still have to be set in this repository.
+- Windows signing through Azure uses Microsoft's own action; the program the workflow called before is not one Microsoft offers.
+- On macOS the worker is flattened before it is signed, the same shape the app's engine has had since 0.18.1, and the signed program is started once before it is recorded. If Apple refuses a worker, the run prints Apple's reason.
+- Nothing in the app itself changed since 0.19.0.
+
 ## 0.19.2 · 2026-11-20
 
 - The worker build (`binaries` workflow) can finish. Its last job stopped because the Windows build wrote the notices file with Windows line ends, so its record disagreed with the other three. The notices are written the same on every platform now.
