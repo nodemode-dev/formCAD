@@ -79,7 +79,7 @@ sign_tree() {
 submit() {
   local file="$1" args=()
   while IFS= read -r line; do args+=("$line"); done < <(notary_args)
-  xcrun notarytool submit "$file" "${args[@]}" --wait --output-format json | tee "$file.notary.json"
+  xcrun notarytool submit "$file" "${args[@]}" --wait --output-format json | tee "$file.notary.json" || true
   grep -q '"status" *: *"Accepted"' "$file.notary.json" || {
     local id
     id="$(sed -n 's/.*"id" *: *"\([^"]*\)".*/\1/p' "$file.notary.json" | head -n 1)"
