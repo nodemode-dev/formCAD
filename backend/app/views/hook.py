@@ -34,6 +34,7 @@ def follow(doc, tx) -> None:
         return
     tx.views_done = True
     cache = {}
+    rebuilt = set()
     for v in sorted(views, key=lambda e: e.handle):
         key = repr(sorted((v.source or {}).items()))
         if key not in cache:
@@ -48,10 +49,17 @@ def follow(doc, tx) -> None:
         if ent.auto:
             try:
                 build.rebuild(doc, v.handle)
+                rebuilt.add(v.handle)
             except ViewError:
                 pass
             except Exception as err:
                 build.fail(d, v.handle, str(err))
+    if rebuilt:
+        from app.dim import assoc
+        from app.doc.kinds import drawannlink
+
+        assoc.follow(doc, rebuilt)
+        drawannlink.follow(doc, tx)
 
 
 commit_hooks.register(PRIORITY, follow)
