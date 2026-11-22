@@ -368,7 +368,11 @@ def open_path(path: str) -> dict:
         return out
     if ext not in FILE_KINDS + (".svg", ".svgz"):
         raise OpError("Open reads .fcad, .dxf, .dwg, .dwt, .svg, .step, .iges, .3dm, .stl, .obj, .3mf, .glb, .gltf and .ply files.")
-    return guarded(lambda: service.open(full).summary())
+    doc = guarded(lambda: service.open(full))
+    out = doc.summary()
+    if getattr(doc, "import_notes", None):
+        out["notes"] = doc.import_notes
+    return out
 
 
 def new_doc(name: str = "", template: str = "") -> dict:
