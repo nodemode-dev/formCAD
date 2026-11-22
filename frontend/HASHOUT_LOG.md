@@ -2,6 +2,14 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## UP1 v0.26.0 underlay pictures on the canvas (canvas/pictures.ts, canvas/gl.ts, canvas/cpu.ts, canvas/painter.ts, canvas/renderer.ts, canvas/store.ts, canvas/types.ts, canvas/mount.ts, io/api.ts, ui/menu-spec.ts, ui/panels/props-kinds.ts)
+
+An underlay's picture arrives as an `img` prim (three corners, clip ring, fade, version stamp). The store keeps the items that carry one in `pics`; `Pictures` fetches each picture once per version through `api.underlay` (the session key goes in the header, so no URL carries it), turns it into an `ImageBitmap`, shrinks it to 4096 pixels on the long side when larger, and asks for one redraw when it is ready. While a new version loads, the previous bitmap of the same underlay keeps being drawn, so a changed file swaps in place instead of blinking. Bitmaps not drawn for 600 frames are closed and their textures deleted.
+
+Both painters draw pictures first, under the layout viewports and the drawing, which matches the plot. WebGL: a textured quad per picture with premultiplied alpha; fade multiplies the colour and alpha, which blends toward whatever is behind (the background canvas). Clipping uses the stencil: bit 1 is the viewport's outline for pictures seen through a layout viewport, bit 2 the underlay's own clip, and the quad draws where both are set; each ring is a triangle fan written with INVERT, so concave and self-crossing clips follow the even-odd rule like the viewport clip. Textures from a lost context fail `isTexture` and are uploaded again. Canvas 2D: the same with `clip('evenodd')`, `globalAlpha` and a transform from picture pixels to the screen.
+
+Checked in Chrome at 4x CPU throttle: a PNG, a JPEG and a PDF underlay appeared, then clipped and faded in place; layout shift 0; no console errors. The canvas 2D painter was type-checked, not run.
+
 ## LN1 v0.24.0 29 interface languages, system language, right-to-left (ui/i18n.ts, ui/i18n/langs.ts, ui/i18n/keys.ts, ui/i18n/tables/, ui/prefs.ts, ui/settings-dialog.ts, agent-dock.ts, styles/shell.css)
 
 Key list. `ui/i18n/keys.ts` is the English strings the tables translate, one per row. It was collected by walking the running interface (Home, every menu and submenu, Preferences, the Studies panel, the agent dock) and reading every visible text, `title`, `aria-label` and `placeholder`, in three runs that became parts a (rows 0 to 548), b (549 to 1060) and c (1061 to 1572), each sorted on its own. A table row is addressed by its position, so the list is append-only: a new string goes at the end, an unused one stays, nothing is reordered. Strings past row 1572 need a part d in `setup/i18n.py` and in `LOADERS`.

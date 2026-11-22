@@ -475,13 +475,38 @@ class SheetBuilder:
         if mode & 64:
             self.sheet.stroke(np.array([[cx - h, cy - h], [cx + h, cy - h], [cx + h, cy + h], [cx - h, cy + h], [cx - h, cy - h]]), False, st)
 
+    def emit_image(self, p, pp, M):
+        from app.doc import underlays as U
+
+        e = self.d.ents.get(pp.item["h"])
+        if e is None or e.kind != "underlay":
+            return
+        full = U.resolve(e.path, U.folder_of(self.doc))
+        if not full or not U.kind_of(full):
+            return
+        s, tx, ty = M
+        c = np.array(p["pts"], dtype=float).reshape(3, 2) * s + np.array([tx, ty])
+        clip = None
+        if p.get("clip"):
+            clip = np.array(p["clip"], dtype=float).reshape(-1, 2) * s + np.array([tx, ty])
+            self.sheet.push_clip([clip], False)
+        alpha = 1.0 - max(0.0, min(100.0, float(p.get("fade", 0)))) / 100.0
+        self.sheet.image({"path": full, "page": int(e.page), "source": e.source}, c, alpha, pp.layer_key())
+        if clip is not None:
+            self.sheet.pop_clip()
+        self.ops += 3
+
     def emit_prims(self, prims, pp, M):
         for p in prims:
+            if p.get("noplot"):
+                continue
             sub = pp
             if "c" in p:
                 sub = pp.derive({"color": p["c"], "color7": bool(p.get("c7"))})
             kind = p["t"]
-            if kind == "pl":
+            if kind == "img":
+                self.emit_image(p, sub, M)
+            elif kind == "pl":
                 a = np.array(p["pts"], dtype=float).reshape(-1, 2)
                 st, _ps = sub.stroke_style()
                 self.emit_polyline(a, bool(p.get("closed")), st, M)
@@ -543,7 +568,7 @@ class SheetBuilder:
         layers = src["layers"]
         texts = src["texts"] if self.real_text else {}
         saved = self.spaceKey
-        for item in items:
+        for item in sorted(items, key=lambda it: it["kind"] != "underlay"):
             lname = item["layer"]
             rec = layers.get(lname)
             on = True if rec is None else bool(rec["on"])
@@ -567,6 +592,9 @@ class SheetBuilder:
                 self.emit_geom(info["geom"], item, pp, M2)
                 self.emit_prims(info["prims"], pp, M2)
                 self.emit_glyphs(info, pp, M2)
+            elif item["kind"] == "underlay":
+                self.emit_prims(item["prims"] or [], pp, M)
+                self.emit_geom(item["geom"], item, pp, M)
             else:
                 self.emit_geom(item["geom"], item, pp, M)
                 if item["prims"]:

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "program": "formcad-dwg-tools",
+  "release": "0.14",
+  "licence": "GPL-3.0-or-later",
+  "source": "https://ftp.gnu.org/gnu/libredwg/libredwg-0.14.tar.xz",
+  "source_sha256": "62ebb73b984f865960f20ed26619ea5f8789d5e3fd088fa40a2598384da81275",
+  "url": "https://github.com/nodemode-dev/formai-binaries/releases/download/dwg-{release}/dwg-gpl-{release}-{triple}.tar.gz",
+  "folder": "dwg-gpl-{release}-{triple}",
+  "triples": [
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc"
+  ],
+  "write_versions": ["R2000"],
+  "files": []
+}

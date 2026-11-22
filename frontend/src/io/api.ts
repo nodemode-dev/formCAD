@@ -190,6 +190,15 @@ export const api = {
     return call('GET', `/api/docs/${enc(id)}/display${q ? `?${q}` : ''}`);
   },
 
+  underlay: async (id: string, handle: string | number): Promise<Blob> => {
+    const headers: Record<string, string> = {};
+    const tok = token();
+    if (tok) headers['X-FormCAD-Token'] = tok;
+    const res = await fetch(`/api/docs/${enc(id)}/underlays/${enc(String(handle))}`, { headers });
+    if (!res.ok) throw new ApiError(res.status, res.statusText || `Request failed (${res.status})`);
+    return await res.blob();
+  },
+
   sendInput: (id: string, text: string): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/input`, { text }),
   runCommand: (id: string, command: string, args?: Record<string, unknown>): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/command`, args === undefined ? { command } : { command, args }),
   cancelCommand: (id: string): Promise<CommandLineState> => call('POST', `/api/docs/${enc(id)}/cancel`),

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -94,34 +95,55 @@ def kind_of(path: str) -> str:
 
 
 def status() -> dict:
+    from app.services import dwgtools
+
     s = load_settings()
     chosen = s["dwgConverter"]
     detected_oda = find_tool(ODA_NAMES)
     detected_read = find_tool(LIBRE_READ)
     detected_write = find_tool(LIBRE_WRITE)
-    path = chosen or detected_oda or detected_read
-    usable = bool(s["dwgEnabled"] and path and os.path.isfile(path))
+    own = chosen or detected_oda or detected_read
+    own_usable = bool(s["dwgEnabled"] and own and os.path.isfile(own))
+    tools = dwgtools.status()
+    kit = dwgtools.installed()
+    path, kind = (own, kind_of(own)) if own_usable else ((kit["read"], "dwgtools") if kit else (own, kind_of(own) if own else ""))
+    usable = own_usable or kit is not None
+    if usable:
+        message = ""
+    elif not s["dwgEnabled"]:
+        message = "DWG support is off. Turn it on and point at a converter you installed" + (", or install the DWG tools." if tools["published"] else ".")
+    else:
+        message = "No DWG converter was found. Install one and set its path" + (", or install the DWG tools." if tools["published"] else ".")
     return {
         "enabled": s["dwgEnabled"],
         "converterPath": chosen,
         "converter": path,
-        "converterKind": kind_of(path) if path else "",
+        "converterKind": kind,
         "detected": {"oda": detected_oda, "libredwgRead": detected_read, "libredwgWrite": detected_write},
         "usable": usable,
-        "writeExperimental": bool(path and kind_of(path) == "libredwg"),
-        "message": "" if usable else ("DWG support is off. Turn it on in the interchange settings and point at your own converter." if not s["dwgEnabled"] else "No DWG converter was found. Install one and set its path."),
+        "writeExperimental": kind in ("libredwg", "dwgtools"),
+        "writeVersions": ["R2000"] if kind in ("libredwg", "dwgtools") else list(ODA_VERSIONS),
+        "tools": tools,
+        "message": message,
     }
 
 
 def _need(write: bool = False) -> tuple:
+    from app.services import dwgtools
+
     s = load_settings()
+    kit = dwgtools.installed()
     if not s["dwgEnabled"]:
+        if kit:
+            return (kit["write"] if write else kit["read"]), "libredwg"
         raise InterchangeError("DWG files need a converter you install yourself. Turn DWG support on in the interchange settings and set the converter path.", "dwgoff")
     path = s["dwgConverter"]
     if path and not os.path.isfile(path):
         raise InterchangeError('The DWG converter "%s" was not found.' % path, "noconv")
     if not path:
         path = find_tool(ODA_NAMES) or find_tool(LIBRE_WRITE if write else LIBRE_READ)
+    if not path and kit:
+        return (kit["write"] if write else kit["read"]), "libredwg"
     if not path:
         raise InterchangeError("No DWG converter was found on this computer. Install one and set its path in the interchange settings.", "noconv")
     kind = kind_of(path)
@@ -140,11 +162,18 @@ def _need(write: bool = False) -> tuple:
     return path, kind
 
 
+def mid_version(version: str) -> str:
+    try:
+        return "R2000" if _need(True)[1] == "libredwg" else version
+    except InterchangeError:
+        return version
+
+
 def oda_command(exe: str, src_dir: str, out_dir: str, version: str, out_type: str, recurse: bool = False, audit: bool = True, flt: str = "*.*") -> list:
     return [exe, src_dir, out_dir, ODA_VERSIONS.get(version, "ACAD2018"), out_type, "1" if recurse else "0", "1" if audit else "0", flt]
 
 
-def _run(cmd: list, timeout: int = TIMEOUT) -> None:
+def _run(cmd: list, timeout: int = TIMEOUT) -> str:
     with tempfile.TemporaryFile() as errs:
         try:
             proc = subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errs, timeout=timeout, shell=False)
@@ -155,12 +184,25 @@ def _run(cmd: list, timeout: int = TIMEOUT) -> None:
         size = errs.seek(0, os.SEEK_END)
         errs.seek(max(0, size - MAX_TAIL))
         text = errs.read(MAX_TAIL)
+    said = text.decode("utf-8", "replace")
     if proc.returncode != 0:
-        tail = text.decode("utf-8", "replace").strip().splitlines()[-3:]
+        tail = said.strip().splitlines()[-3:]
         raise InterchangeError("The DWG converter stopped with code %d. %s" % (proc.returncode, " ".join(tail)[-400:]), "convfail")
+    return said
 
 
-def dwg_to_dxf(path: str, timeout: int = TIMEOUT) -> tuple:
+def losses(said: str) -> list:
+    seen = {}
+    for line in said.splitlines():
+        line = line.strip()
+        if not line.startswith(("Warning:", "ERROR:")):
+            continue
+        key = re.sub(r"0x[0-9A-Fa-f]+|\b\d+(\.\d+)?\b|\([^)]*\)|\[[^\]]*\]", "#", line)
+        seen.setdefault(key, [line, 0])[1] += 1
+    return ["LibreDWG: %s%s" % (first, "" if n == 1 else " (%d times)" % n) for first, n in list(seen.values())[:20]]
+
+
+def dwg_to_dxf(path: str, timeout: int = TIMEOUT, report=None) -> tuple:
     if os.path.getsize(path) > MAX_DWG:
         raise InterchangeError("The DWG file is larger than 512 MB.", "toolarge")
     exe, kind = _need(False)
@@ -178,7 +220,11 @@ def dwg_to_dxf(path: str, timeout: int = TIMEOUT) -> tuple:
             produced = os.path.join(out, name + ".dxf")
         else:
             produced = os.path.join(out, name + ".dxf")
-            _run([exe, "-y", "--as", "r2018", "-o", produced, local], timeout)
+            said = _run([exe, "-y", "-o", produced, local], timeout)
+            if report is not None:
+                report.note("Read through LibreDWG.")
+                for line in losses(said):
+                    report.warn(line)
         if not os.path.isfile(produced):
             raise InterchangeError("The DWG converter finished but produced no DXF file. The DWG may be damaged or newer than the converter supports.", "noout")
         if os.path.getsize(produced) > MAX_DXF:
@@ -205,8 +251,8 @@ def dxf_to_dwg(dxf_path: str, dest: str, version: str = "R2018", timeout: int = 
         if kind == "oda":
             _run(oda_command(exe, src, out, version, "DWG", False, True, "*.dxf"), timeout)
         else:
-            notes.append("Writing DWG through LibreDWG is experimental and produces R2000 files only.")
-            _run([exe, "-y", "--as", "r2000", "-o", produced, local], timeout)
+            notes.append("Saved as DWG in the 2000 format (R2000), the only DWG version LibreDWG writes." + ("" if str(version).upper() == "R2000" else " The %s version you asked for needs the ODA File Converter." % version))
+            notes.extend(losses(_run([exe, "-y", "--as", "r2000", "-o", produced, local], timeout)))
         if not os.path.isfile(produced):
             raise InterchangeError("The DWG converter finished but produced no DWG file.", "noout")
         os.makedirs(os.path.dirname(os.path.abspath(dest)) or ".", exist_ok=True)

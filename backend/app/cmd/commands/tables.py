@@ -259,20 +259,29 @@ def stored_link(full: str, folder: str) -> str:
     return full
 
 
-def read_link(path: str, folder: str = ""):
+def read_link(path: str, folder: str = "", sheet: str = ""):
     full = resolve_link(path, folder)
     if not os.path.isfile(full):
         raise CommandError("The file %s was not found." % path)
     if os.path.getsize(full) > MAX_LINK_BYTES:
         raise CommandError("The file is larger than 8 MB.")
+    if full.lower().endswith((".xlsx", ".xlsm")):
+        from app.doc import xlsxread
+
+        try:
+            return full, xlsxread.read_rows(full, sheet)
+        except xlsxread.XlsxError as err:
+            raise CommandError(str(err))
+    if full.lower().endswith(".xls"):
+        raise CommandError("Old .xls workbooks are not read; save the workbook as .xlsx or CSV.")
     with open(full, "r", encoding="utf-8-sig", newline="") as fh:
         text = fh.read()
     return full, O.parse_delimited(text, O.detect_sep(full, text))
 
 
-def apply_link(ctx, t, path: str, start_row=None) -> None:
+def apply_link(ctx, t, path: str, start_row=None, sheet: str = "") -> None:
     folder = drawing_folder(ctx)
-    full, rows = read_link(path, folder)
+    full, rows = read_link(path, folder, sheet)
     start = (1 if t.title else 0) if start_row is None else int(start_row)
     if start < 0:
         raise CommandError("Requires a positive row.")
@@ -288,9 +297,11 @@ def apply_link(ctx, t, path: str, start_row=None) -> None:
         if r < start:
             t.cells[r][0]["span"] = [t.cells[r][0]["span"][0], t.cols()]
     t.link = {"path": stored_link(full, folder), "start_row": start}
+    if sheet:
+        t.link["sheet"] = sheet
 
 
-@command("datalink", group="annotation", label="Data Link", description="Fill a table from a CSV or delimited text file and keep the link.", menu="")
+@command("datalink", group="annotation", label="Data Link", description="Fill a table from a CSV, delimited text or Excel .xlsx file (with an optional sheet name) and keep the link.", menu="")
 def datalink(ctx):
     s = yield ctx.select("Select a table", pick_one=True)
     if s.kind != "selection":
@@ -303,17 +314,22 @@ def datalink(ctx):
     f = yield ctx.word("Enter data file name")
     if f.kind != "text":
         return
+    name = str(f.value).strip()
+    sheet = ""
+    if name.lower().endswith((".xlsx", ".xlsm")):
+        w = yield ctx.word("Enter sheet name or press Enter for the first sheet", default="")
+        sheet = str(w.value).strip() if w.kind == "text" else ""
     start = (1 if t.title else 0)
     r = yield ctx.number("Enter starting row", default=start + 1, integer=True, positive=True)
     row = start if r.kind != "number" else int(r.value) - 1
-    apply_link(ctx, t, str(f.value).strip(), row)
+    apply_link(ctx, t, name, row, sheet)
     ctx.say("Table linked to %s." % t.link["path"])
 
 
 @executes("datalink")
 def datalink_exec(ctx, args):
     t = editable_table(ctx, args.get("handle"))
-    apply_link(ctx, t, str(args.get("path", "")), args.get("start_row"))
+    apply_link(ctx, t, str(args.get("path", "")), args.get("start_row"), str(args.get("sheet") or ""))
     return {"rows": t.rows(), "cols": t.cols(), "link": t.link}
 
 
@@ -326,7 +342,7 @@ def update_links(ctx, handles=None) -> tuple:
             continue
         t = ctx.d.modify(e.handle)
         try:
-            apply_link(ctx, t, t.link["path"], t.link.get("start_row"))
+            apply_link(ctx, t, t.link["path"], t.link.get("start_row"), str(t.link.get("sheet") or ""))
             done += 1
         except CommandError as err:
             problems.append("%s: %s" % (e.handle, err))

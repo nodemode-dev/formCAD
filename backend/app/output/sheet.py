@@ -38,6 +38,10 @@ class Sheet:
         self.empty = False
         self.ops.append(("T", font, glyphs, style))
 
+    def image(self, pic, corners, alpha, layer):
+        self.empty = False
+        self.ops.append(("I", pic, corners, alpha, layer))
+
     def push_clip(self, rings, evenodd=False):
         self.ops.append(("C", rings, evenodd))
 

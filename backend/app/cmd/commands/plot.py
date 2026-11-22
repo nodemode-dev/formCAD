@@ -258,7 +258,7 @@ def svgout_exec(ctx, args):
     return pack(res)
 
 
-@command("publish", group="output", label="Publish", description="Plot several layouts into one PDF file.", menu="File > Publish...", undoable=False, repeatable=False)
+@command("publish", group="output", label="Publish", description="Plot several layouts into one PDF file; sheets that name a file take their layout from that drawing, so one job can publish a set of drawings.", menu="File > Publish...", undoable=False, repeatable=False)
 def publish(ctx):
     names = ["Model"] + L.names(ctx.d)
     for n in names:

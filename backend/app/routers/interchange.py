@@ -120,6 +120,22 @@ def dwg_settings(body: DwgBody) -> dict:
     return dwg.status()
 
 
+@router.post("/interchange/dwg/tools/install")
+def dwg_tools_install() -> dict:
+    from app.services import dwgtools
+
+    dwgtools.start_install()
+    return dwg.status()
+
+
+@router.delete("/interchange/dwg/tools")
+def dwg_tools_remove() -> dict:
+    from app.services import dwgtools
+
+    dwgtools.remove()
+    return dwg.status()
+
+
 @router.post("/interchange/open")
 def open_file(body: OpenBody) -> dict:
     import os

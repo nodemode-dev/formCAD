@@ -96,6 +96,9 @@ def xf_prims(prims, m, tag):
         else:
             pts = p["pts"]
             q["pts"] = _flat([_pt(m, (pts[i], pts[i + 1])) for i in range(0, len(pts), 2)])
+        if p.get("clip"):
+            c = p["clip"]
+            q["clip"] = _flat([_pt(m, (c[i], c[i + 1])) for i in range(0, len(c), 2)])
         if tag and "c" not in q and "ci" not in q:
             q.update(tag)
         out.append(q)

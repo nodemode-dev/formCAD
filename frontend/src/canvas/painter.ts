@@ -1,4 +1,5 @@
 import type { BatchData } from './batch';
+import type { PicDraw } from './pictures';
 import type { Chunk } from './store';
 import type { Rect } from './types';
 
@@ -28,7 +29,8 @@ export interface Painter {
   readonly kind: 'webgl2' | 'canvas2d';
   readonly retains: boolean;
   resize(cssW: number, cssH: number, dpr: number): void;
-  frame(view: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under?: DynLayer[]): void;
+  frame(view: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under?: DynLayer[], pics?: PicDraw[]): void;
+  dropPicture(b: ImageBitmap): void;
   onLost(fn: (restored: boolean) => void): void;
   release(gpu: unknown): void;
   dispose(): void;

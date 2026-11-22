@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "DWG-eszközök",
+  1574: "minden DWG-verziót olvas, csak DWG 2000-et ment",
+  1575: "Nincs telepítve",
+  1576: "Telepítés",
+  1577: "Telepítés folyamatban",
+  1578: "A DWG-eszközök a GNU LibreDWG, egy különálló, GPL alatti program, amelyet a FormCAD kiadási oldaláról töltenek le, és fájlonként ellenőriznek. Velük a FormCAD minden DWG-verziót megnyit, a DWG-t pedig csak a 2000-es formátumban menti.",
+  1579: "DWG-rajz",
+  1580: "DWG-rajz, 2000-es formátum (az egyetlen DWG-verzió, amelyet a LibreDWG ír)",
+  1581: "Raszterkép-hivatkozás...",
+  1582: "PDF-alátét...",
+  1583: "Kép",
+  1584: "PDF-alátét",
+  1585: "Beállítás...",
+  1586: "Alátét",
+  1587: "Oldal",
+  1588: "Halványítás",
+  1589: "Megjelenítés",
+  1590: "Vágás",
+};
+export default T;

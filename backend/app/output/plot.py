@@ -38,8 +38,47 @@ def requests_of(raw):
         merged.pop("layouts", None)
         if "layout" not in merged:
             raise R.PlotError("Every sheet names a layout.")
-        out.append(R.clean(merged))
+        source = merged.pop("file", None) if isinstance(it, dict) and "file" in it else None
+        req = R.clean(merged)
+        if source:
+            req["file"] = str(source)
+        out.append(req)
     return out
+
+
+def source_doc(doc, path):
+    from app.doc.document import Document
+    from app.doc.service import service
+
+    full = os.path.realpath(os.path.expanduser(str(path)))
+    for d in list(service.docs.values()):
+        if d.path and os.path.realpath(d.path) == full:
+            return d
+    if not os.path.isfile(full):
+        raise R.PlotError('The drawing "%s" was not found.' % path)
+    try:
+        if os.path.splitext(full)[1].lower() == ".fcad":
+            from app.doc import container
+
+            drawing, _ = container.load(full)
+        else:
+            from app.interchange import files
+
+            drawing, _, _ = files.read_any(full)
+    except Exception as err:
+        raise R.PlotError('The drawing "%s" could not be read: %s' % (os.path.basename(full), err))
+    return Document(drawing, os.path.splitext(os.path.basename(full))[0], full, "drawing", drawing.metric)
+
+
+def by_source(doc, reqs):
+    groups = []
+    for r in reqs:
+        src = source_doc(doc, r["file"]) if r.get("file") else doc
+        if groups and groups[-1][0] is src:
+            groups[-1][1].append(r)
+        else:
+            groups.append((src, [r]))
+    return groups
 
 
 def output_of(reqs, raw):
@@ -109,8 +148,13 @@ def render_bytes(sheets, output, reqs, dev):
 def run(doc, raw, output=None):
     reqs = requests_of(raw)
     out = output or output_of(reqs, raw)
-    with doc.lock:
-        sheets, dev = make_sheets(doc, reqs, out)
+    sheets, dev = [], None
+    for src, group in by_source(doc, reqs):
+        with src.lock:
+            part, dev = make_sheets(src, group, out)
+        sheets.extend(part)
+    if len(sheets) > R.MAX_SHEETS:
+        raise R.PlotError("A file holds at most 256 sheets.")
     data = render_bytes(sheets, out, reqs, dev)
     result = {"output": out, "mime": MIMES[out], "pages": info_of(sheets), "size": len(data), "device": dev["name"] if dev else "", "data": data}
     path = reqs[0].get("path")

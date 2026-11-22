@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.26.0 · 2026-11-22
+
+- DWG has two routes. A converter you install yourself (the ODA File Converter) works as before and saves every DWG version. New are the DWG tools: GNU LibreDWG as a separate program that FormCAD downloads from its release page and checks file by file. With them FormCAD opens every DWG version and saves DWG in the 2000 format only, and the save dialog says exactly that. They appear in Preferences once they are published; until then nothing changes. A drawing with multiline text or angular dimensions does not save through them yet: the save stops with LibreDWG's message and writes no file.
+- Opening a DWG lists what was lost: LibreDWG's own warnings and every kind of object kept but not shown.
+- Images and PDF pages can be placed under a drawing: Insert, Raster Image Reference or PDF Underlay. Clip them to a rectangle or a polygon, fade them, and show their frame, hide it or keep it off the plot (`IMAGEFRAME`, `PDFFRAME`). They sit beneath the drawing, plot in place to PDF, SVG and PNG, and are kept in DXF.
+- Publish takes sheets from several drawings into one PDF; it is the replacement for a sheet set manager.
+- A table can link to an Excel workbook (`.xlsx`), to its first sheet or one you name, as well as to CSV. Update Data Links reads it again.
+- LISP reaches drawing objects through `vla-` and `vlax-` functions, so routines written that way run unchanged.
+- The new labels are translated in every language.
+- Not run for this version: the desktop window, macOS and Windows, the ODA converter, and the DWG tools on macOS and Windows.
+
 ## 0.25.0 · 2026-11-22
 
 - The five proof walks (SolidWorks, AutoCAD, Rhino, Grasshopper, Fusion) were run on Linux with the 3D kernel and the mesher installed. Each step's result is recorded; what failed for a bug is fixed below, and what is missing is planned.

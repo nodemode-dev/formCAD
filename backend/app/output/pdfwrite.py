@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import math
 import zlib
 
 from app.output.sheet import PT_PER_MM
@@ -108,6 +109,7 @@ class PageWriter:
         self.cur_oc = None
         self.state = {}
         self.depth = 0
+        self.images = {}
 
     def pt(self, x, y):
         return "%s %s" % (num(x * PT_PER_MM), num(y * PT_PER_MM))
@@ -227,6 +229,9 @@ class PageWriter:
             elif kind == "T":
                 self.text(op)
                 i += 1
+            elif kind == "I":
+                self.image(op)
+                i += 1
             else:
                 i += 1
         self.set_oc(None)
@@ -234,6 +239,25 @@ class PageWriter:
             self.unclip()
         self.out.append("Q")
         return "\n".join(self.out).encode("latin-1")
+
+    def image(self, op):
+        pic, c, alpha, layer = op[1], op[2], op[3], op[4]
+        o, r, t = c[0], c[1], c[2]
+        longest = max(math.hypot(*(r - o)), math.hypot(*(t - o)))
+        side = int(min(6000, max(256, math.ceil(longest / 25.4 * 300.0 / 256.0) * 256)))
+        key = (pic["path"], pic["page"], pic["source"], side if pic["source"] == "pdf" else 0)
+        name = self.images.setdefault(key, "Im%d" % len(self.images))
+        self.set_oc(layer)
+        self.out.append("q")
+        if alpha < 0.999:
+            a = round(min(1.0, max(0.0, alpha)), 2)
+            self.alphas.setdefault(a, "GS%d" % len(self.alphas))
+            self.out.append("/%s gs" % self.alphas[a])
+        k = PT_PER_MM
+        self.out.append("%s %s %s %s %s %s cm" % tuple(num(v) for v in ((r[0] - o[0]) * k, (r[1] - o[1]) * k, (t[0] - o[0]) * k, (t[1] - o[1]) * k, o[0] * k, o[1] * k)))
+        self.out.append("/%s Do" % name)
+        self.out.append("Q")
+        self.state.pop("a", None)
 
     def text(self, op):
         font, glyphs, st = op[1], op[2], op[3]
@@ -277,6 +301,39 @@ class PageWriter:
             prev = (lin, pos, font.width(gid))
         flush()
         self.out.append("ET")
+
+
+def image_xobject(pdf, key):
+    from app.doc import underlays as U
+
+    path, page, source, side = key
+    head = "/Type /XObject /Subtype /Image"
+    try:
+        if source == "image" and U.kind_of(path) == "jpeg":
+            j = U.jpeg_passthrough(path)
+            if j is not None:
+                cs = "/DeviceRGB" if j["comps"] == 3 else "/DeviceGray"
+                return pdf.stream("%s /Width %d /Height %d /ColorSpace %s /BitsPerComponent 8 /Filter /DCTDecode" % (head, j["w"], j["h"], cs), j["data"], compress=False)
+        if source == "image" and U.kind_of(path) == "png":
+            p = U.png_passthrough(path)
+            if p is not None:
+                colors = {0: 1, 2: 3, 3: 1}[p["ctype"]]
+                if p["ctype"] == 3:
+                    n = max(1, len(p["plte"]) // 3)
+                    cs = "[/Indexed /DeviceRGB %d <%s>]" % (n - 1, p["plte"][: n * 3].hex())
+                else:
+                    cs = "/DeviceRGB" if colors == 3 else "/DeviceGray"
+                parms = "/DecodeParms << /Predictor 15 /Colors %d /BitsPerComponent %d /Columns %d >>" % (colors, p["bits"], p["w"])
+                return pdf.stream("%s /Width %d /Height %d /ColorSpace %s /BitsPerComponent %d /Filter /FlateDecode %s" % (head, p["w"], p["h"], cs, p["bits"], parms), p["idat"], compress=False)
+        px = U.pixels(path, page, side)
+    except (U.UnderlayError, OSError):
+        return None
+    h, w = px.shape[:2]
+    smask = ""
+    if (px[:, :, 3] < 255).any():
+        sm = pdf.stream("%s /Width %d /Height %d /ColorSpace /DeviceGray /BitsPerComponent 8" % (head, w, h), px[:, :, 3].tobytes(), compress=True)
+        smask = " /SMask %d 0 R" % sm
+    return pdf.stream("%s /Width %d /Height %d /ColorSpace /DeviceRGB /BitsPerComponent 8%s" % (head, w, h, smask), px[:, :, :3].tobytes(), compress=True)
 
 
 def to_unicode_cmap(font):
@@ -357,12 +414,20 @@ def render(sheets, title="", compress=True, layers=True, min_width=0.05, links=T
         tag = subset_tag(repr((key, sorted(font.gids))).encode("utf-8"), taken)
         font_objs[ref] = write_font(pdf, font, tag)
     gs_dict = " ".join("/%s << /Type /ExtGState /CA %s /ca %s >>" % (name, num(a) if a < 1 else "1", num(a) if a < 1 else "1") for a, name in alphas.items())
+    ximgs = {}
     for sh, po, cs, pw, annots in meta:
         props = " ".join("/%s %d 0 R" % (ocg_names[k][1], ocg_refs[k]) for k in sorted(pw.oc_used))
         fdict = " ".join("/%s %d 0 R" % (ref, font_objs[ref]) for key, (font, ref) in fonts.items() if ref in font_objs)
         res = "<< /ExtGState << %s >>" % gs_dict
         if fdict:
             res += " /Font << %s >>" % fdict
+        xo = []
+        for key, iname in pw.images.items():
+            if key not in ximgs:
+                ximgs[key] = image_xobject(pdf, key) or pdf.stream("/Type /XObject /Subtype /Form /BBox [0 0 1 1]", b"", compress=False)
+            xo.append("/%s %d 0 R" % (iname, ximgs[key]))
+        if xo:
+            res += " /XObject << %s >>" % " ".join(xo)
         if props:
             res += " /Properties << %s >>" % props
         res += " >>"

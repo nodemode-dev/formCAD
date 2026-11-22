@@ -55,6 +55,7 @@ export class DisplayStore {
   readonly chunks = new Map<number, Chunk>();
   readonly infinite = new Map<Handle, DisplayItem>();
   readonly bars = new Map<Handle, ConstraintBar>();
+  readonly pics = new Map<Handle, DisplayItem>();
   layers: Record<string, LayerState> = {};
   extentsHint: Rect | null = null;
   sheet: Rect | null = null;
@@ -89,6 +90,7 @@ export class DisplayStore {
   clear(): void {
     this.items.clear();
     this.bars.clear();
+    this.pics.clear();
     this.dropChunks();
     this.infinite.clear();
     this.seqOf.clear();
@@ -141,13 +143,20 @@ export class DisplayStore {
     }
     this.items.delete(h);
     this.bars.delete(h);
+    this.pics.delete(h);
     this.seqOf.delete(h);
+  }
+
+  hiddenLayer(name: string): boolean {
+    const l = this.layers[name];
+    return !!l && (l.on === false || l.frozen === true);
   }
 
   apply(p: DisplayPayload): void {
     if (p.full) {
       this.items.clear();
       this.bars.clear();
+      this.pics.clear();
       this.dropChunks();
       this.infinite.clear();
       this.seqOf.clear();
@@ -162,6 +171,7 @@ export class DisplayStore {
       this.items.set(it.h, it);
       const bar = barOf(it.prims);
       if (bar) this.bars.set(it.h, bar);
+      if (it.prims?.some((q) => q.t === 'img')) this.pics.set(it.h, it);
       this.seqOf.set(it.h, this.seq++);
       if (this.isInfinite(it)) this.infinite.set(it.h, it);
       else {

@@ -3,6 +3,7 @@ from app.lisp.types import Cons, LispError, Subr, Sym, is_num, sym
 
 BUILTIN: dict = {}
 SPECIAL: dict = {}
+CONSTANTS: dict = {}
 
 
 def fn(name: str, lo: int = 0, hi=None):

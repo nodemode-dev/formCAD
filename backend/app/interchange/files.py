@@ -104,7 +104,7 @@ def read_any(path: str, recover: bool = False, report: Report | None = None, uni
     if kind in (".dxf", ".dwt"):
         d, _ = dxf_read.read_file(full, recover, report)
     elif kind == ".dwg":
-        produced, work = dwg.dwg_to_dxf(full)
+        produced, work = dwg.dwg_to_dxf(full, report=report)
         try:
             d, _ = dxf_read.read_file(produced, recover, report)
         finally:
@@ -169,7 +169,7 @@ def write_any(drawing, path: str, version: str = "", binary: bool = False, preci
 
         with tempfile.TemporaryDirectory(prefix="fcdwgw_") as tmp:
             mid = os.path.join(tmp, "tmp.dxf")
-            dxf_write.write_file(drawing, mid, ver or "R2018", report, precision)
+            dxf_write.write_file(drawing, mid, dwg.mid_version(ver or "R2018"), report, precision)
             for n in dwg.dxf_to_dwg(mid, path, ver or "R2018"):
                 report.note(n)
         return report

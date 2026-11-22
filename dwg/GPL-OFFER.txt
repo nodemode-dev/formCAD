@@ -1,0 +1,24 @@
+Written offer of source code
+
+The programs dwg2dxf and dxf2dwg in this folder are GNU LibreDWG @VERSION@,
+built unmodified from the release archive libredwg-@VERSION@.tar.xz
+(SHA-256 @SHA256@), published by the GNU Project at
+https://ftp.gnu.org/gnu/libredwg/ and signed by its release manager.
+
+GNU LibreDWG is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. The full licence text is in COPYING.txt beside this file.
+
+The complete corresponding source is published in the same place as this
+archive: the release of nodemode-dev/formai-binaries that carries it holds
+libredwg-@VERSION@.tar.xz and its signature. The build script that made these
+programs is setup/build_dwg in the FormCAD repository, and it is part of the
+offer. For at least three years from the date of this release, and for as long
+as this archive is offered, anyone may also request the same source on a
+physical medium for no more than the cost of making and sending it, by writing
+to nodemode.ai.
+
+FormCAD runs these programs as a separate process, exchanging files through a
+temporary folder. Nothing from them is linked into FormCAD, and they are not
+part of the FormCAD application or its installers.

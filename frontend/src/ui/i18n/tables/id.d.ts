@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "Alat DWG",
+  1574: "membaca semua versi DWG, hanya menyimpan DWG 2000",
+  1575: "Belum terinstal",
+  1576: "Instal",
+  1577: "Menginstal",
+  1578: "Alat DWG adalah GNU LibreDWG, program terpisah di bawah GPL, yang diunduh dari halaman rilis FormCAD dan diperiksa file demi file. Dengan alat ini FormCAD membuka semua versi DWG dan menyimpan DWG hanya dalam format 2000.",
+  1579: "Gambar DWG",
+  1580: "Gambar DWG, format 2000 (satu-satunya versi DWG yang ditulis LibreDWG)",
+  1581: "Referensi Gambar Raster...",
+  1582: "Underlay PDF...",
+  1583: "Gambar",
+  1584: "Underlay PDF",
+  1585: "Sesuaikan...",
+  1586: "Underlay",
+  1587: "Halaman",
+  1588: "Pudar",
+  1589: "Tampilkan",
+  1590: "Clipping",
+};
+export default T;

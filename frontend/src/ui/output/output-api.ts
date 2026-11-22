@@ -27,7 +27,8 @@ export interface PlotStyle {
 export interface StyleTable extends StyleTableInfo { styles: PlotStyle[] }
 export interface LayoutList { current: string; tab: string; layouts: Array<{ name: string; paper: string; width: number; height: number; landscape: boolean; current: boolean }> }
 export interface PreviewImage { url: string; width: number; height: number; dpi: number; sheet: string; sheetMm: number[]; printableMm: number[] }
-export interface DwgStatus { enabled: boolean; converterPath: string; converter: string; converterKind: string; detected: { oda: string; libredwgRead: string; libredwgWrite: string }; usable: boolean; writeExperimental: boolean; message: string }
+export interface DwgTools { published: boolean; installed: boolean; release: string | null; licence: string; writeVersions: string[]; installing: boolean; progress: number; message: string }
+export interface DwgStatus { enabled: boolean; converterPath: string; converter: string; converterKind: string; detected: { oda: string; libredwgRead: string; libredwgWrite: string }; usable: boolean; writeExperimental: boolean; writeVersions: string[]; tools: DwgTools; message: string }
 export interface FormatList { read: Array<{ ext: string; name: string }>; write: Array<{ ext: string; name: string }>; versions: string[] }
 export interface Notes { notes: string[]; warnings: string[]; counts: Record<string, number>; dropped: Record<string, number>; converted: Record<string, number> }
 
@@ -77,6 +78,8 @@ export const out = {
   formats: (): Promise<FormatList> => call('GET', '/api/interchange/formats'),
   dwg: (): Promise<DwgStatus> => call('GET', '/api/interchange/dwg'),
   setDwg: (body: { enabled?: boolean; converter?: string }): Promise<DwgStatus> => call('PUT', '/api/interchange/dwg', body),
+  installDwgTools: (): Promise<DwgStatus> => call('POST', '/api/interchange/dwg/tools/install'),
+  removeDwgTools: (): Promise<DwgStatus> => call('DELETE', '/api/interchange/dwg/tools'),
   openForeign: (path: string, recover = false, options?: object): Promise<DocSummary & { notes?: Notes }> => slow('POST', '/api/interchange/open', { path, recover, ...(options ? { options } : {}) }),
   saveAs: (id: string, path: string, version = '', binary = false): Promise<DocSummary & { notes?: Notes }> => slow('POST', `/api/docs/${enc(id)}/interchange/saveas`, { path, version, binary }),
   exportFile: (id: string, path: string, version = '', binary = false): Promise<{ path: string; notes: Notes }> => slow('POST', `/api/docs/${enc(id)}/interchange/export`, { path, version, binary }),

@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 
 from app.lisp.printer import prin1
-from app.lisp.registry import BUILTIN, SPECIAL, bad_type, special
+from app.lisp.registry import BUILTIN, CONSTANTS, SPECIAL, bad_type, special
 from app.lisp.types import AutoStub, Cons, ERROR_SYM, LAMBDA, LispAbort, LispError, MISSING, NULL, SLASH, Subr, Sym, T, Usubr, sym
 
 
@@ -500,4 +500,4 @@ SPECIAL[sym("defun-q")] = sf_defun
 
 
 def initial_symbols() -> dict:
-    return {T: T, sym("PI"): math.pi, sym("PAUSE"): "\\"}
+    return {T: T, sym("PI"): math.pi, sym("PAUSE"): "\\", **CONSTANTS}

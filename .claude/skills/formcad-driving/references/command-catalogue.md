@@ -2,7 +2,7 @@
 
 Generated from the live registry; names marked with a star have no programmatic form or are barred to outside agents (use the FormCAD window). Regenerate the live tool list with scripts/list_tools.py, which is authoritative.
 
-Counts when generated: 727 commands, 693 MCP tools (23 fixed formcad_ tools plus cmd_[id] tools), 40 in the core set. Costing, DFM, design check and sustainability have no commands or MCP tools: they are engine routes only (see sub-skills/manufacture).
+Counts when generated: 727 commands, 693 MCP tools (23 fixed formcad_ tools plus cmd_[id] tools), 40 in the core set. Added by hand in 0.26.0: imageattach and pdfattach (block), imageclip, pdfclip, imageadjust and pdfadjust (modify). Costing, DFM, design check and sustainability have no commands or MCP tools: they are engine routes only (see sub-skills/manufacture).
 
 ## Contents
 
@@ -50,7 +50,7 @@ pluginenable* plugins
 
 ## block
 
--xref bclose bdescription bedit bsave bsaveas dynblock.define dynblock.drag dynblock.grips dynblock.props dynblock.read dynblock.set refclose refedit refset xattach xbind xclip xopen xref
+-xref bclose bdescription bedit bsave bsaveas dynblock.define dynblock.drag dynblock.grips dynblock.props dynblock.read dynblock.set imageattach pdfattach refclose refedit refset xattach xbind xclip xopen xref
 
 ## constraints
 
@@ -98,7 +98,7 @@ lispconsole macroplay* macrorecord macrorecorder macrosave* macrostop
 
 ## modify
 
--array -attedit align array arrayclose arrayedit arraypath arraypath.simple arraypolar arrayrect attedit attsync battman blend block.description blockreplace break breakatpoint burst chamfer change chprop chspace copy crvdegree crvextend crvfit crvknot crvmatch crvoffset crvperiodic crvrebuild crvreverse crvsimplify crvsub erase explode extend fillet flatten gumball hatchedit intersect join lengthen matchprop mirror mledit mocoro move ncopy offset oops pedit properties properties.set reverse rotate scale select* selectall* splinedit stretch subtract textedit trim union
+-array -attedit align array arrayclose arrayedit arraypath arraypath.simple arraypolar arrayrect attedit attsync battman blend block.description blockreplace break breakatpoint burst chamfer change chprop chspace copy crvdegree crvextend crvfit crvknot crvmatch crvoffset crvperiodic crvrebuild crvreverse crvsimplify crvsub erase explode extend fillet flatten gumball hatchedit imageadjust imageclip intersect join lengthen matchprop mirror mledit mocoro move ncopy offset oops pdfadjust pdfclip pedit properties properties.set reverse rotate scale select* selectall* splinedit stretch subtract textedit trim union
 
 ## output
 

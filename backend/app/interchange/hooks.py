@@ -16,7 +16,8 @@ def read_dxf_drawing(path: str, report: Report | None = None):
 
 
 def read_dwg_drawing(path: str, report: Report | None = None):
-    produced, work = dwg.dwg_to_dxf(path)
+    report = report or Report()
+    produced, work = dwg.dwg_to_dxf(path, report=report)
     try:
         return read_dxf_drawing(produced, report)
     finally:
@@ -33,7 +34,7 @@ def write_dwg_hook(drawing, path, precision=16):
     with tempfile.TemporaryDirectory(prefix="fcdwgw_") as tmp:
         mid = os.path.join(tmp, "tmp.dxf")
         rep = Report()
-        dxf_write.write_file(drawing, mid, "R2018", rep, precision)
+        dxf_write.write_file(drawing, mid, dwg.mid_version("R2018"), rep, precision)
         dwg.dxf_to_dwg(mid, path, "R2018")
 
 

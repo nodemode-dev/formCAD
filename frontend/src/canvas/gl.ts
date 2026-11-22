@@ -1,5 +1,6 @@
 import type { BatchData, Mark } from './batch';
 import type { DynLayer, PaintView, Painter } from './painter';
+import type { PicDraw } from './pictures';
 import type { Chunk } from './store';
 
 interface Gpu {
@@ -64,6 +65,25 @@ precision mediump float;
 in vec4 v_col;
 out vec4 o;
 void main() { o = v_col; }`;
+
+const VS_IMG = `#version 300 es
+precision highp float;
+layout(location=0) in vec2 a_pos;
+layout(location=1) in vec2 a_uv;
+uniform vec2 u_k;
+out vec2 v_uv;
+void main() {
+  v_uv = a_uv;
+  gl_Position = vec4(a_pos * u_k, 0.0, 1.0);
+}`;
+
+const FS_IMG = `#version 300 es
+precision mediump float;
+in vec2 v_uv;
+uniform sampler2D u_tex;
+uniform float u_keep;
+out vec4 o;
+void main() { o = texture(u_tex, v_uv) * u_keep; }`;
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader {
   const s = gl.createShader(type);
@@ -282,12 +302,136 @@ export class GlPainter implements Painter {
     gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
   }
 
-  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = []): void {
+  private img: WebGLProgram | null = null;
+  private readonly iu: Record<string, WebGLUniformLocation | null> = {};
+  private imgBuf: WebGLBuffer | null = null;
+  private readonly tex = new Map<ImageBitmap, WebGLTexture>();
+
+  dropPicture(b: ImageBitmap): void {
+    const t = this.tex.get(b);
+    this.tex.delete(b);
+    if (t && !this.lost) this.gl.deleteTexture(t);
+  }
+
+  private texture(b: ImageBitmap): WebGLTexture | null {
+    const gl = this.gl;
+    const have = this.tex.get(b);
+    if (have && gl.isTexture(have)) return have;
+    const t = gl.createTexture();
+    if (!t) return null;
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, b);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    this.tex.set(b, t);
+    return t;
+  }
+
+  private stencilRing(poly: number[], bit: number, v: PaintView): void {
+    const gl = this.gl;
+    const n = poly.length >> 1;
+    if (n < 3) return;
+    const tris = (n - 2) * 3;
+    const buf = new ArrayBuffer(tris * 16);
+    const f = new Float32Array(buf);
+    const u = new Uint32Array(buf);
+    for (let i = 0; i < n - 2; i++) {
+      const ids = [0, i + 1, i + 2];
+      for (let k = 0; k < 3; k++) {
+        const o = (i * 3 + k) * 4;
+        f[o] = poly[ids[k] * 2] - v.cx;
+        f[o + 1] = poly[ids[k] * 2 + 1] - v.cy;
+        u[o + 2] = 0xffffffff;
+        u[o + 3] = 0;
+      }
+    }
+    this.clipBuf ??= gl.createBuffer();
+    if (!this.clipBuf) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.clipBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, buf, gl.DYNAMIC_DRAW);
+    gl.stencilMask(bit);
+    gl.stencilFunc(gl.ALWAYS, 0, bit);
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.INVERT);
+    gl.colorMask(false, false, false, false);
+    gl.useProgram(this.flat);
+    gl.uniform2f(this.fu.u_off, 0, 0);
+    gl.uniform2f(this.fu.u_k, (2 * v.scale) / v.width, (2 * v.scale) / v.height);
+    gl.uniform1f(this.fu.u_contrast, v.contrast);
+    gl.uniform3f(this.fu.u_bg, v.bg[0], v.bg[1], v.bg[2]);
+    this.flatPointers(this.clipBuf, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, tris);
+    gl.colorMask(true, true, true, true);
+  }
+
+  private pictures(pics: PicDraw[], v: PaintView): void {
+    if (!pics.length) return;
+    const gl = this.gl;
+    if (!this.img || !gl.isProgram(this.img)) {
+      this.img = program(gl, VS_IMG, FS_IMG);
+      for (const n of ['u_k', 'u_tex', 'u_keep']) this.iu[n] = gl.getUniformLocation(this.img, n);
+    }
+    this.imgBuf ??= gl.createBuffer();
+    if (!this.imgBuf) return;
+    for (const p of pics) {
+      const t = this.texture(p.bitmap);
+      if (!t) continue;
+      let bits = 0;
+      if (p.area || p.clip) {
+        gl.enable(gl.STENCIL_TEST);
+        gl.stencilMask(0xff);
+        gl.clear(gl.STENCIL_BUFFER_BIT);
+        if (p.area) { this.stencilRing(p.area, 1, v); bits |= 1; }
+        if (p.clip) { this.stencilRing(p.clip, 2, v); bits |= 2; }
+        gl.stencilMask(0);
+        gl.stencilFunc(gl.EQUAL, bits, bits);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+      }
+      const [ox, oy, rx, ry, tx, ty] = p.pts;
+      const qx = rx + tx - ox;
+      const qy = ry + ty - oy;
+      const d = new Float32Array([
+        ox - v.cx, oy - v.cy, 0, 1,
+        rx - v.cx, ry - v.cy, 1, 1,
+        tx - v.cx, ty - v.cy, 0, 0,
+        qx - v.cx, qy - v.cy, 1, 0,
+      ]);
+      gl.useProgram(this.img);
+      gl.uniform2f(this.iu.u_k, (2 * v.scale) / v.width, (2 * v.scale) / v.height);
+      gl.uniform1f(this.iu.u_keep, 1 - p.fade);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.uniform1i(this.iu.u_tex, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.imgBuf);
+      gl.bufferData(gl.ARRAY_BUFFER, d, gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 16, 0);
+      gl.vertexAttribDivisor(0, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 16, 8);
+      gl.vertexAttribDivisor(1, 0);
+      gl.disableVertexAttribArray(2);
+      gl.disableVertexAttribArray(3);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      if (bits) {
+        gl.disable(gl.STENCIL_TEST);
+        gl.stencilMask(0xff);
+      }
+    }
+  }
+
+  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = [], pics: PicDraw[] = []): void {
     if (this.lost || this.gl.isContextLost()) return;
     const gl = this.gl;
     gl.viewport(0, 0, this.w, this.h);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    this.pictures(pics, v);
     for (const d of under) {
       const g = this.upload(d);
       if (!g) continue;

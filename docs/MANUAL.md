@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.25.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.26.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -60,7 +60,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Modify: `move`, `copy`, `rotate`, `scale`, `mirror`, `stretch`, `align`, `trim`, `extend`, `offset`, `break`, `fillet`, `chamfer`, `blend`, `join`, `lengthen`, `explode`, `pedit`, `splinedit`, `erase`, `oops`.
 - Arrays: `arrayrect`, `arraypolar`, `arraypath`, `array`, `arrayedit`.
 - Hatch: `hatch`, `gradient`, `hatchedit`.
-- Text and tables: `text`, `mtext`, `textedit`, `style`, `table`, `tabledit`, `tableexport`, `datalink`.
+- Text and tables: `text`, `mtext`, `textedit`, `style`, `table`, `tabledit`, `tableexport`, `datalink`, `datalinkupdate`. A data link reads CSV, delimited text or an Excel `.xlsx` workbook (first sheet, or the sheet you name); a formula cell shows the value the workbook last saved. Old `.xls` workbooks are not read.
 - Dimensions: `dimlinear`, `dimaligned`, `dimradius`, `dimdiameter`, `dimangular`, `dimordinate`, `dimbaseline`, `dimcontinue`, `qdim`, `dimstyle`, `dimedit`, `dimregen`.
 - Leaders: `leader`, `mleader`, `mleaderedit`, `mleaderstyle`.
 - Layers and properties: `layer`, `laycur`, `layiso`, `layuniso`, `layerstate`, `properties`, `chprop`, `matchprop`, `linetype`, `lweight`, `color`.
@@ -81,14 +81,15 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Blocks: `block`, `insert`, `base`, `blockreplace`, `burst`, `blockspalette`, `bedit`, `bsave`, `bsaveas`, `bclose`, `refedit`, `refset`, `refclose`, `purge`, `wblock`.
 - Attributes: `attdef`, `attedit`, `attdisp`, `attsync`, `battman`, `dataextraction`.
 - External references: `xattach`, `xref`, `xbind`, `xopen`, `xclip`.
+- Image and PDF underlays: `imageattach` (PNG or JPEG) and `pdfattach` (one page of a PDF) place a file by insertion point, scale and rotation; `imageclip` and `pdfclip` clip to a rectangle or polygon or turn clipping on and off; `imageadjust` and `pdfadjust` set the fade; `IMAGEFRAME` and `PDFFRAME` show the frame (0 hidden, 1 shown and plotted, 2 shown and not plotted). At scale 1 an image is its pixel size at its own resolution (96 dpi when the file names none) and a PDF page is its printed size, both in the drawing's units. They are drawn beneath the drawing's lines, plot to PDF, SVG and PNG, and are kept through DXF as IMAGE and PDFUNDERLAY with their clip, fade and frame.
 - Layouts: `layout`, `pagesetup`, `mspace`, `pspace`, `mview`, `vpclip`, `vplayer`, `vpmax`, `vpmin`.
 - Annotation scale: `scalelistedit`, `objectscale`, `annoreset`, `annoupdate`.
 
-**Limits.** External references resolve through relative paths first; a missing file is reported and drawn as a placeholder, never silently dropped.
+**Limits.** External references resolve through relative paths first; a missing file is reported and drawn as a placeholder, never silently dropped. An underlay whose file is missing keeps its frame and draws no picture. Underlays take PNG, JPEG and PDF; TIFF, BMP, DWF and DGN are not read, nor interlaced PNG files in plots. Contrast and brightness from another program are not applied and are set back to the defaults when saved (the open notes say so). A PDF page is shown and plotted as a picture made at plot resolution (about 300 dpi), not as lines you can snap to.
 
 ## 4. Plotting and interchange
 
-**What it does.** Plot to PDF (with layers and searchable text), PNG and SVG; read and write DXF from release 12 to 2018, read SVG, exchange STEP (AP203, AP214, AP242 with semantic product manufacturing information), IGES and 3DM through the kernel, and mesh formats STL, OBJ, PLY, 3MF and GLB. DWG goes through a converter you install yourself.
+**What it does.** Plot to PDF (with layers and searchable text), PNG and SVG; read and write DXF from release 12 to 2018, read SVG, exchange STEP (AP203, AP214, AP242 with semantic product manufacturing information), IGES and 3DM through the kernel, and mesh formats STL, OBJ, PLY, 3MF and GLB. DWG goes through a converter you install yourself, or through the DWG tools when they are offered in Preferences.
 
 **How to start.** `plot` opens the plot flow; `export` and `import` handle other formats; `open` and `saveas` choose the format by extension.
 
@@ -98,14 +99,15 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 - 3DM: curves and untrimmed surfaces are kept exactly. A trimmed face is written as a surface plus its trim curves, with a warning; STEP keeps trimmed faces better.
 - Mesh formats that carry no unit (STL, OBJ) produce a warning on every import and export.
-- DWG needs a converter at a path you configure (`GET /api/interchange/dwg`); without it DWG files are refused with a message.
+- Sheet sets: there is no sheet set manager. `publish` is the replacement: it plots layouts of the current drawing and, with `sheets` entries that name a `file`, layouts of other drawings (FormCAD, DXF or DWG files) into one PDF, in the order listed, each sheet with its own page setup or paper. Sheet numbering, sheet lists and title-block fields shared across drawings are not managed. An agent may name only files in its granted folders.
+- DWG needs a converter. Either turn DWG on and point FormCAD at a converter you installed (the ODA File Converter reads and writes every DWG version from 2000 to 2018), or install the DWG tools from Preferences when they are offered there (GNU LibreDWG, a separate GPL program FormCAD downloads and checks file by file). With the DWG tools FormCAD opens DWG files of every version and saves DWG in the 2000 format only; objects LibreDWG skips are listed in the import notes, and a drawing LibreDWG cannot convert stops the save with its message, so save it as DXF instead. Without either, DWG files are refused with a message (`GET /api/interchange/dwg`).
 - A STEP file that carries something FormCAD cannot represent is read with a report of what was dropped.
 
 ## 5. Automation: LISP, scripts, macros, plugins, CLI, MCP
 
 **What it does.** Five ways to drive the engine without clicking, plus an agent protocol.
 
-- **LISP**: a dialect with 188 builtins. Load with `appload`, open the console with `lispconsole`, run with `lisp`.
+- **LISP**: a dialect with 175 core functions and 14 special forms. Load with `appload`, open the console with `lispconsole`, run with `lisp`. ActiveX object access adds 193 `vla-` functions, 52 `vlax-` functions (properties, methods, variants, safe arrays and the `vlax-curve-` set) and the `vlax-for` form, so routines that start from `vlax-get-acad-object` and `vla-get-ActiveDocument` run unchanged. The objects are the application, the drawing, model and paper space, the layer, linetype, text style, dimension style, block and layout collections, the utility object, attribute references and these entities: line, circle, arc, ellipse, point, lightweight and 3D polyline, spline, ray, xline, text, mtext, attribute definition and block reference (other entities answer the common properties). Not available: other ActiveX programs (`vlax-create-object` says so), reactors (`vlr-`), `vlax-ldata-`, adding to a block definition (use `entmake` with BLOCK and ENDBLK), Save and SaveAs from LISP, and setting `ActiveSpace`. StartUndoMark and EndUndoMark are accepted and do nothing. On ellipses and splines the start and end parameters are the real ones and the parameters in between run with length.
 - **Scripts**: lists of commands as text. `script`, `rscript`, `delay`, `resume`.
 - **Macros**: record what you do (`macrorecord`, `macrostop`, `macrosave`, `macroplay`, `macrorecorder` panel). Python macros run in a separate process with a scrubbed environment, a time limit, resource limits, and a guard on files, network, subprocesses and native code. Each macro's trust is bound to the hash of its source; edit it and trust is gone.
 - **Plugins**: a folder with `plugin.json` listing a hash per file, found through `formcad.plugins` entry points or the data folder. Nothing is imported at discovery; `pluginenable` stores the manifest hash, and a plugin that changed since is not loaded. `plugins` lists them.

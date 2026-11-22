@@ -1,5 +1,6 @@
 import type { BatchData } from './batch';
 import type { DynLayer, PaintView, Painter } from './painter';
+import type { PicDraw } from './pictures';
 import type { Chunk } from './store';
 
 export class CpuPainter implements Painter {
@@ -112,10 +113,47 @@ export class CpuPainter implements Painter {
     }
   }
 
-  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = []): void {
+  dropPicture(_b: ImageBitmap): void {}
+
+  private ringPath(poly: number[], v: PaintView): void {
+    const ctx = this.ctx;
+    ctx.beginPath();
+    for (let i = 0; i + 1 < poly.length; i += 2) {
+      const x = (poly[i] - v.cx) * v.scale + this.w / 2;
+      const y = this.h / 2 - (poly[i + 1] - v.cy) * v.scale;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+
+  private picture(p: PicDraw, v: PaintView): void {
+    const ctx = this.ctx;
+    const sx = (x: number) => (x - v.cx) * v.scale + this.w / 2;
+    const sy = (y: number) => this.h / 2 - (y - v.cy) * v.scale;
+    const [ox, oy, rx, ry, tx, ty] = p.pts;
+    const W = p.bitmap.width;
+    const H = p.bitmap.height;
+    ctx.save();
+    if (p.area) {
+      this.ringPath(p.area, v);
+      ctx.clip('evenodd');
+    }
+    if (p.clip) {
+      this.ringPath(p.clip, v);
+      ctx.clip('evenodd');
+    }
+    ctx.globalAlpha = 1 - p.fade;
+    const d = this.dpr;
+    ctx.setTransform(d * (sx(rx) - sx(ox)) / W, d * (sy(ry) - sy(oy)) / W, d * (sx(ox) - sx(tx)) / H, d * (sy(oy) - sy(ty)) / H, d * sx(tx), d * sy(ty));
+    ctx.drawImage(p.bitmap, 0, 0);
+    ctx.restore();
+  }
+
+  frame(v: PaintView, chunks: Iterable<Chunk>, dyn: DynLayer[], under: DynLayer[] = [], pics: PicDraw[] = []): void {
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.w, this.h);
+    for (const p of pics) this.picture(p, v);
     for (const d of under) {
       if (!d.data) continue;
       ctx.save();

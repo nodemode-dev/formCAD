@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.25.0" src="https://img.shields.io/badge/version-0.25.0-eef0f4?style=flat-square">
+  <img alt="version 0.26.0" src="https://img.shields.io/badge/version-0.26.0-eef0f4?style=flat-square">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Vite-3178c6?style=flat-square&logo=typescript&logoColor=white">
   <img alt="Python" src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-2f7bf5?style=flat-square">
@@ -87,7 +87,7 @@
 
 ## Built for agents
 
-727 commands live in one registry; the window, the CLI and the MCP server all call the same ones. The MCP server offers 45 tools by default and 698 with `--tools all`: the short list keeps an agent's context small, and every command is still reachable through `formcad_execute`. `formcad_status` tells an agent whether the 3D kernel and the mesher are installed and which folders it may use.
+733 commands live in one registry; the window, the CLI and the MCP server all call the same ones. The MCP server offers 45 tools by default and 704 with `--tools all`: the short list keeps an agent's context small, and every command is still reachable through `formcad_execute`. `formcad_status` tells an agent whether the 3D kernel and the mesher are installed and which folders it may use.
 
 ```sh
 ./formCAD mcp                                  # MCP server on stdio for Claude Code, Codex, Cursor and Antigravity

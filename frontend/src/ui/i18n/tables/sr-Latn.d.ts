@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "DWG alatke",
+  1574: "čita sve DWG verzije, čuva samo DWG 2000",
+  1575: "Nije instalirano",
+  1576: "Instaliraj",
+  1577: "Instalacija u toku",
+  1578: "DWG alatke su GNU LibreDWG, poseban program pod licencom GPL, koji se preuzima sa stranice izdanja programa FormCAD i proverava datoteku po datoteku. Uz njih FormCAD otvara svaku DWG verziju i čuva DWG samo u formatu 2000.",
+  1579: "DWG crtež",
+  1580: "DWG crtež, format 2000 (jedina DWG verzija koju LibreDWG zapisuje)",
+  1581: "Referenca rasterske slike...",
+  1582: "Podloga PDF...",
+  1583: "Slika",
+  1584: "Podloga PDF",
+  1585: "Podesi...",
+  1586: "Podloga",
+  1587: "Stranica",
+  1588: "Bledenje",
+  1589: "Prikaži",
+  1590: "Odsecanje",
+};
+export default T;

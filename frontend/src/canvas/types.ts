@@ -21,6 +21,7 @@ export type Prim =
   | { t: 'pl'; pts: number[]; closed?: boolean }
   | { t: 'tri'; pts: number[] }
   | { t: 'fill'; rings: number[][]; c?: number[]; mask?: boolean }
+  | { t: 'img'; pts: number[]; clip: number[] | null; fade: number; v: string }
   | ConstraintBar;
 
 export type ConstraintState = 'none' | 'under' | 'fully' | 'over';
@@ -152,6 +153,7 @@ export type CursorMode = 'point' | 'pick' | 'none';
 
 export interface CanvasDeps {
   fetchDisplay(docId: string, since: number | undefined, space: string | undefined): Promise<DisplayPayload>;
+  fetchPicture(docId: string, handle: Handle): Promise<Blob>;
   sysvar(name: string, fallback: number): number;
   sysvarVec(name: string): number[] | null;
   onSysvar(fn: (name: string) => void): () => void;

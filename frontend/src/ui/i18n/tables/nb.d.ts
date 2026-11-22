@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "DWG-verktøy",
+  1574: "leser alle DWG-versjoner, lagrer bare DWG 2000",
+  1575: "Ikke installert",
+  1576: "Installer",
+  1577: "Installerer",
+  1578: "DWG-verktøyene er GNU LibreDWG, et eget program under GPL, som lastes ned fra utgivelsessiden til FormCAD og kontrolleres fil for fil. Med dem åpner FormCAD alle DWG-versjoner og lagrer DWG bare i 2000-formatet.",
+  1579: "DWG-tegning",
+  1580: "DWG-tegning, 2000-format (den eneste DWG-versjonen som LibreDWG skriver)",
+  1581: "Rasterbildereferanse...",
+  1582: "PDF-underlag...",
+  1583: "Bilde",
+  1584: "PDF-underlag",
+  1585: "Juster...",
+  1586: "Underlag",
+  1587: "Side",
+  1588: "Uttoning",
+  1589: "Vis",
+  1590: "Beskjæring",
+};
+export default T;
