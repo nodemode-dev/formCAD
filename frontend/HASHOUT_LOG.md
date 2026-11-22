@@ -2,6 +2,18 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## WK1 v0.21.0 where the page finds the session key, and dock module 2.2.1 (io/api.ts, ui/status.ts, render/net.ts, dock/)
+
+`token()` in `io/api.ts` used to read only `<meta name="formcad-token">`, which the engine wrote into every page it served. It now looks in three places, in order: `window.__FORMCAD_TOKEN`, which the desktop shell sets before any page script runs and which is deleted as soon as it is read; the meta tag, which the engine writes for the first page load only when it was started for a browser, and which Vite's dev server still writes from the session file; and `sessionStorage` under `formcad-token`, where a key that came by meta tag is kept so a reload of the same tab still works after the engine has stopped handing it out. `sessionStorage` dies with the tab and is not shared between tabs, which is the point. The key the shell gave is never stored: the shell gives it again on every load. Every module that sends `X-FormCAD-Token` already calls `token()`; `render.html` adopts its own token from the address and is untouched.
+
+A page with no key gets 401 on every route and showed "Engine offline" with the note that tells the person to start the engine, which would have been wrong. The status item's note now says the engine gave its key to the first page, when the page holds no key (`KEY_NOTE`). The text of the item itself is unchanged, so nothing moves.
+
+`EnvFile.md5` is `sha256`, following the engine's listing. Nothing in the interface read the field.
+
+`dock/` is formvis's folder at ca3b435, module 2.2.1, copied with `cp` over 2.2.0 and not edited: `CONTRACT.md` and `strings.ts` differ. `agent-dock.ts` needed no change.
+
+Seen in Chrome on Linux at 4x CPU throttle, against an engine serving the built page: the first session connects and still connects after a reload with no meta tag in the reloaded page; a second, separate session gets no key, shows "Engine offline" with the new note, and logs the 401 answers it should; layout shift 0 in both. Not seen: the page in the desktop window.
+
 ## AD1, v0.20.0 the agent dock: the family's shared dock module 2.2.0 (dock/, agent-dock.ts, io/terminal-api.ts, styles/agent-dock.css, index.html, main.ts, ui/menu-spec.ts)
 
 `frontend/src/dock/` is formvis's folder at 9480a07, copied with `cp` and never edited here: 16 files, every hash equal to its `MANIFEST.json` (`./formCAD agents check` fails on a changed, missing or extra file).
