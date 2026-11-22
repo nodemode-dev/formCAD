@@ -11,6 +11,7 @@ uharfbuzz==0.57.0   # OpenType shaping (kerning, Arabic joining, Thai marks); Ap
 manifold3d==3.5.4   # mesh booleans, sections and manifold checks; Apache-2.0, statically contains oneTBB, Clipper2 and quickhull
 fast-simplification==0.2.0   # quadric mesh reduction; MIT, its Linux wheel carries libgomp
 pyclipper==1.4.0   # polygon offsetting and clipping for machining toolpaths; MIT wrapper (wheel licenses/LICENSE) over Clipper 6.4.2 (Boost-1.0), no bundled shared libraries, cp310 to cp314 wheels on Linux, macOS and Windows
+pypdfium2==5.15.2   # PDF underlays: renders PDF pages and decodes JPEG images for plots; BSD-3-Clause OR Apache-2.0, bundles PDFium (BSD-3-Clause) with FreeType, libjpeg-turbo, OpenJPEG, libpng, libtiff, lcms2, zlib and ICU inside libpdfium, wheels for Linux, macOS and Windows
 blake3==1.0.11   # content hashes of the local vault; CC0-1.0 OR Apache-2.0, needs Python 3.11 or newer, no bundled libraries
 mujoco==3.17.0; platform_system != "Darwin" or platform_machine == "arm64"   # joint dynamics and contact; Apache-2.0, no macOS Intel wheel, native modules link only the C library
 ptyprocess==0.7.0; sys_platform != "win32"   # the agent dock's pseudo-terminals on macOS and Linux; ISC, pure Python
