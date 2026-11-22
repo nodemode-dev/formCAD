@@ -189,6 +189,7 @@ const curve = (): MenuItem[] => section('Curve', () => [
   E('Match Curve', 'crvmatch'), E('Offset Curve', 'crvoffset'), E('Extend Curve', 'crvextend'), E('Sub-curve', 'crvsub'), E('Reverse Direction', 'crvreverse'), SEP,
   E('Fit to Tolerance', 'crvfit'), E('Rebuild', 'crvrebuild'), E('Change Degree', 'crvdegree'), E('Insert or Remove Knot', 'crvknot'),
   E('Simplify', 'crvsimplify'), E('Periodic or Open', 'crvperiodic'), SEP,
+  E('Project onto Surface', 'crvproject'), 'u96-project-view', E('Pull onto Surface', 'crvpull'), E('Contour', 'srfcontour'), E('Extract Isocurve', 'srfisocurve'), SEP,
   E('Continuity Report', 'crvcont'), SEP, 'u7-points-cv', 'u7-points-ep', 'u7-points-off',
 ]);
 

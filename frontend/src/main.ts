@@ -12,6 +12,7 @@ import './ui/param/register';
 import './ui/auto/register';
 import './view3d/mount';
 import './view3d/nurbs-ui';
+import './view3d/extract-ui';
 import './part/register';
 import './sheet/register';
 import './u8/register';

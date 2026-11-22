@@ -180,6 +180,18 @@ def load_operations() -> None:
         for name in ("surf_untrim", "surf_shrink"):
             METHODS.setdefault(name, trim_unavailable)
     try:
+        import kernel_extract
+
+        METHODS.update(kernel_extract.METHODS)
+    except Exception as err:
+        failure_extract = str(err)
+
+        def extract_unavailable(_params):
+            raise RuntimeError("The curve extraction operations could not be loaded (%s)." % failure_extract)
+
+        for name in ("surf_project", "surf_pull", "surf_contour", "surf_isocurve"):
+            METHODS.setdefault(name, extract_unavailable)
+    try:
         import kernel_views
 
         METHODS.update(kernel_views.METHODS)
