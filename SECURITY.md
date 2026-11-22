@@ -53,3 +53,35 @@ something outside it could get in:
 
 Bugs that need someone to already control your machine, or to run a modified build
 of FormCAD, are ordinary bugs: please open an issue for those.
+
+## What FormCAD sends over the network
+
+FormCAD collects nothing about you and has no account, no telemetry and no update
+check. It makes a request outside your computer in three cases only, each one
+started by you:
+
+- **The kernel and mesher downloads**: one archive each from the
+  [formai-binaries](https://github.com/nodemode-dev/formai-binaries) releases on
+  GitHub, checked file by file with SHA-256 against the record the app ships.
+- **Render environments**: a larger copy of an environment is one HDR file from Poly
+  Haven (`dl.polyhaven.org`), checked with SHA-256 and its size against the
+  catalogue the app ships. No other host is accepted.
+- **The agent dock's install lines**: when Claude Code, Codex, Cursor or Antigravity
+  is missing, the dock shows the line that installs it. FormCAD never runs that
+  line. A program you start in a tab talks to its own service as it does anywhere.
+
+Nothing else is sent. A request from FormCAD to any other address is a
+vulnerability, and so is any of the three happening without you asking for it.
+
+## Who holds the session key
+
+The engine makes one key at each start. The desktop app's own window receives it
+from the app, never from a page the engine serves. Started for a browser
+(`./formCAD serve`), the engine gives the key to the first page that loads and to no
+later one. Agents and the command line read it from `session.token` in the data
+folder, a file only your user can read. A second page, another user of the computer
+or a web site getting a working key is a vulnerability.
+
+`FORMCAD_HOST` set to anything but loopback makes the engine listen beyond this
+computer and prints a warning at start. It still answers only requests whose Host is
+127.0.0.1 or localhost.
