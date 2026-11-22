@@ -125,7 +125,7 @@ All FormCAD builds are compiled and released from [FormCompiler](https://github.
 
 Prefer it in your browser, or want to contribute? Run the web UI straight from this repo.
 
-**Requires:** Node 20.19+ or 22.12+ and Python 3.12+; Rust only for the desktop shell.
+**Requires:** Node 22.12+ and Python 3.12+; Rust only for the desktop shell.
 
 ```sh
 git clone git@github.com:nodemode-dev/formCAD.git

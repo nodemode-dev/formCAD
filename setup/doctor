@@ -5,7 +5,7 @@ ok() { printf '  ok     %s\n' "$1"; }
 bad() { printf '  FAIL   %s · %s\n' "$1" "$2"; fail=1; }
 warn() { printf '  warn   %s · %s\n' "$1" "$2"; }
 fc_say "doctor · $(fc_os)"
-if fc_node_ok; then ok "node $(node -v)"; else bad "node" "Node 22 or newer is required"; fi
+if fc_node_ok; then ok "node $(node -v)"; else bad "node" "Node 22.12 or newer is required"; fi
 if command -v npm >/dev/null 2>&1; then ok "npm"; else bad "npm" "install npm"; fi
 if py="$(fc_python)"; then ok "python $("$py" -V 2>&1 | awk '{print $2}')"; else bad "python" "Python 3.12 or newer is required"; fi
 if [ -f "$FORMCAD_ROOT/backend/venv/bin/activate" ] || [ -f "$FORMCAD_ROOT/backend/venv/Scripts/activate" ]; then ok "engine venv"; else warn "engine venv" "run ./formCAD install"; fi
