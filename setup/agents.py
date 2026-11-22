@@ -27,6 +27,9 @@ MANIFEST_REL = "agents/manifest.json"
 BACKEND = os.path.join(ROOT, "backend")
 MCP_ROUTER = os.path.join(BACKEND, "app", "routers", "mcp.py")
 MCP_STDIO = os.path.join(ROOT, "setup", "mcp")
+VERSION_FILE = os.path.join(ROOT, "frontend", "src", "version.ts")
+README = os.path.join(ROOT, "README.md")
+README_COUNT = re.compile(r"offers (\d+) tools by default and (\d+) with `--tools all`")
 DOCK = {"present": True, "name": "agent dock", "positions": ["bottom", "right"], "tabs": ["terminal", "claude-code", "codex", "cursor", "antigravity"]}
 DOCK_DIR = os.path.join(ROOT, "frontend", "src", "dock")
 DOCK_DIR_REL = "frontend/src/dock"
@@ -88,6 +91,20 @@ def engine_tools():
     return [{"name": t["name"], "annotations": t.get("annotations") or {}} for t in tool_list("all")]
 
 
+def default_tools():
+    if BACKEND not in sys.path:
+        sys.path.insert(0, BACKEND)
+    from app.automation.mcp import tool_list
+
+    return [t["name"] for t in tool_list("core")]
+
+
+def app_version():
+    with open(VERSION_FILE, encoding="utf-8") as f:
+        found = re.search(r"VERSION = '([^']+)'", f.read())
+    return found.group(1) if found else ""
+
+
 def skill_list():
     found = []
     if not os.path.isdir(SOURCE):
@@ -112,7 +129,7 @@ def build_manifest():
         "format": "form-agent-manifest",
         "version": 1,
         "app": APP,
-        "mcp": {"tools": names, "read_only": read_only, "approval_gated": [n for n in names if n not in read_only], "transports": transports},
+        "mcp": {"tools": default_tools(), "all_tools": names, "read_only": read_only, "confined": [n for n in names if n not in read_only], "transports": transports},
         "skills": skill_list(),
         "dock": DOCK,
         "extensions": EXTENSIONS,
@@ -145,6 +162,20 @@ def check_manifest(problems):
         problems.append(f"{MANIFEST_REL} is missing; run ./{LAUNCHER} agents sync")
     elif read_bytes(MANIFEST).decode("utf-8", errors="replace") != text:
         problems.append(f"{MANIFEST_REL} is not what the engine's tools and the skills folder say; run ./{LAUNCHER} agents sync")
+
+
+def check_readme_count(problems):
+    try:
+        with open(README, encoding="utf-8") as f:
+            said = README_COUNT.search(f.read())
+        have = (len(default_tools()), len(engine_tools()))
+    except (OSError, ValueError, ImportError) as exc:
+        problems.append(f"README.md tool count cannot be checked: {exc}")
+        return
+    if said is None:
+        problems.append("README.md does not state the MCP tool count (offers N tools by default and M with `--tools all`)")
+    elif (int(said.group(1)), int(said.group(2))) != have:
+        problems.append(f"README.md says {said.group(1)} and {said.group(2)} MCP tools; the engine offers {have[0]} and {have[1]}")
 
 
 def check_dock(problems):
@@ -275,6 +306,9 @@ def check_skill_format(problems):
                 problems.append(f"{label} name holds a reserved word")
             if TAG.search(name):
                 problems.append(f"{label} name holds an XML tag")
+        pack = re.search(r"^\s+pack-version:\s*[\"']?([^\"'\s]+)", text, re.M)
+        if pack and pack.group(1) != app_version():
+            problems.append(f"{label} pack-version {pack.group(1)} is not the app version {app_version()}")
         if not description:
             problems.append(f"{label} has no description")
         else:
@@ -347,6 +381,7 @@ def check_agent_files(problems):
 
 def check():
     problems = []
+    check_readme_count(problems)
     check_drift(problems)
     check_skill_format(problems)
     check_agent_files(problems)

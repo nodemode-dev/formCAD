@@ -495,7 +495,7 @@ def cmd_mcp(argv: list) -> int:
         raise Usage("mcp takes no positional arguments.")
     if opts.get("--launch"):
         raise Usage("--launch is not supported; start FormCAD, then connect.")
-    tools = opts.get("--tools", "all")
+    tools = opts.get("--tools", "core")
     if tools not in ("all", "core"):
         raise Usage("--tools is all or core.")
     from app.automation import stdio

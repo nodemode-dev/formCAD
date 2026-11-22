@@ -1,4 +1,5 @@
 import dis
+import re
 import types
 
 from app.cmd import barred, registry
@@ -85,11 +86,24 @@ def _kind_of(spec) -> str:
 
 
 def tool_name(command: str) -> str:
+    return "cmd_" + re.sub(r"[^A-Za-z0-9_]", "_", command)
+
+
+def old_tool_name(command: str) -> str:
     return "cmd_" + command
 
 
 def command_of(tool: str) -> str:
-    return tool[4:] if tool.startswith("cmd_") else ""
+    if not tool.startswith("cmd_"):
+        return ""
+    registry.load_modules()
+    rest = tool[4:]
+    if rest in registry.COMMANDS:
+        return rest
+    for name in registry.COMMANDS:
+        if tool_name(name) == tool:
+            return name
+    return ""
 
 
 def schema_for(spec) -> dict:

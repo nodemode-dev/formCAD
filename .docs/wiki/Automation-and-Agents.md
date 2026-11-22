@@ -42,7 +42,7 @@ A plugin folder has `plugin.json` with a hash for every file. Nothing is importe
 
 ## Agents over MCP
 
-Register the server with the line from `GET /api/automation/status`. Tools are named `formcad_*` plus one `cmd_<id>` per command that takes arguments, each with read-only, destructive and idempotent hints. Results are text plus structured content. Agents get the lower trust class, always.
+Register the server with the line from `GET /api/automation/status`. The server lists the fixed `formcad_*` tools and the `cmd_*` tools of the common drafting commands; every other command runs through `formcad_execute`, and `--tools all` lists one `cmd_*` tool per command. Each tool carries read-only, destructive and idempotent hints. `formcad_status` is the first call: it says whether the kernel and the mesher are installed and which folders are granted. Results are text plus structured content. Agents get the lower trust class, always.
 
 `./formCAD agents install` registers the server (`./formCAD mcp`) with Claude Code, Codex, Cursor and Antigravity for the current user; `--dry-run` says what it would change. A second run changes nothing, every other entry in each program's settings is kept, and a server named `formcad` that FormCAD did not write is left alone. `./formCAD agents sync` copies `skills/` into `.claude/skills` and `.agents/skills` and writes `agents/manifest.json`; `./formCAD agents check` checks all of it. Windows has no `agents` command yet.
 
