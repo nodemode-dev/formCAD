@@ -139,6 +139,7 @@ const modify = (): MenuItem[] => section('Modify', () => [
     S('Multileader', E('Add Leader', 'mleaderedit.add'), E('Remove Leader', 'mleaderedit.remove'), E('Align', 'mleaderalign'), E('Collect', 'mleadercollect'))),
   S('Clip', E('Viewport', 'vpclip'), E('Image', 'imageclip'), E('PDF Underlay', 'pdfclip')),
   S('3D Operations', E('Align', 'align'), 'u8-gumball', 'u8-gumball-reset'),
+  S('Deform', E('Bend', 'bend'), E('Flow along Curve', 'flow'), E('Flow along Surface', 'flowsrf'), E('Cage', 'cage'), E('Cage Edit', 'cageedit'), E('Remove Cage', 'cageoff')),
   S('Solid Editing', E('Union', 'union'), E('Subtract', 'subtract'), E('Intersect', 'intersect')),
   S('Annotative Object Scale', E('Add Current Scale', 'aiobjectscaleadd'), E('Delete Current Scale', 'aiobjectscaleremove'), E('Add/Delete Scales...', 'objectscale'),
     E('Synchronize Multiple-scale Positions', 'annoreset')),
