@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
-  --accent-color: #f97316;
-  --accent-color-dim: #f9731633;
+  --accent-color: #9a7bd8;
+  --accent-color-dim: #9a7bd833;
   --accent-color-hover: color-mix(in srgb, var(--accent-color) 82%, #ffffff);
 
   --bg-primary: #111111;

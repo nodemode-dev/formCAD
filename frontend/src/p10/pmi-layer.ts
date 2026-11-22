@@ -39,7 +39,7 @@ export class PmiLayer implements ViewLayer {
   private items: PmiDraw[] = [];
   private sig = '';
   private picked = '';
-  private ink = { ok: '#f97316', lost: '#ef4444', unsupported: '#f59e0b' };
+  private ink = { ok: '#9a7bd8', lost: '#ef4444', unsupported: '#f59e0b' };
 
   constructor(private readonly vp: Viewport3D) {
     for (const g of GROUPS) {
@@ -59,7 +59,7 @@ export class PmiLayer implements ViewLayer {
 
   palette(_pal: Palette): void {
     const host = this.vp.host;
-    const ok = cssColor(host, '--accent-color', '#f97316');
+    const ok = cssColor(host, '--accent-color', '#9a7bd8');
     const lost = cssColor(host, '--danger', '#ef4444');
     const unsupported = cssColor(host, '--warn', '#f59e0b');
     this.mats.get('ok')?.color.copy(ok);
