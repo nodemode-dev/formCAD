@@ -87,7 +87,7 @@
 
 ## Built for agents
 
-742 commands live in one registry; the window, the CLI and the MCP server all call the same ones. The MCP server offers 45 tools by default and 713 with `--tools all`: the short list keeps an agent's context small, and every command is still reachable through `formcad_execute`. `formcad_status` tells an agent whether the 3D kernel and the mesher are installed and which folders it may use.
+748 commands live in one registry; the window, the CLI and the MCP server all call the same ones. The MCP server offers 45 tools by default and 719 with `--tools all`: the short list keeps an agent's context small, and every command is still reachable through `formcad_execute`. `formcad_status` tells an agent whether the 3D kernel and the mesher are installed and which folders it may use.
 
 ```sh
 ./formCAD mcp                                  # MCP server on stdio for Claude Code, Codex, Cursor and Antigravity
