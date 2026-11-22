@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.26.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.27.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -65,10 +65,10 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Leaders: `leader`, `mleader`, `mleaderedit`, `mleaderstyle`.
 - Layers and properties: `layer`, `laycur`, `layiso`, `layuniso`, `layerstate`, `properties`, `chprop`, `matchprop`, `linetype`, `lweight`, `color`.
 - Selection and inquiry: `select`, `qselect`, `find`, `list`, `dist`, `id`, `count`, `measuregeom`, `cal`.
-- Sketch constraints: `sketch`, `geomconstraint`, `dimconstraint`, `autoconstrain`, `parameters`, `constraintstatus`.
+- Sketch constraints: `sketch`, `geomconstraint`, `dimconstraint`, `autoconstrain`, `parameters`, `constraintstatus`. Geometric relations are coincident, collinear, concentric, fix, parallel, perpendicular, horizontal, vertical, tangent, smooth, symmetric, equal and midpoint (`gcmidpoint`: a point at the middle of a line or arc). Splines take part: their control points move, their ends can be coincident with other geometry, and a coincident between a point and a spline keeps the point on the curve. Each object is coloured by its own state (under, fully or over defined), and the status bar chip gives the state and remaining freedoms of the selection, or of the whole sketch when nothing is selected.
 - Settings: `setvar`, `getvar`, `units`, `zoom`.
 
-**Limits.** Grips work in five modes; dynamic blocks are covered in the next chapter. The constraint solver is FormCAD's own and refuses a dimension that would over-define a sketch, naming the conflict. Very large drawings are fine to a point; the performance fixture holds 100,000 lines and `formcad-engine perf` times your own.
+**Limits.** Grips work in five modes; dynamic blocks are covered in the next chapter. The constraint solver is FormCAD's own and refuses a dimension that would over-define a sketch, naming the conflict. A spline's knots and weights stay as they are while it solves, and its fit points are dropped once the solver moves it. A sketch of about 200 constrained objects solves in well under a second; refusing a conflict in a much larger sketch can take about a second. Very large drawings are fine to a point; the performance fixture holds 100,000 lines and `formcad-engine perf` times your own.
 
 ## 3. Blocks and layouts
 
@@ -128,7 +128,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **Main commands.** `featextrude`, `featcut`, `featrevolve`, `featrevolvecut`, `featadd`, `features`, `featedit`, `featdelete`, `featsuppress`, `featunsuppress`, `featrollback`, `featrebuild`, `featforcerebuild`, `combine`, `splitbody`, `movecopybody`, `refgeo`, `config`, `designtable`, `material`, `materiallib`, `bodymass`, `massprop`; primitives `box`, `cylinder`, `sphere`, `cone`, `torus`, `extrude`; edge work `filletedge`, `chamferedge`, `blendedge`; booleans `boolop`, `boolcheck`.
 
-**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Holes have their own router (`/api/holes`) and take sizes you enter.
+**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Each side of a sketch polyline keeps its own identity through edits: move, add or remove vertices in an early sketch and fillets, chamfers and sketches on the other sides stay where they were. A reference to a side or corner you removed fails with its name rather than jumping to a neighbour; when a corner's name changed because you split a side, the reference is found again by shape and the feature shows a warning. Holes have their own router (`/api/holes`); the standard sizes they offer are described under Toolbox, and any size can be typed.
 
 ## 7. Sheet metal
 
@@ -168,7 +168,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 10. Assemblies
 
-**What it does.** Components that reference part files by safe relative paths, mates (13 kinds) with degree-of-freedom counts and conflict explanations, patterns, configurations, exploded views, interference checks and a bill of materials.
+**What it does.** Components that reference part files by safe relative paths, mates (18 kinds, among them symmetric, width, path, slot and cam) with degree-of-freedom counts and conflict explanations, patterns, configurations, exploded views, interference checks and a bill of materials.
 
 **How to start.** `asminsert` to place a component, `mate` to constrain it.
 
@@ -292,7 +292,9 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **Main commands.** `toolboxinsert`, `toolboximport`. Routes: `GET /api/toolbox/kinds`, `POST /api/toolbox/part`, `GET /api/toolbox/library`.
 
-**Limits.** No standard size table ships. You enter sizes or import your own CSV (2 MB and 5000 row caps; the path is checked against granted folders). A generated screw is a shape from your numbers, not a certified part.
+**Limits.** Hex nuts (ISO 4032, M1.6 to M64) and socket head cap screws (ISO 4762, M14 to M64 only) can take a Standard size; each row names the published standard it was read from and how well it could be read. Everything else is entered by you or imported from your own CSV (2 MB and 5000 row caps; the path is checked against granted folders). A generated screw is a shape from those numbers, not a certified part.
+
+**Hole sizes.** The hole feature offers coarse thread sizes M1 to M64 with their pitch and tap drill, and clearance holes from M42 to M64, each with its source and its reading status (two sources agree, read twice, read once). A value that could not be read is empty and must be typed. Counterbore and countersink sizes do not ship: no free published source for them was found. The tables are written by `setup/hole_tables.py` from the readings it lists; `python3 setup/hole_tables.py --check` says whether the shipped files match it. Your own `hole-sizes.json` in the data folder adds or replaces rows.
 
 ## 23. Inspection and costing
 

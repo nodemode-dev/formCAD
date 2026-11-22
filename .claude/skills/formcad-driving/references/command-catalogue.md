@@ -2,7 +2,7 @@
 
 Generated from the live registry; names marked with a star have no programmatic form or are barred to outside agents (use the FormCAD window). Regenerate the live tool list with scripts/list_tools.py, which is authoritative.
 
-Counts when generated: 727 commands, 693 MCP tools (23 fixed formcad_ tools plus cmd_[id] tools), 40 in the core set. Added by hand in 0.26.0: imageattach and pdfattach (block), imageclip, pdfclip, imageadjust and pdfadjust (modify). Costing, DFM, design check and sustainability have no commands or MCP tools: they are engine routes only (see sub-skills/manufacture).
+Counts when generated: 727 commands, 693 MCP tools (23 fixed formcad_ tools plus cmd_[id] tools), 40 in the core set. Added by hand in 0.26.0: imageattach and pdfattach (block), imageclip, pdfclip, imageadjust and pdfadjust (modify). Added by hand in 0.27.0: gcmidpoint (constraints). Costing, DFM, design check and sustainability have no commands or MCP tools: they are engine routes only (see sub-skills/manufacture).
 
 ## Contents
 
@@ -54,7 +54,7 @@ pluginenable* plugins
 
 ## constraints
 
-autoconstrain constraintbar constraintinfer constraintsettings constraintstatus dcaligned dcangular dcdiameter dcdisplay dchorizontal dclinear dcradius dcvertical delconstraint dimconstraint gccoincident gccollinear gcconcentric gcequal gcfix gchorizontal gcparallel gcperpendicular gcsmooth gcsymmetric gctangent gcvertical geomconstraint parameters parametersclose sketch sketchstatus
+autoconstrain constraintbar constraintinfer constraintsettings constraintstatus dcaligned dcangular dcdiameter dcdisplay dchorizontal dclinear dcradius dcvertical delconstraint dimconstraint gccoincident gccollinear gcconcentric gcequal gcfix gchorizontal gcmidpoint gcparallel gcperpendicular gcsmooth gcsymmetric gctangent gcvertical geomconstraint parameters parametersclose sketch sketchstatus
 
 ## draw
 

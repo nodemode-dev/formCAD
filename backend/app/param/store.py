@@ -8,11 +8,11 @@ CONS = "constraints"
 SKETCHES = "sketches"
 
 DEFAULT_SETTINGS = {
-    "infer": 0, "distance_tol": 1e-6, "angle_tol": 1e-4, "auto_types": ["coincident", "concentric", "tangent", "horizontal", "vertical", "collinear", "perpendicular", "parallel", "equal"],
+    "infer": 0, "distance_tol": 1e-6, "angle_tol": 1e-4, "auto_types": ["coincident", "midpoint", "concentric", "tangent", "horizontal", "vertical", "collinear", "perpendicular", "parallel", "equal"],
     "bars": "all", "bar_except": [], "dims": "all", "dim_except": [], "bar_transparency": 0,
 }
 SETTINGS_KEY = "CONSTRAINTSETTINGS"
-GEOMETRIC_WORDS = ("coincident", "collinear", "concentric", "fix", "parallel", "perpendicular", "horizontal", "vertical", "tangent", "smooth", "symmetric", "equal")
+GEOMETRIC_WORDS = ("coincident", "collinear", "concentric", "fix", "parallel", "perpendicular", "horizontal", "vertical", "tangent", "smooth", "symmetric", "equal", "midpoint")
 DIM_KINDS = ("distance", "hdistance", "vdistance", "angle", "radius", "diameter")
 LABEL_PREFIX = {"distance": "d", "hdistance": "d", "vdistance": "d", "angle": "ang", "radius": "rad", "diameter": "dia"}
 ANGLE_KINDS = ("angle",)

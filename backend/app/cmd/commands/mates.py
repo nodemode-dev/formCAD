@@ -7,9 +7,16 @@ from app.mates import store as S
 from app.solid.work import SolidError
 
 FAILURES = (S.MateRefused, SolidError, ValueError, KeyError)
-KIND_WORDS = ["Coincident", "Concentric", "Distance", "Angle", "Parallel", "Perpendicular", "Tangent", "Lock", "Gear", "Rack", "Screw", "LimitDistance", "LimitAngle"]
+KIND_WORDS = ["Coincident", "Concentric", "Distance", "Angle", "Parallel", "Perpendicular", "Tangent", "Lock", "Gear", "Rack", "Screw", "LimitDistance", "LimitAngle", "Symmetric", "Width", "Path", "Slot", "Cam"]
 REF_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*(?::\s*([A-Za-z]+)\s*(\d*))?\s*$")
-NEEDS_VALUE = {"distance": "Distance", "angle": "Angle in degrees", "gear": "Gear ratio (turns of the second per turn of the first)", "rackpinion": "Pinion pitch radius", "screw": "Pitch (travel per turn)"}
+NEEDS_VALUE = {"distance": "Distance", "angle": "Angle in degrees", "gear": "Gear ratio (turns of the second per turn of the first)", "rackpinion": "Pinion pitch radius", "screw": "Pitch (travel per turn)", "slot": "Slot length (travel between the end centres)"}
+REF_PROMPTS = {
+    "symmetric": ("Enter the first point, plane or axis", "Enter the second reference of the same type", "Enter the symmetry plane"),
+    "width": ("Enter the first tab face", "Enter the second tab face", "Enter the first groove face", "Enter the second groove face"),
+    "path": ("Enter the point that follows the path", "Enter the path edge (a straight edge or a circle)"),
+    "slot": ("Enter the pin axis or point", "Enter the slot centre line (an axis or straight edge)"),
+    "cam": ("Enter the follower (a cylinder, sphere or point)", "Enter the cam profile (a circle edge or cylinder)"),
+}
 
 
 def run(fn, *args, **kwargs):
@@ -57,21 +64,24 @@ def say_state(ctx, st):
     ctx.say("State %s, %d degree(s) of freedom." % (st["state"], st["dof"]))
 
 
-@command("mate", aliases=("addmate",), group="solids", label="Mate", description="Position a component against another with a mate: coincident, concentric, distance, angle, parallel, perpendicular, tangent, lock, gear, rack and pinion, screw or a limit.", menu="Assembly > Mate")
+@command("mate", aliases=("addmate",), group="solids", label="Mate", description="Position a component against another with a mate: coincident, concentric, distance, angle, parallel, perpendicular, tangent, lock, gear, rack and pinion, screw, a limit, symmetric (mirror about a plane), width (tab centred in a groove), path (point on a curve), slot (pin in a slot) or cam (follower on a cam profile).", menu="Assembly > Mate")
 def mate_cmd(ctx):
     k = yield ctx.keyword("Mate [%s]" % "/".join(KIND_WORDS), KIND_WORDS, "Coincident")
     if k.kind != "keyword":
         return
     kind = ops.kind_of(k.value)
-    r1 = yield ctx.text("Enter the first reference (like C1:f2, C1:z or C1:xy)")
-    if r1.kind != "text":
-        return
-    r2 = yield ctx.text("Enter the second reference")
-    if r2.kind != "text":
-        return
-    refs = [parse_ref(r1.value), parse_ref(r2.value)]
+    refs = []
+    for prompt in REF_PROMPTS.get(kind, ("Enter the first reference (like C1:f2, C1:z or C1:xy)", "Enter the second reference")):
+        r = yield ctx.text(prompt)
+        if r.kind != "text":
+            return
+        refs.append(parse_ref(r.value))
     value = None
     opt = {}
+    if kind == "slot":
+        p = yield ctx.keyword("Position along the slot [Free/Centre]", ["Free", "Centre"], "Free")
+        if p.kind == "keyword" and p.value == "Centre":
+            opt["position"] = "centre"
     if kind in ("angle", "limitangle"):
         r3 = yield ctx.text("Enter the rotation axis reference, or press Enter for the plain angle")
         if r3.kind == "text" and str(r3.value).strip():
@@ -109,7 +119,7 @@ def mateedit(ctx):
     rec = S.get(ctx.d, t.value.strip())
     if rec is None:
         raise CommandError("There is no mate %s." % t.value)
-    if rec["kind"] in ("distance", "angle", "gear", "rackpinion", "screw"):
+    if rec["kind"] in ("distance", "angle", "gear", "rackpinion", "screw", "slot"):
         v = yield ctx.number("New value", default=rec.get("value") or 0.0)
         if v.kind != "number":
             return

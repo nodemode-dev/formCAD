@@ -15,7 +15,7 @@ import { Pictures } from './pictures';
 import { DisplayStore, type BuildOptions } from './store';
 import { readTheme, type Theme } from './theme';
 import { onThemeChange } from './ink';
-import type { CanvasApi, CanvasDeps, CanvasEvents, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, MarkHit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
+import type { CanvasApi, CanvasDeps, CanvasEvents, ConstraintBar, CursorMode, DisplayItem, DocEventInfo, Handle, Hit, MarkHit, OverlayItems, OverlayName, Pt, Rect, ViewState } from './types';
 
 const VIEW_KEY = 'formCAD.canvasView';
 const WORK_MS = 10;
@@ -595,6 +595,8 @@ export class Renderer implements CanvasApi {
   markHandles(id: number): Handle[] { return handlesOf(this.store, id); }
 
   marked(): number { return this.store.bars.size; }
+
+  barFor(h: Handle): ConstraintBar | null { return this.store.bars.get(h) ?? null; }
 
   setMarkHover(hit: MarkHit | null): void {
     const a = markState.hover;

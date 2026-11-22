@@ -74,6 +74,8 @@ def space_key(doc, name):
     low = raw.casefold()
     if low in ("", "model"):
         return "model"
+    if low.startswith("sketch:"):
+        return raw if raw in doc.drawing.spaces else None
     prefix = "layout:"
     if low.startswith("layout:") or low.startswith("block:"):
         prefix = low.split(":", 1)[0] + ":"

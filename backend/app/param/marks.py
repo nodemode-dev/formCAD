@@ -1,6 +1,7 @@
 import math
 import weakref
 
+from app.doc import curvepath, nurbs
 from app.param import adapt, ops
 from app.param import store as S
 
@@ -28,6 +29,14 @@ def point_of(ent, part: str):
         sweep = (ent.end_angle - ent.start_angle) % math.tau
         a = ent.start_angle if part == "start" else ent.end_angle if part == "end" else ent.start_angle + sweep / 2.0
         return [c[0] + r * math.cos(a), c[1] + r * math.sin(a)]
+    if k == "spline":
+        c = curvepath.spline_curve(ent)
+        if c is None:
+            return None
+        lo, hi = c.domain()
+        u = lo if part == "start" else hi if part == "end" else 0.5 * (lo + hi)
+        q = nurbs.point_at(c, u)
+        return [q[0], q[1]]
     if k == "lwpolyline" and ent.vertices:
         if part[:1] == "v" and part[1:].isdigit() and int(part[1:]) < len(ent.vertices):
             p = ent.vertices[int(part[1:])]["p"]

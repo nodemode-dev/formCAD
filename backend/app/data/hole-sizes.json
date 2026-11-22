@@ -1,47 +1,759 @@
 {
-  "format": 1,
-  "units": "mm",
-  "notice": "Unverified seed, check against your standard. Only the coarse thread pitches listed under thread_series carry a traced source, and each row says how well it could be read. Clearance holes, counterbores, countersinks and tap drills are empty on purpose: no free primary source gave a legible table for them. Add rows here or in your own copy of this file; a row in your copy replaces the shipped row with the same key. Nothing in this file is a statement of any standard.",
-  "user_file": "hole-sizes.json in the FormCAD data folder",
-  "sources": {
-    "BIS-IS-4218-2-2001": {
-      "title": "IS 4218 (Part 2): 2001, ISO general purpose metric screw threads, Part 2 General plan (second revision)",
-      "publisher": "Bureau of Indian Standards",
-      "identical_to": "ISO 261:1998",
-      "url": "https://law.resource.org/pub/in/bis/S01/is.4218.2.2001.pdf",
-      "retrieved": "2026-11-02",
-      "access": "Public.Resource.Org copy of the standard; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
-      "reading": "Text extraction of a scanned page. Two separate reads were made. Rows marked read_twice agree in both reads; rows marked read_once appeared in one read only; rows marked illegible_in_source could not be read and carry no value."
-    }
+ "format": 1,
+ "units": "mm",
+ "generated_by": "setup/hole_tables.py",
+ "notice": "Every number in this table names its source, a published standard identical to the ISO standard it cites, and says how well it could be read: two_sources (two independent standards agree), read_twice (one source, two readings agree), read_once (one reading only). A value that could not be read is left empty and must be typed. Coarse pitches and tap drills cover M1 to M64; clearance holes are given only from M42 to M64, because the only free copy of ISO 273 is too badly scanned below that; counterbore and countersink sizes do not ship, because no free published source for them was found. Check every value against your own copy of the standard. Add rows in your own copy of this file; a row in your copy replaces the shipped row with the same key.",
+ "user_file": "hole-sizes.json in the FormCAD data folder",
+ "sources": {
+  "BIS-IS-4218-2-2001": {
+   "title": "IS 4218 (Part 2): 2001, ISO general purpose metric screw threads, Part 2 General plan (second revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 261:1998",
+   "url": "https://law.resource.org/pub/in/bis/S01/is.4218.2.2001.pdf",
+   "retrieved": "2026-11-02",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text extraction of a scanned page, two separate reads. Rows read_twice agree in both reads; read_once appeared in one read only."
   },
-  "thread_series": [
-    {"id": "M1", "standard": "iso_metric_coarse", "nominal": 1.0, "pitch": 0.25, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M2", "standard": "iso_metric_coarse", "nominal": 2.0, "pitch": null, "source": "BIS-IS-4218-2-2001", "status": "illegible_in_source", "note": "Enter the coarse pitch from your standard."},
-    {"id": "M2.5", "standard": "iso_metric_coarse", "nominal": 2.5, "pitch": null, "source": "BIS-IS-4218-2-2001", "status": "illegible_in_source", "note": "Enter the coarse pitch from your standard."},
-    {"id": "M3", "standard": "iso_metric_coarse", "nominal": 3.0, "pitch": null, "source": "BIS-IS-4218-2-2001", "status": "illegible_in_source", "note": "Enter the coarse pitch from your standard."},
-    {"id": "M4", "standard": "iso_metric_coarse", "nominal": 4.0, "pitch": 0.7, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M5", "standard": "iso_metric_coarse", "nominal": 5.0, "pitch": 0.8, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M6", "standard": "iso_metric_coarse", "nominal": 6.0, "pitch": 1.0, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M8", "standard": "iso_metric_coarse", "nominal": 8.0, "pitch": 1.25, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M10", "standard": "iso_metric_coarse", "nominal": 10.0, "pitch": 1.5, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M12", "standard": "iso_metric_coarse", "nominal": 12.0, "pitch": 1.75, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M14", "standard": "iso_metric_coarse", "nominal": 14.0, "pitch": 2.0, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M16", "standard": "iso_metric_coarse", "nominal": 16.0, "pitch": 2.0, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M18", "standard": "iso_metric_coarse", "nominal": 18.0, "pitch": 2.5, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M20", "standard": "iso_metric_coarse", "nominal": 20.0, "pitch": 2.5, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M22", "standard": "iso_metric_coarse", "nominal": 22.0, "pitch": 2.5, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M24", "standard": "iso_metric_coarse", "nominal": 24.0, "pitch": 3.0, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M27", "standard": "iso_metric_coarse", "nominal": 27.0, "pitch": 3.0, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M30", "standard": "iso_metric_coarse", "nominal": 30.0, "pitch": 3.5, "source": "BIS-IS-4218-2-2001", "status": "read_twice"},
-    {"id": "M33", "standard": "iso_metric_coarse", "nominal": 33.0, "pitch": 3.5, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M36", "standard": "iso_metric_coarse", "nominal": 36.0, "pitch": 4.0, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M39", "standard": "iso_metric_coarse", "nominal": 39.0, "pitch": 4.0, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M42", "standard": "iso_metric_coarse", "nominal": 42.0, "pitch": 4.5, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M45", "standard": "iso_metric_coarse", "nominal": 45.0, "pitch": 4.5, "source": "BIS-IS-4218-2-2001", "status": "read_once"},
-    {"id": "M48", "standard": "iso_metric_coarse", "nominal": 48.0, "pitch": 5.0, "source": "BIS-IS-4218-2-2001", "status": "read_once"}
-  ],
-  "clearance": [],
-  "counterbore": [],
-  "countersink": [],
-  "tap_drill": []
+  "BIS-IS-1364-3-2025": {
+   "title": "IS 1364 (Part 3): 2025, Hexagon head bolts, screws and nuts of product grades A and B, Part 3 Hexagon nuts, style 1 (sixth revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 4032:2023",
+   "url": "https://www.services.bis.gov.in/tmp/PGD32022813_14072025_2.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text layer of a typeset PDF, two separate reads; every value marked read_twice agreed in both. Annex A (sizes below M5 and above M39) is informative and warns against these nuts for new or critical uses."
+  },
+  "BIS-IS-10952-1984": {
+   "title": "IS 10952: 1984, Recommendations for drills for use prior to tapping screw threads (reaffirmed 2005)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 2306-1972",
+   "url": "https://law.resource.org/pub/in/bis/S01/is.10952.1984.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text extraction of a scanned page, one read of Table 1 (coarse pitch series). A drill that does not fall between the table's own minimum and maximum minor diameters of the nut thread is treated as damaged by the scan and left empty."
+  },
+  "BIS-IS-2269-2006": {
+   "title": "IS 2269: 2006, Hexagon socket head cap screws (fifth revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 4762:2004",
+   "url": "https://law.resource.org/pub/in/bis/S01/is.2269.2006.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text extraction, one read of Table 1. Only the columns from M14 up are in the text layer; smaller sizes could not be read."
+  },
+  "BIS-IS-1821-1987": {
+   "title": "IS 1821: 1987, Dimensions for clearance holes for bolts and screws (third revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 273-1979",
+   "url": "https://law.resource.org/pub/in/bis/S01/is.1821.1987.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text extraction of a badly scanned page, one read. Only rows whose three values could be tied to their thread size are kept; every other row is left out."
+  }
+ },
+ "thread_series": [
+  {
+   "id": "M1",
+   "standard": "iso_metric_coarse",
+   "nominal": 1.0,
+   "pitch": 0.25,
+   "source": "BIS-IS-4218-2-2001",
+   "status": "read_twice"
+  },
+  {
+   "id": "M1.6",
+   "standard": "iso_metric_coarse",
+   "nominal": 1.6,
+   "pitch": 0.35,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M2",
+   "standard": "iso_metric_coarse",
+   "nominal": 2.0,
+   "pitch": 0.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M2.5",
+   "standard": "iso_metric_coarse",
+   "nominal": 2.5,
+   "pitch": 0.45,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M3",
+   "standard": "iso_metric_coarse",
+   "nominal": 3.0,
+   "pitch": 0.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025"
+   ]
+  },
+  {
+   "id": "M3.5",
+   "standard": "iso_metric_coarse",
+   "nominal": 3.5,
+   "pitch": 0.6,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025"
+   ]
+  },
+  {
+   "id": "M4",
+   "standard": "iso_metric_coarse",
+   "nominal": 4.0,
+   "pitch": 0.7,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M4.5",
+   "standard": "iso_metric_coarse",
+   "nominal": 4.5,
+   "pitch": 0.75,
+   "source": "BIS-IS-10952-1984",
+   "status": "read_once"
+  },
+  {
+   "id": "M5",
+   "standard": "iso_metric_coarse",
+   "nominal": 5.0,
+   "pitch": 0.8,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M6",
+   "standard": "iso_metric_coarse",
+   "nominal": 6.0,
+   "pitch": 1.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M7",
+   "standard": "iso_metric_coarse",
+   "nominal": 7.0,
+   "pitch": 1.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025"
+   ]
+  },
+  {
+   "id": "M8",
+   "standard": "iso_metric_coarse",
+   "nominal": 8.0,
+   "pitch": 1.25,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M9",
+   "standard": "iso_metric_coarse",
+   "nominal": 9.0,
+   "pitch": 1.25,
+   "source": "BIS-IS-10952-1984",
+   "status": "read_once"
+  },
+  {
+   "id": "M10",
+   "standard": "iso_metric_coarse",
+   "nominal": 10.0,
+   "pitch": 1.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M11",
+   "standard": "iso_metric_coarse",
+   "nominal": 11.0,
+   "pitch": 1.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "read_once"
+  },
+  {
+   "id": "M12",
+   "standard": "iso_metric_coarse",
+   "nominal": 12.0,
+   "pitch": 1.75,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M14",
+   "standard": "iso_metric_coarse",
+   "nominal": 14.0,
+   "pitch": 2.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M16",
+   "standard": "iso_metric_coarse",
+   "nominal": 16.0,
+   "pitch": 2.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M18",
+   "standard": "iso_metric_coarse",
+   "nominal": 18.0,
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M20",
+   "standard": "iso_metric_coarse",
+   "nominal": 20.0,
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M22",
+   "standard": "iso_metric_coarse",
+   "nominal": 22.0,
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M24",
+   "standard": "iso_metric_coarse",
+   "nominal": 24.0,
+   "pitch": 3.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M27",
+   "standard": "iso_metric_coarse",
+   "nominal": 27.0,
+   "pitch": 3.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M30",
+   "standard": "iso_metric_coarse",
+   "nominal": 30.0,
+   "pitch": 3.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M33",
+   "standard": "iso_metric_coarse",
+   "nominal": 33.0,
+   "pitch": 3.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M36",
+   "standard": "iso_metric_coarse",
+   "nominal": 36.0,
+   "pitch": 4.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M39",
+   "standard": "iso_metric_coarse",
+   "nominal": 39.0,
+   "pitch": 4.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M42",
+   "standard": "iso_metric_coarse",
+   "nominal": 42.0,
+   "pitch": 4.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M45",
+   "standard": "iso_metric_coarse",
+   "nominal": 45.0,
+   "pitch": 4.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M48",
+   "standard": "iso_metric_coarse",
+   "nominal": 48.0,
+   "pitch": 5.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006",
+    "BIS-IS-4218-2-2001"
+   ]
+  },
+  {
+   "id": "M52",
+   "standard": "iso_metric_coarse",
+   "nominal": 52.0,
+   "pitch": 5.0,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025"
+   ]
+  },
+  {
+   "id": "M56",
+   "standard": "iso_metric_coarse",
+   "nominal": 56.0,
+   "pitch": 5.5,
+   "source": "BIS-IS-10952-1984",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-10952-1984",
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006"
+   ]
+  },
+  {
+   "id": "M60",
+   "standard": "iso_metric_coarse",
+   "nominal": 60.0,
+   "pitch": 5.5,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M64",
+   "standard": "iso_metric_coarse",
+   "nominal": 64.0,
+   "pitch": 6.0,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "two_sources",
+   "sources": [
+    "BIS-IS-1364-3-2025",
+    "BIS-IS-2269-2006"
+   ]
+  }
+ ],
+ "clearance": [
+  {
+   "id": "M42",
+   "standard": "iso_metric_coarse",
+   "fine": 43.0,
+   "medium": 45.0,
+   "coarse": 48.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  },
+  {
+   "id": "M45",
+   "standard": "iso_metric_coarse",
+   "fine": 46.0,
+   "medium": 48.0,
+   "coarse": 52.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  },
+  {
+   "id": "M48",
+   "standard": "iso_metric_coarse",
+   "fine": 50.0,
+   "medium": 52.0,
+   "coarse": 56.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  },
+  {
+   "id": "M52",
+   "standard": "iso_metric_coarse",
+   "fine": 54.0,
+   "medium": 56.0,
+   "coarse": 62.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  },
+  {
+   "id": "M56",
+   "standard": "iso_metric_coarse",
+   "fine": 58.0,
+   "medium": 62.0,
+   "coarse": 66.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  },
+  {
+   "id": "M60",
+   "standard": "iso_metric_coarse",
+   "fine": 62.0,
+   "medium": 66.0,
+   "coarse": null,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once",
+   "note": "The coarse series value is damaged in the scan."
+  },
+  {
+   "id": "M64",
+   "standard": "iso_metric_coarse",
+   "fine": 66.0,
+   "medium": 70.0,
+   "coarse": 74.0,
+   "source": "BIS-IS-1821-1987",
+   "status": "read_once"
+  }
+ ],
+ "counterbore": [],
+ "countersink": [],
+ "tap_drill": [
+  {
+   "id": "M3",
+   "standard": "iso_metric_coarse",
+   "pitch": 0.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 2.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M3.5",
+   "standard": "iso_metric_coarse",
+   "pitch": 0.6,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 2.9,
+   "status": "read_once"
+  },
+  {
+   "id": "M4",
+   "standard": "iso_metric_coarse",
+   "pitch": 0.7,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 3.3,
+   "status": "read_once"
+  },
+  {
+   "id": "M4.5",
+   "standard": "iso_metric_coarse",
+   "pitch": 0.75,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 3.7,
+   "status": "read_once"
+  },
+  {
+   "id": "M5",
+   "standard": "iso_metric_coarse",
+   "pitch": 0.8,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 4.2,
+   "status": "read_once"
+  },
+  {
+   "id": "M6",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 5.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M7",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 6.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M8",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.25,
+   "source": "BIS-IS-10952-1984",
+   "diameter": null,
+   "status": "illegible_in_source",
+   "note": "The drill is printed without its decimal point in the scan."
+  },
+  {
+   "id": "M9",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.25,
+   "source": "BIS-IS-10952-1984",
+   "diameter": null,
+   "status": "illegible_in_source",
+   "note": "The printed drill lies outside the table's own minor diameter range, so the scan is taken as damaged."
+  },
+  {
+   "id": "M10",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 8.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M11",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 9.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M12",
+   "standard": "iso_metric_coarse",
+   "pitch": 1.75,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 10.2,
+   "status": "read_once"
+  },
+  {
+   "id": "M14",
+   "standard": "iso_metric_coarse",
+   "pitch": 2.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 12.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M16",
+   "standard": "iso_metric_coarse",
+   "pitch": 2.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 14.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M18",
+   "standard": "iso_metric_coarse",
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 15.5,
+   "status": "read_once",
+   "note": "The row's size is damaged in the scan; it is the row between M16 and M20, with pitch 2.5 and the basic minor diameter of M18."
+  },
+  {
+   "id": "M20",
+   "standard": "iso_metric_coarse",
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 17.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M22",
+   "standard": "iso_metric_coarse",
+   "pitch": 2.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 19.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M24",
+   "standard": "iso_metric_coarse",
+   "pitch": 3.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": null,
+   "status": "illegible_in_source",
+   "note": "The printed drill lies outside the table's own minor diameter range, so the scan is taken as damaged."
+  },
+  {
+   "id": "M27",
+   "standard": "iso_metric_coarse",
+   "pitch": 3.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 24.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M30",
+   "standard": "iso_metric_coarse",
+   "pitch": 3.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 26.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M33",
+   "standard": "iso_metric_coarse",
+   "pitch": 3.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 29.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M36",
+   "standard": "iso_metric_coarse",
+   "pitch": 4.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 32.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M39",
+   "standard": "iso_metric_coarse",
+   "pitch": 4.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 35.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M42",
+   "standard": "iso_metric_coarse",
+   "pitch": 4.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 37.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M45",
+   "standard": "iso_metric_coarse",
+   "pitch": 4.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 40.5,
+   "status": "read_once"
+  },
+  {
+   "id": "M48",
+   "standard": "iso_metric_coarse",
+   "pitch": 5.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 43.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M52",
+   "standard": "iso_metric_coarse",
+   "pitch": 5.0,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 47.0,
+   "status": "read_once"
+  },
+  {
+   "id": "M56",
+   "standard": "iso_metric_coarse",
+   "pitch": 5.5,
+   "source": "BIS-IS-10952-1984",
+   "diameter": 50.5,
+   "status": "read_once"
+  }
+ ]
 }

@@ -190,6 +190,7 @@ export interface CanvasApi {
   setMarkHover(hit: MarkHit | null): void;
   markHandles(id: number): Handle[];
   marked(): number;
+  barFor(h: Handle): ConstraintBar | null;
   stats():{ items: number; chunks: number; builds: number; frames: number };
   on<K extends keyof CanvasEvents>(event: K, fn: (e: CanvasEvents[K]) => void): () => void;
 }

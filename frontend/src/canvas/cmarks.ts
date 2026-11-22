@@ -38,7 +38,7 @@ export const markState: MarkState = { hover: null, key: '', placed: [] };
 
 export const KIND_NAMES: Record<string, string> = {
   coincident: 'Coincident', collinear: 'Collinear', concentric: 'Concentric', fix: 'Fix', parallel: 'Parallel', perpendicular: 'Perpendicular',
-  horizontal: 'Horizontal', vertical: 'Vertical', tangent: 'Tangent', smooth: 'Smooth', symmetric: 'Symmetric', equal: 'Equal',
+  horizontal: 'Horizontal', vertical: 'Vertical', tangent: 'Tangent', smooth: 'Smooth', symmetric: 'Symmetric', equal: 'Equal', midpoint: 'Midpoint',
 };
 
 export function barOf(prims: ReadonlyArray<{ t: string }> | undefined): ConstraintBar | null {
@@ -202,6 +202,20 @@ function glyphIcon(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: 
       ctx.moveTo(cx + 5, cy - 2);
       ctx.lineTo(cx + 2, cy);
       ctx.lineTo(cx + 5, cy + 2);
+      break;
+    case 'midpoint':
+      ctx.moveTo(cx - r, cy + 2);
+      ctx.lineTo(cx - 2, cy + 2);
+      ctx.moveTo(cx + 2, cy + 2);
+      ctx.lineTo(cx + r, cy + 2);
+      ctx.moveTo(cx - r, cy);
+      ctx.lineTo(cx - r, cy + 4);
+      ctx.moveTo(cx + r, cy);
+      ctx.lineTo(cx + r, cy + 4);
+      ctx.moveTo(cx, cy - 4);
+      ctx.lineTo(cx - 2, cy + 2);
+      ctx.lineTo(cx + 2, cy + 2);
+      ctx.closePath();
       break;
     case 'equal':
       ctx.moveTo(cx - r, cy - 2);

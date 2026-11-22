@@ -147,7 +147,7 @@ const modify = (): MenuItem[] => section('Modify', () => [
 const parametric = (): MenuItem[] => section('Parametric', () => [
   S('Geometric Constraints', E('Coincident', 'gccoincident'), E('Collinear', 'gccollinear'), E('Concentric', 'gcconcentric'), E('Fix', 'gcfix'),
     E('Parallel', 'gcparallel'), E('Perpendicular', 'gcperpendicular'), E('Horizontal', 'gchorizontal'), E('Vertical', 'gcvertical'),
-    E('Tangent', 'gctangent'), E('Smooth', 'gcsmooth'), E('Symmetric', 'gcsymmetric'), E('Equal', 'gcequal')),
+    E('Tangent', 'gctangent'), E('Smooth', 'gcsmooth'), E('Symmetric', 'gcsymmetric'), E('Equal', 'gcequal'), E('Midpoint', 'gcmidpoint')),
   S('Dimensional Constraints', E('Linear', 'dclinear'), E('Aligned', 'dcaligned'), E('Horizontal', 'dchorizontal'), E('Vertical', 'dcvertical'),
     E('Angular', 'dcangular'), E('Radius', 'dcradius'), E('Diameter', 'dcdiameter')),
   S('Constraint Bars', E('Select Objects', 'constraintbar'), E('Show All', 'constraintbar', 'show'), E('Hide All', 'constraintbar', 'hide')),

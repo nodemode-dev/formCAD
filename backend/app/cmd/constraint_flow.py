@@ -11,8 +11,9 @@ POINT_PARTS = {
     "circle": ("center",),
     "ellipse": ("center",),
     "point": ("whole",),
+    "spline": ("start", "end"),
 }
-DEFAULT_PART = {"line": "start", "arc": "start", "circle": "center", "ellipse": "center", "point": "whole", "lwpolyline": "v0"}
+DEFAULT_PART = {"line": "start", "arc": "start", "circle": "center", "ellipse": "center", "point": "whole", "lwpolyline": "v0", "spline": "start"}
 
 
 def fail(ctx, err) -> None:

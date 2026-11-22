@@ -2,7 +2,7 @@
 
 FormCAD is an Apache-2.0 desktop CAD app for macOS, Linux and Windows: 2D drafting, parametric parts, surfaces, assemblies, drawings, manufacture, simulation, electronics and automation, driven by one engine that you can also run headless or hand to an agent.
 
-Version: v0.26.0.
+Version: v0.27.0.
 
 ## Start here
 

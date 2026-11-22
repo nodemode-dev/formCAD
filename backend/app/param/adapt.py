@@ -1,6 +1,7 @@
 import math
 import re
 
+from app.doc import curvepath
 from app.param import store as S
 from app.solve import Sketch
 from app.solve.errors import SolverFault
@@ -12,8 +13,9 @@ POINT_PARTS = {
     "circle": ("whole", "center"),
     "arc": ("whole", "center", "start", "end", "mid"),
     "ellipse": ("whole", "center", "major"),
+    "spline": ("whole", "start", "end"),
 }
-KIND_NAMES = {"line": "line", "point": "point", "circle": "circle", "arc": "arc", "ellipse": "ellipse", "lwpolyline": "polyline"}
+KIND_NAMES = {"line": "line", "point": "point", "circle": "circle", "arc": "arc", "ellipse": "ellipse", "lwpolyline": "polyline", "spline": "spline"}
 SEG_RE = re.compile(r"^([vs])(\d+)$")
 MOVE_TOL = 1e-12
 
@@ -86,6 +88,16 @@ class Network:
             else:
                 eid = sk.add_ellipse(ent.center[0], ent.center[1], ent.major[0], ent.major[1], ent.ratio, ent.start_param, ent.end_param)
             b = Binding(handle, k, [eid], arc=not full)
+        elif k == "spline":
+            c = curvepath.spline_curve(ent)
+            if c is None:
+                raise S.ParamError("The spline has no valid control points to constrain.")
+            try:
+                eid = sk.add_spline(c.degree, c.knots, c.ctrl, c.weights, c.closed)
+            except SolverFault as err:
+                raise S.ParamError(str(err))
+            b = Binding(handle, k, [eid], closed=bool(c.closed), nv=len(c.ctrl))
+            b.curve = c
         else:
             verts = ent.vertices
             nv = len(verts)
@@ -263,6 +275,18 @@ class Network:
             ent.radius = v[2]
             ent.start_angle = a0
             ent.end_angle = a1
+        elif k == "spline":
+            c = b.curve
+            uniq = len(v) // 2
+            ctrl = [[v[2 * (i % uniq)], v[2 * (i % uniq) + 1]] + list(c.ctrl[i][2:]) for i in range(len(c.ctrl))]
+            if all(_close(p[:2], q[:2]) for p, q in zip(ctrl, c.ctrl)):
+                return False
+            ent = self.d.modify(ent.handle)
+            ent.control_points = ctrl
+            ent.knots = list(c.knots)
+            ent.weights = list(c.weights) if c.weights else []
+            ent.degree = c.degree
+            ent.fit_points = []
         else:
             cur = [ent.center[0], ent.center[1], ent.major[0], ent.major[1], ent.ratio]
             if _close(cur, v[:5]) and (not b.arc or _close([ent.start_param, ent.end_param], v[5:7])):
@@ -310,6 +334,12 @@ def params_of(ent):
         if not (sweep < 1e-12 or abs(sweep - TAU) < 1e-9):
             vals += [ent.start_param, ent.end_param]
         return [vals]
+    if k == "spline":
+        c = curvepath.spline_curve(ent)
+        if c is None:
+            return None
+        uniq = len(c.ctrl) - (c.degree if c.closed and len(c.ctrl) > 2 * c.degree else 0)
+        return [[v for p in c.ctrl[:uniq] for v in p[:2]]]
     if k == "lwpolyline":
         n = len(ent.vertices)
         closed = bool(ent.closed) and n >= 3

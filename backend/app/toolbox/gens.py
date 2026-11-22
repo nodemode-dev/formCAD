@@ -1,8 +1,26 @@
+import json
 import math
+from pathlib import Path
 
 from app.solid import work
 
-NOTE = "Sizes are entered by the user or imported from the user's own table. No standard, catalogue or section table ships with FormCAD; the shapes are generic parametric models and the designation text is a label only."
+NOTE = "Sizes are entered by the user or imported from the user's own table. Hex nuts (ISO 4032) and socket head cap screws (ISO 4762, M14 and up) can also take a size from a table that names its source for every value. No catalogue or section table ships with FormCAD; the shapes are generic parametric models and the designation text is a label only."
+SIZES_FILE = Path(__file__).resolve().parents[1] / "data" / "fastener-sizes.json"
+SIZE_FIELDS = {"hex_nut": ("pitch", "across_flats", "thickness"), "socket_screw": ("pitch", "head_d", "head_h", "socket_s")}
+_sizes: dict = {}
+
+
+def size_table() -> dict:
+    if "doc" not in _sizes:
+        try:
+            _sizes["doc"] = json.loads(SIZES_FILE.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            _sizes["doc"] = {}
+    return _sizes["doc"]
+
+
+def size_rows(kind: str) -> list:
+    return [r for r in size_table().get(kind) or [] if isinstance(r, dict) and isinstance(r.get("id"), str)]
 BULGE90 = math.tan(math.radians(90.0) / 4.0)
 
 P = lambda name, default, lo, hi, label, derived=None: {"name": name, "default": default, "min": lo, "max": hi, "label": label, "derived": derived}
@@ -64,7 +82,32 @@ class GenError(ValueError):
 
 
 def kinds() -> list:
-    return [{"kind": k, "group": v["group"], "label": v["label"], "params": [dict(p) for p in v["params"]], "note": NOTE} for k, v in KINDS.items()]
+    srcs = size_table().get("sources") or {}
+    out = []
+    for k, v in KINDS.items():
+        row = {"kind": k, "group": v["group"], "label": v["label"], "params": [dict(p) for p in v["params"]], "note": NOTE}
+        if k in SIZE_FIELDS:
+            row["sizes"] = [{"id": r["id"], "status": r.get("status", ""), "source": (srcs.get(r.get("source")) or {}).get("title", ""), "note": r.get("note", ""), "values": {f: r[f] for f in ("nominal",) + SIZE_FIELDS[k] if r.get(f) is not None}} for r in size_rows(k)]
+        out.append(row)
+    return out
+
+
+def from_size(kind: str, raw: dict) -> dict:
+    size = str(raw.get("size") or "").strip()
+    if not size:
+        return raw
+    if kind not in SIZE_FIELDS:
+        raise GenError("%s has no standard sizes; enter its dimensions." % KINDS[kind]["label"])
+    row = next((r for r in size_rows(kind) if r["id"].casefold() == size.casefold()), None)
+    if row is None:
+        raise GenError("No sourced size %s for %s; enter its dimensions, or use one of %s." % (size, KINDS[kind]["label"].lower(), ", ".join(r["id"] for r in size_rows(kind)) or "none"))
+    out = {k: v for k, v in raw.items() if k != "size"}
+    if out.get("d") in (None, ""):
+        out["d"] = row["nominal"]
+    for key in SIZE_FIELDS[kind]:
+        if out.get(key) in (None, "") and row.get(key) is not None:
+            out[key] = row[key]
+    return out
 
 
 def _defaults(kind: str, p: dict) -> dict:
@@ -92,7 +135,7 @@ def clean(kind: str, raw: dict | None) -> dict:
     spec = KINDS.get(kind)
     if spec is None:
         raise GenError("The kind is one of %s." % ", ".join(KINDS))
-    raw = raw or {}
+    raw = from_size(kind, raw or {})
     unknown = [k for k in raw if k not in {q["name"] for q in spec["params"]} and k not in ("name", "source", "designation")]
     if unknown:
         raise GenError("%s has no parameter %s." % (spec["label"], ", ".join(map(str, unknown))))

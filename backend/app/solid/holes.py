@@ -86,7 +86,7 @@ def dialog_data() -> dict:
         "sections": {s: t[s] for s in SECTIONS},
         "empty": [s for s in SECTIONS if not t[s]],
         "rules": [
-            "Tap drill, when no row is given, is derived as nominal diameter minus pitch. That is a rule from the basic thread profile, not a table value; check it against your standard.",
+            "Tap drill, when the table has no readable row, is derived as nominal diameter minus pitch. That is a rule from the basic thread profile, not a table value; check it against your standard.",
             "Every number can be typed over in the feature. A typed number is stored in the feature and is never replaced by the table.",
         ],
     }
@@ -124,16 +124,18 @@ def resolve(values: dict, mm: float, table: dict | None = None) -> tuple:
                 raise PartError("The table has no verified pitch for %s; type the pitch from your standard." % (size or "this size"))
             pitch = float(row_thread["pitch"])
             info["origin"]["pitch"] = "table:%s" % row_thread.get("status", "")
-            if row_thread.get("status") != "read_twice":
+            if row_thread.get("status") not in ("read_twice", "two_sources"):
                 notes.append("The pitch of %s comes from a row marked %s; confirm it against your standard." % (size, row_thread.get("status", "unverified")))
         else:
             info["origin"]["pitch"] = "typed"
         drill = given("tap_drill")
         if drill is None:
             row = find(t, "tap_drill", size, standard)
-            if row is not None:
+            if row is not None and row.get("diameter") is not None:
                 drill = float(row["diameter"])
-                info["origin"]["tap_drill"] = "table"
+                info["origin"]["tap_drill"] = "table:%s" % row.get("status", "")
+                if row.get("status") not in ("read_twice", "two_sources"):
+                    notes.append("The tap drill of %s comes from a row marked %s; confirm it against your standard." % (size, row.get("status", "unverified")))
             else:
                 drill = nominal - pitch
                 info["origin"]["tap_drill"] = "derived"

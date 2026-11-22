@@ -8,8 +8,113 @@ TAU = 2.0 * math.pi
 
 GEOMETRIC = (
     "coincident", "collinear", "concentric", "fix", "parallel", "perpendicular",
-    "horizontal", "vertical", "tangent", "smooth", "symmetric", "equal",
+    "horizontal", "vertical", "tangent", "smooth", "symmetric", "equal", "midpoint",
 )
+
+
+class SplineMeta:
+    __slots__ = ("p", "knots", "w", "uniq", "nc", "periodic", "lo", "hi")
+
+    def __init__(self, p, knots, w, uniq, nc, periodic):
+        self.p = p
+        self.knots = knots
+        self.w = w
+        self.uniq = uniq
+        self.nc = nc
+        self.periodic = periodic
+        self.lo = knots[p]
+        self.hi = knots[nc]
+
+
+def _span(m, u):
+    U = m.knots
+    n = m.nc - 1
+    if u >= U[n + 1]:
+        return n
+    if u <= U[m.p]:
+        return m.p
+    lo, hi = m.p, n + 1
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if u < U[mid]:
+            hi = mid
+        else:
+            lo = mid
+    return lo
+
+
+def _spline_at(x, o, m, u, deriv):
+    p, U = m.p, m.knots
+    s = _span(m, u)
+    N = [0.0] * (p + 1)
+    D = [0.0] * (p + 1)
+    left = [0.0] * (p + 1)
+    right = [0.0] * (p + 1)
+    N[0] = 1.0
+    for j in range(1, p + 1):
+        left[j] = u - U[s + 1 - j]
+        right[j] = U[s + j] - u
+        saved = 0.0
+        if j == p and deriv:
+            for r in range(p):
+                den = U[s + r + 1] - U[s + r + 1 - p]
+                f = p * N[r] / den if den else 0.0
+                D[r] -= f
+                D[r + 1] += f
+        for r in range(j):
+            den = right[r + 1] + left[j - r]
+            t = N[r] / den if den else 0.0
+            N[r] = saved + right[r + 1] * t
+            saved = left[j - r] * t
+        N[j] = saved
+    ax = ay = aw = dx = dy = dw = 0.0
+    for j in range(p + 1):
+        i = (s - p + j) % m.uniq
+        wt = m.w[s - p + j] if m.w else 1.0
+        cx, cy = x[o + 2 * i], x[o + 2 * i + 1]
+        ax += N[j] * wt * cx
+        ay += N[j] * wt * cy
+        aw += N[j] * wt
+        dx += D[j] * wt * cx
+        dy += D[j] * wt * cy
+        dw += D[j] * wt
+    if aw == 0.0:
+        aw = 1.0
+    px, py = ax / aw, ay / aw
+    return px, py, (dx - dw * px) / aw, (dy - dw * py) / aw
+
+
+def spline_point(x, o, m, u):
+    if m.periodic:
+        span = m.hi - m.lo
+        return _spline_at(x, o, m, m.lo + (u - m.lo) % span, False)[:2]
+    if u < m.lo or u > m.hi:
+        b = m.lo if u < m.lo else m.hi
+        px, py, tx, ty = _spline_at(x, o, m, b, True)
+        return px + tx * (u - b), py + ty * (u - b)
+    return _spline_at(x, o, m, u, False)[:2]
+
+
+def spline_project(x, o, m, q):
+    span = m.hi - m.lo
+    n = max(16, 24 * (m.nc - m.p))
+    best, bu = None, m.lo
+    for k in range(n + 1):
+        u = m.lo + span * k / n
+        px, py = spline_point(x, o, m, u)
+        d = (px - q[0]) ** 2 + (py - q[1]) ** 2
+        if best is None or d < best:
+            best, bu = d, u
+    for _ in range(20):
+        px, py, tx, ty = _spline_at(x, o, m, min(max(bu, m.lo), m.hi), True)
+        g = tx * tx + ty * ty
+        if g < 1e-24:
+            break
+        step = ((q[0] - px) * tx + (q[1] - py) * ty) / g
+        bu = min(max(bu + step, m.lo), m.hi)
+        if abs(step) < 1e-14 * max(1.0, span):
+            break
+    return bu
 DIMENSIONAL = ("distance", "hdistance", "vdistance", "angle", "radius", "diameter")
 PREFIX = {"distance": "d", "hdistance": "d", "vdistance": "d", "angle": "ang", "radius": "rad", "diameter": "dia"}
 
@@ -64,6 +169,12 @@ def point_fn(ent, part):
                 s = math.sin(x[o + t]) * x[o + 4]
                 return x[o] + c * x[o + 2] - s * x[o + 3], x[o + 1] + c * x[o + 3] + s * x[o + 2]
             return ep, [o, o + 1, o + 2, o + 3, o + 4, o + t]
+    if k == "spline" and part in ("start", "end") and not ent.meta.periodic:
+        m = ent.meta
+        u = m.lo if part == "start" else m.hi
+        s = _span(m, u)
+        idx = sorted({o + 2 * ((s - m.p + j) % m.uniq) + c for j in range(m.p + 1) for c in (0, 1)})
+        return (lambda x: spline_point(x, o, m, u)), idx
     raise SolverFault("%s has no reference '%s'" % (ent.kind, part))
 
 
@@ -182,12 +293,38 @@ def build(sk, kind, refs, value, ctx):
             cent, cpart = split_ref(sk, cref)
             if cpart != "whole":
                 raise SolverFault("coincident needs a point and a curve")
-            fc, idx = on_curve(cent)
-            touch(cent, idx)
-            fn = lambda x: np.array([fc(x, *fp(x))])
-            rows = 1
+            if cent.kind == "spline":
+                m, so = cent.meta, cent.off
+                aux = sk.aux_param(spline_project(x0, so, m, fp(x0)))
+                ui = aux.off
+                touch(cent, list(range(so, so + cent.n)))
+                touch(aux, [ui])
+
+                def fn(x):
+                    px, py = fp(x)
+                    sx, sy = spline_point(x, so, m, x[ui])
+                    return np.array([sx - px, sy - py])
+                rows = 2
+            else:
+                fc, idx = on_curve(cent)
+                touch(cent, idx)
+                fn = lambda x: np.array([fc(x, *fp(x))])
+                rows = 1
         else:
             raise SolverFault("coincident needs at least one point")
+    elif kind == "midpoint":
+        _need(refs, 2, kind)
+        ea, pa = split_ref(sk, refs[0])
+        pref, cref = (refs[1], refs[0]) if not pointlike(ea, pa) else (refs[0], refs[1])
+        cent, cpart = split_ref(sk, cref)
+        if cent.kind not in ("line", "arc") or cpart != "whole":
+            raise SolverFault("midpoint needs a point and a line or arc")
+        fp = pt(pref)
+        if any(e == cent.id for e in ents) and split_ref(sk, pref)[1] in ("start", "end"):
+            raise SolverFault("an end of a line or arc cannot be its own midpoint")
+        fm = pt((cent.id, "mid"))
+        fn = lambda x: np.array([fp(x)[0] - fm(x)[0], fp(x)[1] - fm(x)[1]])
+        rows = 2
     elif kind == "collinear":
         _need(refs, 2, kind)
         a, b = lin(refs[0]), lin(refs[1])

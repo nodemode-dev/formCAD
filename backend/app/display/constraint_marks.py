@@ -2,7 +2,7 @@ import json
 
 from app.display import shapes
 
-KINDS = ("circle", "arc", "point", "lwpolyline", "ellipse")
+KINDS = ("circle", "arc", "point", "lwpolyline", "ellipse", "spline")
 _encode = json.JSONEncoder(separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode
 
 
