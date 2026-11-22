@@ -50,7 +50,7 @@ Run the same checks CI runs:
 
 ```sh
 (cd frontend && npm ci && npx tsc --noEmit -p . && npm run build)
-(cd backend && pip install -r requirements.txt \
+(cd backend && pip install --require-hashes -r requirements.lock \
   && python -m compileall -q app formcad_engine.py \
   && python formcad_engine.py --selfcheck)
 ```
