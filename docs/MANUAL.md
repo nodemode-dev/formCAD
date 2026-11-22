@@ -128,7 +128,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **Main commands.** `featextrude`, `featcut`, `featrevolve`, `featrevolvecut`, `featadd`, `features`, `featedit`, `featdelete`, `featsuppress`, `featunsuppress`, `featrollback`, `featrebuild`, `featforcerebuild`, `combine`, `splitbody`, `movecopybody`, `refgeo`, `config`, `designtable`, `material`, `materiallib`, `bodymass`, `massprop`; primitives `box`, `cylinder`, `sphere`, `cone`, `torus`, `extrude`; edge work `filletedge`, `chamferedge`, `blendedge`; booleans `boolop`, `boolcheck`.
 
-**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Holes have their own router (`/api/holes`) and take sizes you enter.
+**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Each side of a sketch polyline keeps its own identity through edits: move, add or remove vertices in an early sketch and fillets, chamfers and sketches on the other sides stay where they were. A reference to a side or corner you removed fails with its name rather than jumping to a neighbour; when a corner's name changed because you split a side, the reference is found again by shape and the feature shows a warning. Holes have their own router (`/api/holes`); the standard sizes they offer are described under Toolbox, and any size can be typed.
 
 ## 7. Sheet metal
 

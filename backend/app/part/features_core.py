@@ -56,7 +56,9 @@ def sketch_plan(step):
     if not name:
         raise PartError("The sketch feature has no sketch.")
     frame = sketch_frame(step)
-    return {"profile": profile.build(step.d, name, frame)}
+    segs = {}
+    prof = profile.build(step.d, name, frame, known=step.feat.get("segs") or {}, out=segs)
+    return {"profile": prof, "segs": segs}
 
 
 def thin_of(step):

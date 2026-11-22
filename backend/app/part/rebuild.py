@@ -189,6 +189,24 @@ class Step:
             self._index[tag] = {k: i for i, k in enumerate(keys)}
         return self._index[tag]
 
+    def sibling(self, tag, ref, idx, taken):
+        keys = self.base_faces if tag == "faces" else self.base_edges
+        if ("fam", tag) not in self._index:
+            fam = {}
+            for i, k in enumerate(keys):
+                fam.setdefault(names.base_key(k), []).append(i)
+            self._index[("fam", tag)] = fam
+        group = self._index[("fam", tag)].get(names.base_key(keys[idx])) or []
+        if len(group) < 2:
+            return idx
+        cand = self.signatures(tag)
+        pick = names.match_signature(ref["sig"], {str(i): cand[str(i)] for i in group if str(i) in cand}, self.diag(), set(taken))
+        if pick is None or pick == idx:
+            return idx
+        ref["key"] = keys[pick]
+        self.rb.healed = True
+        return pick
+
     def signatures(self, tag):
         if tag not in self._sigs:
             if self.base is None:
@@ -212,6 +230,8 @@ class Step:
         for ref in refs:
             key = ref.get("key") or ""
             idx = self.key_index(tag).get(key)
+            if idx is not None and ref.get("sig"):
+                idx = self.sibling(tag, ref, idx, out)
             if idx is None:
                 sig = ref.get("sig") or {}
                 cand = self.signatures(tag)
@@ -434,6 +454,9 @@ class Rebuilder:
         except (PartError, S.ParamError, SolidError, X.ExprError, KeyError) as err:
             e = self.fail_entry(prev, str(err) if not isinstance(err, KeyError) else "The sketch %s is missing." % err)
             return e
+        segs = call.get("segs")
+        if segs is not None and segs != (rec.get("segs") or {}):
+            self.keep_segs(rec, segs)
         dig = hashlib.sha1(profile.digest(prof).encode()).hexdigest()[:20]
         h2 = hashlib.sha1((hsh + dig).encode()).hexdigest()[:20]
         old = self.cache.entries.get(rec["id"])
@@ -450,6 +473,13 @@ class Rebuilder:
         e.ms = round((time.perf_counter() - t0) * 1000.0, 2)
         self.report["rebuilt"].append(rec["id"])
         return e
+
+    def keep_segs(self, rec, segs):
+        rec["segs"] = segs
+        q = copy.deepcopy(self.d.tables[store.TABLE].get(rec["id"]))
+        if q is not None:
+            q["segs"] = segs
+            store.put(self.d, q)
 
     def build(self, rec, ft, values, prev, hsh):
         step = Step(self, rec, ft, values, prev)

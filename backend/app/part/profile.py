@@ -1,5 +1,6 @@
 import json
 import math
+import zlib
 
 from app.doc import curves2d as C
 from app.doc import planar as P
@@ -8,6 +9,7 @@ from app.param import store as S
 from app.param import units as U
 
 MAX_ENTITIES = 20000
+ALIGN_CELLS = 250000
 
 
 def role(handle, seg=None) -> str:
@@ -23,7 +25,7 @@ def arc_ends(e):
     return a, b, math.tan(sweep / 4.0)
 
 
-def poly_segments(e, handle, scale):
+def poly_segments(e, handle, scale, ids=None):
     verts = e.vertices
     n = len(verts)
     count = n if e.closed else n - 1
@@ -34,8 +36,69 @@ def poly_segments(e, handle, scale):
         pb = [float(b["p"][0]) * scale, float(b["p"][1]) * scale]
         if math.hypot(pa[0] - pb[0], pa[1] - pb[1]) <= 1e-9:
             continue
-        out.append({"t": "line" if not float(a.get("bulge", 0.0) or 0.0) else "arc", "a": pa, "b": pb, "bulge": float(a.get("bulge", 0.0) or 0.0), "role": role(handle, i)})
+        out.append({"t": "line" if not float(a.get("bulge", 0.0) or 0.0) else "arc", "a": pa, "b": pb, "bulge": float(a.get("bulge", 0.0) or 0.0), "role": role(handle, ids[i] if ids else i)})
     return out
+
+
+def vertex_marks(e, scale):
+    return ["%08x" % zlib.crc32(("%.6f,%.6f" % (float(v["p"][0]) * scale, float(v["p"][1]) * scale)).encode()) for v in e.vertices]
+
+
+def edit_pairs(a, b):
+    n, m = len(a), len(b)
+    cost = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n + 1):
+        cost[i][0] = i
+    for j in range(m + 1):
+        cost[0][j] = j
+    for i in range(1, n + 1):
+        row, up = cost[i], cost[i - 1]
+        for j in range(1, m + 1):
+            row[j] = min(up[j - 1] + (0 if a[i - 1] == b[j - 1] else 1), up[j] + 1, row[j - 1] + 1)
+    pairs = []
+    i, j = n, m
+    while i > 0 and j > 0:
+        if cost[i][j] == cost[i - 1][j - 1] + (0 if a[i - 1] == b[j - 1] else 1):
+            pairs.append((j - 1, i - 1))
+            i, j = i - 1, j - 1
+        elif cost[i][j] == cost[i - 1][j] + 1:
+            i -= 1
+        else:
+            j -= 1
+    return pairs
+
+
+def align(old, new):
+    n, m = len(old), len(new)
+    if n == m:
+        return list(range(m))
+    pre = 0
+    while pre < min(n, m) and old[pre] == new[pre]:
+        pre += 1
+    suf = 0
+    while suf < min(n, m) - pre and old[n - 1 - suf] == new[m - 1 - suf]:
+        suf += 1
+    got = list(range(pre)) + [None] * (m - pre - suf) + [n - suf + k for k in range(suf)]
+    a, b = old[pre:n - suf], new[pre:m - suf]
+    if a and b and len(a) * len(b) <= ALIGN_CELLS:
+        for j, i in edit_pairs(a, b):
+            got[pre + j] = pre + i
+    return got
+
+
+def stable_ids(known, marks):
+    ids_old = (known or {}).get("ids") or []
+    if not ids_old or len(ids_old) != len(known.get("v") or ()):
+        return list(range(len(marks))), {"v": marks, "ids": list(range(len(marks))), "next": len(marks)}
+    nxt = max(int(known.get("next", 0)), max(ids_old, default=-1) + 1)
+    ids = []
+    for i in align(known["v"], marks):
+        if i is None:
+            ids.append(nxt)
+            nxt += 1
+        else:
+            ids.append(ids_old[i])
+    return ids, {"v": marks, "ids": ids, "next": nxt}
 
 
 def loop_ring(segs):
@@ -143,7 +206,7 @@ def nest(loops):
     return [regions[i] for i in order]
 
 
-def build(d, sketch_name, frame_mm, exclude=()) -> dict:
+def build(d, sketch_name, frame_mm, exclude=(), known=None, out=None) -> dict:
     rec = S.get_sketch(d, sketch_name)
     if rec is None:
         raise PartError("The sketch %s does not exist." % sketch_name)
@@ -172,7 +235,10 @@ def build(d, sketch_name, frame_mm, exclude=()) -> dict:
         elif k == "circle":
             closed.append({"closed": True, "segs": [{"t": "circle", "c": [e.center[0] * scale, e.center[1] * scale], "r": e.radius * scale, "role": role(h)}]})
         elif k == "lwpolyline":
-            segs = poly_segments(e, int(h), scale)
+            ids = None
+            if out is not None:
+                ids, out[str(int(h))] = stable_ids((known or {}).get(str(int(h))), vertex_marks(e, scale))
+            segs = poly_segments(e, int(h), scale, ids)
             if e.closed and len(segs) >= 2:
                 closed.append({"closed": True, "segs": segs})
             else:
