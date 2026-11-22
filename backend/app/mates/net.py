@@ -358,25 +358,64 @@ class Network:
         w = extra[0][3]
         _, F, J = self.system_for(free, mates, extra)
         k = len(extra) * 3
-        Jh, Js, rs = J[:-k], J[-k:] / w, F[-k:] / w
+        Js, rs = J[-k:] / w, F[-k:] / w
+        sides = self.one_sided(mates)
+        eq = [i for i in range(J.shape[0] - k) if i not in sides]
+        dx = self.null_step(J[eq], Js, rs)
+        if dx is None:
+            return False
+        if sides:
+            snap = self.snapshot()
+            before = self.residual(mates)
+            self.step(free, dx * frac)
+            after = self.residual(mates)
+            self.restore(snap)
+            hit = [i for i in sides if abs(after[i]) > abs(before[i]) + 1e-9 * self.L]
+            if hit:
+                dx = self.null_step(np.vstack([J[eq], self.side_rows(free, mates, hit)]), Js, rs)
+                if dx is None:
+                    return False
+        self.step(free, dx * frac)
+        return True
+
+    def null_step(self, Jh, Js, rs):
         if Jh.shape[0]:
             _, s, Vt = np.linalg.svd(Jh, full_matrices=True)
             rank = int(np.sum(s > 1e-7 * max(s[0], 1e-30)))
             N = Vt[rank:].T
         else:
-            N = np.eye(J.shape[1])
+            N = np.eye(Js.shape[1])
         if N.shape[1] == 0:
-            return False
-        y = np.linalg.lstsq(Js @ N, -rs, rcond=1e-6)[0]
-        dx = N @ y
+            return None
+        dx = N @ np.linalg.lstsq(Js @ N, -rs, rcond=1e-6)[0]
         big = float(np.max(np.abs(dx))) if dx.size else 0.0
         if big < 1e-12 * self.L:
-            return False
+            return None
         limit = 0.25 * self.L
-        if big > limit:
-            dx = dx * (limit / big)
-        self.step(free, dx * frac)
-        return True
+        return dx * (limit / big) if big > limit else dx
+
+    def one_sided(self, mates):
+        out, r = [], 0
+        for m in mates:
+            n = self.mate_res(m).size
+            if m.kind in ("limitdistance", "limitangle") or (m.kind == "slot" and m.opt.get("position", "free") not in ("centre", "center")):
+                out.append(r + n - 1)
+            r += n
+        return out
+
+    def side_rows(self, free, mates, rows):
+        col = {c: 6 * i for i, c in enumerate(free)}
+        out = np.zeros((len(rows), 6 * len(free)))
+        r = 0
+        for m in mates:
+            f0 = self.mate_res(m)
+            for j, row in enumerate(rows):
+                if r <= row < r + f0.size:
+                    for c, block in self.jac_mate(m, f0, True).items():
+                        if c in col:
+                            out[j, col[c]:col[c] + 6] = block[row - r]
+            r += f0.size
+        return out
 
     def lm_soft(self, mates, extra, max_it=40):
         free = self.free_ids(mates)
