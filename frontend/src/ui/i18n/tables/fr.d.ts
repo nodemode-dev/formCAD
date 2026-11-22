@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "Outils DWG",
+  1574: "lit toutes les versions DWG, n'enregistre qu'en DWG 2000",
+  1575: "Non installé",
+  1576: "Installer",
+  1577: "Installation en cours",
+  1578: "Les outils DWG sont GNU LibreDWG, un programme distinct sous licence GPL, téléchargé depuis la page des versions de FormCAD et vérifié fichier par fichier. Avec eux, FormCAD ouvre toutes les versions DWG et n'enregistre le DWG qu'au format 2000.",
+  1579: "Dessin DWG",
+  1580: "Dessin DWG, format 2000 (la seule version DWG qu'écrit LibreDWG)",
+  1581: "Référence d'image raster...",
+  1582: "Sous-couche PDF...",
+  1583: "Image",
+  1584: "Sous-couche PDF",
+  1585: "Ajuster...",
+  1586: "Sous-couche",
+  1587: "Page",
+  1588: "Fondu",
+  1589: "Afficher",
+  1590: "Délimitation",
+};
+export default T;

@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "Công cụ DWG",
+  1574: "đọc mọi phiên bản DWG, chỉ lưu DWG 2000",
+  1575: "Chưa cài đặt",
+  1576: "Cài đặt",
+  1577: "Đang cài đặt",
+  1578: "Công cụ DWG là GNU LibreDWG, một chương trình riêng theo giấy phép GPL, được tải xuống từ trang phát hành của FormCAD và kiểm tra từng tệp. Với chúng, FormCAD mở được mọi phiên bản DWG và chỉ lưu DWG ở định dạng 2000.",
+  1579: "Bản vẽ DWG",
+  1580: "Bản vẽ DWG, định dạng 2000 (phiên bản DWG duy nhất mà LibreDWG ghi)",
+  1581: "Tham chiếu hình ảnh raster...",
+  1582: "Nền PDF...",
+  1583: "Hình ảnh",
+  1584: "Nền PDF",
+  1585: "Điều chỉnh...",
+  1586: "Nền",
+  1587: "Trang",
+  1588: "Làm mờ",
+  1589: "Hiện",
+  1590: "Cắt tỉa",
+};
+export default T;

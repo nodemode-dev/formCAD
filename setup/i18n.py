@@ -7,7 +7,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEYS_FILE = os.path.join(ROOT, "frontend", "src", "ui", "i18n", "keys.ts")
 TABLES = os.path.join(ROOT, "frontend", "src", "ui", "i18n", "tables")
-PARTS = {"a": (0, 548), "b": (549, 1060), "c": (1061, 1572)}
+PARTS = {"a": (0, 548), "b": (549, 1060), "c": (1061, 1572), "d": (1573, 2299)}
 VARIANTS = {"es-MX": "es", "fr-CA": "fr"}
 PLACEHOLDER = re.compile(r"\{[a-z0-9]+\}")
 ROW = re.compile(r'^\s*(\d+):\s*("(?:[^"\\]|\\.)*"),\s*$')

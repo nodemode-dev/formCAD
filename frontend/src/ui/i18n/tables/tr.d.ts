@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "DWG araçları",
+  1574: "tüm DWG sürümlerini okur, yalnızca DWG 2000 olarak kaydeder",
+  1575: "Kurulu değil",
+  1576: "Kur",
+  1577: "Kuruluyor",
+  1578: "DWG araçları, GPL altında ayrı bir program olan GNU LibreDWG'dir; FormCAD sürüm sayfasından indirilir ve dosya dosya denetlenir. Bunlarla FormCAD her DWG sürümünü açar ve DWG'yi yalnızca 2000 biçiminde kaydeder.",
+  1579: "DWG çizimi",
+  1580: "DWG çizimi, 2000 biçimi (LibreDWG'nin yazdığı tek DWG sürümü)",
+  1581: "Raster görüntü referansı...",
+  1582: "PDF altlığı...",
+  1583: "Görüntü",
+  1584: "PDF altlığı",
+  1585: "Ayarla...",
+  1586: "Altlık",
+  1587: "Sayfa",
+  1588: "Soldurma",
+  1589: "Göster",
+  1590: "Kırpma",
+};
+export default T;

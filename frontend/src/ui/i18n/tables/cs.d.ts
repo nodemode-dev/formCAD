@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "Nástroje DWG",
+  1574: "čte všechny verze DWG, ukládá jen DWG 2000",
+  1575: "Nenainstalováno",
+  1576: "Nainstalovat",
+  1577: "Instaluje se",
+  1578: "Nástroje DWG jsou GNU LibreDWG, samostatný program pod licencí GPL, který se stahuje ze stránky vydání FormCAD a kontroluje se soubor po souboru. S nimi FormCAD otevře všechny verze DWG a ukládá DWG pouze ve formátu 2000.",
+  1579: "Výkres DWG",
+  1580: "Výkres DWG, formát 2000 (jediná verze DWG, kterou LibreDWG zapisuje)",
+  1581: "Reference rastrového obrázku...",
+  1582: "Podklad PDF...",
+  1583: "Obrázek",
+  1584: "Podklad PDF",
+  1585: "Upravit...",
+  1586: "Podklad",
+  1587: "Stránka",
+  1588: "Vyblednutí",
+  1589: "Zobrazit",
+  1590: "Oříznutí",
+};
+export default T;

@@ -1,0 +1,21 @@
+const T: Record<number, string> = {
+  1573: "DWG-gereedschappen",
+  1574: "leest elke DWG-versie, slaat alleen DWG 2000 op",
+  1575: "Niet geïnstalleerd",
+  1576: "Installeren",
+  1577: "Bezig met installeren",
+  1578: "De DWG-gereedschappen zijn GNU LibreDWG, een apart programma onder de GPL, dat wordt gedownload van de releasepagina van FormCAD en bestand voor bestand wordt gecontroleerd. Hiermee opent FormCAD elke DWG-versie en slaat het DWG alleen op in het 2000-formaat.",
+  1579: "DWG-tekening",
+  1580: "DWG-tekening, 2000-formaat (de enige DWG-versie die LibreDWG schrijft)",
+  1581: "Rasterafbeeldingsreferentie...",
+  1582: "PDF-ondergrond...",
+  1583: "Afbeelding",
+  1584: "PDF-ondergrond",
+  1585: "Aanpassen...",
+  1586: "Ondergrond",
+  1587: "Pagina",
+  1588: "Vervagen",
+  1589: "Tonen",
+  1590: "Afknippen",
+};
+export default T;
