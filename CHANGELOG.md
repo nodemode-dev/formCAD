@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.21.0 · 2026-11-22
+
+- The session key reaches one window. The desktop app hands it to its own window; the engine no longer writes it into the pages it serves. Run for a browser, the engine gives it to the first page only, and a later page says so in its status line.
+- The app's window stays on its engine: it refuses to load any other address.
+- Render environment downloads are checked with SHA-256.
+- `FORMCAD_HOST` set beyond this computer prints a warning at start.
+- The agent dock is the family's module 2.2.1; its guide now names Codex, Cursor and Antigravity.
+- The README and `SECURITY.md` say what FormCAD sends over the network: the kernel and mesher downloads, a render environment when you ask for one, and nothing else.
+- The shell, the scripts, the kernel and the mesher each have a living log beside their code.
+- Not run for this version: the app on macOS or Windows.
+
 ## 0.20.1 · 2026-11-22
 
 - On Windows the engine can no longer outlive the app. It runs inside a job object that Windows ends with the app, so a crashed or killed FormCAD leaves no `formcad-engine.exe` behind and the next start has one engine.
