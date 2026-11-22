@@ -408,6 +408,173 @@ def srfblend_exec(ctx, args):
     return do_blend(ctx, args)
 
 
+FILLET_LABELS = {"fillet": ("SRFFILLET", "Fillet surface"), "chamfer": ("SRFCHAMFER", "Chamfer surface"), "variable": ("SRFVARFILLET", "Variable fillet surface")}
+
+
+def face_pick(ctx, ref):
+    ref = {"body": ref} if isinstance(ref, (int, str)) else dict(ref or {})
+    if ref.get("body") is None:
+        raise CommandError("Give each surface as {body, face}, or as the handle of a single surface.")
+    if ref.get("face") is None and ref.get("face_index") is None:
+        body = guard(sw.body_of, ctx.d, ref["body"])
+        if len(body.face_ids) != 1:
+            raise CommandError("Object %s has %d faces; name one with face or face_index." % (body.handle, len(body.face_ids)))
+        ref["face_index"] = 0
+    return guard(sw.face_ref, ctx.d, ref)
+
+
+def two_faces(ctx, args):
+    a, b = args.get("a"), args.get("b")
+    if a is None or b is None:
+        faces = list(ctx.doc.subselection.get("faces") or [])
+        if len(faces) < 2:
+            raise CommandError("Select two surface faces first, one on each surface, or give a and b as {body, face}.")
+        a = a if a is not None else {"body": faces[0]["body"], "face": faces[0]["face"]}
+        b = b if b is not None else {"body": faces[1]["body"], "face": faces[1]["face"]}
+    return face_pick(ctx, a), face_pick(ctx, b)
+
+
+def fillet_sizes(ctx, args, kind):
+    s = sw.scale(ctx.d)
+    if kind == "chamfer":
+        out = {"distance": to_mm(ctx, args.get("distance"), "The distance")}
+        if args.get("distance2") is not None:
+            out["distance2"] = to_mm(ctx, args["distance2"], "The second distance")
+        return out
+    if kind == "fillet":
+        return {"radius": to_mm(ctx, args.get("radius"), "The radius")}
+    radii = args.get("radii")
+    if not isinstance(radii, list) or len(radii) < 2:
+        raise CommandError("Give radii as at least two [parameter, radius] pairs; the parameter runs from 0 at one end of the fillet to 1 at the other.")
+    try:
+        return {"radii": [[float(r[0]), float(r[1]) * s] for r in radii]}
+    except (TypeError, ValueError, IndexError):
+        raise CommandError("Each entry of radii is [parameter, radius].")
+
+
+def fillet_pieces(ctx, res, bodies, name):
+    d = ctx.d
+    handles = []
+    for piece, body in zip(res["pieces"], bodies):
+        info = {"report": {**res["report"], "audit": piece.get("audit")}, "summary": piece["summary"], "id": piece["id"]}
+        if body is None:
+            handles.append(sw.add_result(ctx, info, name, "surf_fillet").handle)
+            continue
+        target = d.modify(body.handle)
+        work.apply_result(d, target, piece["id"], piece["summary"], {**sw.source_for("surf_fillet", info), "from": [body.name]}, None, body.lineage)
+        handles.append(target.handle)
+    return handles
+
+
+def do_surface_fillet(ctx, args, kind):
+    d = ctx.d
+    s = sw.scale(d)
+    (ba, fa), (bb, fb) = two_faces(ctx, args)
+    trim = bool(args.get("trim", True))
+    params = {"a": fa, "b": fb, "kind": kind, "trim": trim, "join": bool(args.get("join", True)), **fillet_sizes(ctx, args, kind)}
+    for key in ("from", "keep_a", "keep_b"):
+        if args.get(key) is not None:
+            params[key] = sw.p3(args[key], s)
+    res = guard(sw.call, d, "surf_fillet", params)
+    rep = res["report"]
+    label, name = FILLET_LABELS[kind]
+    if "pieces" in res:
+        out = {"handles": guard(fillet_pieces, ctx, res, (ba, bb, None), name)}
+        ctx.say("%s: both surfaces trimmed back; the new surface is left separate." % label)
+        line = sw.audit_line(rep)
+        if line:
+            ctx.say(line)
+        keep_report(ctx, rep)
+    else:
+        if not trim:
+            body = guard(sw.add_result, ctx, res, name, "surf_fillet", {"seams": [ba.handle, bb.handle]})
+        elif ba.handle == bb.handle:
+            body = guard(sw.replace_result, ctx, ba, res, "surf_fillet")
+        else:
+            body = guard(sw.merge_bodies, ctx, [ba, bb], res, "surf_fillet")
+        out = {"handle": body.handle}
+        announce(ctx, label, res)
+    if kind == "chamfer":
+        ctx.say("Distances %.4g and %.4g mm along a shared edge of %.4g mm." % (rep["distance"], rep["distance2"], rep["shared_length"]))
+    elif rep.get("radius_min") is not None:
+        ctx.say("Radius measured from %.4g to %.4g mm; normals across the fillet edges differ by at most %.3g rad (%s)." % (rep["radius_min"], rep["radius_max"], rep["max_tangent_angle"], "tangent" if rep.get("tangent") else "above the angle tolerance"))
+    if rep.get("joined"):
+        ctx.say("Joined into a valid %s with %d free edge(s)." % ("closed solid" if rep.get("closed_solid") else "polysurface", rep.get("free_edges", 0)))
+    return {**out, "report": sw.compact(rep)}
+
+
+def ask_fillet_result(ctx):
+    r = yield from ask_style(ctx, "Result", ["Join", "Trim", "Surface"], "Join")
+    if r is None:
+        return None
+    return {"trim": r != "Surface", "join": r == "Join"}
+
+
+@command("srffillet", aliases=("surffillet", "filletsrf"), group=GROUP, label="Fillet Surfaces", description="Round the corner between two surfaces with one radius, trimming both back to the fillet and joining the result; select a face on each surface first.", menu="Draw > Modeling > Surface > Fillet")
+def srffillet_cmd(ctx):
+    two_faces(ctx, {})
+    r = yield ctx.distance("Specify the radius", positive=True)
+    if r.kind != "number":
+        return
+    mode = yield from ask_fillet_result(ctx)
+    if mode is not None:
+        do_surface_fillet(ctx, {"radius": r.value, **mode}, "fillet")
+
+
+@executes("srffillet")
+def srffillet_exec(ctx, args):
+    return do_surface_fillet(ctx, args, "fillet")
+
+
+@command("srfchamfer", aliases=("surfchamfer", "chamfersrf"), group=GROUP, label="Chamfer Surfaces", description="Cut the corner between two surfaces with a flat band at one distance on each surface, trimming both back and joining the result; select a face on each surface first.", menu="Draw > Modeling > Surface > Chamfer")
+def srfchamfer_cmd(ctx):
+    two_faces(ctx, {})
+    a = yield ctx.distance("Specify the distance on the first surface", positive=True)
+    if a.kind != "number":
+        return
+    b = yield ctx.distance("Specify the distance on the second surface", default=a.value, positive=True)
+    if b.kind not in ("number", "enter", "none"):
+        return
+    mode = yield from ask_fillet_result(ctx)
+    if mode is not None:
+        do_surface_fillet(ctx, {"distance": a.value, "distance2": b.value if b.kind == "number" else a.value, **mode}, "chamfer")
+
+
+@executes("srfchamfer")
+def srfchamfer_exec(ctx, args):
+    return do_surface_fillet(ctx, args, "chamfer")
+
+
+@command("srfvarfillet", aliases=("surfvarfillet", "variablefilletsrf"), group=GROUP, label="Variable Fillet Surfaces", description="Round the corner between two surfaces with a radius that changes along the fillet, given as radii at parameters from 0 to 1; select a face on each surface first.", menu="Draw > Modeling > Surface > Variable Fillet")
+def srfvarfillet_cmd(ctx):
+    two_faces(ctx, {})
+    first = yield ctx.distance("Specify the radius at the start", positive=True)
+    if first.kind != "number":
+        return
+    last = yield ctx.distance("Specify the radius at the end", positive=True)
+    if last.kind != "number":
+        return
+    radii = [[0.0, first.value], [1.0, last.value]]
+    while True:
+        t = yield ctx.number("Parameter of another radius, from 0 to 1 along the fillet (Enter to finish)", minimum=0.0, maximum=1.0)
+        if t.kind in ("enter", "none"):
+            break
+        if t.kind != "number":
+            return
+        r = yield ctx.distance("Specify the radius there", positive=True)
+        if r.kind != "number":
+            return
+        radii.append([t.value, r.value])
+    mode = yield from ask_fillet_result(ctx)
+    if mode is not None:
+        do_surface_fillet(ctx, {"radii": radii, **mode}, "variable")
+
+
+@executes("srfvarfillet")
+def srfvarfillet_exec(ctx, args):
+    return do_surface_fillet(ctx, args, "variable")
+
+
 @command("srfmatch", aliases=("surfmatch",), group=GROUP, label="Match Surface", description="Move the edge rows of a surface to meet another surface edge with G0, G1 or G2; select the moving edge first, then the target edge.", menu="Draw > Modeling > Surface > Match")
 def srfmatch_cmd(ctx):
     two_sides(ctx, {})

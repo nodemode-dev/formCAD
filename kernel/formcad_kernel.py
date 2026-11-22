@@ -153,7 +153,7 @@ def load_operations() -> None:
         def surfaces_unavailable(_params):
             raise RuntimeError("The surface operations could not be loaded (%s)." % failure5)
 
-        for name in ("surf_loft", "surf_sweep", "surf_network", "surf_patch", "surf_extrude", "surf_revolve", "surf_planar", "surf_edge", "surf_extend", "surf_offset", "surf_split", "surf_join", "surf_continuity", "surf_blend", "surf_match", "bool_diag", "fillet_edge", "chamfer_edge"):
+        for name in ("surf_loft", "surf_sweep", "surf_network", "surf_patch", "surf_extrude", "surf_revolve", "surf_planar", "surf_edge", "surf_extend", "surf_offset", "surf_split", "surf_join", "surf_fillet", "surf_continuity", "surf_blend", "surf_match", "bool_diag", "fillet_edge", "chamfer_edge"):
             METHODS.setdefault(name, surfaces_unavailable)
     try:
         import kernel_views

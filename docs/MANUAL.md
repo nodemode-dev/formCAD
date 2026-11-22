@@ -142,19 +142,21 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 8. Surfaces and forms
 
-**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, trim, join), analysis (zebra, curvature, draft, deviation, curvature comb), a gumball, and subdivision forms with creases converted to closed solids.
+**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, fillet, chamfer and variable fillet between surfaces, trim, join), analysis (zebra, curvature, draft, deviation, curvature comb), a gumball, and subdivision forms with creases converted to closed solids.
 
 **How to start.** `crv` or `srfloft` for NURBS; `subdbox` for a form; `analysisramp` and `zebra` for analysis.
 
 **Main commands.**
 
 - Curves: `crv`, `crvinterp`, `crvfit`, `crvrebuild`, `crvdegree`, `crvblend`, `crvmatch`, `crvoffset`, `crvextend`, `crvcont`.
-- Surfaces: `srfloft`, `srfsweep`, `srfnetwork`, `srfpatch`, `srfextrude`, `srfrevolve`, `srfplanar`, `srfedge`, `srfblend`, `srfmatch`, `srfextend`, `srfoffset`, `srfsplit`, `srftrim`, `srfjoin`, `seamcheck`, `nakededges`, `surfreport`, `modeltol`.
+- Surfaces: `srfloft`, `srfsweep`, `srfnetwork`, `srfpatch`, `srfextrude`, `srfrevolve`, `srfplanar`, `srfedge`, `srfblend`, `srffillet`, `srfchamfer`, `srfvarfillet`, `srfmatch`, `srfextend`, `srfoffset`, `srfsplit`, `srftrim`, `srfjoin`, `seamcheck`, `nakededges`, `surfreport`, `modeltol`.
 - Analysis: `zebra`, `curvatureanalysis`, `draftanalysis`, `deviation`, `curvaturecomb`, `analysisoff`, `analysisramp`.
 - Forms: `subdbox`, `subdcylinder`, `subdsphere`, `subdtorus`, `subdextrude`, `subdrevolve`, `subdinsertedge`, `subddivideface`, `subdcrease`, `subdbridge`, `subdfillhole`, `subdsymmetry`, `subddisplay`, `subdconvert`, `subdinfo`.
 - Gumball: `gumball`.
 
-**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured.
+Fillet, Chamfer and Variable Fillet between surfaces (`srffillet`, `srfchamfer`, `srfvarfillet`) work on two surfaces that share an edge or cross: select one face on each, give a radius, two distances, or radii at parameters from 0 to 1 along the fillet, and choose Join (trim both surfaces back and join everything), Trim (trim but keep three surfaces) or Surface (the fillet surface alone). The report lists the measured radius range, the tangency to both surfaces, the free edges and the stored tolerances; a joined result with no free edge becomes a closed solid.
+
+**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured. Surface fillets, and the other surface operations added from 0.29.0, need the 3D kernel released with them; an older kernel says so.
 
 ## 9. Meshes and plastic parts
 

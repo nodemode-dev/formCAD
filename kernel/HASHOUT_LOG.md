@@ -4,6 +4,10 @@ Living record of decisions and removed context for the `formcad-kernel` worker, 
 
 Entries older than v0.21.0 are in `backend/HASHOUT_LOG.md`, which logged the engine and the kernel together; look there for anything this file does not hold. From v0.21.0 a change to a file in `kernel/` is logged here.
 
+## KW4 v0.29.0 surface fillet, chamfer and variable fillet (kernel_surf.py, formcad_kernel.py)
+
+Handoff 9.1. `surf_fillet` with kind fillet, chamfer or variable. Two faces of one body use their shared edge; two bodies are sewn first; two single surfaces that cross are cut along their intersection, keeping the largest piece of each or the piece nearest `keep_a` and `keep_b`. Built with BRepFilletAPI on the shell. The variable law is `[t, r]` pairs mapped by length over the whole spine (tangent chains included), per spine edge through `SetRadius(UandR, IC, IinC)`; `from` picks the end where t is 0; a closed spine needs equal end radii. Trim and join gives one shell, or a solid when no free edge remains, with face and edge history; trim alone gives three pieces; no trim gives the blend surface only. The report carries tol, angtol, the stored-tolerance audit, valid, free edges, closed solid, shells, the spine, radii measured at stations (by three-point circumradius, because GeomLProp curvature was wrong on rational fillet surfaces), radius range and the largest tangent angle. A result whose stored tolerance exceeds 5 percent of the smallest size is refused as too large, although OpenCascade calls it valid. `closed_solid` is shared with `join`.
+
 ## KW3 v0.28.0 modelled threads, thicken, delete face (kernel_features3.py, formcad_kernel.py)
 
 Handoff 8.6. `feat_thread`, `feat_thicken` and `feat_delete_face`, registered from their own module with a fallback message when it cannot load. They reach users with the next kernel bundle; until then the engine says the installed kernel is older than the feature.
