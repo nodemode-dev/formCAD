@@ -2,7 +2,7 @@ import math
 
 from app.assembly import parts, walk
 from app.mates import eqs
-from app.mates.eqs import AX, PL, PT
+from app.mates.eqs import AX, CV, PL, PT
 from app.param.units import mm_per_unit
 from app.solid import work
 
@@ -41,9 +41,15 @@ def from_geometry(g: dict, inv: float) -> dict:
 
 def explicit(g: dict, inv: float) -> dict:
     kind = str(g.get("kind") or "").lower()
-    kind = {"face": PL, "line": AX, "center": PT, "centre": PT}.get(kind, kind)
-    if kind not in (PL, AX, PT):
-        raise PickError("A reference geometry needs kind plane, axis or point.")
+    kind = {"face": PL, "line": AX, "center": PT, "centre": PT, "polyline": CV, "path": CV, "profile": CV}.get(kind, kind)
+    if kind not in (PL, AX, PT, CV):
+        raise PickError("A reference geometry needs kind plane, axis, point or curve.")
+    if kind == CV:
+        pts = g.get("pts")
+        if not isinstance(pts, list) or len(pts) < 2 or any(not isinstance(q, (list, tuple)) or len(q) not in (2, 3) for q in pts):
+            raise PickError("A curve needs pts: a list of at least 2 points of x, y and optional z.")
+        pts = [_vec(list(q) + [0.0] * (3 - len(q)), inv) for q in pts]
+        return {"kind": CV, "p": pts[0], "pts": pts, "closed": bool(g.get("closed", False))}
     out = {"kind": kind, "p": _vec(g.get("p") or g.get("origin") or [0, 0, 0], inv)}
     if kind != PT:
         d = g.get("d") or g.get("normal") or g.get("axis")
@@ -125,7 +131,7 @@ def resolve(doc, ref: dict) -> dict:
 
 def side_of(spec: dict) -> eqs.Side:
     try:
-        return eqs.Side(spec.get("comp"), spec["kind"], spec["p"], spec.get("d"), spec.get("r"))
+        return eqs.Side(spec.get("comp"), spec["kind"], spec["p"], spec.get("d"), spec.get("r"), spec.get("pts"), spec.get("closed", False))
     except (ValueError, KeyError, TypeError) as err:
         raise PickError(str(err))
 
@@ -135,3 +141,8 @@ def finite(spec: dict) -> None:
         for v in spec.get(k) or []:
             if not math.isfinite(float(v)):
                 raise PickError("A reference has a non-finite number.")
+    for q in spec.get("pts") or []:
+        if not all(math.isfinite(float(v)) for v in q):
+            raise PickError("A reference has a non-finite number.")
+    if len(spec.get("pts") or []) > eqs.MAX_CURVE_POINTS:
+        raise PickError("A curve reference takes at most %d points." % eqs.MAX_CURVE_POINTS)

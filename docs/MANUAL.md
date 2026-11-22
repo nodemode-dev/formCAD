@@ -168,7 +168,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 10. Assemblies
 
-**What it does.** Components that reference part files by safe relative paths, mates (13 kinds) with degree-of-freedom counts and conflict explanations, patterns, configurations, exploded views, interference checks and a bill of materials.
+**What it does.** Components that reference part files by safe relative paths, mates (18 kinds, among them symmetric, width, path, slot and cam) with degree-of-freedom counts and conflict explanations, patterns, configurations, exploded views, interference checks and a bill of materials.
 
 **How to start.** `asminsert` to place a component, `mate` to constrain it.
 

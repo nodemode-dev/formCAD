@@ -4,8 +4,10 @@ import numpy as np
 
 from app.mates import joint_eq, rig
 
-PL, AX, PT = "plane", "axis", "point"
-KINDS = ("coincident", "concentric", "distance", "angle", "parallel", "perpendicular", "tangent", "lock", "gear", "rackpinion", "screw", "limitdistance", "limitangle", "joint", "jointlink")
+PL, AX, PT, CV = "plane", "axis", "point", "curve"
+KINDS = ("coincident", "concentric", "distance", "angle", "parallel", "perpendicular", "tangent", "lock", "gear", "rackpinion", "screw", "limitdistance", "limitangle", "symmetric", "width", "path", "slot", "cam", "joint", "jointlink")
+CURVE_KINDS = ("path", "cam")
+MAX_CURVE_POINTS = 4096
 MECHANICAL = ("gear", "rackpinion", "screw")
 VALUED = ("distance", "angle", "limitdistance", "limitangle")
 ALIGNS = ("any", "aligned", "anti", "auto")
@@ -17,20 +19,33 @@ class MateError(ValueError):
 
 
 class Side:
-    __slots__ = ("comp", "k", "p", "d", "r")
+    __slots__ = ("comp", "k", "p", "d", "r", "pts", "closed")
 
-    def __init__(self, comp, k, p, d=None, r=None):
-        if k not in (PL, AX, PT):
-            raise MateError("A mate reference must be a plane, an axis or a point.")
+    def __init__(self, comp, k, p, d=None, r=None, pts=None, closed=False):
+        if k not in (PL, AX, PT, CV):
+            raise MateError("A mate reference must be a plane, an axis, a point or a curve.")
         self.comp = comp
         self.k = k
+        self.r = None if r is None else float(r)
+        self.pts = None
+        self.closed = bool(closed)
+        if k == CV:
+            pts = np.asarray(pts if pts is not None else [], dtype=float)
+            if pts.ndim != 2 or pts.shape[1] != 3 or not 2 <= pts.shape[0] <= MAX_CURVE_POINTS:
+                raise MateError("A curve reference needs 2 to %d points of x, y and z." % MAX_CURVE_POINTS)
+            self.pts = pts
+            self.p = pts[0].copy()
+            self.d = _plane_normal(pts)
+            return
         self.p = np.asarray(p, dtype=float).reshape(3)
         self.d = rig.unit(d) if (d is not None and k != PT) else (np.array([0.0, 0.0, 1.0]) if k != PT else np.zeros(3))
-        self.r = None if r is None else float(r)
 
     def to_dict(self) -> dict:
         out = {"comp": self.comp, "kind": self.k, "p": [float(v) for v in self.p]}
-        if self.k != PT:
+        if self.k == CV:
+            out["pts"] = [[float(v) for v in q] for q in self.pts]
+            out["closed"] = self.closed
+        elif self.k != PT:
             out["d"] = [float(v) for v in self.d]
         if self.r is not None:
             out["r"] = self.r
@@ -38,7 +53,18 @@ class Side:
 
     @staticmethod
     def from_dict(rec: dict) -> "Side":
-        return Side(rec.get("comp"), rec["kind"], rec["p"], rec.get("d"), rec.get("r"))
+        return Side(rec.get("comp"), rec["kind"], rec["p"], rec.get("d"), rec.get("r"), rec.get("pts"), rec.get("closed", False))
+
+
+def _plane_normal(pts) -> np.ndarray:
+    c = pts.mean(axis=0)
+    _, s, vt = np.linalg.svd(pts - c)
+    span = float(np.max(np.linalg.norm(pts - c, axis=1)))
+    if pts.shape[0] < 3 or span < 1e-12 or s.size < 2 or s[1] < 1e-9 * max(span, 1.0):
+        return np.zeros(3)
+    if s.size > 2 and s[2] > 1e-6 * max(span, 1.0):
+        return np.zeros(3)
+    return rig.unit(vt[2])
 
 
 class Mate:
@@ -59,7 +85,11 @@ class Mate:
 
 def world(side: Side, pose) -> dict:
     r, t = pose
-    return {"k": side.k, "p": r @ side.p + t, "d": r @ side.d, "r": side.r, "R": r, "t": t}
+    out = {"k": side.k, "p": r @ side.p + t, "d": r @ side.d, "r": side.r, "R": r, "t": t}
+    if side.pts is not None:
+        out["pts"] = side.pts @ r.T + t
+        out["closed"] = side.closed
+    return out
 
 
 def _vec(e):
@@ -314,10 +344,116 @@ def res_limitangle(m, W):
     return np.array([th - min(max(th, lo), hi)])
 
 
+def _mirror_p(x, pl):
+    return x - 2.0 * float((x - pl["p"]) @ pl["d"]) * pl["d"]
+
+
+def _mirror_d(v, pl):
+    return v - 2.0 * float(v @ pl["d"]) * pl["d"]
+
+
+def res_symmetric(m, W):
+    a, b, s = W[0], W[1], W[2]
+    if s["k"] != PL:
+        raise MateError("Symmetric needs a symmetry plane as the third reference.")
+    if a["k"] != b["k"] or a["k"] == CV:
+        raise MateError("Symmetric needs two references of the same type: two points, two planes or two axes.")
+    pa = _mirror_p(a["p"], s)
+    if a["k"] == PT:
+        return pa - b["p"]
+    da = _mirror_d(a["d"], s)
+    if a["k"] == PL:
+        return np.concatenate([_cross_rows(da, b["d"], m.opt.get("align", "aligned")), [float((b["p"] - pa) @ b["d"])]])
+    return np.concatenate([np.cross(da, b["d"]), np.cross(b["p"] - pa, da)])
+
+
+def res_width(m, W):
+    if len(W) != 4 or any(e["k"] != PL for e in W):
+        raise MateError("Width needs four planes: two faces of the tab, then two faces of the groove.")
+    t1, t2, g1, g2 = W
+    ng = g1["d"]
+    off = float((0.5 * (t1["p"] + t2["p"]) - 0.5 * (g1["p"] + g2["p"])) @ ng)
+    return np.concatenate([np.cross(t1["d"], ng), [off]])
+
+
+def _poly_closest(pts, closed, x):
+    a = pts if closed else pts[:-1]
+    b = np.roll(pts, -1, axis=0) if closed else pts[1:]
+    ab = b - a
+    l2 = np.maximum(np.einsum("ij,ij->i", ab, ab), 1e-300)
+    t = np.clip(np.einsum("ij,ij->i", x - a, ab) / l2, 0.0, 1.0)
+    c = a + t[:, None] * ab
+    return c[int(np.argmin(np.einsum("ij,ij->i", c - x, c - x)))]
+
+
+def _circle_closest(e, x):
+    w = (x - e["p"]) - float((x - e["p"]) @ e["d"]) * e["d"]
+    n = float(np.linalg.norm(w))
+    u = w / n if n > 1e-12 else rig.perp(e["d"])
+    return e["p"] + e["r"] * u
+
+
+def _curve_closest(e, x):
+    if e["k"] == CV:
+        return _poly_closest(e["pts"], e["closed"], x)
+    if e["r"] is not None:
+        return _circle_closest(e, x)
+    return e["p"] + float((x - e["p"]) @ e["d"]) * e["d"]
+
+
+def res_path(m, W):
+    a, b = W[0], W[1]
+    if a["k"] != PT:
+        raise MateError("Path needs a point on the first component.")
+    if b["k"] not in (AX, CV):
+        raise MateError("Path needs a curve, a straight edge or a circle on the second component.")
+    return a["p"] - _curve_closest(b, a["p"])
+
+
+def res_slot(m, W):
+    f, s = W[0], W[1]
+    if f["k"] not in (PT, AX) or s["k"] != AX:
+        raise MateError("Slot needs a point or a pin axis on the first component and the slot centre line on the second.")
+    ds = s["d"]
+    dlt = f["p"] - s["p"]
+    if f["k"] == PT:
+        rows = np.cross(dlt, ds)
+    else:
+        n = s["R"] @ np.asarray(m.opt["n"], dtype=float)
+        rows = np.concatenate([np.cross(f["d"], n), [float(dlt @ np.cross(ds, n))]])
+    u = float(dlt @ ds)
+    if m.opt.get("position", "free") in ("centre", "center"):
+        return np.concatenate([rows, [u]])
+    h = 0.5 * float(m.value)
+    return np.concatenate([rows, [u - min(max(u, -h), h)]])
+
+
+def res_cam(m, W):
+    f, c = W[0], W[1]
+    if f["k"] == AX and f["r"] is None:
+        raise MateError("A cylinder follower needs a radius.")
+    if f["k"] not in (PT, AX):
+        raise MateError("Cam needs a point, sphere or cylinder follower on the first component.")
+    if not ((c["k"] == AX and c["r"] is not None) or c["k"] == CV):
+        raise MateError("Cam needs a profile curve or a circle on the second component.")
+    n = c["d"]
+    if float(n @ n) < 0.25:
+        raise MateError("The cam profile is a straight line or is not flat, so it has no plane.")
+    h = float((f["p"] - c["p"]) @ n)
+    q = f["p"] - h * n
+    head = np.cross(f["d"], n) if f["k"] == AX else np.array([h])
+    v = q - _curve_closest(c, q)
+    rf = f["r"] or 0.0
+    if rf > 0.0:
+        return np.concatenate([head, [float(np.linalg.norm(v)) - rf]])
+    return np.concatenate([head, v])
+
+
 RES = {
     "coincident": res_coincident, "concentric": res_concentric, "distance": res_distance, "angle": res_angle, "parallel": res_parallel,
     "perpendicular": res_perpendicular, "tangent": res_tangent, "lock": res_lock, "gear": res_gear, "rackpinion": res_rackpinion,
     "screw": res_screw, "limitdistance": res_limitdistance, "limitangle": res_limitangle,
+    "symmetric": res_symmetric, "width": res_width, "path": res_path, "slot": res_slot, "cam": res_cam,
     "joint": joint_eq.res_joint, "jointlink": joint_eq.res_link,
 }
 
@@ -329,6 +465,10 @@ def residual(m: Mate, W: list) -> np.ndarray:
 def resolve(m: Mate, W: list) -> None:
     a, b = W[0], W[1]
     k = m.kind
+    if k not in CURVE_KINDS and any(e["k"] == CV for e in W):
+        raise MateError("Only path and cam mates take a curve reference.")
+    if k in ("symmetric", "width", "path", "slot", "cam"):
+        _resolve_shape(m, W)
     if k in ("coincident", "distance", "parallel", "concentric", "limitdistance"):
         if m.opt.get("align", "auto") == "auto":
             if k in ("parallel", "concentric"):
@@ -390,6 +530,49 @@ def resolve(m: Mate, W: list) -> None:
             raise MateError("This mate needs axes on both components.")
     if k in VALUED and k not in ("limitdistance", "limitangle") and m.value is None:
         raise MateError("This mate needs a value.")
+
+
+def _parallel(a, b) -> bool:
+    return float(np.linalg.norm(np.cross(a["d"], b["d"]))) < 1e-6
+
+
+def _resolve_shape(m: Mate, W: list) -> None:
+    k = m.kind
+    a, b = W[0], W[1]
+    if k == "symmetric":
+        if len(W) != 3:
+            raise MateError("Symmetric needs three references: two entities and the symmetry plane.")
+        res_symmetric(m, W)
+        if a["k"] == PL and m.opt.get("align", "auto") == "auto":
+            m.opt["align"] = "aligned" if float(_mirror_d(a["d"], W[2]) @ b["d"]) >= 0 else "anti"
+    elif k == "width":
+        res_width(m, W)
+        t1, t2, g1, g2 = W
+        if not _parallel(t1, t2):
+            raise MateError("The two tab faces are not parallel, so they have no mid-plane.")
+        if not _parallel(g1, g2):
+            raise MateError("The two groove faces are not parallel, so they have no mid-plane.")
+        if m.sides[0].comp != m.sides[1].comp or m.sides[2].comp != m.sides[3].comp:
+            raise MateError("Both tab faces must be on one component and both groove faces on one component.")
+        if m.sides[0].comp == m.sides[2].comp:
+            raise MateError("The tab and the groove must be on different components.")
+    elif k == "path":
+        res_path(m, W)
+    elif k == "slot":
+        if str(m.opt.get("position", "free")).lower() in ("center", "centred", "centered", "centre"):
+            m.opt["position"] = "centre"
+        if m.opt.get("position", "free") not in ("free", "centre"):
+            raise MateError("A slot position is free or centre.")
+        if m.opt.get("position", "free") == "free" and (m.value is None or float(m.value) <= 0.0):
+            raise MateError("A slot mate needs the slot length: the travel between the two end centres.")
+        if a["k"] == AX and b["k"] == AX:
+            w = a["d"] - float(a["d"] @ b["d"]) * b["d"]
+            if float(np.linalg.norm(w)) < 1e-6:
+                raise MateError("The pin axis runs along the slot; it must cross the slot.")
+            m.opt["n"] = (b["R"].T @ rig.unit(w)).tolist()
+        res_slot(m, W)
+    elif k == "cam":
+        res_cam(m, W)
 
 
 def update_state(m: Mate, W: list) -> None:

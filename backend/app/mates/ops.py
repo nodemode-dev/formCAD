@@ -11,8 +11,8 @@ from app.mates import net as N
 from app.mates import store as S
 from app.param.units import mm_per_unit
 
-ALIASES = {"concentric": "concentric", "coaxial": "concentric", "coincident": "coincident", "distance": "distance", "angle": "angle", "parallel": "parallel", "perpendicular": "perpendicular", "tangent": "tangent", "lock": "lock", "gear": "gear", "rack": "rackpinion", "rackpinion": "rackpinion", "rack_and_pinion": "rackpinion", "screw": "screw", "limitdistance": "limitdistance", "limit_distance": "limitdistance", "limitangle": "limitangle", "limit_angle": "limitangle"}
-REF_COUNT = {"angle": (2, 3), "limitangle": (2, 3)}
+ALIASES = {"concentric": "concentric", "coaxial": "concentric", "coincident": "coincident", "distance": "distance", "angle": "angle", "parallel": "parallel", "perpendicular": "perpendicular", "tangent": "tangent", "lock": "lock", "gear": "gear", "rack": "rackpinion", "rackpinion": "rackpinion", "rack_and_pinion": "rackpinion", "screw": "screw", "limitdistance": "limitdistance", "limit_distance": "limitdistance", "limitangle": "limitangle", "limit_angle": "limitangle", "symmetric": "symmetric", "symmetry": "symmetric", "width": "width", "path": "path", "slot": "slot", "cam": "cam", "camfollower": "cam"}
+REF_COUNT = {"angle": (2, 3), "limitangle": (2, 3), "symmetric": (3, 3), "width": (4, 4)}
 ANGLE_KINDS = ("angle", "limitangle")
 STEP_DEG = 5.0
 MAX_MATES = 5000
@@ -329,7 +329,7 @@ def set_mate(doc, mid, value=None, opt=None, label=None, suppressed=None) -> dic
     S.put(d, r)
     model = Model(d)
     start = model.net.snapshot()
-    if value is not None and new_value != old_value and old_value is not None and not r.get("suppressed"):
+    if value is not None and new_value != old_value and old_value is not None and not r.get("suppressed") and r["kind"] in ("distance", "angle"):
         out = drive(doc, r["id"], value=new_value, commit=True, model=model)
         return out
     if value is not None:

@@ -138,7 +138,10 @@ function explainBox(): { el: HTMLElement; show(x: Explanation | null, remove: (m
 const MATE_KINDS: ReadonlyArray<readonly [string, string]> = [
   ['concentric', 'Concentric'], ['coincident', 'Coincident'], ['distance', 'Distance'], ['angle', 'Angle'], ['parallel', 'Parallel'],
   ['perpendicular', 'Perpendicular'], ['tangent', 'Tangent'], ['lock', 'Lock'],
+  ['symmetric', 'Symmetric'], ['width', 'Width'], ['path', 'Path'], ['slot', 'Slot'], ['cam', 'Cam'],
 ];
+const REF_COUNT: Readonly<Record<string, number>> = { symmetric: 3, width: 4 };
+const VALUE_KINDS: ReadonlySet<string> = new Set(['distance', 'angle', 'slot']);
 
 interface Ref { comp: string; face?: number; edge?: number }
 
@@ -153,10 +156,10 @@ export function matesPanel(drag: () => { enabled: boolean; set(on: boolean): voi
       const explain = explainBox();
 
       const add = section('New mate');
-      const kind = selectCtl('Kind', MATE_KINDS);
+      const kind = selectCtl('Kind', MATE_KINDS, () => syncRefs());
       const value = numberCtl('Value', 0);
-      const refs: Array<Ref | null> = [null, null];
-      const refRead = [readout('First reference'), readout('Second reference')];
+      const refs: Array<Ref | null> = [null, null, null, null];
+      const refRead = [readout('First reference'), readout('Second reference'), readout('Third reference'), readout('Fourth reference')];
       let picking = -1;
       const setPick = (i: number): void => {
         const vp = view3d()?.vp;
@@ -176,18 +179,32 @@ export function matesPanel(drag: () => { enabled: boolean; set(on: boolean): voi
       };
       const pickA = button('Pick first', () => setPick(picking === 0 ? -1 : 0));
       const pickB = button('Pick second', () => setPick(picking === 1 ? -1 : 1));
+      const pickC = button('Pick third', () => setPick(picking === 2 ? -1 : 2));
+      const pickD = button('Pick fourth', () => setPick(picking === 3 ? -1 : 3));
       const addBtn = button('Add mate', () => void addMate(), 'primary');
-      add.body.append(kind.el, value.el, refRead[0].el, refRead[1].el, buttons(pickA, pickB, addBtn));
+      const refCount = (): number => REF_COUNT[kind.get()] ?? 2;
+      const syncRefs = (): void => {
+        const n = refCount();
+        setHidden(refRead[2].el, n < 3);
+        setHidden(pickC, n < 3);
+        setHidden(refRead[3].el, n < 4);
+        setHidden(pickD, n < 4);
+        if (picking >= n) setPick(-1);
+      };
+      add.body.append(kind.el, value.el, ...refRead.map((r) => r.el), buttons(pickA, pickB, pickC, pickD, addBtn));
+      syncRefs();
 
       const showExplain = (x: Explanation | null): void => explain.show(x, (mid) => { void guarded(() => req('DELETE', docUrl(asm.id() ?? '', `mates/${mid}`))).then(() => { showExplain(null); return sceneSettled(); }); });
       const addMate = async (): Promise<void> => {
         const id = asm.id();
         if (!id) return;
+        const n = refCount();
+        if (n > 2 && refs.slice(0, n).some((r) => !r)) { toast(t('Pick every reference first.'), 'info'); return; }
         if (!refs[0] || (!refs[1] && kind.get() !== 'lock')) { toast(t('Pick both references first.'), 'info'); return; }
         const k = kind.get();
-        const list = (k === 'lock' && !refs[1] ? [refs[0], refs[0]] : refs).filter(Boolean);
+        const list = (k === 'lock' && !refs[1] ? [refs[0], refs[0]] : refs.slice(0, n)).filter(Boolean);
         try {
-          const res = await req<{ ms: number; iterations: number }>('POST', docUrl(id, 'mates'), { kind: k, refs: list, value: k === 'distance' || k === 'angle' ? value.get() : null });
+          const res = await req<{ ms: number; iterations: number }>('POST', docUrl(id, 'mates'), { kind: k, refs: list, value: VALUE_KINDS.has(k) ? value.get() : null });
           showExplain(null);
           setText(solveNote, `${t('Solved in')} ${fmt(res.ms, 3)} ms · ${res.iterations} ${t('iterations')}`);
           await view3d()?.refresh();
