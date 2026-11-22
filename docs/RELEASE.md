@@ -65,7 +65,7 @@ It copies the existing `kernel/dist/formcad-kernel` (or `mesher/dist`), writes t
 
 - `apps/formCAD.json`: the formcompiler file, kept byte for byte equal to formcompiler's `apps/formCAD.json`. After a change, copy it there and run `python3 scripts/registry.py check` in formcompiler.
 - `apps/products-row.json`: the row for formai_dev `catalog/products.json`, then formportal's copy (`FAM3` item 1).
-- `apps/form-app.json`: format_version 2 manifest. It must sit at the root of the application bundle; the build copies it in when the bundle step is extended.
+- `apps/form-app.json`: format_version 2 manifest. `setup/freeze_backend` copies it into `src-tauri/engine/`, beside `formcad-engine`, so every bundle carries it in the engine folder. The registry's `mcp_launch` is resolved relative to that folder: `{"command": "formcad-engine", "args": ["mcp"]}` (`formcad-engine.exe` on Windows is the same name with the system's suffix).
 
 ## Open decisions
 

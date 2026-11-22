@@ -65,6 +65,7 @@ PYTHONPATH="$src/backend${PYTHONPATH:+$sep$PYTHONPATH}" pyinstaller --noconfirm 
 out="$FORMCAD_ROOT/src-tauri/engine"
 rm -rf "$out"
 cp -R dist-engine/formcad-engine "$out"
+cp "$FORMCAD_ROOT/apps/form-app.json" "$out/form-app.json"
 [ "$(fc_os)" != macos ] || flatten_engine "$out"
 [ "$(fc_os)" != macos ] || sign_engine "$out"
 "$out/formcad-engine${ext}" --selfcheck
