@@ -24,12 +24,14 @@ export interface SeamReport {
   g0: boolean;
   g1: boolean;
   g2: boolean;
+  g3?: boolean | null;
   max_gap: number;
   max_gap_at?: Vec3;
   max_angle: number;
   max_angle_deg?: number;
   max_curvature_gap: number;
-  tolerance?: { length: number; angle: number; curvature: number; curvature_relative?: number };
+  max_curvature_rate_gap?: number;
+  tolerance?: { length: number; angle: number; curvature: number; curvature_relative?: number; curvature_rate?: number };
   hair?: Array<{ p: Vec3; gap: number; angle: number; curv?: number }>;
   bodies?: number[];
 }
