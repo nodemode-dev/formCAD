@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -e
+source "$(dirname "$0")/lib.sh"
+version="0.14"
+source_sha256="62ebb73b984f865960f20ed26619ea5f8789d5e3fd088fa40a2598384da81275"
+signer="38A4167B0DB69E49C5F7216CB8C28866AB27A7A2"
+origin="https://ftp.gnu.org/gnu/libredwg"
+os="$(fc_os)"
+case "$os/$(uname -m)" in
+  macos/arm64) triple=aarch64-apple-darwin ;;
+  macos/x86_64) triple=x86_64-apple-darwin ;;
+  linux/x86_64) triple=x86_64-unknown-linux-gnu ;;
+  linux/aarch64) triple=aarch64-unknown-linux-gnu ;;
+  windows/*) triple=x86_64-pc-windows-msvc ;;
+  *) fc_die "there is no DWG tools build for $os $(uname -m)" ;;
+esac
+triple="${FORMCAD_TARGET:-$triple}"
+ext="$(fc_exe)"
+name="dwg-gpl-$version-$triple"
+tarball="libredwg-$version.tar.xz"
+work="$FORMCAD_ROOT/dwg/build"
+dist="$FORMCAD_ROOT/dwg/dist"
+out="$dist/$name"
+
+hash_of() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | awk '{print $1}'; else shasum -a 256 "$1" | awk '{print $1}'; fi
+}
+
+mkdir -p "$work" "$dist"
+cd "$work"
+[ -f "$tarball" ] || curl -fL --retry 3 -o "$tarball" "$origin/$tarball"
+[ "$(hash_of "$tarball")" = "$source_sha256" ] || fc_die "$tarball does not match the pinned SHA-256"
+if command -v gpg >/dev/null 2>&1; then
+  [ -f "$tarball.sig" ] || curl -fL --retry 3 -o "$tarball.sig" "$origin/$tarball.sig"
+  [ -f gnu-keyring.gpg ] || curl -fL --retry 3 -o gnu-keyring.gpg "https://ftp.gnu.org/gnu/gnu-keyring.gpg"
+  gpg --batch --no-default-keyring --keyring "$work/gnu-keyring.gpg" --status-fd 1 --verify "$tarball.sig" "$tarball" 2>/dev/null | grep -q "VALIDSIG $signer" || fc_die "the GNU signature of $tarball did not verify for $signer"
+  fc_say "signature of $tarball verified ($signer)"
+else
+  fc_say "gpg not found; the pinned SHA-256 is the only check of $tarball"
+fi
+
+rm -rf "libredwg-$version" stage
+tar -xf "$tarball"
+cd "libredwg-$version"
+[ "$os" = windows ] && export LDFLAGS="${LDFLAGS:-} -static"
+./configure --prefix="$work/stage" --disable-shared --enable-static --disable-bindings --disable-python --disable-docs --disable-werror --disable-Werror --enable-release
+make -j"${FORMCAD_JOBS:-2}"
+make install
+
+rm -rf "$out"
+mkdir -p "$out"
+for tool in dwg2dxf dxf2dwg; do
+  cp "$work/stage/bin/$tool$ext" "$out/$tool$ext"
+  [ "$os" = windows ] || strip "$out/$tool$ext"
+done
+cp COPYING "$out/COPYING.txt"
+cp "$FORMCAD_ROOT/dwg/NOTICE.md" "$out/NOTICE.md"
+sed -e "s/@VERSION@/$version/g" -e "s/@SHA256@/$source_sha256/g" "$FORMCAD_ROOT/dwg/GPL-OFFER.txt" > "$out/GPL-OFFER.txt"
+
+for tool in dwg2dxf dxf2dwg; do
+  case "$os" in
+    linux) deps="$(ldd "$out/$tool" | awk '{print $1}' | grep -v -E '^(linux-vdso|/lib64/ld-linux|libc\.so|libm\.so)' || true)" ;;
+    macos) deps="$(otool -L "$out/$tool" | tail -n +2 | awk '{print $1}' | grep -v -E '^(/usr/lib/|/System/)' || true)" ;;
+    windows) deps="$(objdump -p "$out/$tool.exe" | awk '/DLL Name/ {print $3}' | grep -v -i -E '^(kernel32|msvcrt|ucrtbase|api-ms-win-.*|advapi32|user32|ws2_32|shell32|ole32)\.dll$' || true)" ;;
+  esac
+  [ -z "$deps" ] || fc_die "$tool needs libraries the archive does not carry: $(echo $deps)"
+done
+
+check="$work/check"
+rm -rf "$check"
+mkdir -p "$check"
+"$out/dxf2dwg$ext" -y --as r2000 -o "$check/fixture.dwg" "$FORMCAD_ROOT/fixtures/sheetmetal/channel-cutting.dxf" >/dev/null 2>&1 || true
+[ -s "$check/fixture.dwg" ] || fc_die "dxf2dwg did not write a DWG from fixtures/sheetmetal/channel-cutting.dxf"
+"$out/dwg2dxf$ext" -y -o "$check/fixture.dxf" "$check/fixture.dwg" >/dev/null 2>&1 || true
+[ -s "$check/fixture.dxf" ] || fc_die "dwg2dxf did not read back the DWG it wrote"
+
+(cd "$dist" && tar -czf "$name.tar.gz" "$name")
+cp "$work/$tarball" "$dist/$tarball"
+[ ! -f "$work/$tarball.sig" ] || cp "$work/$tarball.sig" "$dist/$tarball.sig"
+{
+  printf '[\n'
+  first=1
+  for f in $(cd "$out" && find . -type f | sed 's#^\./##' | sort); do
+    [ $first = 1 ] || printf ',\n'
+    first=0
+    printf '  {"triple": "%s", "path": "%s", "sha256": "%s"}' "$triple" "$f" "$(hash_of "$out/$f")"
+  done
+  printf '\n]\n'
+} > "$dist/$name.files.json"
+{
+  printf '%s  %s\n' "$(hash_of "$dist/$name.tar.gz")" "$name.tar.gz"
+  printf '%s  %s\n' "$source_sha256" "$tarball"
+} > "$dist/$name.SHA256SUMS"
+fc_say "DWG tools ready in $dist: $name.tar.gz, $name.files.json (add its rows to backend/app/data/dwg-licence.json), $name.SHA256SUMS, and the source $tarball to publish beside them"
