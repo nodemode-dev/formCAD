@@ -60,7 +60,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Modify: `move`, `copy`, `rotate`, `scale`, `mirror`, `stretch`, `align`, `trim`, `extend`, `offset`, `break`, `fillet`, `chamfer`, `blend`, `join`, `lengthen`, `explode`, `pedit`, `splinedit`, `erase`, `oops`.
 - Arrays: `arrayrect`, `arraypolar`, `arraypath`, `array`, `arrayedit`.
 - Hatch: `hatch`, `gradient`, `hatchedit`.
-- Text and tables: `text`, `mtext`, `textedit`, `style`, `table`, `tabledit`, `tableexport`, `datalink`.
+- Text and tables: `text`, `mtext`, `textedit`, `style`, `table`, `tabledit`, `tableexport`, `datalink`, `datalinkupdate`. A data link reads CSV, delimited text or an Excel `.xlsx` workbook (first sheet, or the sheet you name); a formula cell shows the value the workbook last saved. Old `.xls` workbooks are not read.
 - Dimensions: `dimlinear`, `dimaligned`, `dimradius`, `dimdiameter`, `dimangular`, `dimordinate`, `dimbaseline`, `dimcontinue`, `qdim`, `dimstyle`, `dimedit`, `dimregen`.
 - Leaders: `leader`, `mleader`, `mleaderedit`, `mleaderstyle`.
 - Layers and properties: `layer`, `laycur`, `layiso`, `layuniso`, `layerstate`, `properties`, `chprop`, `matchprop`, `linetype`, `lweight`, `color`.
