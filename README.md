@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.20.1" src="https://img.shields.io/badge/version-0.20.1-eef0f4?style=flat-square">
+  <img alt="version 0.21.0" src="https://img.shields.io/badge/version-0.21.0-eef0f4?style=flat-square">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Vite-3178c6?style=flat-square&logo=typescript&logoColor=white">
   <img alt="Python" src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-2f7bf5?style=flat-square">
@@ -110,6 +110,16 @@ Agent rules are in [`AGENTS.md`](AGENTS.md); two skill packs live in [`skills/`]
 - **Desktop:** a Tauri 2 shell around the engine as a sidecar; the same UI runs in a browser.
 - **Scripting:** a LISP dialect, macros, Python macros in an isolated process and hashed plugins.
 - **Clean room:** the drafting floor comes from a functional study, never from another product's code.
+
+## What FormCAD sends over the network
+
+FormCAD collects nothing about you and has no account, no telemetry and no update check. It makes a request outside your computer in three cases only, each one started by you:
+
+- **Install kernel** and **Install mesher** download one archive each from the [formai-binaries](https://github.com/nodemode-dev/formai-binaries) releases on GitHub and check every file against the record the app ships.
+- **Download** on a render environment fetches that one HDR file from Poly Haven (`dl.polyhaven.org`) and checks it against the catalogue the app ships. Three environments ship with the app and need no download.
+- **The agent dock** shows the line that installs Claude Code, Codex, Cursor or Antigravity when one is missing. FormCAD does not run that line; if you run it, that program's own installer contacts its maker. A program you start in a tab then talks to its own service as it always does.
+
+Nothing else is sent. The engine listens on 127.0.0.1 only.
 
 ## Download
 

@@ -1,6 +1,24 @@
 # HASHOUT_LOG · engine (backend/ and kernel/)
 
-Living record of decisions and removed context for the engine, newest first. Read before editing.
+Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
+
+## WK1 v0.21.0 the session key goes to one window, environments are checked with SHA-256, a wide host warns (app/core/guard.py, app/main.py, formcad_engine.py, app/render/environments.py, app/data/render/environments.json, app/services/agent_programs.py)
+
+The key. `Frontend.get_response` wrote `guard.TOKEN` into every `index.html`, so `curl http://127.0.0.1:<port>/` from any process of any user of the computer returned a working key. The owner left the choice between a window key like formvis's and an accepted exception to the assistant; the key was chosen, in the smallest form that fits this engine. formvis has a second secret beside its guard; formCAD already has one token that every route asks for, so the same token is simply delivered differently and no route, header or client changed:
+
+- `FORMCAD_WINDOW_KEY_STDOUT=1` (the shell sets it): `formcad_engine.py` prints `formcad-window-key: <token>` once before the server starts and `guard.page_token()` answers `None` for every page, so no page the engine serves carries the key. The shell hands it to its window. The line is printed with `print`, not through `logging`, and the file handler in `core/runtime.py` hangs on loggers only, so the key is not in `formcad-engine.log` (checked).
+- otherwise (`./formCAD serve`, a browser): `page_token()` answers the token for the first `index.html` it is asked for and `None` from then on. `guard.PAGE` counts the withheld loads.
+- `session.token` in the data folder is unchanged (mode 0600): the command line, the stdio MCP bridge, `setup/agents.py` and Vite's dev server read it. A process that can read that file is the user.
+
+Decided against: a `POST /api/window/key` claim route as in formvis. With the first-load rule the key never travels in an answer a script could ask for later, and there is no route to race.
+
+What this does not stop: a process of the same user reading `session.token`. That is the documented way in for agents.
+
+Environments. `environments.json` had `md5` per file; it has `sha256` in its place, and `download` hashes with SHA-256. The nine values were computed from the files: the three shipped ones from `app/data/render/env/`, the six others fetched from the catalogue's addresses, each only after its size and old MD5 matched the catalogue. Run: a download of `studio_small_08` 2k was kept; with the last character of its catalogue value changed it was refused and nothing was left in the folder.
+
+Host. `FORMCAD_HOST` outside `guard.LOOPBACK` prints one line to stderr. The guard's Host check is unchanged, so such an engine still answers only requests addressed to 127.0.0.1 or localhost.
+
+Dock contract. `agent_programs.CONTRACT` is "2.2.1", the module version the interface now carries (clause 16 of `frontend/src/dock/CONTRACT.md`).
 
 ## AD1 v0.20.0 the engine side of the shared agent dock 2.2.0 (app/routers/terminal.py, app/services/terminal.py, app/services/agent_programs.py, app/services/agent_lookup.py, app/main.py, setup/agents.py, setup/freeze_backend)
 

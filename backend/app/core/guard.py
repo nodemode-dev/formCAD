@@ -11,6 +11,21 @@ HEADER = "x-formcad-token"
 TOKEN_FILE = "session.token"
 OPEN_PATHS = {"/api/health"}
 TOKEN = secrets.token_urlsafe(32)
+KEY_ENV = "FORMCAD_WINDOW_KEY_STDOUT"
+KEY_LINE = "formcad-window-key: "
+PAGE = {"given": False, "withheld": 0}
+
+
+def stdout_mode() -> bool:
+    return os.environ.get(KEY_ENV) == "1"
+
+
+def page_token() -> str | None:
+    if stdout_mode() or PAGE["given"]:
+        PAGE["withheld"] += 1
+        return None
+    PAGE["given"] = True
+    return TOKEN
 
 
 def write_token(data: Path) -> Path:

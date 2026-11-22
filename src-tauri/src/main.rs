@@ -73,6 +73,13 @@ fn renderer_choice(handle: &tauri::AppHandle, choice: window_state::Choice) {
     }
 }
 
+fn stays_home(target: &tauri::Url, home: &str) -> bool {
+    match target.scheme() {
+        "data" | "about" => true,
+        _ => target.origin().ascii_serialization() == home,
+    }
+}
+
 fn close_splash(handle: &tauri::AppHandle) {
     if let Some(splash) = handle.get_webview_window("splash") {
         let _ = splash.close();
@@ -276,6 +283,7 @@ fn main() {
             let mut engine = engine
                 .env("FORMCAD_PORT", "0")
                 .env("FORMCAD_DESKTOP", "1")
+                .env("FORMCAD_WINDOW_KEY_STDOUT", "1")
                 .env("FORMCAD_SHELL_PID", std::process::id().to_string());
             if let Some(dir) = user_data_dir_arg(&launch_args) {
                 engine = engine.env("FORMCAD_DATA_DIR", dir);
@@ -302,13 +310,18 @@ fn main() {
 
             tauri::async_runtime::spawn(async move {
                 let pattern = regex::Regex::new(r"http://127\.0\.0\.1:(\d+)").unwrap();
+                let key_pattern = regex::Regex::new(r"formcad-window-key: ([A-Za-z0-9_-]{32,})").unwrap();
                 let mut port: Option<u16> = None;
+                let mut key: Option<String> = None;
                 while let Some(event) = rx.recv().await {
                     let text = match event {
                         CommandEvent::Stdout(bytes) | CommandEvent::Stderr(bytes) => String::from_utf8_lossy(&bytes).into_owned(),
                         CommandEvent::Terminated(_) => break,
                         _ => continue,
                     };
+                    if key.is_none() {
+                        key = key_pattern.captures(&text).map(|c| c[1].to_string());
+                    }
                     if let Some(found) = pattern.captures(&text).and_then(|c| c[1].parse::<u16>().ok()) {
                         port = Some(found);
                         break;
@@ -338,14 +351,19 @@ fn main() {
                             .inner_size(width, height)
                             .min_inner_size(MIN_SIZE.0, MIN_SIZE.1)
                             .disable_drag_drop_handler()
+                            .initialization_script(match &key {
+                                Some(value) => format!("if (window.location.origin === {url:?}) {{ window.__FORMCAD_TOKEN = {value:?}; }}"),
+                                None => String::new(),
+                            })
                             .on_navigation({
                                 let handle = handle.clone();
-                                move |url| match window_state::shell_choice(url) {
+                                let home = url.clone();
+                                move |target| match window_state::shell_choice(target) {
                                     Some(choice) => {
                                         renderer_choice(&handle, choice);
                                         false
                                     }
-                                    None => true,
+                                    None => stays_home(target, &home),
                                 }
                             });
                         let builder = if place.width > 0.0 {

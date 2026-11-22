@@ -177,10 +177,15 @@ def main() -> int:
     os.environ.setdefault("FORMCAD_DESKTOP", "1")
     import uvicorn
 
+    from app.core import guard
     from app.main import app as fastapi_app
 
+    if guard.stdout_mode():
+        print(guard.KEY_LINE + guard.TOKEN, flush=True)
     port = int(os.environ.get("FORMCAD_PORT", "0") or 0)
     host = os.environ.get("FORMCAD_HOST", "127.0.0.1")
+    if host.strip().lower() not in guard.LOOPBACK:
+        print("[formCAD] warning: FORMCAD_HOST=%s makes the engine listen beyond this computer; it answers only requests whose Host is 127.0.0.1 or localhost" % host, file=sys.stderr, flush=True)
     server = uvicorn.Server(uvicorn.Config(fastapi_app, host=host, port=port, log_level="info"))
     announce_port(server, data)
     start_control(data, server)

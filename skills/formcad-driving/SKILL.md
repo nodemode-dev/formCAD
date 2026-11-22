@@ -4,7 +4,7 @@ description: "Operates FormCAD through its MCP server (formcad-engine mcp) and h
 license: Apache-2.0
 metadata:
   product: FormCAD
-  pack-version: "0.20.1"
+  pack-version: "0.21.0"
   audience: operating agent
 ---
 
