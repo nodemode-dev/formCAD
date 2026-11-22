@@ -4,7 +4,7 @@ import numpy as np
 
 from OCP.BRep import BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Curve2d
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace, BRepBuilderAPI_NurbsConvert
+from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling
 from OCP.BRepTools import BRepTools
 from OCP.Geom import Geom_BSplineSurface
@@ -17,7 +17,7 @@ from OCP.collections import Array1_double, Array1_int, Array2_double, Array2_gp_
 from OCP.gp import gp_Pnt, gp_Vec
 
 import kernel_store as store
-from kernel_surf import TopoDS, edge_of_shape, face_of, finish, kind_edges, tolerances
+from kernel_surf import TopoDS, edge_of_shape, face_of, finish, kind_edges, nurbs_convert, tolerances
 
 MAX_SAMPLES = 2000
 
@@ -181,7 +181,7 @@ def extend(p):
     if not math.isfinite(length) or length <= tol:
         raise RuntimeError("The extension length must be larger than the tolerance.")
     cont = str(p.get("continuity", "g2")).lower()
-    nc = BRepBuilderAPI_NurbsConvert(face, True)
+    nc = nurbs_convert(face)
     conv = TopoDS.Face_s(kind_edges(nc.Shape(), TopAbs_FACE)[0])
     raw = BRep_Tool.Surface_s(conv)
     if not isinstance(raw, Geom_BSplineSurface):
@@ -818,7 +818,7 @@ def match(p):
         raise RuntimeError("Continuity is 0, 1 or 2.")
     moving = resolve_side(p["moving"], tol)
     target = resolve_side(p["target"], tol)
-    nc = BRepBuilderAPI_NurbsConvert(moving.face, True)
+    nc = nurbs_convert(moving.face)
     mface = TopoDS.Face_s(kind_edges(nc.Shape(), TopAbs_FACE)[0])
     raw = BRep_Tool.Surface_s(mface)
     if not isinstance(raw, Geom_BSplineSurface):

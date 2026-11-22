@@ -3,7 +3,7 @@ import math
 from OCP.BRep import BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire, BRepBuilderAPI_NurbsConvert, BRepBuilderAPI_Sewing, BRepBuilderAPI_MakeSolid
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy, BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire, BRepBuilderAPI_NurbsConvert, BRepBuilderAPI_Sewing, BRepBuilderAPI_MakeSolid
 from OCP.BRepClass import BRepClass_FaceClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
@@ -290,8 +290,12 @@ def finish(op, shape, tol, ang, report=None, history=None):
     return out
 
 
+def nurbs_convert(shape):
+    return BRepBuilderAPI_NurbsConvert(BRepBuilderAPI_Copy(shape, True, False).Shape(), True)
+
+
 def to_bspline_surface(face):
-    nc = BRepBuilderAPI_NurbsConvert(face, True)
+    nc = nurbs_convert(face)
     conv = nc.Shape()
     f2 = TopoDS.Face_s(kind_edges(conv, TopAbs_FACE)[0])
     surf = BRep_Tool.Surface_s(f2)
