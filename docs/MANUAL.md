@@ -81,10 +81,11 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Blocks: `block`, `insert`, `base`, `blockreplace`, `burst`, `blockspalette`, `bedit`, `bsave`, `bsaveas`, `bclose`, `refedit`, `refset`, `refclose`, `purge`, `wblock`.
 - Attributes: `attdef`, `attedit`, `attdisp`, `attsync`, `battman`, `dataextraction`.
 - External references: `xattach`, `xref`, `xbind`, `xopen`, `xclip`.
+- Image and PDF underlays: `imageattach` (PNG or JPEG) and `pdfattach` (one page of a PDF) place a file by insertion point, scale and rotation; `imageclip` and `pdfclip` clip to a rectangle or polygon or turn clipping on and off; `imageadjust` and `pdfadjust` set the fade; `IMAGEFRAME` and `PDFFRAME` show the frame (0 hidden, 1 shown and plotted, 2 shown and not plotted). At scale 1 an image is its pixel size at its own resolution (96 dpi when the file names none) and a PDF page is its printed size, both in the drawing's units. They are drawn beneath the drawing's lines, plot to PDF, SVG and PNG, and are kept through DXF as IMAGE and PDFUNDERLAY with their clip, fade and frame.
 - Layouts: `layout`, `pagesetup`, `mspace`, `pspace`, `mview`, `vpclip`, `vplayer`, `vpmax`, `vpmin`.
 - Annotation scale: `scalelistedit`, `objectscale`, `annoreset`, `annoupdate`.
 
-**Limits.** External references resolve through relative paths first; a missing file is reported and drawn as a placeholder, never silently dropped.
+**Limits.** External references resolve through relative paths first; a missing file is reported and drawn as a placeholder, never silently dropped. An underlay whose file is missing keeps its frame and draws no picture. Underlays take PNG, JPEG and PDF; TIFF, BMP, DWF and DGN are not read, nor interlaced PNG files in plots. Contrast and brightness from another program are not applied and are set back to the defaults when saved (the open notes say so). A PDF page is shown and plotted as a picture made at plot resolution (about 300 dpi), not as lines you can snap to.
 
 ## 4. Plotting and interchange
 

@@ -946,6 +946,50 @@ class Writer:
         ent = lay.add_wipeout([(float(p[0]), float(p[1])) for p in e.points], dxfattribs=self.props(e))
         return ent
 
+    def w_underlay(self, e, lay):
+        if self.rank < R2000:
+            self.r.drop("underlay")
+            return None
+        o = e.corners[0]
+        u, v = e.u(), e.v()
+        props = self.props(e)
+        if e.source == "image":
+            w, h = max(1, int(e.pixels[0])), max(1, int(e.pixels[1]))
+            defs = self.__dict__.setdefault("image_defs", {})
+            idef = defs.get(e.path)
+            if idef is None:
+                idef = defs[e.path] = self.doc.add_image_def(filename=e.path, size_in_pixel=(w, h))
+            ent = lay.add_image(idef, (o[0], o[1], 0.0), (math.hypot(*u), math.hypot(*v)), 0.0, dxfattribs=props)
+            ent.dxf.u_pixel = (u[0] / w, u[1] / w, 0.0)
+            ent.dxf.v_pixel = (v[0] / h, v[1] / h, 0.0)
+            ent.dxf.fade = int(e.fade)
+            flags = ent.SHOW_IMAGE | ent.SHOW_IMAGE_WHEN_NOT_ALIGNED
+            if e.clip:
+                ent.set_boundary_path([(float(p[0]) * w - 0.5, (1.0 - float(p[1])) * h - 0.5) for p in e.clip])
+                ent.dxf.clipping = 1 if e.clip_on else 0
+                flags |= ent.USE_CLIPPING_BOUNDARY if e.clip_on else 0
+            ent.dxf.flags = flags if e.show else flags & ~ent.SHOW_IMAGE
+            return ent
+        wn, hn = float(e.pixels[0]) / 72.0, float(e.pixels[1]) / 72.0
+        if wn <= 0 or hn <= 0:
+            self.r.drop("underlay")
+            return None
+        key = (e.path, int(e.page))
+        defs = self.__dict__.setdefault("pdf_defs", {})
+        udef = defs.get(key)
+        if udef is None:
+            udef = defs[key] = self.doc.add_underlay_def(filename=e.path, fmt="pdf", name=str(int(e.page)))
+        det = u[0] * v[1] - u[1] * v[0]
+        sx = math.hypot(*u) / wn
+        sy = math.hypot(*v) / hn * (1.0 if det >= 0 else -1.0)
+        ent = lay.add_underlay(udef, (o[0], o[1], 0.0), (sx, sy, 1.0), math.degrees(math.atan2(u[1], u[0])), dxfattribs=props)
+        ent.dxf.fade = int(e.fade)
+        ent.on = bool(e.show)
+        if e.clip:
+            ent.set_boundary_path([(float(p[0]) * wn, float(p[1]) * hn) for p in e.clip])
+            ent.clipping = bool(e.clip_on)
+        return ent
+
     def w_region(self, e, lay):
         first = None
         out = []

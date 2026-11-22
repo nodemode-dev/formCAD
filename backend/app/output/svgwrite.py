@@ -33,6 +33,35 @@ def stroke_attrs(st, min_width):
     return a
 
 
+def image_tag(op):
+    import base64
+    import math
+
+    from app.doc import underlays as U
+    from app.output import pngwrite
+
+    pic, c, alpha = op[1], op[2], op[3]
+    o, r, t = c[0], c[1], c[2]
+    try:
+        kind = U.kind_of(pic["path"])
+        if pic["source"] == "image" and kind in ("png", "jpeg"):
+            with open(pic["path"], "rb") as fh:
+                data = fh.read(U.MAX_FILE + 1)
+            if len(data) > U.MAX_FILE:
+                return ""
+            mime = "image/png" if kind == "png" else "image/jpeg"
+        else:
+            longest = max(math.hypot(*(r - o)), math.hypot(*(t - o)))
+            side = int(min(U.PLOT_SIDE, max(256, math.ceil(longest / 25.4 * 300.0 / 256.0) * 256)))
+            data = pngwrite.encode(U.pixels(pic["path"], pic["page"], side), level=6)
+            mime = "image/png"
+    except (U.UnderlayError, OSError):
+        return ""
+    m = (r[0] - o[0], r[1] - o[1], -(t[0] - o[0]), -(t[1] - o[1]), t[0], t[1])
+    a = ' opacity="%s"' % n(alpha) if alpha < 0.999 else ""
+    return '<image x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(%s)"%s href="data:%s;base64,%s"/>' % (" ".join(n(v) for v in m), a, mime, base64.b64encode(data).decode("ascii"))
+
+
 def render(sheet, min_width=0.05, background=True):
     w, h = sheet.width, sheet.height
     x0, y0, x1, y1 = sheet.printable
@@ -81,6 +110,12 @@ def render(sheet, min_width=0.05, background=True):
             if clips:
                 out.append("</g>")
                 clips -= 1
+            i += 1
+        elif k == "I":
+            open_layer(op[4])
+            tag = image_tag(op)
+            if tag:
+                out.append(tag)
             i += 1
         elif k == "S":
             st = op[3]

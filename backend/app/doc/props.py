@@ -407,6 +407,7 @@ FIELDS = {
     "helix": [_pt("center"), _plain("turns", pos=True), _plain("height", pos=True), _plain("base_radius", pos=True), _plain("top_radius", nonneg=True)],
     "mline": [_plain("scale"), _plain("justification", "integer", integer=True, minimum=0), _plain("closed", "bool")],
     "wipeout": [],
+    "underlay": [_ro("path", lambda e: e.path, "string"), _ro("page", lambda e: e.page, "integer"), _plain("fade", "integer", integer=True, minimum=0), _plain("show", "bool"), _plain("clip_on", "bool")],
     "assoc_array": _array_fields(),
     "leader": [_plain("arrowhead", "bool"), _plain("spline", "bool"), _plain("arrow_size", nonneg=True), _ro("style", lambda e: e.style, "string"), _ro("vertices", lambda e: len(e.points), "integer"), _ro("length", lambda e: sum(geom.dist(e.points[i], e.points[i + 1]) for i in range(len(e.points) - 1)))],
     "mleader": [_plain("text", "string"), _ro("content_type", lambda e: e.content_type, "string"), _ro("leader_type", lambda e: e.leader_type, "string"), _ro("style", lambda e: e.style, "string"), _ro("leader_lines", lambda e: len(e.leaders), "integer"), _plain("size_scale", pos=True), _pt("content_pos")],

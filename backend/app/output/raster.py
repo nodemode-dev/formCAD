@@ -129,6 +129,45 @@ class Canvas:
         if self.clips:
             self.clips.pop()
 
+    def image(self, pic, corners, alpha):
+        from app.doc import underlays as U
+
+        o, r, t = self.map(corners)
+        u, v = r - o, t - o
+        det = u[0] * v[1] - u[1] * v[0]
+        if abs(det) < 1e-9:
+            return
+        quad = np.array([o, r, t, r + v])
+        cx0, cy0, cx1, cy1, mask = self.clip_state()
+        x0, y0 = max(cx0, int(math.floor(quad[:, 0].min()))), max(cy0, int(math.floor(quad[:, 1].min())))
+        x1, y1 = min(cx1, int(math.ceil(quad[:, 0].max()))), min(cy1, int(math.ceil(quad[:, 1].max())))
+        if x1 <= x0 or y1 <= y0:
+            return
+        side = int(min(U.PLOT_SIDE, max(256, math.ceil(max(math.hypot(*u), math.hypot(*v)) / 256.0) * 256)))
+        try:
+            px = U.pixels(pic["path"], pic["page"], side)
+        except (U.UnderlayError, OSError):
+            return
+        ih, iw = px.shape[:2]
+        xs = np.arange(x0, x1) + 0.5 - o[0]
+        for b0 in range(y0, y1, 256):
+            b1 = min(y1, b0 + 256)
+            dy = (np.arange(b0, b1) + 0.5 - o[1])[:, None]
+            s = (xs[None, :] * v[1] - dy * v[0]) / det
+            tt = (u[0] * dy - u[1] * xs[None, :]) / det
+            inside = (s >= 0) & (s < 1) & (tt >= 0) & (tt < 1)
+            if not inside.any():
+                continue
+            col = np.clip((s * iw).astype(np.int64), 0, iw - 1)
+            row = np.clip(((1.0 - tt) * ih).astype(np.int64), 0, ih - 1)
+            src = px[row, col]
+            a = src[:, :, 3].astype(np.float32) / 255.0 * float(alpha) * inside
+            if mask is not None:
+                a = a * mask[b0 - cy0:b1 - cy0, x0 - cx0:x1 - cx0]
+            dst = self.px[b0:b1, x0:x1].astype(np.float32)
+            a3 = a[:, :, None]
+            self.px[b0:b1, x0:x1] = np.clip(dst * (1.0 - a3) + src[:, :, :3].astype(np.float32) * a3 + 0.5, 0, 255).astype(np.uint8)
+
     def blend(self, x0, y0, cov, rgb, alpha):
         h, w = cov.shape
         cx0, cy0, cx1, cy1, mask = self.clip_state()
@@ -294,5 +333,7 @@ def render(sheet, dpi=300.0, max_pixels=MAX_PIXELS):
             cv.push_clip(op[1], op[2])
         elif kind == "E":
             cv.pop_clip()
+        elif kind == "I":
+            cv.image(op[1], op[2], op[3])
     alpha = np.full((cv.h, cv.w, 1), 255, dtype=np.uint8)
     return np.concatenate([cv.px, alpha], axis=2), cv.dpi

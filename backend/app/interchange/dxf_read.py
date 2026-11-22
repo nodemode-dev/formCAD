@@ -12,7 +12,7 @@ from app.interchange import dxfw_tables as TB
 from app.interchange.errors import InterchangeError, Report
 
 MAX_FILE = 512 * 1024 * 1024
-HANDLED = {"LINE", "POINT", "CIRCLE", "ARC", "ELLIPSE", "RAY", "XLINE", "SOLID", "TRACE", "LWPOLYLINE", "POLYLINE", "SPLINE", "TEXT", "MTEXT", "ATTDEF", "INSERT", "HATCH", "DIMENSION", "LEADER", "MULTILEADER", "MLINE", "WIPEOUT", "VIEWPORT", "ACAD_TABLE"}
+HANDLED = {"LINE", "POINT", "CIRCLE", "ARC", "ELLIPSE", "RAY", "XLINE", "SOLID", "TRACE", "LWPOLYLINE", "POLYLINE", "SPLINE", "TEXT", "MTEXT", "ATTDEF", "INSERT", "HATCH", "DIMENSION", "LEADER", "MULTILEADER", "MLINE", "WIPEOUT", "VIEWPORT", "ACAD_TABLE", "IMAGE", "PDFUNDERLAY"}
 
 
 def _v3(p):
@@ -918,6 +918,83 @@ class Reader:
             pts = pts[:-1]
         return Wipeout(points=pts)
 
+    def r_image(self, e):
+        from app.doc.kinds.underlay import Underlay
+
+        idef = e.image_def
+        if idef is None:
+            self.r.drop("IMAGE")
+            self.r.warn("An image without its definition was dropped.")
+            return None
+        path = str(idef.dxf.get("filename", "") or "")
+        w, h = (float(c) for c in tuple(idef.dxf.get("image_size", (1, 1)))[:2])
+        w, h = max(1.0, w), max(1.0, h)
+        o, u, v = e.dxf.insert, e.dxf.u_pixel, e.dxf.v_pixel
+        ul = Underlay(source="image", path=path, name=os.path.splitext(os.path.basename(path.replace("\\", "/")))[0], pixels=[int(w), int(h)])
+        ul.corners = [[float(o[0]), float(o[1]), 0.0], [float(o[0] + u[0] * w), float(o[1] + u[1] * w), 0.0], [float(o[0] + v[0] * h), float(o[1] + v[1] * h), 0.0]]
+        ul.fade = max(0, min(100, int(e.dxf.get("fade", 0) or 0)))
+        flags = int(e.dxf.get("flags", 3) or 0)
+        ul.show = bool(flags & 1)
+        if int(e.dxf.get("clipping_boundary_type", 1) or 1) in (1, 2) and e.boundary_path and len(e.boundary_path) >= 2:
+            pts = [(float(p[0]), float(p[1])) for p in e.boundary_path]
+            if len(pts) == 2:
+                (x0, y0), (x1, y1) = pts
+                pts = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+            elif len(pts) > 3 and abs(pts[0][0] - pts[-1][0]) < 1e-9 and abs(pts[0][1] - pts[-1][1]) < 1e-9:
+                pts = pts[:-1]
+            clip = [[(x + 0.5) / w, 1.0 - (y + 0.5) / h] for x, y in pts]
+            full = all(min(abs(c[0]), abs(c[0] - 1)) < 1e-6 and min(abs(c[1]), abs(c[1] - 1)) < 1e-6 for c in clip) and len(clip) == 4
+            if not full:
+                ul.clip = clip
+                ul.clip_on = bool(flags & 4) and int(e.dxf.get("clipping", 0) or 0) != 0
+        for key, default in (("contrast", 50), ("brightness", 50)):
+            if int(e.dxf.get(key, default) or default) != default:
+                self.r.note("An image's %s is not applied; it is set back to %d when saved." % (key, default))
+        return ul
+
+    def r_pdfunderlay(self, e):
+        from app.doc import underlays as U
+        from app.doc.kinds.underlay import Underlay
+
+        udef = e.get_underlay_def()
+        if udef is None:
+            self.r.drop("PDFUNDERLAY")
+            self.r.warn("A PDF underlay without its definition was dropped.")
+            return None
+        path = str(udef.dxf.get("filename", "") or "")
+        try:
+            page = max(1, int(str(udef.dxf.get("name", "1") or "1").strip() or 1))
+        except ValueError:
+            page = 1
+            self.r.note('A PDF underlay names its page "%s"; page 1 is used.' % udef.dxf.get("name", ""))
+        full = U.resolve(path, getattr(self, "folder", ""))
+        try:
+            info = U.pdf_info(full, page)
+            wp, hp = info["w"], info["h"]
+        except U.UnderlayError as err:
+            wp, hp = 612.0, 792.0
+            self.r.warn("PDF underlay %s: %s Its size is a placeholder until the file is found." % (os.path.basename(path.replace("\\", "/")), err))
+        wn, hn = wp / 72.0, hp / 72.0
+        sx, sy, _sz = e.scaling
+        rot = math.radians(float(e.dxf.get("rotation", 0.0) or 0.0))
+        ca, sa = math.cos(rot), math.sin(rot)
+        o = e.dxf.insert
+        uw, vh = wn * sx, hn * sy
+        ul = Underlay(source="pdf", path=path, name=os.path.splitext(os.path.basename(path.replace("\\", "/")))[0], page=page, pixels=[wp, hp])
+        ul.corners = [[float(o[0]), float(o[1]), 0.0], [float(o[0] + uw * ca), float(o[1] + uw * sa), 0.0], [float(o[0] - vh * sa), float(o[1] + vh * ca), 0.0]]
+        ul.fade = max(0, min(100, int(e.dxf.get("fade", 0) or 0)))
+        ul.show = bool(e.on)
+        bp = [(float(p[0]), float(p[1])) for p in (e.boundary_path or [])]
+        if len(bp) == 2:
+            (x0, y0), (x1, y1) = bp
+            bp = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+        elif len(bp) > 3 and abs(bp[0][0] - bp[-1][0]) < 1e-9 and abs(bp[0][1] - bp[-1][1]) < 1e-9:
+            bp = bp[:-1]
+        if len(bp) >= 3:
+            ul.clip = [[x / wn, y / hn] for x, y in bp]
+            ul.clip_on = bool(e.clipping)
+        return ul
+
     def r_viewport(self, e):
         from app.doc.entities import KINDS
 
@@ -1111,6 +1188,7 @@ def read_file(path: str, recover: bool = False, report: Report | None = None):
         raise InterchangeError("The file is larger than the 512 MB limit.", "toolarge")
     doc, auditor = load_ezdxf(src, recover, report)
     rd = Reader(doc, report, auditor)
+    rd.folder = os.path.dirname(src)
     try:
         d = rd.run()
     except InterchangeError:

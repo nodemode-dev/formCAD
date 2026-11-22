@@ -91,6 +91,8 @@ def grips_of(e) -> list:
         out = [_g(p, "corner", "k%d" % i) for i, p in enumerate(e.corners)]
     elif e.kind == "wipeout":
         out = [_g(p, "vertex", "v%d" % i) for i, p in enumerate(e.points)]
+    elif e.kind == "underlay":
+        out = [_g(e.corners[0], "insert", "ins")]
     elif e.kind == "mline":
         out = [_g(v["p"], "vertex", "v%d" % i) for i, v in enumerate(e.vertices)]
     elif e.kind == "helix":
@@ -267,6 +269,9 @@ def stretch(e, gid, to) -> None:
         e.corners[_idx(gid)] = list(t)
     elif e.kind == "wipeout":
         e.points[_idx(gid)] = list(t)
+    elif e.kind == "underlay":
+        o = e.corners[0]
+        e.move_by([t[0] - o[0], t[1] - o[1], 0.0])
     elif e.kind == "mline":
         e.vertices[_idx(gid)]["p"] = [t[0], t[1]]
     elif e.kind == "nurbscurve":
@@ -496,6 +501,8 @@ def transform(e, xf) -> None:
         dimgrips.transform(e, xf, P)
     elif e.kind == "wipeout":
         e.points = [P(p) for p in e.points]
+    elif e.kind == "underlay":
+        e.corners = [P(p) for p in e.corners]
     elif e.kind == "mline":
         for v in e.vertices:
             v["p"] = _pt2(xf, v["p"])

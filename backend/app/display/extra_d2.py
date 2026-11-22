@@ -36,6 +36,29 @@ def wipeout(e, ctx):
     return {"type": "compound", "parts": parts}, prims, grip_list([(p, "vtx") for p in pts]), _box(pts)
 
 
+@builder("underlay")
+def underlay(e, ctx):
+    from app.doc import underlays as U
+
+    full = U.resolve(e.path, U.folder_of(ctx.doc))
+    found = bool(full) and U.kind_of(full) in (("pdf",) if e.source == "pdf" else ("png", "jpeg"))
+    ring = e.clip_ring() or e.outline()
+    flat = [v for p in ring for v in xy(p)]
+    mode = int(ctx.d.header.get("PDFFRAME" if e.source == "pdf" else "IMAGEFRAME", 1))
+    if not found:
+        mode = 1
+    verts = [[p[0], p[1], 0.0, 0.0, 0.0] for p in ring]
+    parts = [{"type": "poly", "verts": verts, "closed": True, "elev": 0.0}] if mode == 1 else []
+    prims = []
+    if mode == 2:
+        prims.append({"t": "pl", "pts": flat + flat[:2], "noplot": True})
+    if found and e.show:
+        o, r, t = (xy(p) for p in e.corners)
+        clip = e.clip_ring()
+        prims.append({"t": "img", "pts": o + r + t, "clip": [v for p in clip for v in xy(p)] if clip else None, "fade": int(e.fade), "v": "%s-%d" % (U.stamp(full), int(e.page))})
+    return {"type": "compound", "parts": parts}, prims, grip_list([(xy(e.corners[0]), "ins")]), _box([xy(p) for p in ring])
+
+
 def _flat(points):
     return [v for p in points for v in p]
 
