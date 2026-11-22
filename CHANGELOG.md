@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.23.0 · 2026-11-22
+
+- Agents get a true picture of FormCAD. The MCP server describes the whole studio, and the new `formcad_status` tool says whether the 3D kernel and the mesher are installed and which folders an agent may use.
+- The server offers a short list of tools by default, so an agent's context stays small; every command is still reachable through `formcad_execute`, and `--tools all` lists them all.
+- An agent can start a simulation study or a toolpath run and follow it to the end: `formcad_sim_start`, `formcad_cam_start`, `formcad_job_status`, `formcad_job_cancel`.
+- Tool names use only letters, digits and underscores. A tool called by its old name still works.
+- The skill pack for driving FormCAD starts from `formcad_status` and covers the agent dock, rendering and the vault. The kernel notes name the published kernel 8.0.1 and mesher 6.2.2608.
+- Not run for this version: a study or a toolpath job to its end, and Claude Code, Codex, Cursor or Antigravity as the client.
+
 ## 0.22.0 · 2026-11-22
 
 - FormCAD has its own accent, a violet, in place of FormVis's orange. If you chose an accent yourself it is kept.

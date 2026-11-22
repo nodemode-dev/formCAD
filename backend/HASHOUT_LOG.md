@@ -2,6 +2,24 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## MC1 v0.23.0 the MCP server tells agents the truth and stays small (app/automation/mcp.py, app/automation/forms.py, app/automation/cli.py, app/routers/mcp.py, ../setup/agents.py)
+
+Instructions. `INSTRUCTIONS` began "FormCAD is a 2D drafting application". It names the workspaces, says what needs the kernel and the mesher, sends the agent to `formcad_status` first, and states the folder rule and the job pattern. It is returned by `initialize` and by `server/discover`.
+
+Default list. The owner's answer was "all of them but optimized ... so there isn't context ballooning". Measured: `tools/list` in mode all is 698 tools and about 475 KB of JSON; mode core is 45 tools and about 29 KB. The default everywhere (`Server()`, `tool_list()`, `formcad mcp`, `POST /mcp`) is now core. Nothing is lost: `formcad_list_commands` finds any command, `formcad_execute` runs it, and `call_tool` resolves a name against the full list, so a `cmd_*` tool that is not listed can still be called. `--tools all`, or `POST /mcp?tools=all`, lists everything for a client that wants it.
+
+Names. 91 of 670 command tools had a dot or a dash in their name (`cmd_layer.new`, `cmd_-array`), which not every client's tool-name rule accepts. `forms.tool_name` writes every character outside `A-Za-z0-9_` as an underscore. No two commands collide under that rule (checked over the registry). `forms.command_of` maps back by trying the old spelling first and then the registry, so `cmd_layer.new` and `cmd_layer_new` both run LAYER.NEW. If a later command would collide with an existing one, `command_of` returns the first in registry order; add a check when that day comes.
+
+Status. `formcad_status` reads `kernel.status()` and `mesher.status()` and reports each as installed, installing or not installed, with the sentence that tells a person where the Install button is; the granted folders (`barred._granted`); and the settings file. There is no interface for `agentFolders`: a person edits `automation.json` in the data folder, and the tool says so rather than naming a preference page that does not exist.
+
+Jobs. `formcad_sim_start` and `formcad_cam_start` call `sim.jobs.start` and `cam.jobs.start` and return at once; `formcad_job_status` and `formcad_job_cancel` look a job id up in both. `_job_view` gives both kinds one shape: `job`, `kind`, `state`, `finished`, `progress` from 0 to 1, `message`, then `study`, `phase`, `result` for a study or `operations`, `detail`, `results` for toolpaths. A study started by an agent is always started `restrict=True`, the agent's lower caps. Jobs live in memory, so a job id is good only while that engine runs; the not-found message says so.
+
+Descriptions. `formcad_undo`, `formcad_redo`, `formcad_get_variable` and `formcad_set_variable` say what they return, checked by calling them: undo and redo return `{rev, label, labels, state}`.
+
+Manifest. `agents/manifest.json` has `tools` (the default list), `all_tools`, `read_only` and `confined` in place of `approval_gated`: the server asks no approval; it confines every path argument to the granted folders. `check_readme_count` fails when the README sentence "offers N tools by default and M with `--tools all`" is not what the engine says, and `check_skill_format` fails when a `pack-version` in a `SKILL.md` is not `frontend/src/version.ts`.
+
+Run on Linux through `./formCAD mcp`: initialize, the 45-tool list, `formcad_status` with no kernel and no granted folder, both spellings of a dotted command, undo and redo, the variable tools, and the job tools refusing an unknown study, an empty operation list and an unknown job. Not run: a job to its end, and any agent program as the client.
+
 ## WK1 v0.21.0 the session key goes to one window, environments are checked with SHA-256, a wide host warns (app/core/guard.py, app/main.py, formcad_engine.py, app/render/environments.py, app/data/render/environments.json, app/services/agent_programs.py)
 
 The key. `Frontend.get_response` wrote `guard.TOKEN` into every `index.html`, so `curl http://127.0.0.1:<port>/` from any process of any user of the computer returned a working key. The owner left the choice between a window key like formvis's and an accepted exception to the assistant; the key was chosen, in the smallest form that fits this engine. formvis has a second secret beside its guard; formCAD already has one token that every route asks for, so the same token is simply delivered differently and no route, header or client changed:

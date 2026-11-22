@@ -12,11 +12,17 @@ description: Registers the FormCAD MCP server, chooses headless or live mode, an
 - `.mcp.json`: `{"mcpServers": {"formcad": {"command": "[install-dir]/formcad-engine", "args": ["mcp"]}}}` with an absolute path; Claude Desktop uses the same block in its config and needs a restart.
 - `GET /api/automation/status` on a running engine returns these strings filled in.
 
-Modes: headless (default, in-process drawings, no window); `--connect auto` or `--connect HOST:PORT` bridges to the running app so edits appear in the window (loopback only; reads `engine.port` and `session.token` from the data folder, or `FORMCAD_URL` and `FORMCAD_TOKEN`); `--tools core` serves about 40 tools. `--settings-dir DIR` picks a data folder (empty means throwaway). HTTP `POST /mcp` also exists behind the token guard.
+Modes: headless (default, in-process drawings, no window); `--connect auto` or `--connect HOST:PORT` bridges to the running app so edits appear in the window (loopback only; reads `engine.port` and `session.token` from the data folder, or `FORMCAD_URL` and `FORMCAD_TOKEN`); the server lists the core tools by default (the fixed `formcad_*` tools plus the curated drafting `cmd_*` tools) and every other command stays reachable through `formcad_execute`; `--tools all` lists one tool per command, which is hundreds of schemas, so ask for it only when a client needs them listed. `--settings-dir DIR` picks a data folder (empty means throwaway). HTTP `POST /mcp` also exists behind the token guard.
+
+## First call
+
+Call `formcad_status` before planning. It returns the app version, `kernel` and `mesher` (each with `state` installed, installing or not installed, a `version`, a `message`, and `how` a person installs a missing one), `granted_folders`, the `settings_file` where a person grants more, and the open documents. Plan from it: without the kernel only 2D drafting, meshes and non-solid graph nodes work; without the mesher no study runs. An agent cannot install either: tell the person which button to press and stop that branch of the plan.
 
 ## Tools
 
-23 fixed `formcad_*` tools (documents, command line, script, execute, list_commands, inspect, query_entities, find_text, render, select, undo, redo, export, display_list, variables, graph_run) plus one `cmd_[id]` per command that has a programmatic form. Annotations mark read, write and destructive; they are advice, there is no confirmation step. Results are text plus structuredContent; `ok` false sets `isError`.
+The fixed `formcad_*` tools (status, documents, command line, script, execute, list_commands, inspect, query_entities, find_text, render, select, undo, redo, export, display_list, variables, graph_run, and the job tools sim_start, cam_start, job_status, job_cancel) plus `cmd_[id]` tools. A command id with a dot or a dash is written with underscores in its tool name (`layer.new` is `cmd_layer_new`); the old spelling is still accepted when called. A `cmd_` tool that is not in the list can still be called by name, or run through `formcad_execute` with the command id. Annotations mark read and destructive tools; they are advice, there is no confirmation step. Results are text plus structuredContent; `ok` false sets `isError`.
+
+Long work is a job: `formcad_sim_start` and `formcad_cam_start` return a job id at once. Poll `formcad_job_status` every few seconds until `finished` is true, then read `result` (a study) or `results` (toolpaths). `formcad_job_cancel` stops one. Never wait inside a single call.
 
 ## Trust model
 

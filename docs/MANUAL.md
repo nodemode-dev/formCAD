@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.22.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.23.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -110,7 +110,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - **Macros**: record what you do (`macrorecord`, `macrostop`, `macrosave`, `macroplay`, `macrorecorder` panel). Python macros run in a separate process with a scrubbed environment, a time limit, resource limits, and a guard on files, network, subprocesses and native code. Each macro's trust is bound to the hash of its source; edit it and trust is gone.
 - **Plugins**: a folder with `plugin.json` listing a hash per file, found through `formcad.plugins` entry points or the data folder. Nothing is imported at discovery; `pluginenable` stores the manifest hash, and a plugin that changed since is not loaded. `plugins` lists them.
 - **The CLI**: `formcad-engine info`, `convert`, `run`, `commands`, `mcp`, `perf`, `sample`, `plugin seal`, `plugin list`, `macro list`, `graph run`, `graph io`, `graph optimize`. Exit codes: 0 success, 1 a command failed, 2 usage error (graph runs add 3 missing node type, 4 timeout, 5 cancelled).
-- **MCP**: `./formCAD mcp` serves the engine over standard input and output; an HTTP endpoint `POST /mcp` sits behind the session token. Tools named `formcad_*` plus one `cmd_<id>` tool per command that takes arguments. `GET /api/automation/status` returns the exact lines to register it with your agent.
+- **MCP**: `./formCAD mcp` serves the engine over standard input and output; an HTTP endpoint `POST /mcp` sits behind the session token. By default it lists the fixed `formcad_*` tools and the `cmd_*` tools for the common drafting commands; every other command runs through `formcad_execute`, and `--tools all` lists one `cmd_*` tool per command. `formcad_status` reports whether the kernel and the mesher are installed and which folders an agent may use; a study or a toolpath run is started with `formcad_sim_start` or `formcad_cam_start` and followed with `formcad_job_status`. `GET /api/automation/status` returns the exact lines to register it with your agent.
 
 **How to start.** Open the Automation panels from the Window menu, or run `./formCAD mcp` and register it with your agent with the line the status route gives.
 

@@ -15,8 +15,8 @@ def _mismatch(message: str) -> JSONResponse:
     return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": HEADER_MISMATCH, "message": message}}, status_code=400)
 
 
-def _process(text: str, version: str) -> str | None:
-    return protocol.Server().handle_text(text, version)
+def _process(text: str, version: str, mode: str = "core") -> str | None:
+    return protocol.Server(mode).handle_text(text, version)
 
 
 @router.post("/mcp")
@@ -41,7 +41,7 @@ async def post(request: Request) -> Response:
                     return _mismatch("The Mcp-Name header must match the request name.")
     elif version and version not in protocol.SUPPORTED:
         return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": protocol.UNSUPPORTED_VERSION, "message": "Unsupported protocol version.", "data": {"supported": list(protocol.SUPPORTED), "requested": version}}}, status_code=400)
-    reply = await run_in_threadpool(_process, text, version)
+    reply = await run_in_threadpool(_process, text, version, "all" if request.query_params.get("tools") == "all" else "core")
     if reply is None:
         return Response(status_code=202)
     return Response(content=reply, media_type="application/json")
