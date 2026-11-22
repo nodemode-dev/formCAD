@@ -1,6 +1,6 @@
 import { param, type ParamRow } from '../io/api-param';
 import { docStore } from '../ui/doc-store';
-import { el, q, setClass, setHidden, setText } from '../ui/dom';
+import { el, q, setClass, setHidden, setText, setTitle } from '../ui/dom';
 import { t } from '../ui/i18n';
 import { icon } from '../ui/icons';
 import { toast } from '../ui/toast';
@@ -109,7 +109,9 @@ export class FeatureEditor {
       refs.appendChild(view.row);
     }
     if (schema.type === 'hole') {
-      props.appendChild(el(`<p class="pp-note" data-hole-notice></p>`));
+      const notice = el<HTMLElement>(`<p class="pp-note" data-hole-notice></p>`);
+      setText(notice, t('Every size names its published source and how well it could be read. Check values against your own copy of the standard.'));
+      props.appendChild(notice);
     }
     for (const p of schema.params) {
       if (schema.type === 'sketch') continue;
@@ -345,7 +347,7 @@ export class FeatureEditor {
         sel.appendChild(o);
       }
       const n = form.root.querySelector('[data-hole-notice]');
-      if (n && holeCache) setText(n as HTMLElement, holeCache.notice);
+      if (n && holeCache) setTitle(n as HTMLElement, holeCache.notice);
       form.fields.get('size')?.row.after(form.sizeNote as HTMLElement);
     }
     this.sizePicked(form, false);
@@ -355,8 +357,10 @@ export class FeatureEditor {
     const sel = form.size;
     if (!sel || !form.sizeNote) return;
     const row: HoleRow | undefined = holeCache?.sections.thread_series.find((r) => r.id === sel.value);
-    const src = row ? holeCache?.sources?.[row.source]?.title : undefined;
-    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') + (src ? ` ${t('Source:')} ${src}` : '') : t('Counterbore and countersink sizes do not ship: no free published source for them was found. Type your own numbers.'));
+    const keys = row ? (row.sources?.length ? row.sources : [row.source]) : [];
+    const titles = keys.map((k) => holeCache?.sources?.[k]?.title).filter((s): s is string => !!s);
+    const src = titles.length ? ` ${t(titles.length > 1 ? 'Sources:' : 'Source:')} ${titles.join('; ')}` : '';
+    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') + src : t('Counterbore and countersink sizes do not ship: no free published source for them was found. Type your own numbers.'));
     setClass(form.sizeNote, 'is-warn', !!row && row.status !== 'read_twice' && row.status !== 'two_sources');
     if (!row || !fill) return;
     const nom = form.fields.get('thread_nominal');

@@ -117,7 +117,7 @@ export interface MassResult {
   centroid_cs?: [number, number, number];
 }
 
-export interface HoleRow { id: string; standard: string; nominal: number; pitch: number | null; source: string; status: string; note?: string; origin: string }
+export interface HoleRow { id: string; standard: string; nominal: number; pitch: number | null; source: string; sources?: string[]; status: string; note?: string; origin: string }
 export interface HoleTable { notice: string; sources?: Record<string, { title?: string }>; sections: { thread_series: HoleRow[] } & Record<string, unknown[]>; empty: string[]; rules: string[]; kinds: string[]; fits: string[] }
 
 export const part = {

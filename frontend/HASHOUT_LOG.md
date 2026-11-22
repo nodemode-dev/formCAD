@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## HB1 v0.27.0 hole builder size notes (part/feature-editor.ts, part/api.ts)
+
+The hole builder showed the size table's whole notice (about 16 lines, English only, with the file's status words such as `two_sources`) above the fields. It now shows one translated sentence, set when the dialog is built, and the full notice is its tooltip once the table has loaded, so nothing moves when the table arrives. The note under Size names every source a row cites (`sources`), not only the first, with "Sources:" when there are several. Checked in Chrome at 4x CPU throttle (2026-11-22): the toolbox Standard size fills the size fields and shows "M20 · read once · Source: IS 2269: 2006 ..."; the hole builder's note for M6 lists IS 10952, IS 1364 (Part 3) and IS 4218 (Part 2); the mates panel shows 3 reference rows for symmetric, 4 for width and 2 for path, slot, cam and coincident. Over three runs no layout shift came later than 500 ms after the action that caused it, and there were no console errors.
+
 ## SC1 v0.27.0 per-selection constraint state in the status chip, midpoint glyph (ui/param/status-chip.ts, canvas/cmarks.ts, canvas/renderer.ts, canvas/types.ts, ui/menu-spec.ts)
 
 The canvas already coloured each entity from its own constraint bar state (blue under, red over, normal ink fully); splines now get a state too. The status chip now answers for the selection: when the selection holds constrained entities it shows their worst state as the chip's dot and the sum of their freedoms, read from `CanvasApi.barFor`; with nothing selected it falls back to the whole sketch. It repaints only when its key changes, writes text, class and title in place, and keeps its fixed 176 px width. The midpoint relation has its own glyph and an entry under Parametric > Geometric Constraints.
