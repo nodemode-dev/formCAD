@@ -5,11 +5,11 @@ import type { Commands } from './commands';
 import { confirmAction, Dialog } from './dialogs';
 import { el, patchList, q, setClass, setHidden, setText, setValue, store, stored } from './dom';
 import { icon } from './icons';
-import { isLang, languages, onLanguage, setLanguage, t } from './i18n';
+import { languages, onLanguage, setLanguage, t } from './i18n';
 import { checkRow, colorRow, numberRow, selectRow, sliderRow, toggleRow, type Row } from './panels/controls';
 import { aciRow, buttonRow, colorDefaultRow, enable, infoRow, pathRow, radioRow, segRow, textRow } from './panels/pref-rows';
 import {
-  ANGLE_UNITS, ANIMATION_MODES, DEFAULT_PREFS, DRAW_UNITS, SAVE_VERSIONS, loadPrefs, updatePrefs, type Prefs,
+  ANGLE_UNITS, ANIMATION_MODES, DEFAULT_PREFS, DRAW_UNITS, SAVE_VERSIONS, loadPrefs, systemLang, updatePrefs, type Prefs,
 } from './prefs';
 import { dwgRows } from './output/dwg-prefs';
 import { macroRows, mcpRows, pluginRows } from './auto/automation-prefs';
@@ -90,10 +90,7 @@ const tokenColor = (name: string, fallback: string): string => {
   return /^#[0-9a-f]{6}$/i.test(v) ? v : fallback;
 };
 
-const systemLanguage = (): string => {
-  const primary = (navigator.language || 'en').split(/[-_]/)[0].toLowerCase();
-  return isLang(primary) ? primary : 'en';
-};
+const systemLanguage = (): string => systemLang();
 
 export class SettingsDialog extends Dialog {
   private prefs: Prefs = loadPrefs();

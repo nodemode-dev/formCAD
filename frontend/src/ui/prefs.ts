@@ -1,4 +1,4 @@
-import { isLang, type Lang } from './i18n/langs';
+import { LANG_CODES, isLang, type Lang } from './i18n/langs';
 
 export type DrawUnit = 'mm' | 'cm' | 'm' | 'in' | 'ft';
 export type AngleUnit = 'deg' | 'rad' | 'grad';
@@ -98,6 +98,24 @@ function cleanShortcuts(v: unknown): Record<string, string[]> {
   return out;
 }
 
+const LANG_ALIASES: Record<string, Lang> = { 'zh-hant': 'zh-TW', 'zh-hk': 'zh-TW', 'zh-mo': 'zh-TW', zh: 'zh-CN', pt: 'pt-BR', no: 'nb', nn: 'nb', sr: 'sr-Latn', 'es-419': 'es-MX', 'es-us': 'es-MX' };
+
+export function systemLang(): Lang {
+  try {
+    for (const raw of navigator.languages?.length ? navigator.languages : [navigator.language]) {
+      const parts = raw.replace(/_/g, '-').toLowerCase().split('-');
+      for (let n = parts.length; n > 0; n--) {
+        const tag = parts.slice(0, n).join('-');
+        const hit = LANG_ALIASES[tag] ?? LANG_CODES.find((c) => c.toLowerCase() === tag);
+        if (hit) return hit;
+      }
+    }
+  } catch {
+    return 'en';
+  }
+  return 'en';
+}
+
 export function loadPrefs(): Prefs {
   let r: Partial<Record<keyof Prefs, unknown>> = {};
   try {
@@ -108,7 +126,7 @@ export function loadPrefs(): Prefs {
   }
   const d = DEFAULT_PREFS;
   return {
-    language: isLang(r.language) ? r.language : d.language,
+    language: flag(r.languageAuto, d.languageAuto) || !isLang(r.language) ? systemLang() : r.language,
     autoShowHome: flag(r.autoShowHome, d.autoShowHome),
     homeOnLastClose: flag(r.homeOnLastClose, d.homeOnLastClose),
     restoreSession: flag(r.restoreSession, d.restoreSession),
