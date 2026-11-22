@@ -116,6 +116,9 @@ def read_into(path: str, kind: str, report: Report, target=None, options=None):
     report.note("%d bod%s %s a colour." % (colour_n, "y" if colour_n == 1 else "ies", "carries" if colour_n == 1 else "carry"))
     if res.get("colours_in_file", 0) > colour_n:
         report.warn("The file holds %d colours; body colours are kept, face and edge colours are not." % res["colours_in_file"])
+    for name in res.get("untranslated") or []:
+        report.drop("shape the kernel could not translate")
+        report.warn("A shape in the file could not be translated and was left out: %s." % (name or "unnamed"))
     for w in info["warnings"]:
         if "choose to convert" not in w:
             report.warn(w)

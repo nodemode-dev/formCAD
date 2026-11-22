@@ -201,6 +201,7 @@ class Walker:
         self.layer_tool = layer_tool
         self.found = []
         self.defs = {}
+        self.empty = []
 
     def run(self, label, loc, path, name_hint, depth=0):
         if len(self.found) >= MAX_BODIES or depth > 64:
@@ -219,6 +220,7 @@ class Walker:
             return
         shape = XCAFDoc_ShapeTool.GetShape_s(label)
         if shape.IsNull():
+            self.empty.append(name_hint or label_name(label) or entry_of(label))
             return
         placed = shape.Located(loc.Multiplied(shape.Location()))
         key = entry_of(label)
@@ -430,6 +432,7 @@ def xde_read(p):
         "bodies": bodies,
         "pmi": pmi[:MAX_PMI],
         "pmi_lost": lost,
+        "untranslated": walker.empty[:50],
         "unit": unit,
         "schema": "" if iges else file_schema(path),
         "colours_in_file": colour_count,
@@ -606,11 +609,18 @@ def xde_write(p):
         def_labels = {}
         body_loc = {}
         validated = 0
+        taken = set()
         for key, b in bodies.items():
             full = store.shape_of(b["id"])
             body_loc[key] = full.Location()
             shape = full.Located(TopLoc_Location())
             lab = shape_tool.AddShape(shape, False)
+            if entry_of(lab) in taken:
+                from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy
+
+                shape = BRepBuilderAPI_Copy(shape, True, False).Shape()
+                lab = shape_tool.AddShape(shape, False)
+            taken.add(entry_of(lab))
             set_name(lab, b.get("name"))
             set_color(color_tool, lab, b.get("rgb"))
             for layer in b.get("layers") or []:
