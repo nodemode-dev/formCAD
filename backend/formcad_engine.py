@@ -180,6 +180,8 @@ def main() -> int:
     from app.core import guard
     from app.main import app as fastapi_app
 
+    if guard.stdout_mode():
+        print(guard.KEY_LINE + guard.TOKEN, flush=True)
     port = int(os.environ.get("FORMCAD_PORT", "0") or 0)
     host = os.environ.get("FORMCAD_HOST", "127.0.0.1")
     if host.strip().lower() not in guard.LOOPBACK:

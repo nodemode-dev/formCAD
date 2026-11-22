@@ -1,5 +1,5 @@
 import { fmtLinear } from '../canvas/interact/units';
-import { api, type Capabilities, type KernelStatus } from '../io/api';
+import { api, token, type Capabilities, type KernelStatus } from '../io/api';
 import { events } from '../io/events';
 import type { Commands } from './commands';
 import type { DocStore } from './doc-store';
@@ -21,6 +21,7 @@ export interface StatusDeps {
 export interface CursorDetail { x: number; y: number; z?: number }
 
 const SERVICE_NOTE = 'The engine is not running, so drawings cannot be created, opened or saved. Start it with ./formCAD boot.';
+const KEY_NOTE = 'This engine gave its key to the first page that opened it, so this page cannot use it. Go back to that page, or restart the engine to use this one.';
 
 const UNIT_NAMES: Record<number, [string, string]> = {
   0: ['', 'unitless'], 1: ['in', 'inches'], 2: ['ft', 'feet'], 3: ['mi', 'miles'], 4: ['mm', 'millimetres'], 5: ['cm', 'centimetres'],
@@ -209,7 +210,7 @@ export class StatusBar {
   private showEngine(): void {
     const off = this.offline || (this.checked && !this.caps);
     setText(this.engineState, this.caps && !off ? `${t('Engine')} ${this.caps.version}${this.caps.desktop ? ` · ${t('desktop')}` : ''}` : off ? t('Engine offline') : '');
-    setTitle(this.engineState, off ? t(SERVICE_NOTE) : '');
+    setTitle(this.engineState, off ? t(token() ? SERVICE_NOTE : KEY_NOTE) : '');
   }
 
   private syncKernel(): void {

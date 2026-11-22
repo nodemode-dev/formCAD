@@ -127,8 +127,10 @@ class Frontend(StaticFiles):
         target = getattr(response, "path", None)
         if target and os.path.basename(str(target)) == "index.html":
             html = Path(target).read_text(encoding="utf-8")
-            meta = f'<meta name="formcad-token" content="{guard.TOKEN}">'
-            html = html.replace("</head>", meta + "</head>", 1) if "</head>" in html else meta + html
+            key = guard.page_token()
+            if key is not None:
+                meta = f'<meta name="formcad-token" content="{key}">'
+                html = html.replace("</head>", meta + "</head>", 1) if "</head>" in html else meta + html
             return HTMLResponse(html, headers={"Cache-Control": "no-store"})
         return response
 

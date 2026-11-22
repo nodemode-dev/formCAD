@@ -108,10 +108,29 @@ export class ApiError extends Error {
 
 let cachedToken = '';
 
+const TOKEN_STORE = 'formcad-token';
+
+function keptToken(): string {
+  try { return sessionStorage.getItem(TOKEN_STORE) ?? ''; } catch { return ''; }
+}
+
+function keepToken(value: string): void {
+  try { sessionStorage.setItem(TOKEN_STORE, value); } catch { return; }
+}
+
 export function token(): string {
   if (cachedToken) return cachedToken;
+  const holder = window as unknown as { __FORMCAD_TOKEN?: unknown };
+  const given = holder.__FORMCAD_TOKEN;
+  delete holder.__FORMCAD_TOKEN;
+  if (typeof given === 'string' && given) {
+    cachedToken = given;
+    return cachedToken;
+  }
   const meta = document.querySelector<HTMLMetaElement>('meta[name="formcad-token"]');
-  cachedToken = meta?.content ?? '';
+  const served = meta?.content ?? '';
+  if (served) keepToken(served);
+  cachedToken = served || keptToken();
   return cachedToken;
 }
 
