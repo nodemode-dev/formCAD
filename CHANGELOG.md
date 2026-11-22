@@ -2,6 +2,16 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.27.0 · 2026-11-22
+
+- References survive edits to an early sketch. Move, add or remove vertices of a sketch outline and the fillets, chamfers and face sketches on its other sides stay where they were. A reference to a side or corner you removed fails with its name instead of jumping to a neighbour.
+- Sketches: a midpoint relation (`gcmidpoint`, and Midpoint under Parametric), splines in relations (their ends and points on them), and a status bar chip that shows the state and freedoms of what you selected. A sketch of about 200 constrained objects solves in well under a second.
+- Assemblies: five new mates, symmetric, width, path, slot and cam. A component resting against a slot end or a limit mate's stop now comes off it when you drag it back.
+- Hole and fastener sizes come from published standards, each with its source and how well it could be read: coarse thread pitches and tap drills from M1 to M64, clearance holes from M42 to M64, and in the toolbox hex nut sizes and socket head cap screw sizes from M14. A value that could not be read is left for you to type. Counterbore and countersink sizes do not ship, because no free published source for them was found.
+- While a part sketch is open the window no longer logs failed requests for it.
+- The new labels are translated in every language.
+- Not run for this version: the desktop window, macOS and Windows.
+
 ## 0.26.0 · 2026-11-22
 
 - DWG has two routes. A converter you install yourself (the ODA File Converter) works as before and saves every DWG version. New are the DWG tools: GNU LibreDWG as a separate program that FormCAD downloads from its release page and checks file by file. With them FormCAD opens every DWG version and saves DWG in the 2000 format only, and the save dialog says exactly that. They appear in Preferences once they are published; until then nothing changes. A drawing with multiline text or angular dimensions does not save through them yet: the save stops with LibreDWG's message and writes no file.
