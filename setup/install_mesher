@@ -6,7 +6,7 @@ py="$(fc_python)" || fc_die "Python 3.12 or newer is required"
 cd "$FORMCAD_ROOT/mesher"
 [ -f venv/bin/activate ] || [ -f venv/Scripts/activate ] || "$py" -m venv venv
 fc_mesher_venv
-python -m pip install --upgrade pip
+python -m pip install pip==26.3
 if [ "${FORMCAD_LOCKED:-0}" = 1 ]; then
   [ -f requirements_mesher.lock ] || fc_die "mesher/requirements_mesher.lock is missing"
   pip install --no-deps -r requirements_mesher.lock

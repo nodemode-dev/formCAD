@@ -124,7 +124,7 @@ jobs:
         run: |
           source setup/lib.sh
           fc_venv
-          pip install pip-licenses
+          pip install pip-licenses==5.5.5
           python - <<'PY'
           import fnmatch, json, os, re, subprocess, sys
           banned_names = ['libx264*', 'libx265*', 'librubberband*', 'libvidstab*', 'libpostproc*', 'libfdk*', 'libTK*', 'libocct*', 'OCP*', 'libgpl*', 'libavcodec*', 'libavformat*', 'libswscale*']

@@ -62,8 +62,12 @@ fc_rust_env() {
   export PATH
   unset RUSTC RUSTC_WORKSPACE_WRAPPER RUSTFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_BUILD_RUSTFLAGS CARGO_BUILD_TARGET CARGO_TARGET_DIR CARGO_BUILD_TARGET_DIR CARGO_BUILD_RUSTC
   export RUSTC_WRAPPER="" CARGO_BUILD_RUSTC_WRAPPER=""
-  if command -v rustup >/dev/null 2>&1 && rustup toolchain list 2>/dev/null | grep -q '^stable'; then
-    export RUSTUP_TOOLCHAIN="${FORMCAD_RUST_TOOLCHAIN:-stable}"
+  if [ -n "${FORMCAD_RUST_TOOLCHAIN:-}" ]; then
+    export RUSTUP_TOOLCHAIN="$FORMCAD_RUST_TOOLCHAIN"
+  elif [ -f "$FORMCAD_ROOT/rust-toolchain.toml" ]; then
+    unset RUSTUP_TOOLCHAIN
+  elif command -v rustup >/dev/null 2>&1 && rustup toolchain list 2>/dev/null | grep -q '^stable'; then
+    export RUSTUP_TOOLCHAIN=stable
   fi
 }
 fc_rust_fresh() {
