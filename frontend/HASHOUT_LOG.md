@@ -2,6 +2,20 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## LN1 v0.24.0 29 interface languages, system language, right-to-left (ui/i18n.ts, ui/i18n/langs.ts, ui/i18n/keys.ts, ui/i18n/tables/, ui/prefs.ts, ui/settings-dialog.ts, agent-dock.ts, styles/shell.css)
+
+Key list. `ui/i18n/keys.ts` is the English strings the tables translate, one per row. It was collected by walking the running interface (Home, every menu and submenu, Preferences, the Studies panel, the agent dock) and reading every visible text, `title`, `aria-label` and `placeholder`, in three runs that became parts a (rows 0 to 548), b (549 to 1060) and c (1061 to 1572), each sorted on its own. A table row is addressed by its position, so the list is append-only: a new string goes at the end, an unused one stays, nothing is reordered. Strings past row 1572 need a part d in `setup/i18n.py` and in `LOADERS`.
+
+Tables. `ui/i18n/tables/[code].[part].ts` is `const T: Record<number, string>` keyed by row. `rows()` joins a language's three parts with the key list into the English-keyed table `t()` already read, so nothing that calls `t()` changed. Each part is its own chunk, loaded only when that language is chosen. es-MX and fr-CA hold only the rows that differ from es and fr; `LANG_PARENT` sends the rest to the parent. The tables were written by a model, not by people; `python3 setup/i18n.py check` proves their form (every row present, placeholders the same as the English, no em dash), not their wording.
+
+Switching. `setLanguage` loads the tables, sets `lang` and `dir`, runs the listeners, then walks the page. Text that code wrote with `t()` in the old language has no English record in the walker, so it used to stay in the old language (German "Körper" in an Arabic toolbar). For the walk after a switch, `back` maps every string of the old language to its English key, and text or attributes found in it are translated again from that key. `back` is cleared after the walk.
+
+System language. `languageAuto` (on by default) makes `loadPrefs` pick the first of `navigator.languages` that FormCAD has, by full tag then by its parts, with aliases for zh-Hant, zh-HK, pt, no, nn, sr, es-419 and es-US. Choosing a language in Preferences turns it off; Auto turns it back on.
+
+Right-to-left. Arabic sets `dir="rtl"` on the root, so the grid, menus, dialogs and dock mirror. The stage, the command line, its popup and the terminal stay left-to-right: drawing coordinates, typed commands and shell output read left to right in every language. The agent dock's adapter passes its English through `t()` with `{app}`, `{noun}` and `{start}` filled first.
+
+Measured (Chromium, CPU 4x, `lang_check`, system locale de-DE): Home loads in German with layout shift 0 and no English left among the key list's strings; Preferences switches to Arabic and back to English without a reload; Home, Preferences and all 14 top menus show none of the key list's strings in English while Arabic is on; no German is left after the switch; no console errors. Switching to or from Arabic moves the dock and the stage to the other side once; the browser counts that as a layout shift of 0.89 because the move lands after its 500 ms input window. An Arabic system starts mirrored with layout shift 0, since the app waits for the tables before its first content paint. Not covered: about 1700 strings a static scan finds in other panels and every message the engine writes stay English.
+
 ## LK1 v0.22.0 the look: own accent, layer tokens, in-place updates, movable and resizable panel groups, segmented bar, card rows, declared properties (index.html, styles/, ui/themes.ts, ui/dock.ts, ui/panels/pref-rows.ts, ui/panels/layer-manager.ts, graph/node-view.ts, graph/canvas.ts)
 
 The reference is formvis 2.8.1 at ca3b435, read and run side by side in Chrome. The owner's design skill and its audit scripts were not used, at his word, so there are no audit numbers here; parity is by reading and by looking.

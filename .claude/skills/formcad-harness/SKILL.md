@@ -4,7 +4,7 @@ description: "Use when asked to run, install, build, test, freeze, debug or exte
 license: Apache-2.0
 metadata:
   product: FormCAD
-  pack-version: "0.23.0"
+  pack-version: "0.24.0"
   audience: developer agent
 ---
 

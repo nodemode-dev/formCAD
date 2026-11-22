@@ -5,6 +5,7 @@ import { ApiError } from './io/api';
 import { terminalApi, termSocket } from './io/terminal-api';
 import { commands } from './ui/commands';
 import { isMac } from './ui/dom';
+import { t } from './ui/i18n';
 
 type Extra = 'antigravity';
 
@@ -55,7 +56,7 @@ export function formcadAgentDock(): DockAdapter<Extra> {
     chordLabel: () => `${isMac ? 'Cmd' : 'Ctrl'}+J`,
     tabs: () => ({ builtin: ['shell', 'claude', 'codex', 'cursor', 'antigravity'] }),
     classes: { iconButton: 'cv-tt-btn', button: 'cv-btn', primaryButton: 'cv-btn cv-btn-primary', input: 'cv-input', select: 'cv-input', note: 'cv-note' },
-    t: (_key, english) => english,
+    t: (_key, english) => t(english.replace(/\{(app|noun|start)\}/g, (_m, name: string) => ({ app: 'FormCAD', noun: 'drawing', start: './formCAD' })[name] ?? '')),
     onTheme: (handler) => { document.addEventListener('nm:ui-settings-changed', handler); },
     errors: {
       message: (err) => (err instanceof ApiError ? err.message : null),
