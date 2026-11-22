@@ -343,7 +343,7 @@ def load(d, seeds=None, sketch=None, scope=None, everything=False):
     seen = set()
     sk_rec = S.get_sketch(d, sketch) if sketch else None
     if sk_rec is not None:
-        todo.extend(h for h in sk_rec["entities"] if d.get(h) is not None)
+        todo.extend(h for h in S.members(d, sk_rec) if d.get(h) is not None)
     if everything:
         todo.extend(by_handle.keys())
     while todo:

@@ -77,6 +77,18 @@ def add_entities(d, name, handles) -> dict:
     return info(d, name)
 
 
+def adopt(d) -> list:
+    taken = []
+    for rec in S.sketches(d):
+        space = "sketch:" + rec["name"]
+        have = set(rec["entities"])
+        new = [h for h in d.spaces.get(space, []) if h not in have and h in d.ents]
+        if new:
+            add_entities(d, rec["name"], new)
+            taken.extend(new)
+    return taken
+
+
 def remove_entities(d, name, handles) -> dict:
     rec = copy.deepcopy(find(d, name))
     gone = {int(h) for h in handles}
@@ -162,7 +174,7 @@ def info(d, name) -> dict:
     cons = [r for r in S.constraints(d) if r.get("sketch") == name]
     dims = [{"id": r["id"], "name": r["label"], "kind": r["kind"], "expr": r.get("expr") or "", "value": r.get("value"), "driving": bool(r.get("driving", True))} for r in cons if r.get("label")]
     rels = [{"id": r["id"], "kind": r["kind"], "refs": r["refs"], "dangling": bool(r.get("dangling"))} for r in cons if not r.get("label")]
-    return {"name": rec["name"], "plane": rec["plane"], "entities": rec["entities"], "construction": rec["construction"], "status": st["status"], "dof": st["dof"], "entityStatus": st["entities"], "relations": rels, "dimensions": dims, "redundant": st["redundant"], "conflicts": st["conflicts"], "dangling": st["dangling"], "ms": st["ms"]}
+    return {"name": rec["name"], "plane": rec["plane"], "entities": S.members(d, rec), "construction": rec["construction"], "status": st["status"], "dof": st["dof"], "entityStatus": st["entities"], "relations": rels, "dimensions": dims, "redundant": st["redundant"], "conflicts": st["conflicts"], "dangling": st["dangling"], "ms": st["ms"]}
 
 
 def listing(d) -> list:

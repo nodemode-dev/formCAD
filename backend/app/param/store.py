@@ -50,6 +50,16 @@ def get_sketch(d, name: str):
     return t.get(name) if t is not None else None
 
 
+def members(d, rec) -> list:
+    have = list(rec["entities"])
+    seen = set(have)
+    for h in d.spaces.get("sketch:" + rec["name"], []):
+        if h not in seen and h in d.ents and d.ents[h].kind not in ("dimension", "text", "mtext"):
+            have.append(h)
+            seen.add(h)
+    return have
+
+
 def con_key(cid: int) -> str:
     return "c%d" % cid
 

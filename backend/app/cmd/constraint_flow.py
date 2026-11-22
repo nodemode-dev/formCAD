@@ -2,7 +2,7 @@ import math
 
 from app.cmd.context import CommandError
 from app.cmd.prompts import Prompt
-from app.param import adapt, marks, ops
+from app.param import adapt, marks, ops, sketch
 from app.param import store as S
 
 POINT_PARTS = {
@@ -142,6 +142,7 @@ def guard_call(ctx, fn, *a, **k):
 
 def run_add(ctx, kind, refs, **kw):
     try:
+        sketch.adopt(ctx.d)
         res = ops.add_constraint(ctx.d, kind, refs, **kw)
     except (S.ParamError, ValueError) as err:
         fail(ctx, err)
