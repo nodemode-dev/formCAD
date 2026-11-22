@@ -195,4 +195,6 @@ def cache_record(host_drawing, lp: LoadedPart, embed: bool = True, config: str =
 
 
 def shapes(lp: LoadedPart, body) -> str:
+    if body.ent is None:
+        raise work.SolidError("%s is drawn from the copy kept in this assembly because its file changed or is missing. Reload the component, then try again." % body.name)
     return work.worker_id(lp.drawing, body.ent)

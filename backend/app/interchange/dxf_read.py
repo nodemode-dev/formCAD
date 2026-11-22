@@ -1,4 +1,5 @@
 import copy
+import logging
 import math
 import os
 
@@ -430,8 +431,9 @@ class Reader:
                     continue
                 xd[app] = [[t.code, t.value if not hasattr(t.value, "x") else [t.value.x, t.value.y, t.value.z]] for t in e.get_xdata(app)]
             dst.xdata = xd
-        except Exception:
-            pass
+        except Exception as err:
+            self.r.drop("extended data")
+            self.r.warn("Extended data on a %s could not be read and was left out: %s" % (e.dxftype(), str(err) or type(err).__name__))
 
     def read_entities(self) -> None:
         d = self.d
@@ -839,8 +841,9 @@ class Reader:
         try:
             if e.has_xdata("ACAD"):
                 dim.overrides = TB.parse_dstyle(e.get_xdata("ACAD"))
-        except Exception:
-            pass
+        except Exception as err:
+            self.r.drop("dimension style overrides")
+            self.r.warn("The style overrides of a dimension could not be read; it uses its style as it is: %s" % (str(err) or type(err).__name__))
         return dim
 
     def r_leader(self, e):
@@ -1047,7 +1050,38 @@ def patterns_known(name: str) -> bool:
         return False
 
 
+class _Heard(logging.Handler):
+    WORDS = ("invalid", "remove", "misplaced", "ignore", "skip", "discard")
+
+    def __init__(self):
+        super().__init__(logging.DEBUG)
+        self.lines: list = []
+
+    def emit(self, record):
+        text = record.getMessage()
+        if record.levelno >= logging.WARNING or any(w in text.lower() for w in self.WORDS):
+            self.lines.append(text)
+
+
 def load_ezdxf(path: str, recover: bool, report: Report):
+    log = logging.getLogger("ezdxf")
+    heard, level, spread = _Heard(), log.level, log.propagate
+    log.addHandler(heard)
+    log.setLevel(logging.DEBUG)
+    log.propagate = False
+    try:
+        return _load_ezdxf(path, recover, report)
+    finally:
+        log.removeHandler(heard)
+        log.setLevel(level)
+        log.propagate = spread
+        for text in heard.lines[:40]:
+            if "xdata" in text.lower():
+                report.drop("extended data")
+            report.warn("Left out or repaired while reading: %s" % text)
+
+
+def _load_ezdxf(path: str, recover: bool, report: Report):
     auditor = None
     if recover:
         doc, auditor = ezrecover.readfile(path)

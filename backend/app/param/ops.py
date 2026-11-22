@@ -442,12 +442,13 @@ def status(d, sketch=None, handles=None) -> dict:
     rep = net.sk.solve(analyse=True)
     stat = net.entity_status(rep)
     ents = {}
+    mine = set(S.members(d, sk_rec)) if sk_rec else set()
     for h, v in stat.items():
         st = v["status"]
         if st == "unconstrained":
-            st = "under" if sk_rec is not None and h in sk_rec["entities"] else "none"
+            st = "under" if h in mine else "none"
         ents[h] = {"status": st, "dof": v["dof"]}
-    for h in (sk_rec["entities"] if sk_rec else []):
+    for h in (S.members(d, sk_rec) if sk_rec else []):
         ents.setdefault(h, {"status": "under", "dof": 0})
     dangling = [r["id"] for r in S.constraints(d) if r.get("dangling") and (not sketch or r.get("sketch") == sketch)]
     over = bool(rep.redundant) or not rep.ok

@@ -2,6 +2,22 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## LW1 v0.25.0 fixes from the Linux proof walks (app/drawann/__init__.py, app/drawann/modelitems.py, app/cmd/commands/drawann.py, app/views/hook.py, app/assembly/parts.py, app/param/store.py, app/param/adapt.py, app/param/ops.py, app/param/sketch.py, app/cmd/constraint_flow.py, app/automation/ops.py, app/automation/mcp.py, app/cmd/runner.py, app/interchange/dxf_read.py, app/interchange/stepio.py)
+
+The five walks of the production handoff were run against an engine with the published kernel and mesher installed through the app's own routes. Each fix below was found by a walk step and that step passed on a second run.
+
+Drawing views and annotation. `drawann/drawview.py` registers the drawing-view provider with `viewsrc`, but nothing imported it, so VIEWDIM, MODELITEMS, BALLOON and AUTOBALLOON answered that a view was not a view. `drawann/__init__.py` imports it. MODELITEMS placed a sketch's vertical distance as a horizontal dimension because it chose the direction from the projected end points; a horizontal or vertical sketch distance now carries its axis (`along`) and is placed along that axis as projected, and is left out when that axis is end-on in the view. The skipped list holds every offered item that was not placed. When a view rebuilds after a model change, `views/hook.py` runs the dimension and annotation followers itself: they had already run earlier in the same commit, so dimensions on views lagged one edit behind. AUTOBALLOON on a view of the open assembly takes the parts list of that assembly. A view of an assembly whose component file changed or is missing stopped with an internal error; it now says to reload the component.
+
+Sketch state. A part sketch's entities joined the sketch record only when the sketch was left, so SKETCHSTATUS inside an open sketch said "none, 0" and relations added there were not tied to the sketch. `store.members` adds the entities waiting in the sketch's space, read only, and the solver and the status use it. A relation or dimension added in an open sketch first adopts those entities (`sketch.adopt`), so it belongs to the sketch.
+
+MCP. `formcad_open_document` and `formcad_export` refused STEP, IGES, 3DM and mesh files although the interface opens and writes them; they now go through the same interchange code and return its notes. `formcad_status` probes the mesher when its state is unknown, so an installed mesher no longer reads "not installed" in a new engine.
+
+Typed words. A word that is not a command, typed by an agent, answered that LISP is not available to outside agents. LISP is still refused to agents; the word now gets "Unknown command".
+
+DXF losses (handoff 6.3). Extended data and dimension style overrides that could not be read were dropped silently; both now add a warning and a dropped count. ezdxf repairs or removes some damaged data while it parses (invalid XDATA, misplaced tags) and only logs it. `load_ezdxf` listens to the `ezdxf` logger during the read and turns those lines into warnings; it keeps lines at warning level and lines that say something was removed, skipped, ignored or invalid, and leaves out ezdxf's own notes about dictionaries it creates for R12 files. The ten DXF fixtures open with no new warning. `dxf_read.py` and `dxf_write.py` still hold other broad handlers; they were not changed in this pass.
+
+STEP import. A shape in a STEP or IGES file that the kernel could not translate was skipped without a word. The kernel now lists such shapes (`untranslated`) and the import notes name them. Not seen firing: the case that showed a missing body turned out to be the writer's (see the kernel log, KW2).
+
 ## MC1 v0.23.0 the MCP server tells agents the truth and stays small (app/automation/mcp.py, app/automation/forms.py, app/automation/cli.py, app/routers/mcp.py, ../setup/agents.py)
 
 Instructions. `INSTRUCTIONS` began "FormCAD is a 2D drafting application". It names the workspaces, says what needs the kernel and the mesher, sends the agent to `formcad_status` first, and states the folder rule and the job pattern. It is returned by `initialize` and by `server/discover`.

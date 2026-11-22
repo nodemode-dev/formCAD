@@ -637,10 +637,7 @@ class CommandRunner:
             from app.cmd import barred
             from app.lisp import hooks
 
-            if barred.lisp_refusal(self):
-                self._fail(barred.lisp_refusal(self))
-                return
-            if not transparent and hooks.lisp_command(self, word, rest):
+            if not barred.lisp_refusal(self) and not transparent and hooks.lisp_command(self, word, rest):
                 return
             from app.sysvars import known
 

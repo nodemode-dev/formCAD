@@ -2,6 +2,16 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.25.0 · 2026-11-22
+
+- The five proof walks (SolidWorks, AutoCAD, Rhino, Grasshopper, Fusion) were run on Linux with the 3D kernel and the mesher installed. Each step's result is recorded; what failed for a bug is fixed below, and what is missing is planned.
+- Drawings: dimension, model-dimension and balloon commands work on drawing views; a vertical model dimension is placed vertically; dimensions on a view follow a model change at once; balloons on an assembly view take that assembly's parts list; an assembly view of a changed component asks you to reload it instead of failing.
+- Sketches: the sketch status counts what you have drawn in an open part sketch, and a relation added there belongs to that sketch.
+- Agents can open and export STEP, IGES, 3DM and mesh files through `formcad_open_document` and `formcad_export`, and `formcad_status` sees an installed mesher in a new session. A mistyped word gets "Unknown command".
+- DXF: extended data, dimension style overrides and repairs that could not be kept are listed in the import notes instead of being dropped silently.
+- Kernel source: a fillet on an inside corner is accepted; the sweep along two rails follows both rails; two identical bodies are written to STEP and IGES as two; a shape the kernel cannot translate on import is named in the notes. These reach you with the next kernel download.
+- Not run for this version: the desktop window, macOS and Windows, and a real machine for the toolpaths.
+
 ## 0.24.0 · 2026-11-22
 
 - The interface speaks 29 languages besides English: Spanish (and Mexican Spanish), Brazilian Portuguese, French (and Canadian French), German, Italian, Dutch, Danish, Finnish, Norwegian Bokmål, Swedish, Russian, Polish, Czech, Hungarian, Ukrainian, Turkish, Greek, Serbian (Latin), Simplified and Traditional Chinese, Japanese, Korean, Indonesian, Thai, Vietnamese, Arabic and Hindi.

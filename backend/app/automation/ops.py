@@ -275,9 +275,16 @@ def export(doc, path: str, version: str = "", window=None, view: str = "", layou
     from app.output import plot
     from app.output import request as R
 
-    full = checked_output(path, tuple(EXPORT_KINDS) + (".dxf", ".dwg"))
+    models = files.MODEL_EXT + files.THREEDM_EXT + files.MESH_EXT
+    full = checked_output(path, tuple(EXPORT_KINDS) + (".dxf", ".dwg") + models)
     granted(full)
     ext = os.path.splitext(full)[1].lower()
+    if ext in models:
+        try:
+            report = files.write_any(doc.drawing, full, version or "", False, 16, {}, doc)
+        except InterchangeError as err:
+            raise OpError(str(err))
+        return {"path": full, "format": ext[1:], "notes": report.to_dict()}
     if ext in (".dxf", ".dwg"):
         try:
             report = files.write_any(doc.drawing, full, version or "", False)
@@ -347,8 +354,20 @@ def open_path(path: str) -> dict:
     granted(full)
     if not os.path.isfile(full):
         raise OpError('Cannot find the file "%s".' % path)
-    if os.path.splitext(full)[1].lower() not in FILE_KINDS + (".svg", ".svgz"):
-        raise OpError("Open reads .fcad, .dxf, .dwg, .dwt and .svg files.")
+    from app.interchange import files
+    from app.interchange.errors import InterchangeError
+
+    ext = os.path.splitext(full)[1].lower()
+    if ext in files.MODEL_EXT + files.THREEDM_EXT + files.MESH_EXT:
+        try:
+            doc = guarded(lambda: service.open_foreign(full))
+        except InterchangeError as err:
+            raise OpError(str(err))
+        out = doc.summary()
+        out["notes"] = getattr(doc, "import_notes", {})
+        return out
+    if ext not in FILE_KINDS + (".svg", ".svgz"):
+        raise OpError("Open reads .fcad, .dxf, .dwg, .dwt, .svg, .step, .iges, .3dm, .stl, .obj, .3mf, .glb, .gltf and .ply files.")
     return guarded(lambda: service.open(full).summary())
 
 

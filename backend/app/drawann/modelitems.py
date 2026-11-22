@@ -92,6 +92,8 @@ def sketch_items(dm) -> list:
         if len(pts) != 2:
             continue
         item.update({"kind": {"distance": "linear", "hdistance": "linear", "vdistance": "linear"}[kind], "a": plane.to3(pts[0]), "b": plane.to3(pts[1])})
+        if kind != "distance":
+            item["along"] = plane.x if kind == "hdistance" else plane.y
         out.append(item)
     return out
 
