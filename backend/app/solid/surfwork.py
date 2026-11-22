@@ -242,7 +242,9 @@ def surface_label(summary: dict) -> str:
 
 
 def seam_line(rep: dict) -> str:
-    return "%s, gap %.3g mm, normal angle %.3g rad, curvature gap %.3g" % (rep.get("level", "none").upper(), rep.get("max_gap", 0.0), rep.get("max_angle", 0.0), rep.get("max_curvature_gap", 0.0))
+    line = "%s, gap %.3g mm, normal angle %.3g rad, curvature gap %.3g" % (rep.get("level", "none").upper(), rep.get("max_gap", 0.0), rep.get("max_angle", 0.0), rep.get("max_curvature_gap", 0.0))
+    rate = rep.get("max_curvature_rate_gap")
+    return line if rate is None else "%s, curvature rate gap %.3g" % (line, rate)
 
 
 def audit_line(report: dict) -> str:

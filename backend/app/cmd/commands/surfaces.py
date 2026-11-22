@@ -1009,7 +1009,7 @@ def do_seam(ctx, args):
     rep["bodies"] = [sa["body"].handle, sb["body"].handle]
     ctx.say("SEAMCHECK: %s." % sw.seam_line(rep))
     t = rep.get("tolerance") or {}
-    ctx.say("Against position %.3g mm, angle %.3g rad, curvature %.3g: G0 %s, G1 %s, G2 %s. G3 is not measured." % (t.get("length", 0.0), t.get("angle", 0.0), t.get("curvature", 0.0), "yes" if rep.get("g0") else "no", "yes" if rep.get("g1") else "no", "yes" if rep.get("g2") else "no"))
+    ctx.say("Against position %.3g mm, angle %.3g rad, curvature %.3g, curvature rate %.3g: G0 %s, G1 %s, G2 %s, G3 %s." % (t.get("length", 0.0), t.get("angle", 0.0), t.get("curvature", 0.0), t.get("curvature_rate", 0.0), "yes" if rep.get("g0") else "no", "yes" if rep.get("g1") else "no", "yes" if rep.get("g2") else "no", "not measured" if rep.get("g3") is None else "yes" if rep.get("g3") else "no"))
     off = rep.get("edge_offset")
     if off is not None and off > max(10.0 * float(t.get("length", 0.0)), 1e-6):
         ctx.say("Warning: the second edge lies %.3g mm from the first, so it is not the seam; the report measures the first edge against the second surface. Pick the edge that meets the first." % off)

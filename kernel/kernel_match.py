@@ -295,6 +295,46 @@ def normal_curvature(Su, Sv, Suu, Svv, Suv, n, d):
     return II / I
 
 
+def d3(surf, u, v):
+    P = gp_Pnt()
+    g = [gp_Vec() for _ in range(9)]
+    surf.D3(u, v, P, *g)
+    return [vec(x) for x in g]
+
+
+def tangent_coords(Su, Sv, d):
+    E, F, G = Su @ Su, Su @ Sv, Sv @ Sv
+    det = E * G - F * F
+    if abs(det) < 1e-300:
+        raise RuntimeError("degenerate")
+    return (G * (d @ Su) - F * (d @ Sv)) / det, (E * (d @ Sv) - F * (d @ Su)) / det
+
+
+def curvature_rate(ders, n, d):
+    Su, Sv, Suu, Svv, Suv, Suuu, Svvv, Suuv, Suvv = ders
+    a, b = tangent_coords(Su, Sv, d)
+    second = a * a * Suu + 2 * a * b * Suv + b * b * Svv
+    a2, b2 = tangent_coords(Su, Sv, -(second - (second @ n) * n))
+    third = a * a * a * Suuu + 3 * a * a * b * Suuv + 3 * a * b * b * Suvv + b * b * b * Svvv
+    mixed = a * a2 * Suu + (a * b2 + b * a2) * Suv + b * b2 * Svv
+    return float((third + 3.0 * mixed) @ n)
+
+
+def cross_rates(surf, uv, n, across, along):
+    ders = d3(surf, uv[0], uv[1])
+    x = unit(across - (across @ n) * n)
+    y = unit(along - (along @ n) * n - ((along - (along @ n) * n) @ x) * x)
+    r = math.sqrt(0.5)
+    fxxx = curvature_rate(ders, n, x)
+    fyyy = curvature_rate(ders, n, y)
+    plus = curvature_rate(ders, n, r * (x + y))
+    minus = curvature_rate(ders, n, r * (x - y))
+    root2 = math.sqrt(2.0)
+    fxyy = (root2 * (plus + minus) - fxxx) / 3.0
+    fxxy = (root2 * (plus - minus) - fyyy) / 3.0
+    return np.array([fxxx, fxxy, fxyy])
+
+
 class Side:
     def __init__(self, face, edge, tol):
         self.face = face
@@ -376,6 +416,7 @@ def seam_report(sa, sb, tol, ang, samples=41, curv_rel=0.01):
     prev = None
     flip_votes = 0
     kmax = 0.0
+    rmax = 0.0
     for t in ts:
         try:
             pa = sa.point(t)
@@ -404,6 +445,15 @@ def seam_report(sa, sb, tol, ang, samples=41, curv_rel=0.01):
             kb_b = sign * normal_curvature(Sub, Svb, Suub, Svvb, Suvb, nb, unit(bb_vec))
             curv = max(abs(ka_t - kb_t), abs(ka_b - kb_b))
             kmax = max(kmax, abs(ka_t), abs(ka_b), abs(kb_t), abs(kb_b))
+            rate = None
+            try:
+                ra = cross_rates(sa.surf, uva, na, bv, tv)
+                rb = cross_rates(sb.surf, uvb, nb_al, bv, tv)
+                if np.all(np.isfinite(ra)) and np.all(np.isfinite(rb)):
+                    rate = float(np.max(np.abs(ra - rb)))
+                    rmax = max(rmax, float(np.max(np.abs(ra))), float(np.max(np.abs(rb))))
+            except Exception:
+                rate = None
             try:
                 la = LocalAnalysis_SurfaceContinuity(sa.surf, uva[0], uva[1], sb.surf, uvb[0], uvb[1], GeomAbs_G2, 1e-9, tol, ang, ang, ang, curv_rel, 1e9)
                 la_worst["c0"] = max(la_worst["c0"], la.C0Value())
@@ -411,7 +461,7 @@ def seam_report(sa, sb, tol, ang, samples=41, curv_rel=0.01):
                 la_worst["g2"] = max(la_worst["g2"], la.G2CurvatureGap())
             except Exception:
                 pass
-            rows.append({"t": t, "p": [float(x) for x in pa], "gap": gap, "angle": angle, "curv": curv, "na": [float(x) for x in na], "nb": [float(x) for x in nb_al], "flip": bool(dot < 0), "ka": [float(ka_t), float(ka_b)], "kb": [float(kb_t), float(kb_b)]})
+            rows.append({"t": t, "p": [float(x) for x in pa], "gap": gap, "angle": angle, "curv": curv, "rate": rate, "na": [float(x) for x in na], "nb": [float(x) for x in nb_al], "flip": bool(dot < 0), "ka": [float(ka_t), float(ka_b)], "kb": [float(kb_t), float(kb_b)]})
             if dot < 0:
                 flip_votes += 1
         except RuntimeError:
@@ -427,16 +477,24 @@ def seam_report(sa, sb, tol, ang, samples=41, curv_rel=0.01):
     g0 = bool(worst_gap["gap"] <= tol)
     g1 = bool(g0 and worst_ang["angle"] <= ang)
     g2 = bool(g1 and worst_cur["curv"] <= ktol)
-    level = "G2" if g2 else "G1" if g1 else "G0" if g0 else "none"
+    span = max(length, 1e-9)
+    rtol = max(curv_rel * max(rmax, kmax * kmax), ang / (span * span))
+    rated = [r for r in rows if r["rate"] is not None]
+    worst_rate = max(rated, key=lambda r: r["rate"]) if rated else None
+    g3 = bool(g2 and worst_rate["rate"] <= rtol) if worst_rate else None
+    level = "G3" if g3 else "G2" if g2 else "G1" if g1 else "G0" if g0 else "none"
     step = max(1, len(rows) // 64)
-    hair = [{"p": r["p"], "na": r["na"], "nb": r["nb"], "gap": r["gap"], "angle": r["angle"], "curv": r["curv"]} for r in rows[::step]]
+    hair = [{"p": r["p"], "na": r["na"], "nb": r["nb"], "gap": r["gap"], "angle": r["angle"], "curv": r["curv"], "rate": r["rate"]} for r in rows[::step]]
     return {
         "level": level,
         "g0": g0,
         "g1": g1,
         "g2": g2,
-        "g3": None,
-        "g3_note": "not measured; the kernel has no G3 measure",
+        "g3": g3,
+        "g3_note": "largest gap in the rate of change of normal curvature across the seam, per mm of travel across it" if worst_rate else "not measured; the third derivatives could not be evaluated at any sample",
+        "max_curvature_rate_gap": worst_rate["rate"] if worst_rate else None,
+        "max_curvature_rate_at": worst_rate["p"] if worst_rate else None,
+        "curvature_rate_samples": len(rated),
         "max_gap": worst_gap["gap"],
         "max_gap_at": worst_gap["p"],
         "max_angle": worst_ang["angle"],
@@ -444,7 +502,7 @@ def seam_report(sa, sb, tol, ang, samples=41, curv_rel=0.01):
         "max_angle_at": worst_ang["p"],
         "max_curvature_gap": worst_cur["curv"],
         "max_curvature_at": worst_cur["p"],
-        "tolerance": {"length": tol, "angle": ang, "curvature": ktol, "curvature_relative": curv_rel},
+        "tolerance": {"length": tol, "angle": ang, "curvature": ktol, "curvature_relative": curv_rel, "curvature_rate": rtol},
         "samples": len(rows),
         "skipped": skipped,
         "length": length,

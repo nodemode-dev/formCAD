@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## SF2 v0.29.0 untrim, shrink and the G3 seam verdict (app/cmd/commands/surftrim.py, surfaces.py, app/solid/surfwork.py)
+
+Handoff 9.4 and 9.5, the engine side of kernel KW5. `srfuntrim` (modes all and holes, keep curves) and `srfshrink` (margin 0 to 1) in their own module, found by command discovery. The face comes from `face`, `face_index`, the sub-selection, or the only face; a single-face body is edited in place, a face of a polysurface comes out as a new surface and the polysurface is left alone. Kept trim curves become NURBS curve entities named "Trim curve". `seamcheck` and the seam lines of blend and match print the curvature rate gap and a G3 verdict with its tolerance instead of "G3 is not measured".
+
 ## SF1 v0.29.0 fillet, chamfer and variable fillet between surfaces (app/cmd/commands/surfaces.py)
 
 Handoff 9.1, the engine side of kernel KW4. `srffillet`, `srfchamfer` and `srfvarfillet` sit beside `srfblend`. The surfaces are `a` and `b` as `{body, face}` or `face_index`, the handle of a single-face surface, or two sub-selected faces; sizes are a radius, one or two distances, or `radii` as `[t, r]` pairs; `trim` and `join` default to true, plus `from`, `keep_a`, `keep_b`. Trim and join merges the two bodies into one; trim alone edits both and adds the blend; no trim adds the blend only. The interactive forms ask the sizes, then Result Join, Trim or Surface. Messages say when the surfaces do not meet (with the closest distance), when they are already tangent, and when the size is too large (with the shared edge length and how far the surfaces reach).

@@ -156,6 +156,18 @@ def load_operations() -> None:
         for name in ("surf_loft", "surf_sweep", "surf_network", "surf_patch", "surf_extrude", "surf_revolve", "surf_planar", "surf_edge", "surf_extend", "surf_offset", "surf_split", "surf_join", "surf_fillet", "surf_continuity", "surf_blend", "surf_match", "bool_diag", "fillet_edge", "chamfer_edge"):
             METHODS.setdefault(name, surfaces_unavailable)
     try:
+        import kernel_trim
+
+        METHODS.update(kernel_trim.METHODS)
+    except Exception as err:
+        failure_trim = str(err)
+
+        def trim_unavailable(_params):
+            raise RuntimeError("The untrim and shrink operations could not be loaded (%s)." % failure_trim)
+
+        for name in ("surf_untrim", "surf_shrink"):
+            METHODS.setdefault(name, trim_unavailable)
+    try:
         import kernel_views
 
         METHODS.update(kernel_views.METHODS)

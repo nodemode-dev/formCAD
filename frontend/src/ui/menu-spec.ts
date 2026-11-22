@@ -195,7 +195,7 @@ const curve = (): MenuItem[] => section('Curve', () => [
 const surface = (): MenuItem[] => section('Surface', () => [
   E('Loft', 'srfloft'), E('Sweep', 'srfsweep'), E('Network', 'srfnetwork'), E('Patch', 'srfpatch'), E('Planar', 'srfplanar'), E('From Edge Curves', 'srfedge'),
   E('Extrude Curve', 'srfextrude'), E('Revolve Curve', 'srfrevolve'), SEP,
-  E('Blend', 'srfblend'), E('Fillet', 'srffillet'), E('Chamfer', 'srfchamfer'), E('Variable Fillet', 'srfvarfillet'), E('Match', 'srfmatch'), E('Extend', 'srfextend'), E('Offset', 'srfoffset'), E('Trim', 'srftrim'), E('Split', 'srfsplit'), E('Join', 'srfjoin'), SEP,
+  E('Blend', 'srfblend'), E('Fillet', 'srffillet'), E('Chamfer', 'srfchamfer'), E('Variable Fillet', 'srfvarfillet'), E('Match', 'srfmatch'), E('Extend', 'srfextend'), E('Offset', 'srfoffset'), E('Trim', 'srftrim'), E('Untrim', 'srfuntrim'), E('Shrink Trimmed', 'srfshrink'), E('Split', 'srfsplit'), E('Join', 'srfjoin'), SEP,
   S('Edge Treatment', E('Fillet Edge', 'filletedge'), E('Chamfer Edge', 'chamferedge'), E('Blend Edge', 'blendedge')),
   S('Boolean', E('Boolean with Diagnostics', 'boolop'), E('Check Boolean', 'boolcheck'), 'u7-diag-open'), SEP,
   E('Seam Continuity', 'seamcheck'), 'u7-seams-sel', E('Naked Edges', 'nakededges'), E('Surface Report', 'surfreport'), 'u7-clear-analysis', SEP,
