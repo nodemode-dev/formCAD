@@ -17,14 +17,13 @@ from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_TrimmedCurve
 from OCP.GeomAbs import GeomAbs_C0, GeomAbs_C2, GeomAbs_G1, GeomAbs_G2, GeomAbs_Arc, GeomAbs_Intersection
 from OCP.GeomConvert import GeomConvert
 from OCP.GeomFill import GeomFill, GeomFill_BSplineCurves, GeomFill_CurvedStyle, GeomFill_StretchStyle
-from OCP.Law import Law_Interpol
 from OCP.ShapeAnalysis import ShapeAnalysis_Surface
 from OCP.TopAbs import TopAbs_REVERSED, TopAbs_EDGE, TopAbs_FACE, TopAbs_IN, TopAbs_SHELL, TopAbs_VERTEX, TopAbs_WIRE
 from OCP.TopExp import TopExp_Explorer
 from OCP.TopoDS import TopoDS as _Cast, TopoDS_Compound
 from OCP.BRep import BRep_Builder
-from OCP.collections import Array1_double, Array1_gp_Pnt, Array1_gp_Pnt2d, Array1_int, List_TopoDS_Shape as ShapeList
-from OCP.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Elips, gp_Pnt2d, gp_Vec, gp_Trsf
+from OCP.collections import Array1_double, Array1_gp_Pnt, Array1_int, List_TopoDS_Shape as ShapeList
+from OCP.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Elips, gp_Vec, gp_Trsf
 
 import kernel_store as store
 from kernel_ops import direction, input_history, pnt
@@ -384,14 +383,13 @@ def sweep(p):
     rail = curve_wire(p["rail"])
     profiles = [curve_wire(s) for s in specs(p, "profiles")]
     rail2 = p.get("rail2")
+    frame = str(p.get("frame", "freeform")).lower()
+    if rail2:
+        return sweep_two_rails(rail, curve_wire(rail2), profiles[0], p, tol, ang)
     maker = BRepOffsetAPI_MakePipeShell(rail)
     method = "one rail"
-    frame = str(p.get("frame", "freeform")).lower()
     report = {"frame": frame}
-    if rail2:
-        method = "two rails"
-        report.update(sweep_two_rail_setup(maker, rail, curve_wire(rail2), profiles, p, tol))
-    elif frame == "frenet":
+    if frame == "frenet":
         maker.SetMode(True)
     elif frame == "fixed":
         maker.SetMode(gp_Ax2(pnt([0, 0, 0]), direction(p.get("axis"))))
@@ -404,47 +402,81 @@ def sweep(p):
 
     maker.SetTransitionMode({"round": BRepBuilderAPI_RoundCorner, "transformed": BRepBuilderAPI_Transformed}.get(corner, BRepBuilderAPI_RightCorner))
     maker.SetTolerance(tol, tol, ang)
-    if rail2:
-        pass
-    else:
-        for w in profiles:
-            maker.Add(w, False, bool(p.get("correct", False)))
+    for w in profiles:
+        maker.Add(w, False, bool(p.get("correct", False)))
     maker.Build()
     if not maker.IsDone():
         raise RuntimeError("The sweep failed; the profile may be too far from the rail or the rail too sharp for this frame.")
     shape = maker.Shape()
     report["method"] = method
     report["error"] = float(maker.ErrorOnSurface()) if hasattr(maker, "ErrorOnSurface") else 0.0
-    if rail2:
-        rails = [rail, curve_wire(rail2)]
-        report["rail_deviation"] = [max(surface_distance_samples(shape, curve_points(e, 21)) for e in edge_pieces(r)) for r in rails]
     return finish("sweep", shape, tol, ang, report)
 
 
-def sweep_two_rail_setup(maker, rail, rail2, profiles, p, tol):
-    maker.SetMode(rail2, True, __import__("OCP.BRepFill", fromlist=["BRepFill_NoContact"]).BRepFill_NoContact)
+def rails_frame(a, b, tangent):
+    from OCP.gp import gp_Ax3
+
+    x = gp_Vec(a, b)
+    width = x.Magnitude()
+    if width <= 1e-9:
+        raise RuntimeError("The two rails touch; the sweep has no width there.")
+    x.Normalize()
+    z = tangent.Subtracted(x.Multiplied(tangent.Dot(x)))
+    if z.Magnitude() <= 1e-9:
+        raise RuntimeError("The rails run along the line between them; the sweep cannot be oriented there.")
+    z.Normalize()
+    return gp_Ax3(a, gp_Dir(z), gp_Dir(x)), width
+
+
+def unit_tangent(ad, u):
+    from OCP.gp import gp_Pnt
+
+    at, v = gp_Pnt(), gp_Vec()
+    ad.D1(u, at, v)
+    if v.Magnitude() <= 1e-12:
+        raise RuntimeError("A rail has a point with no direction.")
+    v.Normalize()
+    return v
+
+
+def sweep_two_rails(rail, rail2, profile, p, tol, ang):
+    from OCP.BRepAdaptor import BRepAdaptor_CompCurve
+    from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+
+    count = max(3, min(int(p.get("sections", 24)), 200))
     e1, e2 = edge_pieces(rail)[0], edge_pieces(rail2)[0]
-    ad1, par1 = chord_fraction_points(e1, 41)
-    ad2, par2 = chord_fraction_points(e2, 41)
-    base = None
-    pts = []
-    for i in range(41):
-        d = ad1.Value(par1[i]).Distance(ad2.Value(par2[i]))
-        if base is None:
-            base = d
-        pts.append((i / 40.0, d))
-    if base is None or base <= 1e-9:
-        raise RuntimeError("The two rails touch at their start; the sweep has no width there.")
-    arr = Array1_gp_Pnt2d(1, len(pts))
-    first = ad1.FirstParameter()
-    last = ad1.LastParameter()
-    for i, (s, d) in enumerate(pts):
-        arr.SetValue(i + 1, gp_Pnt2d(first + (last - first) * s, d / base))
-    law = Law_Interpol()
-    law.Set(arr, False)
-    for w in profiles[:1]:
-        maker.SetLaw(w, law, False, False)
-    return {"rail_gap_start": base, "rail_gap_end": pts[-1][1], "scaling": "profile scaled by the rail distance"}
+    ad1, par1 = chord_fraction_points(e1, count)
+    ad2, par2 = chord_fraction_points(e2, count)
+    ends = BRepAdaptor_CompCurve(profile)
+    s0, s1 = ends.Value(ends.FirstParameter()), ends.Value(ends.LastParameter())
+    a0, b0 = ad1.Value(par1[0]), ad2.Value(par2[0])
+    if s0.Distance(a0) + s1.Distance(b0) > s1.Distance(a0) + s0.Distance(b0):
+        s0, s1 = s1, s0
+    start, width0 = rails_frame(s0, s1, unit_tangent(ad1, par1[0]).Added(unit_tangent(ad2, par2[0])))
+    maker = BRepOffsetAPI_ThruSections(False, False, tol)
+    maker.CheckCompatibility(False)
+    gaps = []
+    for i in range(count):
+        a, b = ad1.Value(par1[i]), ad2.Value(par2[i])
+        here, width = rails_frame(a, b, unit_tangent(ad1, par1[i]).Added(unit_tangent(ad2, par2[i])))
+        move, size = gp_Trsf(), gp_Trsf()
+        move.SetDisplacement(start, here)
+        size.SetScale(a, width / width0)
+        maker.AddWire(TopoDS.Wire_s(BRepBuilderAPI_Transform(profile, size.Multiplied(move), True).Shape()))
+        gaps.append(width)
+    maker.Build()
+    if not maker.IsDone():
+        raise RuntimeError("The two-rail sweep failed; check that both rails run the same way and the profile spans from one rail to the other.")
+    shape = maker.Shape()
+    report = {
+        "frame": "two rails", "method": "two rails", "sections": count,
+        "rail_gap_start": gaps[0], "rail_gap_end": gaps[-1],
+        "scaling": "profile scaled by the rail distance",
+        "profile_gap": [s0.Distance(a0), s1.Distance(b0)],
+        "rail_deviation": [max(surface_distance_samples(shape, curve_points(e, 21)) for e in edge_pieces(r)) for r in (rail, rail2)],
+    }
+    report["error"] = max(report["rail_deviation"])
+    return finish("sweep", shape, tol, ang, report)
 
 
 def network(p):
