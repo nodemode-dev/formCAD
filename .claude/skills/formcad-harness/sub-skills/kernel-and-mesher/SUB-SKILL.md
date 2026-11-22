@@ -33,7 +33,7 @@ Worker method tables live in `kernel/README.md` and `mesher/README.md`; method c
 
 ## Verification of downloads
 
-The desktop app downloads each worker release from formai-binaries and verifies every file against `backend/app/data/kernel-licence.json` (and `mesher-licence.json`). In the checkout those records carry a null `release` and an empty `files` list until the owner publishes a release; the record schema is `release/formCAD-binaries/records/SCHEMA.md`. A hash mismatch is a refusal, never a warning to skip. Do not edit a record to make a download pass, and never commit worker binaries.
+The desktop app downloads each worker release from formai-binaries and verifies every file against `backend/app/data/kernel-licence.json` (and `mesher-licence.json`). Both records carry a published release: kernel 8.0.1 (OpenCascade 8.0.1) and mesher 6.2.2608 (Netgen), each with SHA-256 hashes for four platforms. A person installs them from the window: Install kernel in the status bar, Install mesher in the Studies panel; an agent reads the result with the `formcad_status` tool. The record schema is `release/formCAD-binaries/records/SCHEMA.md`. A hash mismatch is a refusal, never a warning to skip. Do not edit a record to make a download pass, and never commit worker binaries.
 
 ## Failure patterns
 

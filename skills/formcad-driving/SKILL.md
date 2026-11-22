@@ -16,7 +16,10 @@ FormCAD is a CAD engine with one document model: 2D drafting, parametric parts, 
 
 | Task | Load |
 | --- | --- |
-| Register the server, modes, granted folders, results, what is barred | `sub-skills/connect-and-trust/SUB-SKILL.md` |
+| Register the server, the first call (`formcad_status`), modes, granted folders, jobs, results, what is barred | `sub-skills/connect-and-trust/SUB-SKILL.md` |
+| Working from a tab of the agent dock, beside a person in the open window | `sub-skills/agent-dock/SUB-SKILL.md` |
+| A picture, a rendered image, a turntable, a video, an exploded view | `sub-skills/render-and-animation/SUB-SKILL.md` |
+| Versions, branches, check in and out, diff, merge, comments, where-used | `sub-skills/vault/SUB-SKILL.md` |
 | 2D drawing, layers, dimensions, hatch, blocks, queries | `sub-skills/drafting-2d/SUB-SKILL.md` |
 | Parts, sketches, features, surfaces, forms, meshes, plastic, weldments, molds | `sub-skills/parts-and-surfaces/SUB-SKILL.md` |
 | Sheet metal and flat patterns | `sub-skills/sheet-metal/SUB-SKILL.md` |
@@ -29,9 +32,10 @@ FormCAD is a CAD engine with one document model: 2D drafting, parametric parts, 
 
 ## Core loop
 
+0. `formcad_status` first: it says whether the 3D kernel and the mesher are installed and which folders are granted. Plan only what it allows.
 1. Discover: `formcad_list_commands` (with a filter), or run `scripts/list_tools.py --filter [text]` for required and known arguments. Never invent a tool or argument; `references/command-catalogue.md` lists every command by group but the live list wins.
 2. Create or open a document with `formcad_new_document` and an explicit `template` (`metric`, `part`, `assembly`, `drawing-mm-a3`, `surface`, `form`, `graph`, `ecad`; a bare call is not metric).
-3. Act with `cmd_[id]` tools (structured arguments, no prompts) or `formcad_command_line` (typed like a person; spaces act as Enter).
+3. Act with `cmd_[id]` tools (structured arguments, no prompts; a dot or dash in the id is an underscore in the tool name), with `formcad_execute` for any command the tool list does not show, or with `formcad_command_line` (typed like a person; spaces act as Enter). Studies and toolpaths run as jobs: `formcad_sim_start` or `formcad_cam_start`, then poll `formcad_job_status`.
 4. Check every result: `ok`, `error`, `output`. A part feature returns a `state` with status ok or error; read it before the next step.
 5. Verify by measurement: `formcad_inspect`, `formcad_query_entities`, `formcad_render`, `cmd_bodymass`, check commands. Edits are undoable with `formcad_undo`.
 6. Save and export only inside granted folders.
