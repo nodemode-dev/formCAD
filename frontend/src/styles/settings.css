@@ -74,6 +74,14 @@
 .cv-radios { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
 .cv-radio { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--text-primary); cursor: pointer; }
 .cv-radio input { margin: 0; accent-color: var(--accent-color); }
+.cv-seg { display: inline-flex; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+.cv-seg button { height: var(--ctl-sm); padding: 0 var(--space-3); border: 0; background: transparent; color: var(--text-muted); font-size: var(--fs-11); cursor: pointer; }
+.cv-seg button + button { border-left: 1px solid var(--border-light); }
+.cv-seg button:hover { color: var(--text-primary); }
+.cv-seg button.is-active { background: var(--bg-tertiary); color: var(--accent-color); }
+.cv-seg button:focus-visible { outline: 2px solid var(--accent-color); outline-offset: -2px; }
+.cv-seg-row > .cv-seg { justify-self: end; }
+.op-form .cv-seg-row > .cv-seg { justify-self: start; }
 .cv-color-ctl { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
 .cv-hex { min-width: 5ch; color: var(--text-muted); font-family: var(--font-mono); font-size: var(--fs-11); text-transform: uppercase; }
 .cv-aci-ctl { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); }
