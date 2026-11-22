@@ -2,6 +2,19 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.20.1 · 2026-11-22
+
+- On Windows the engine can no longer outlive the app. It runs inside a job object that Windows ends with the app, so a crashed or killed FormCAD leaves no `formcad-engine.exe` behind and the next start has one engine.
+- An engine that cannot be started shows "The FormCAD engine failed to start" and exits, where the window used to vanish without a word.
+- An installed app runs only the engine it shipped with. A build made for release no longer looks in parent folders for an engine script, and says "The FormCAD engine is missing. Reinstall the app." when its engine folder is gone.
+- `formCAD.bat agents sync`, `check` and `install` work on Windows.
+- One Node minimum everywhere, 22.12: the README, `package.json` and both installers, which refuse an older Node with the same sentence.
+- The engine installs from `backend/requirements.lock`, a lock file with hashes for every platform. pip, pip-licenses, Rust (1.97.0, `rust-toolchain.toml`) and Node (`.nvmrc`) have a version in the repository. The unused `backend/requirements_macos.txt` is removed.
+- The check workflow checks the agent kit, type-checks the desktop shell on macOS and Windows, and freezes the engine on an Intel Mac as well.
+- The frozen engine folder carries `form-app.json` beside `formcad-engine`, so the registry can name how an installed copy starts its MCP server.
+- The bundle's long description names the Form family and its copyright names NodeAgentc, Inc.
+- Not run for this version: the app on macOS or Windows, a freeze, and the changed workflow.
+
 ## 0.20.0 · 2026-11-20
 
 - The agent dock: Window, Agent Dock (Ctrl+J, Cmd+J on a Mac) opens a panel at the bottom or the right of the window with a terminal and tabs that run the real Claude Code, Codex, Cursor and Antigravity, each already connected to this window's engine over MCP with a token made for that tab and ended when the tab closes. A program that is not installed shows the line that installs it. While the home screen is open the dock stays beside it and the home makes room. It is the form family's shared agent dock module 2.2.0, copied unchanged.
