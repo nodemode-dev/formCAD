@@ -231,6 +231,9 @@ def t_status(a):
 
     from app.doc.service import service
 
+    seen = mesher.status()
+    if not seen.get("available") and not seen.get("installing"):
+        mesher.probe()
     return _result({
         "version": __version__,
         "kernel": part(kernel.status(), "A person installs it with Install kernel in the status bar of the FormCAD window."),
@@ -330,7 +333,7 @@ FIXED = [
     ("formcad_list_commands", "List the command catalogue: id, label, menu path, aliases and whether a programmatic form exists, with an optional substring filter.", _obj({"filter": {"type": "string"}, "programmatic_only": {"type": "boolean"}}), _ann(read=True), t_list_commands),
     ("formcad_list_documents", "List the open drawings and which one is active.", _obj({}), _ann(read=True), t_list_documents),
     ("formcad_new_document", "Create a new empty drawing and make it active.", _obj({"name": {"type": "string"}, "template": {"type": "string"}}), _ann(), t_new_document),
-    ("formcad_open_document", "Open a .fcad, .dxf, .dwg, .dwt or .svg file by path.", _obj({"path": {"type": "string"}}, ["path"]), _ann(), t_open_document),
+    ("formcad_open_document", "Open a file by path: .fcad, .dxf, .dwg, .dwt, .svg, or a model or mesh file (.step, .stp, .iges, .igs, .3dm, .stl, .obj, .3mf, .glb, .gltf, .ply; these need the kernel and come back with import notes).", _obj({"path": {"type": "string"}}, ["path"]), _ann(), t_open_document),
     ("formcad_save_document", "Save a drawing. Without a path it saves in place; a .dxf or .fcad path saves as.", _obj({"path": {"type": "string"}, "document": DOC}), _ann(destructive=True), t_save_document),
     ("formcad_close_document", "Close a drawing; refused when it has unsaved changes unless force is true.", _obj({"force": {"type": "boolean"}, "document": DOC}), _ann(destructive=True), t_close_document),
     ("formcad_inspect", "Summarise a drawing: object counts by kind, layers, blocks, layouts, extents, selection.", _obj({"document": DOC}), _ann(read=True), t_inspect),
@@ -342,7 +345,7 @@ FIXED = [
     ("formcad_cancel", "Press Escape: cancel the running command or clear the selection.", _obj({"document": DOC}), _ann(idem=True), t_cancel),
     ("formcad_undo", "Undo the last edits of a document, one step per command that changed it (kernel features included). Returns {rev, label, labels, state}: the document's new revision number, the names of the commands taken back (labels, newest first; label is the last of them) and the command line state. Example: {steps:2} takes back the last two commands.",_obj({"steps": {"type": "integer", "minimum": 1}, "document": DOC}), _ann(destructive=True), t_undo),
     ("formcad_redo", "Redo edits that formcad_undo took back, one step each. A new edit after an undo empties what can be redone. Returns {rev, label, labels, state} as formcad_undo does, naming the commands put back. Example: {steps:1}.",_obj({"steps": {"type": "integer", "minimum": 1}, "document": DOC}), _ann(), t_redo),
-    ("formcad_export", "Export to a file chosen by its extension: .pdf, .png, .svg, .dxf (optionally a DXF version such as R2018) or .dwg.", _obj({"path": {"type": "string"}, "version": {"type": "string"}, "window": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, "layout": {"type": "string"}, "dpi": {"type": "number"}, "paper": {"type": "string"}, "document": DOC}, ["path"]), _ann(destructive=True), t_export),
+    ("formcad_export", "Export to a file chosen by its extension: .pdf, .png, .svg, .dxf (optionally a DXF version such as R2018), .dwg, or a model or mesh file (.step with version ap203, ap214 or ap242, .iges, .3dm, .stl, .obj, .3mf, .glb, .ply; these need the kernel and return export notes).", _obj({"path": {"type": "string"}, "version": {"type": "string"}, "window": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4}, "layout": {"type": "string"}, "dpi": {"type": "number"}, "paper": {"type": "string"}, "document": DOC}, ["path"]), _ann(destructive=True), t_export),
     ("formcad_display_list", "Summarise the display list the canvas draws (counts, size); include=true embeds a bounded slice of the JSON.", _obj({"space": {"type": "string"}, "include": {"type": "boolean"}, "max_chars": {"type": "integer"}, "document": DOC}), _ann(read=True), t_display),
     ("formcad_get_variable", "Read one system variable of a document, for example LTSCALE, CLAYER, OSMODE or MEASUREMENT. The name is not case sensitive. Returns {name, value}, the name in upper case and the value as a number or text. Example: {name:'CLAYER'} returns {name:'CLAYER', value:'0'}.",_obj({"name": {"type": "string"}, "document": DOC}, ["name"]), _ann(read=True), t_get_variable),
     ("formcad_set_variable", "Set one system variable of a document. A read-only variable or a value outside its range is refused with the reason. Returns {name, value} with the value as it now stands, which may differ from what was sent when the variable rounds or clamps. Example: {name:'LTSCALE', value:2} returns {name:'LTSCALE', value:2.0}.",_obj({"name": {"type": "string"}, "value": {}, "document": DOC}, ["name", "value"]), _ann(destructive=True), t_set_variable),
