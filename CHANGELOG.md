@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.24.0 · 2026-11-22
+
+- The interface speaks 29 languages besides English: Spanish (and Mexican Spanish), Brazilian Portuguese, French (and Canadian French), German, Italian, Dutch, Danish, Finnish, Norwegian Bokmål, Swedish, Russian, Polish, Czech, Hungarian, Ukrainian, Turkish, Greek, Serbian (Latin), Simplified and Traditional Chinese, Japanese, Korean, Indonesian, Thai, Vietnamese, Arabic and Hindi.
+- FormCAD starts in your system's language when it has it. Choosing a language in Preferences keeps that choice; Auto goes back to the system language. The switch happens in place, without a restart.
+- In Arabic the window mirrors: menus, dialogs and the side column read right to left. The drawing area, the command line and the terminal stay left to right.
+- Translated: Home, every menu, Preferences, the agent dock and the Studies panel. Other panels and every message the engine writes are still in English. The translations were made by a model and have not been read by native speakers yet.
+- Not run for this version: the desktop window, macOS and Windows.
+
 ## 0.23.0 · 2026-11-22
 
 - Agents get a true picture of FormCAD. The MCP server describes the whole studio, and the new `formcad_status` tool says whether the 3D kernel and the mesher are installed and which folders an agent may use.
