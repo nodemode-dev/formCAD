@@ -98,6 +98,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 - 3DM: curves and untrimmed surfaces are kept exactly. A trimmed face is written as a surface plus its trim curves, with a warning; STEP keeps trimmed faces better.
 - Mesh formats that carry no unit (STL, OBJ) produce a warning on every import and export.
+- Sheet sets: there is no sheet set manager. `publish` is the replacement: it plots layouts of the current drawing and, with `sheets` entries that name a `file`, layouts of other drawings (FormCAD, DXF or DWG files) into one PDF, in the order listed, each sheet with its own page setup or paper. Sheet numbering, sheet lists and title-block fields shared across drawings are not managed. An agent may name only files in its granted folders.
 - DWG needs a converter. Either turn DWG on and point FormCAD at a converter you installed (the ODA File Converter reads and writes every DWG version from 2000 to 2018), or install the DWG tools from Preferences when they are offered there (GNU LibreDWG, a separate GPL program FormCAD downloads and checks file by file). With the DWG tools FormCAD opens DWG files of every version and saves DWG in the 2000 format only; objects LibreDWG skips are listed in the import notes, and a drawing LibreDWG cannot convert stops the save with its message, so save it as DXF instead. Without either, DWG files are refused with a message (`GET /api/interchange/dwg`).
 - A STEP file that carries something FormCAD cannot represent is read with a report of what was dropped.
 
