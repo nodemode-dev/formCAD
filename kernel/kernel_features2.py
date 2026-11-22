@@ -327,7 +327,7 @@ def fillet(p):
             failed_edges = sorted(selected)
         return failure(errors[0]["message"], errors, warnings, {"edges": failed_edges, "faces": []})
     result = maker.Shape()
-    out, bad = finish(maker, sid, result, expect=lambda v0, v1: "The fillet removed no material; the radius may be too small or the edge may be a smooth one." if v1 >= v0 - 1e-9 else None)
+    out, bad = finish(maker, sid, result, expect=lambda v0, v1: "The fillet changed nothing; the radius may be too small or the edge may be a smooth one." if abs(v1 - v0) <= 1e-9 else None)
     if out is None:
         return failure(bad, warnings=warnings, failed={"edges": sorted(selected), "faces": []})
     new_faces = []
