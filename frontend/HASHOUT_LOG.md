@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## LA2 v0.28.0 lightweight components in the assembly tree (u8/asm-panels.ts, u8/asm.ts)
+
+A lightweight part row's badge reads "lightweight" with a tooltip saying the solid loads when a command needs it; each part row has a load act (resolve, or make lightweight again) whose title is updated in place; the panel bar has Resolve all; the status line counts lightweight instances. `TreeNode.lightweight`. Checked by the worker in Chrome at 4x CPU throttle: no console errors, no failed requests, no shift when badges change after resolving. A shift of 0.0049 came when the tree filled on opening the 100-part assembly (the panel growing in the dock); whether it predates 0.28.0 was not established.
+
 ## LN2 v0.27.0 labels of the panels touched in 0.27.0 (ui/i18n/keys.ts, ui/i18n/tables/*.d.ts)
 
 Keys 1591 to 1677: every literal `t()` label in the files changed since 0.26.0 that had no key (toolbox, feature editor, assembly panels, status chip), plus the labels that reach `t()` through variables: the hole size status sentences, the status words in both spellings (lowercase in the toolbox, capitalised through `pretty` in the hole builder) and the size notes from `hole-sizes.json` and `fastener-sizes.json`. A note added to those files needs a key too, or it shows in English. Count words such as "samples" or "rows" follow a number and are one form per language; in Russian, Ukrainian, Polish, Czech and Serbian the genitive plural is used, which is wrong after 2 to 4. Fixing that needs plural forms in `t()`. About 800 labels in panels not touched since 0.24.0 still have no key (the 0.24.0 notes say other panels are in English).

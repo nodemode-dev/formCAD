@@ -165,8 +165,8 @@ const sketch = (): MenuItem[] => section('Sketch', () => [
 
 const partMenu = (): MenuItem[] => section('Part', () => [
   'pt-sketch', 'pt-finish-sketch', 'pt-edit-sketch', SEP,
-  'pt-extrude', 'pt-extrude-cut', 'pt-revolve', 'pt-revolve-cut', 'pt-sweep', 'pt-sweep-cut', 'pt-loft', 'pt-loft-cut', 'pt-boundary', 'pt-rib', 'pt-hole', SEP,
-  'pt-fillet', 'pt-chamfer', 'pt-shell', 'pt-draft', 'pt-pattern', 'pt-mirror', SEP,
+  'pt-extrude', 'pt-extrude-cut', 'pt-revolve', 'pt-revolve-cut', 'pt-sweep', 'pt-sweep-cut', 'pt-loft', 'pt-loft-cut', 'pt-boundary', 'pt-rib', 'pt-hole', 'pt-thread', 'pt-thicken', SEP,
+  'pt-fillet', 'pt-chamfer', 'pt-shell', 'pt-draft', 'pt-pattern', 'pt-mirror', 'pt-delete-face', SEP,
   S('Sheet Metal', 'sm-base', 'sm-convert', SEP, 'sm-edge', 'sm-miter', 'sm-hem', 'sm-jog', 'sm-sketched', SEP, 'sm-relief', 'sm-corner', SEP,
     'sm-flat', 'sm-flat-export', SEP, 'sm-rule', 'sm-tables', 'sm-cutlist'),
   S('Plastic', 'pl-boss', 'pl-rib', 'pl-snap', 'pl-lip', 'pl-groove', SEP, 'pl-panel', E('Plastic Checks', 'plasticcheck'), E('Wall Thickness Map', 'wallthickness')), SEP,
@@ -266,7 +266,8 @@ const drawing = (): MenuItem[] => section('Drawing', () => [
   'dw-section', 'dw-detail', 'dw-aux', 'dw-break', 'dw-crop', SEP,
   'dw-update', 'dw-update-all', 'dw-update-one', 'dw-delete', S('Projection Angle', 'dw-proj-third', 'dw-proj-first'), SEP,
   'dw-dim', 'dw-frame', 'dw-frame-edit', 'dw-datum', 'dw-finish', SEP,
-  'dw-balloon', 'dw-autoballoon', 'dw-bom', 'dw-bom-update', 'dw-centermarks', 'dw-hatch', SEP,
+  'dw-balloon', 'dw-autoballoon', 'dw-bom', 'dw-bom-update', E('Hole Table', 'holetable'), E('Update Hole Tables', 'holetableupdate'), 'dw-centermarks', 'dw-hatch', SEP,
+  E('Revision Table', 'revtable'), E('Add Revision...', 'revadd'), E('Remove Last Revision', 'revremove'), SEP,
   'dw-settings', 'dw-panel-views', 'dw-panel-props',
 ]);
 

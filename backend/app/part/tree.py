@@ -3,7 +3,7 @@ import copy
 from app.param import sketch as K
 from app.param import store as S
 from app.param import units as U
-from app.part import features_bodies, features_core, features_shapes, names, rebuild, registry, store
+from app.part import features_bodies, features_core, features_modify, features_shapes, names, rebuild, registry, store
 from app.part.registry import PartError
 from app.plastic import features as plastic_features
 from app.sheetmetal import features as sheet_features

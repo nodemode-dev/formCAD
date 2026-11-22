@@ -136,7 +136,7 @@ def pack(rev, scale, detail, rows, loose, issues) -> bytes:
 
         version = zlib.crc32(("%s|%s|%s" % (b.blob, inst.key, ",".join("%.9g" % v for v in row["world"].reshape(-1)))).encode()) & 0x7FFFFFFF
         flags = (base.FLAG_VISIBLE if row["visible"] else 0) | (base.FLAG_CLOSED if b.closed else 0)
-        extra = {"instance": inst.key, "component": inst.cid, "label": inst.record["label"], "body": b.name, "status": inst.status["status"], "stale": inst.status["stale"], "source_of_mesh": inst.status["source"]}
+        extra = {"instance": inst.key, "component": inst.cid, "label": inst.record["label"], "body": b.name, "status": inst.status["status"], "stale": inst.status["stale"], "source_of_mesh": inst.status["source"], "lightweight": bool(inst.status.get("lightweight"))}
         emit(row["raw"] if row["visible"] else None, handle, version, flags, _colour(b, None), tf, inst.record["label"] + ("" if len(lp.bodies) == 1 else " / " + b.name), extra, b.face_ids, b.edge_ids)
     for row in loose:
         handle += 1

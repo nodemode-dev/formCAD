@@ -1,6 +1,6 @@
 import os
 
-from app.assembly import api, bom, cfg, model, parts, patterns, store, walk
+from app.assembly import api, bom, cfg, light, model, parts, patterns, store, walk
 from app.assembly import props as P
 from app.assembly.store import AssemblyError
 from app.cmd import barred
@@ -387,10 +387,47 @@ def asmsearch_exec(ctx, args):
     action = str(args.get("action") or "show").lower()
     if action == "show":
         h = store.header(ctx.d)
-        return {"search_folders": h["search_folders"], "search_order": h["search_order"], "embed_cache": h["embed_cache"]}
+        return {"search_folders": h["search_folders"], "search_order": h["search_order"], "embed_cache": h["embed_cache"], "lightweight": bool(h.get("lightweight", True))}
     if action != "set":
         raise CommandError("action is show or set.")
-    return run(model.settings, ctx.doc, args.get("folders"), args.get("order"), args.get("embed_cache"))
+    return run(model.settings, ctx.doc, args.get("folders"), args.get("order"), args.get("embed_cache"), args.get("lightweight"))
+
+
+def _which(ctx, ident):
+    if ident is None or str(ident).strip().lower() in ("", "all"):
+        return None
+    items = ident if isinstance(ident, list) else [ident]
+    return [comp_id(ctx, v) for v in items]
+
+
+@command("asmresolve", group="solids", label="Resolve Components", description="Load lightweight components in full so their solids can be measured, mated, checked or exported.", menu="Assembly > Resolve Components", undoable=False)
+def asmresolve(ctx):
+    t = yield ctx.text("Enter the component name or id (or ALL)", "ALL")
+    if t.kind != "text":
+        return
+    out = run(light.resolve, ctx.doc, _which(ctx, t.value))
+    ctx.say("%d resolved, %d still lightweight." % (len(out["resolved"]), out["lightweight"]))
+    for f in out["failed"]:
+        ctx.say("%s: %s" % (f["key"], f["message"]))
+
+
+@executes("asmresolve")
+def asmresolve_exec(ctx, args):
+    return run(light.resolve, ctx.doc, _which(ctx, args.get("component")))
+
+
+@command("asmlightweight", group="solids", label="Make Components Lightweight", description="Show components from the display copy kept in the assembly again, without their full solids.", menu="Assembly > Make Lightweight", undoable=False)
+def asmlightweight(ctx):
+    t = yield ctx.text("Enter the component name or id (or ALL)", "ALL")
+    if t.kind != "text":
+        return
+    out = run(light.lighten, ctx.doc, _which(ctx, t.value))
+    ctx.say("%d lightweight." % out["count"])
+
+
+@executes("asmlightweight")
+def asmlightweight_exec(ctx, args):
+    return run(light.lighten, ctx.doc, _which(ctx, args.get("component")))
 
 
 @command("partprops", aliases=("partprop",), group="solids", label="Document Properties", description="Show or set part number, description, material and revision of this document.", menu="File > Document Properties")

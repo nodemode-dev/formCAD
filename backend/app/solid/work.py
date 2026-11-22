@@ -25,6 +25,8 @@ def kcall(method: str, params: dict | None = None, timeout: float = SHORT):
     try:
         return kernel.call(method, params, timeout)
     except kernel.KernelError as err:
+        if str(err) == "Unknown method %s." % method:
+            raise SolidError("The installed 3D kernel is older than this feature (it has no %s). Install the newer kernel from Preferences when it is offered." % method)
         raise SolidError(str(err))
 
 

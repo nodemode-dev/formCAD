@@ -6,6 +6,7 @@ from app.param.units import mm_per_unit
 
 def brief_status(st: dict, with_log: bool = True) -> dict:
     out = {k: st[k] for k in ("status", "stale", "source", "reason", "resolved", "found_by", "message", "nested")}
+    out["lightweight"] = bool(st.get("lightweight"))
     if with_log:
         out["log"] = st.get("log", [])
     return out
@@ -32,10 +33,11 @@ def listing(doc) -> dict:
     counts = {
         "components": len(comps), "instances": len(live), "missing": sum(1 for c in comps if c["status"] and c["status"]["status"] == "missing"),
         "outofdate": sum(1 for c in comps if c["status"] and c["status"]["status"] == "outofdate"), "stale": sum(1 for c in comps if c["status"] and c["status"]["stale"]),
+        "lightweight": sum(1 for i in live if i.status.get("lightweight")),
     }
     return {
         "rev": doc.rev, "kind": doc.kind, "schema": head["schema"], "units_mm": mm_per_unit(d), "path": doc.path,
-        "settings": {"search_folders": head["search_folders"], "search_order": refs.describe_order(head), "embed_cache": head["embed_cache"], "active_config": cfg.active_name(d)},
+        "settings": {"search_folders": head["search_folders"], "search_order": refs.describe_order(head), "embed_cache": head["embed_cache"], "lightweight": bool(head.get("lightweight", True)), "active_config": cfg.active_name(d)},
         "components": comps, "patterns": [copy.deepcopy(p) for p in store.patterns(d)], "configs": cfg.listing(d), "counts": counts,
     }
 

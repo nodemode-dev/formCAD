@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.27.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.28.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -122,13 +122,13 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 6. Parts
 
-**What it does.** Parametric solid parts on the OpenCascade kernel: a feature tree with rollback, suppress and rebuild; 20 feature types; references that survive upstream edits; multibody parts; reference geometry; configurations; design tables; materials; mass properties.
+**What it does.** Parametric solid parts on the OpenCascade kernel: a feature tree with rollback, suppress and rebuild; 24 feature types besides sketches, among them modelled threads, thicken and delete face; references that survive upstream edits; multibody parts; reference geometry; configurations; design tables; materials; mass properties.
 
 **How to start.** `partworkspace` enters the part workspace, `partsketch` starts a sketch on a plane or face, `partsketchdone` finishes it, then a feature command.
 
 **Main commands.** `featextrude`, `featcut`, `featrevolve`, `featrevolvecut`, `featadd`, `features`, `featedit`, `featdelete`, `featsuppress`, `featunsuppress`, `featrollback`, `featrebuild`, `featforcerebuild`, `combine`, `splitbody`, `movecopybody`, `refgeo`, `config`, `designtable`, `material`, `materiallib`, `bodymass`, `massprop`; primitives `box`, `cylinder`, `sphere`, `cone`, `torus`, `extrude`; edge work `filletedge`, `chamferedge`, `blendedge`; booleans `boolop`, `boolcheck`.
 
-**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Each side of a sketch polyline keeps its own identity through edits: move, add or remove vertices in an early sketch and fillets, chamfers and sketches on the other sides stay where they were. A reference to a side or corner you removed fails with its name rather than jumping to a neighbour; when a corner's name changed because you split a side, the reference is found again by shape and the feature shows a warning. Holes have their own router (`/api/holes`); the standard sizes they offer are described under Toolbox, and any size can be typed.
+**Limits.** Needs the kernel worker. The materials that ship have cited values; where no cited value exists the table is empty and yours to fill. A failed feature is marked with its reason and later features wait; it never silently changes the model. Each side of a sketch polyline keeps its own identity through edits: move, add or remove vertices in an early sketch and fillets, chamfers and sketches on the other sides stay where they were. A reference to a side or corner you removed fails with its name rather than jumping to a neighbour; when a corner's name changed because you split a side, the reference is found again by shape and the feature shows a warning. Holes have their own router (`/api/holes`); the standard sizes they offer are described under Toolbox, and any size can be typed. Thread cuts a real ISO 60 degree thread into a cylindrical face or adds one onto it, outside a shaft or inside a hole; with no size picked, the size and pitch come from the hole table row that matches the face, or from the tapped hole that made it, and a typed pitch overrides both. Thicken turns faces of the part, or sheet bodies, into solid on one side, the other or both, added to or cut from the body. Delete Face removes faces and heals the gap by extending the neighbours, or fills it with a patch; when the neighbours cannot meet, the feature fails and says so. These three need the 3D kernel released with them; an older kernel says so when they rebuild.
 
 ## 7. Sheet metal
 
@@ -172,9 +172,11 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **How to start.** `asminsert` to place a component, `mate` to constrain it.
 
-**Main commands.** `asminsert`, `asmremove`, `asmmove`, `asmflags`, `asmreload`, `asmreplace`, `asmfind`, `asmrebase`, `asmembed`, `asmpattern`, `asmconfig`, `asmbom`, `asmsearch`, `asmrefresh`, `mate`, `mateedit`, `matedelete`, `matesolve`, `matestatus`, `matedrag`, `explodeview`, `interfere`, `interferesweep`, `matesettings`. The file contract is in `docs/ASSEMBLY_SCHEMA.md`.
+**Main commands.** `asminsert`, `asmremove`, `asmmove`, `asmflags`, `asmreload`, `asmreplace`, `asmfind`, `asmrebase`, `asmembed`, `asmpattern`, `asmconfig`, `asmbom`, `asmsearch`, `asmrefresh`, `mate`, `mateedit`, `matedelete`, `matesolve`, `matestatus`, `matedrag`, `explodeview`, `interfere`, `interferesweep`, `matesettings`, `asmresolve`, `asmlightweight`. The file contract is in `docs/ASSEMBLY_SCHEMA.md`.
 
-**Limits.** Interference checks grow with the number of pairs and are capped; a large assembly is checked in sweeps. A component file outside the granted or document folders is refused.
+Lightweight components: when you open an assembly, each part is drawn from the display copy the assembly keeps instead of being loaded from its file, so a large assembly opens in a moment; such rows carry the badge "lightweight" in the Assembly panel. The solid loads by itself as soon as a command needs it (a mate on a face, an interference check, an export, a drawing view). Load it yourself with the load button on the row, Resolve all or `asmresolve`, and go back with `asmlightweight`. A part whose file changed after its copy was stored opens in full and its status says so. `asmsearch` with `lightweight` false turns lightweight opening off.
+
+**Limits.** Interference checks grow with the number of pairs and are capped; a large assembly is checked in sweeps. Lightweight opening needs the display copies, so an assembly saved with them turned off (`asmsearch` embed cache) opens in full; resolving every component of a large assembly takes as long as opening it in full did. A component file outside the granted or document folders is refused.
 
 ## 11. Joints and motion
 
@@ -188,13 +190,15 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 12. Drawings
 
-**What it does.** Drawing views from 3D in first or third angle: base, projected, auxiliary, section, detail, broken and cropped views that update with the model; dimensions that follow the model; tolerance frames, datums, balloons, bills of materials, title blocks, center marks and section hatching.
+**What it does.** Drawing views from 3D in first or third angle: base, projected, auxiliary, section, detail, broken and cropped views that update with the model; dimensions that follow the model; tolerance frames, datums, balloons, bills of materials, hole tables, revision tables, title blocks, center marks and section hatching.
 
 **How to start.** On a layout, `viewbase`, then `viewprojected`.
 
-**Main commands.** `viewbase`, `viewprojected`, `viewaux`, `viewsection`, `viewdetail`, `viewbroken`, `viewcrop`, `viewupdate`, `viewedit`, `viewdelete`, `viewprojection`, `viewdim`, `modelitems`, `gdtframe`, `gdtedit`, `datumsym`, `balloon`, `autoballoon`, `bomtable`, `bomupdate`, `bomexport`, `titleblock`, `docprops`, `centermarks`, `sectionhatch`, `finishmark`.
+**Main commands.** `viewbase`, `viewprojected`, `viewaux`, `viewsection`, `viewdetail`, `viewbroken`, `viewcrop`, `viewupdate`, `viewedit`, `viewdelete`, `viewprojection`, `viewdim`, `modelitems`, `gdtframe`, `gdtedit`, `datumsym`, `balloon`, `autoballoon`, `bomtable`, `bomupdate`, `bomexport`, `holetable`, `holetableupdate`, `revtable`, `revadd`, `revedit`, `revremove`, `titleblock`, `docprops`, `centermarks`, `sectionhatch`, `finishmark`.
 
-**Limits.** Views come from hidden line removal, not a rendering of the model; very dense models take a while and show a progress bar. Standards frames are drawn from geometry rules you can inspect; no standard's text is reproduced.
+A hole table lists the holes seen end-on in one view: a tag per hole (one letter per size, numbered), its X and Y from the lower-left corner of the view's part (or from a view point you name) and its size, "⌀6.00 THRU", "⌀6.00 x 8.00 DEEP", a counterbore after it, or the thread ("M6x1 THRU") for a tapped hole of a Hole feature. The tags are placed beside the holes. When the part changes, the table and its tags follow with the view. A revision table lists the drawing's revisions; Add Revision takes the next letter (A to Z without I and O), today's date unless you give one, and updates every revision table and the REV field of the title blocks. A dimension placed on view geometry, by `viewdim` or by snapping to a view's corners and edges, stays on that geometry when the part changes.
+
+**Limits.** Views come from hidden line removal, not a rendering of the model; very dense models take a while and show a progress bar. Standards frames are drawn from geometry rules you can inspect; no standard's text is reproduced. A hole table finds cylindrical holes only: a countersink cone or a hole seen at an angle is not listed, and a hole in an assembly view or in a view of another file shows its diameter rather than its thread.
 
 ## 13. The graph
 

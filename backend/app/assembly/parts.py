@@ -77,6 +77,26 @@ class LoadedPart:
         return ""
 
 
+def cached_bodies(cache: dict) -> list:
+    out = []
+    for i, b in enumerate(cache.get("bodies") or []):
+        pb = PartBody.__new__(PartBody)
+        pb.ent = None
+        pb.handle = int(b.get("handle", i))
+        pb.name = str(b.get("name") or "Body%d" % i)
+        pb.blob = str(b.get("blob") or "")
+        pb.rgb = list(b.get("rgb") or [])
+        pb.offset = [float(v) for v in (b.get("offset") or [0.0, 0.0, 0.0])]
+        pb.summary = dict(b.get("summary") or {})
+        pb.closed = bool(b.get("closed"))
+        pb.material = str(b.get("material") or "")
+        pb.face_ids = [int(v) for v in (b.get("face_ids") or [])]
+        pb.edge_ids = [int(v) for v in (b.get("edge_ids") or [])]
+        pb.version = int(b.get("version") or 0)
+        out.append(pb)
+    return out
+
+
 class CachedPart(LoadedPart):
     source = "cache"
 
@@ -92,22 +112,7 @@ class CachedPart(LoadedPart):
         self.configs = list(cache.get("configs") or [])
         self.active_config = str(cache.get("active_config") or "")
         self.variants = {}
-        self.bodies = []
-        for i, b in enumerate(cache.get("bodies") or []):
-            pb = PartBody.__new__(PartBody)
-            pb.ent = None
-            pb.handle = int(b.get("handle", i))
-            pb.name = str(b.get("name") or "Body%d" % i)
-            pb.blob = str(b.get("blob") or "")
-            pb.rgb = list(b.get("rgb") or [])
-            pb.offset = [float(v) for v in (b.get("offset") or [0.0, 0.0, 0.0])]
-            pb.summary = {}
-            pb.closed = bool(b.get("closed"))
-            pb.material = str(b.get("material") or "")
-            pb.face_ids = []
-            pb.edge_ids = []
-            pb.version = 0
-            self.bodies.append(pb)
+        self.bodies = cached_bodies(cache)
 
     def scan(self) -> None:
         return None
@@ -176,7 +181,7 @@ def forget(path: str = "") -> None:
 
 
 def cache_record(host_drawing, lp: LoadedPart, embed: bool = True, config: str = "") -> dict:
-    out = {"bodies": [], "props": copy.deepcopy(lp.props), "configs": list(lp.configs), "active_config": lp.active_config, "mmu": lp.mm_per_unit, "taken": ""}
+    out = {"bodies": [], "props": copy.deepcopy(lp.props), "configs": list(lp.configs), "active_config": lp.active_config, "mmu": lp.mm_per_unit, "taken": "", "complete": True}
     if not embed:
         return out
     total = 0
@@ -188,13 +193,19 @@ def cache_record(host_drawing, lp: LoadedPart, embed: bool = True, config: str =
         if raw is not None:
             total += len(raw)
             if total > 64 * 1024 * 1024:
+                out["complete"] = False
                 break
             host_drawing.blobs[blobs.cache_path(b.blob, CACHE_TAG)] = raw
-        out["bodies"].append({"handle": b.handle, "name": b.name, "blob": b.blob, "rgb": b.rgb, "offset": b.offset, "closed": b.closed, "material": b.material, "has_mesh": raw is not None})
+        out["bodies"].append({
+            "handle": b.handle, "name": b.name, "blob": b.blob, "rgb": b.rgb, "offset": b.offset, "closed": b.closed, "material": b.material, "has_mesh": raw is not None,
+            "summary": copy.deepcopy(b.summary), "face_ids": list(b.face_ids), "edge_ids": list(b.edge_ids), "version": int(b.version or 0),
+        })
     return out
 
 
 def shapes(lp: LoadedPart, body) -> str:
+    if lp.source == "light":
+        return lp.shape(body)
     if body.ent is None:
         raise work.SolidError("%s is drawn from the copy kept in this assembly because its file changed or is missing. Reload the component, then try again." % body.name)
     return work.worker_id(lp.drawing, body.ent)

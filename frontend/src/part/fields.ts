@@ -38,6 +38,8 @@ const CHOICE_WORDS: Record<string, string> = {
   open: 'Open',
   teardrop: 'Teardrop',
   rolled: 'Rolled',
+  heal: 'Delete and heal',
+  patch: 'Delete and patch',
 };
 
 const numeric = (s: string): number | null => {
@@ -234,6 +236,8 @@ export function showWhen(type: string, name: string, v: Record<string, unknown>)
     if (name === 'tap_drill' || name === 'thread_nominal' || name === 'thread_pitch' || name === 'thread_depth' || name === 'cosmetic') return k === 'tapped';
     if (name === 'standard') return false;
   }
+  if (type === 'thread' && name === 'standard') return false;
+  if (type === 'delete_face' && name === 'tangent') return g('mode') === 'patch';
   return true;
 }
 

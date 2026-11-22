@@ -396,7 +396,7 @@ def embed(doc, handles, label=None, fixed=None) -> dict:
     return copy.deepcopy(rec)
 
 
-def settings(doc, search_folders=None, search_order=None, embed_cache=None) -> dict:
+def settings(doc, search_folders=None, search_order=None, embed_cache=None, lightweight=None) -> dict:
     h = _guard(doc)
     if search_folders is not None:
         out = []
@@ -413,8 +413,10 @@ def settings(doc, search_folders=None, search_order=None, embed_cache=None) -> d
         h["search_order"] = refs.clean_order(search_order)
     if embed_cache is not None:
         h["embed_cache"] = bool(embed_cache)
+    if lightweight is not None:
+        h["lightweight"] = bool(lightweight)
     store.save_header(doc.drawing, h)
-    return {"search_folders": h["search_folders"], "search_order": h["search_order"], "embed_cache": h["embed_cache"]}
+    return {"search_folders": h["search_folders"], "search_order": h["search_order"], "embed_cache": h["embed_cache"], "lightweight": bool(h.get("lightweight", True))}
 
 
 def rebase(doc, relative: bool = True) -> dict:

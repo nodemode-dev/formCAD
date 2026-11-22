@@ -57,9 +57,11 @@ def follow(doc, tx) -> None:
     if rebuilt:
         from app.dim import assoc
         from app.doc.kinds import drawannlink
+        from app.drawann import holetable
 
         assoc.follow(doc, rebuilt)
         drawannlink.follow(doc, tx)
+        holetable.follow(doc, rebuilt)
 
 
 commit_hooks.register(PRIORITY, follow)

@@ -105,6 +105,18 @@ def load_operations() -> None:
         for name in ("feature_fillet", "feature_chamfer", "feature_shell", "feature_draft", "feature_pattern", "feature_mirror", "feature_precheck"):
             METHODS.setdefault(name, features2_unavailable)
     try:
+        import kernel_features3
+
+        METHODS.update(kernel_features3.METHODS)
+    except Exception as err:
+        failure_f3 = str(err)
+
+        def features3_unavailable(_params):
+            raise RuntimeError("The thread, thicken and delete face operations could not be loaded (%s)." % failure_f3)
+
+        for name in ("feat_thread", "feat_thicken", "feat_delete_face"):
+            METHODS.setdefault(name, features3_unavailable)
+    try:
         import kernel_shapes
 
         METHODS.update(kernel_shapes.METHODS)

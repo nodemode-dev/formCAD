@@ -15,6 +15,7 @@ export interface TreeNode {
   visible: boolean;
   status: string;
   stale: boolean;
+  lightweight?: boolean;
   world: number[];
   pattern: string | null;
   index: number;

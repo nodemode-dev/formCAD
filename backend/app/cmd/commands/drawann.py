@@ -499,6 +499,164 @@ def bomexport_exec(ctx, args):
     return {"path": path, "rows": len(t.cells)}
 
 
+def table_guard(fn):
+    def run(ctx, args):
+        from app.drawann import holetable, revisions
+
+        try:
+            return fn(ctx, args)
+        except (holetable.HoleTableError, revisions.RevisionError, titleblock.TitleError, viewsrc.ViewError, ops.AnnError) as err:
+            raise fail(err)
+
+    run.__name__ = fn.__name__
+    return run
+
+
+@command("holetable", group="annotation", label="Hole Table", description="Place a table of the holes seen in a drawing view, with a tag, position and size for each; it follows the part when it changes.", menu="")
+def holetable_cmd(ctx):
+    r = yield ctx.entity("Select a drawing view")
+    if r.kind != "entity":
+        return
+    p = yield from ask_point(ctx, "Specify the hole table insertion point")
+    if p is None:
+        return
+    try:
+        out = holetable_exec(ctx, {"view": r.value["handle"], "point": [p[0], p[1]]})
+    except CommandError as err:
+        ctx.say(str(err))
+        return
+    ctx.say("%d hole(s) listed." % len(out["holes"]))
+
+
+@executes("holetable")
+@table_guard
+def holetable_exec(ctx, args):
+    from app.cmd.commands.tables import make_table
+    from app.drawann import holetable
+
+    view = viewsrc.need(ctx.d, args.get("view"))
+    origin = None
+    if args.get("origin") is not None:
+        origin = view_link(ctx, view, args["origin"])
+    title = str(args.get("title", holetable.TITLE))[:80]
+    at = ops.pt(args.get("point", [0.0, 0.0]))
+    t = make_table(ctx, len(holetable.COLUMNS), 1, at, args.get("style"))
+    t.extra = {"holetable": {"view": view.handle, "origin": origin, "title": title, "show_tags": bool(args.get("tags", True)), "tags": []}}
+    h = ctx.add(t)
+    return holetable.refresh(ctx.doc, h)
+
+
+@command("holetableupdate", group="annotation", label="Update Hole Tables", description="Read the holes of their views again into the hole tables.", menu="", repeatable=False)
+def holetableupdate(ctx):
+    out = holetableupdate_exec(ctx, {})
+    ctx.say("%d hole table(s) updated." % len(out["updated"]))
+    yield from ()
+
+
+@executes("holetableupdate")
+@table_guard
+def holetableupdate_exec(ctx, args):
+    from app.drawann import holetable
+
+    want = {int(h) for h in args["handles"]} if args.get("handles") else None
+    done = []
+    for e in list(ctx.d.ents.values()):
+        if e.kind == "table" and "holetable" in (e.extra or {}) and (want is None or e.handle in want) and not ctx.locked(e):
+            done.append(holetable.refresh(ctx.doc, e.handle))
+    return {"updated": done}
+
+
+def refresh_revisions(ctx):
+    from app.drawann import revisions
+
+    n = revisions.refresh_all(ctx.d)
+    for owner in sorted({e.owner for e in ctx.d.ents.values() if e.kind == "insert" and e.block.upper() == titleblock.BLOCK and e.owner.startswith("layout:")}):
+        titleblock_exec(ctx, {"layout": owner[7:]})
+    return n
+
+
+@command("revtable", group="annotation", label="Revision Table", description="Place the drawing's revision table; it lists every revision added with Add Revision.", menu="")
+def revtable_cmd(ctx):
+    p = yield from ask_point(ctx, "Specify the revision table insertion point")
+    if p is None:
+        return
+    try:
+        revtable_exec(ctx, {"point": [p[0], p[1]]})
+    except CommandError as err:
+        ctx.say(str(err))
+
+
+@executes("revtable")
+@table_guard
+def revtable_exec(ctx, args):
+    from app.cmd.commands.tables import make_table
+    from app.drawann import revisions
+
+    rows = revisions.get(ctx.d)
+    title = str(args.get("title", revisions.TITLE))[:80]
+    t = make_table(ctx, len(revisions.COLUMNS), max(len(rows), 1), ops.pt(args.get("point", [0.0, 0.0])), args.get("style"))
+    t.extra = {"revisions": {"title": title}}
+    revisions.fill(ctx.d, t, rows, title)
+    return {"created": ctx.add(t), "rows": len(rows)}
+
+
+@command("revadd", group="annotation", label="Add Revision", description="Add the next revision with its description, date and approval; the revision tables and title blocks follow.", menu="")
+def revadd_cmd(ctx):
+    r = yield ctx.text("Enter the revision description")
+    if r.kind != "text":
+        return
+    try:
+        out = revadd_exec(ctx, {"description": r.value})
+    except CommandError as err:
+        ctx.say(str(err))
+        return
+    ctx.say("Revision %s added." % out["revision"]["rev"])
+
+
+@executes("revadd")
+@table_guard
+def revadd_exec(ctx, args):
+    from app.drawann import revisions
+
+    row = revisions.add(ctx.d, args.get("description", ""), args.get("date"), args.get("approved", ""), args.get("rev"))
+    return {"revision": row, "tables": refresh_revisions(ctx)}
+
+
+@command("revedit", group="annotation", label="Edit Revision", description="Change the description, date or approval of a revision.", menu="")
+def revedit_cmd(ctx):
+    ctx.say("Edit Revision is available through the programmatic form: revedit with rev and the fields to change.")
+    yield from ()
+
+
+@executes("revedit")
+@table_guard
+def revedit_exec(ctx, args):
+    from app.drawann import revisions
+
+    row = revisions.edit(ctx.d, args.get("rev"), {k: args[k] for k in revisions.FIELDS if k in args})
+    return {"revision": row, "tables": refresh_revisions(ctx)}
+
+
+@command("revremove", group="annotation", label="Remove Last Revision", description="Remove the latest revision; the revision before it becomes current.", menu="", repeatable=False)
+def revremove_cmd(ctx):
+    try:
+        out = revremove_exec(ctx, {})
+    except CommandError as err:
+        ctx.say(str(err))
+        return
+    ctx.say("Revision %s removed." % out["removed"]["rev"])
+    yield from ()
+
+
+@executes("revremove")
+@table_guard
+def revremove_exec(ctx, args):
+    from app.drawann import revisions
+
+    gone = revisions.remove_last(ctx.d)
+    return {"removed": gone, "tables": refresh_revisions(ctx)}
+
+
 @command("autoballoon", group="annotation", label="Auto Balloons", description="Place a balloon for every BOM item on the parts of a drawing view.", menu="", repeatable=False)
 def autoballoon(ctx):
     r = yield ctx.entity("Select a drawing view")

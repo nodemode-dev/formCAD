@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from app.assembly import cfg, parts, patterns, refs, store, xform
+from app.assembly import cfg, light, parts, patterns, refs, store, xform
 from app.assembly.store import AssemblyError
 from app.param.units import mm_per_unit
 
@@ -33,14 +33,15 @@ class Instance:
             "config": self.config, "key": self.key, "cid": self.cid, "path": list(self.path), "depth": self.depth, "label": self.record["label"], "type": self.record["type"],
             "suppressed": self.suppressed, "visible": self.visible, "pattern": self.pattern, "index": self.index, "world": xform.to_list(self.world),
             "local": xform.to_list(self.local), "status": self.status["status"], "stale": self.status["stale"], "source": self.status["source"],
+            "lightweight": bool(self.status.get("lightweight")),
         }
 
 
 def new_status() -> dict:
-    return {"status": "loaded", "stale": False, "source": "file", "reason": "found", "resolved": "", "found_by": "", "message": "", "nested": [], "log": []}
+    return {"status": "loaded", "stale": False, "source": "file", "reason": "found", "resolved": "", "found_by": "", "message": "", "nested": [], "log": [], "lightweight": False}
 
 
-def resolve(host_d, host_path: str, rec: dict, stack=(), depth=0, folders=(), deep=False) -> tuple:
+def resolve(host_d, host_path: str, rec: dict, stack=(), depth=0, folders=(), deep=False, lite=None) -> tuple:
     st = new_status()
     kind = rec["type"]
     if kind == "embedded":
@@ -66,6 +67,19 @@ def resolve(host_d, host_path: str, rec: dict, stack=(), depth=0, folders=(), de
         return fall("cycle", "That file would contain itself, so it is not opened.")
     if depth >= MAX_DEPTH:
         return fall("toodeep", "Sub-assemblies are nested more than %d levels deep." % MAX_DEPTH)
+    changed = False
+    if lite is not None and light.usable(host_d, rec, lite[2]):
+        if light.matches(real, rec.get("sig") or {}):
+            st.update(resolved=real, found_by=by, source="light", lightweight=True)
+            return st, light.LightPart(host_d, rec, real, lite[0], lite[1])
+        changed = True
+    st, lp = _full(st, real, by, rec, kind, cached, fall, unavailable)
+    if changed and st["status"] == "outofdate":
+        st["message"] = (st["message"] + " " if st["message"] else "") + light.CHANGED
+    return st, lp
+
+
+def _full(st, real, by, rec, kind, cached, fall, unavailable) -> tuple:
     try:
         lp = parts.load(real)
     except parts.PartLoadError:
@@ -104,9 +118,13 @@ def _expand(host_d, host_path, parent_world, prefix, parent_path, stack, depth, 
         vis = bool(overlay["visible"].get(cid, rec.get("visible", True))) if overlay else bool(rec.get("visible", True))
         conf = str(overlay["component_config"].get(cid, rec.get("config") or "")) if overlay else str(rec.get("config") or "")
         local = _matrix(rec)
-        ckey = (id(host_d), cid, stack)
+        lite = None
+        held = opts.get("light")
+        if held is not None and rec["type"] == "part" and prefix + cid not in held:
+            lite = (opts["top"], prefix + cid, conf)
+        ckey = (id(host_d), cid, stack) + ((prefix,) if lite else ())
         if ckey not in cache:
-            cache[ckey] = resolve(host_d, host_path, rec, stack, depth, opts.get("folders", ()), opts.get("deep", False))
+            cache[ckey] = resolve(host_d, host_path, rec, stack, depth, opts.get("folders", ()), opts.get("deep", False), lite)
         status, lp = cache[ckey]
         copies = [(0, xform.identity(), None)]
         for p in pats.get(cid, []):
@@ -125,7 +143,7 @@ def _expand(host_d, host_path, parent_world, prefix, parent_path, stack, depth, 
             key = prefix + cid + ("#%d" % idx if idx else "")
             world = parent_world @ pm @ local
             part = lp
-            if lp is not None and rec["type"] == "part" and conf and conf != (lp.active_config or "") and conf in lp.configs:
+            if lp is not None and lp.source != "light" and rec["type"] == "part" and conf and conf != (lp.active_config or "") and conf in lp.configs:
                 try:
                     from app.assembly import variants
 
@@ -146,12 +164,14 @@ def _expand(host_d, host_path, parent_world, prefix, parent_path, stack, depth, 
                 status["nested"] = bad[:50]
 
 
-def instances(doc, include_suppressed: bool = False, folders=(), deep: bool = False) -> list:
+def instances(doc, include_suppressed: bool = False, folders=(), deep: bool = False, lightweight=None) -> list:
     d = doc.drawing
     host_path = getattr(doc, "path", "") or ""
     stack = (os.path.realpath(host_path),) if host_path else ()
     out: list = []
-    _expand(d, host_path, xform.identity(), "", (), stack, 0, None, out, {"include_suppressed": include_suppressed, "folders": folders, "deep": deep}, {})
+    use = light.enabled(d) if lightweight is None else bool(lightweight)
+    opts = {"include_suppressed": include_suppressed, "folders": folders, "deep": deep, "light": light.resolved(d) if use else None, "top": d}
+    _expand(d, host_path, xform.identity(), "", (), stack, 0, None, out, opts, {})
     return out
 
 
@@ -167,5 +187,8 @@ def status_of(doc, rec, folders=(), deep=False) -> dict:
     d = doc.drawing
     host_path = getattr(doc, "path", "") or ""
     stack = (os.path.realpath(host_path),) if host_path else ()
-    st, _lp = resolve(d, host_path, rec, stack, 0, folders, deep)
+    lite = None
+    if light.enabled(d) and rec.get("type") == "part" and rec["id"] not in light.resolved(d):
+        lite = (d, rec["id"], str(rec.get("config") or ""))
+    st, _lp = resolve(d, host_path, rec, stack, 0, folders, deep, lite)
     return st
