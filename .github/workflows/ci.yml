@@ -90,12 +90,33 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
 
+  shell:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stand-in folders the shell's build script looks for
+        run: |
+          mkdir -p frontend/dist src-tauri/engine
+          printf '<!doctype html>\n' > frontend/dist/index.html
+          : > src-tauri/engine/.keep
+      - name: Type check the shell
+        working-directory: src-tauri
+        run: cargo check --locked
+
   engine-freeze:
     needs: [frontend, backend]
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-22.04]
+        os: [macos-latest, macos-15-intel, windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     defaults:
@@ -117,6 +138,8 @@ jobs:
           source setup/lib.sh
           fc_venv
           pip install pyinstaller==6.22.3
+      - name: Check the agent kit
+        run: ./formCAD agents check
       - name: Install the frontend
         run: setup/install_frontend
       - name: Freeze the engine and run its selfcheck
