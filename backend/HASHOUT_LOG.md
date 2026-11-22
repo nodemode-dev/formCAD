@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## DS1 v0.27.0 a part sketch's space is displayable (app/display/state.py)
+
+Entering a part sketch makes `sketch:<name>` the document's current space, and the interface asks the display route for the current space. `space_key` only knew the model, layouts and blocks, so the route answered 404 for every request while a sketch was open (two console errors per sketch). A `sketch:` space that exists in the drawing's spaces is now its own display key.
+
 ## MT2 v0.27.0 end stops release on a reverse drag (app/mates/net.py)
 
 Fixes the known problem in MT1. The drag step projects the pull onto the null space of the mate rows, and a limit row (limit distance, limit angle, a free slot's end stops) at its stop has a one-sided Jacobian, so it acted as an equality and froze the motion both ways. `tangent_step` now leaves the one-sided rows out, takes the step, and only when that step pushes a one-sided row further into its stop recomputes with those rows (central differences, so the row has its full direction) as equalities, which lets the component slide along the stop. Checked in process (2026-11-22) for a point in a 40 long slot and for a point on an axis with a limit distance of -20 to 20: dragged to 50 it stops at 20; dragged to -50 it now reaches -20 (it stayed at 20 before); drags to 5, 30 and -8 end at 5, 20 and -8 as before; mate residuals 0.
