@@ -73,6 +73,13 @@ fn renderer_choice(handle: &tauri::AppHandle, choice: window_state::Choice) {
     }
 }
 
+fn stays_home(target: &tauri::Url, home: &str) -> bool {
+    match target.scheme() {
+        "data" | "about" => true,
+        _ => target.origin().ascii_serialization() == home,
+    }
+}
+
 fn close_splash(handle: &tauri::AppHandle) {
     if let Some(splash) = handle.get_webview_window("splash") {
         let _ = splash.close();
@@ -340,12 +347,13 @@ fn main() {
                             .disable_drag_drop_handler()
                             .on_navigation({
                                 let handle = handle.clone();
-                                move |url| match window_state::shell_choice(url) {
+                                let home = url.clone();
+                                move |target| match window_state::shell_choice(target) {
                                     Some(choice) => {
                                         renderer_choice(&handle, choice);
                                         false
                                     }
-                                    None => true,
+                                    None => stays_home(target, &home),
                                 }
                             });
                         let builder = if place.width > 0.0 {
