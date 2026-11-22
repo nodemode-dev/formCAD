@@ -78,7 +78,7 @@ const view = (): MenuItem[] => section('View', () => [
 ]);
 
 const insert = (): MenuItem[] => section('Insert', () => [
-  E('Block...', 'insert'), E('DWG Reference...', 'xattach'), E('Data Link...', 'datalink'), S('Layout', E('New Layout', 'layout', 'new')),
+  E('Block...', 'insert'), E('DWG Reference...', 'xattach'), E('Raster Image Reference...', 'imageattach'), E('PDF Underlay...', 'pdfattach'), E('Data Link...', 'datalink'), S('Layout', E('New Layout', 'layout', 'new')),
   SEP, E('Image Reference...', 'imageattach'), E('Table...', 'table'),
 ]);
 
@@ -135,8 +135,9 @@ const modify = (): MenuItem[] => section('Modify', () => [
     E('Edit Array', 'arrayedit'), E('Block Description...', 'blockdesc'),
     S('Attribute', E('Single...', 'attedit'), E('Global', '-attedit'), E('Block Attribute Manager...', 'battman'), E('Synchronize Attributes', 'attsync')),
     S('External Reference', E('Bind...', 'xbind')),
+    S('Image', E('Adjust...', 'imageadjust')), S('PDF Underlay', E('Adjust...', 'pdfadjust')),
     S('Multileader', E('Add Leader', 'mleaderedit.add'), E('Remove Leader', 'mleaderedit.remove'), E('Align', 'mleaderalign'), E('Collect', 'mleadercollect'))),
-  S('Clip', E('Viewport', 'vpclip')),
+  S('Clip', E('Viewport', 'vpclip'), E('Image', 'imageclip'), E('PDF Underlay', 'pdfclip')),
   S('3D Operations', E('Align', 'align'), 'u8-gumball', 'u8-gumball-reset'),
   S('Solid Editing', E('Union', 'union'), E('Subtract', 'subtract'), E('Intersect', 'intersect')),
   S('Annotative Object Scale', E('Add Current Scale', 'aiobjectscaleadd'), E('Delete Current Scale', 'aiobjectscaleremove'), E('Add/Delete Scales...', 'objectscale'),

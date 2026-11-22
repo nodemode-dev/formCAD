@@ -11,6 +11,7 @@ import { bindInput } from './input';
 import { OverlayStore, drawOverlays, type OverlayEnv } from './overlay';
 import { newDyn, type DynLayer, type PaintView, type Painter } from './painter';
 import { distanceTo, distanceToInfinite, touchesRect } from './pick';
+import { Pictures } from './pictures';
 import { DisplayStore, type BuildOptions } from './store';
 import { readTheme, type Theme } from './theme';
 import { onThemeChange } from './ink';
@@ -71,6 +72,12 @@ export class Renderer implements CanvasApi {
   private infKey = '';
   private readonly under: DynLayer[] = [];
   private underKey = '';
+  private picsMgr: Pictures | null = null;
+
+  private get pictures(): Pictures {
+    this.picsMgr ??= new Pictures(this.deps, () => { this.dirtyScene = true; this.schedule(); }, (b) => this.painter.dropPicture(b));
+    return this.picsMgr;
+  }
   private readonly listeners = new Map<string, Set<(e: never) => void>>();
   private readonly off: Array<() => void> = [];
   private hasSize = false;
@@ -322,7 +329,10 @@ export class Renderer implements CanvasApi {
       visible: vis,
     };
     this.syncLayout(band);
-    this.painter.frame(pv, this.store.chunks.values(), dyn, this.under);
+    const lay = this.store.layout;
+    const vps = lay ? lay.viewports.filter((vp) => vp.on && vp.contentVisible && vp.items.length).map((vp) => ({ items: vp.items, area: (vp.outline.length >= 3 ? vp.outline : [[vp.bounds[0], vp.bounds[1]], [vp.bounds[2], vp.bounds[1]], [vp.bounds[2], vp.bounds[3]], [vp.bounds[0], vp.bounds[3]]]).flatMap((p) => [p[0], p[1]]) })) : [];
+    const pics = this.pictures.list(this.docId, this.store.pics.values(), (l) => this.store.hiddenLayer(l), vps);
+    this.painter.frame(pv, this.store.chunks.values(), dyn, this.under, pics);
     if (this.store.dead.length) {
       for (const g of this.store.dead) this.painter.release(g);
       this.store.dead.length = 0;
@@ -500,6 +510,7 @@ export class Renderer implements CanvasApi {
     if (id === this.docId) return;
     this.docId = id;
     this.store.clear();
+    this.pictures.clear();
     this.jigItems = [];
     this.overlays.set('jig', null);
     this.needFit = true;

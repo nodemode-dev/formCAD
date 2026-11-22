@@ -29,6 +29,7 @@ function modeFor(state: CommandLineState): CursorMode {
 onShellMounted((ctx) => {
   const c = mountCanvas(ctx.hosts.canvasHost, {
     fetchDisplay: (id, since, space) => api.display(id, since, space),
+    fetchPicture: (id, h) => api.underlay(id, h),
     sysvar: (name, fallback) => sysvars.num(name, fallback),
     sysvarVec: vector,
     onSysvar: (fn) => sysvars.onChange(() => fn('')),

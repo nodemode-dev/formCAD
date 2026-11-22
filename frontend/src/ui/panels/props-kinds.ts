@@ -179,6 +179,7 @@ export const KINDS: KindSpec[] = [
   },
   { kind: 'region', title: 'Region', rows: [] },
   { kind: 'viewport', title: 'Viewport', rows: [] },
+  { kind: 'underlay', title: 'Underlay', rows: [fixed('path', 'File', 'text'), fixed('page', 'Page'), plain('fade', 'Fade'), plain('show', 'Show', 'bool'), plain('clip_on', 'Clipping', 'bool')] },
 ];
 
 export const KIND_BY_NAME = new Map(KINDS.map((k) => [k.kind, k]));
