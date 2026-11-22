@@ -266,7 +266,8 @@ const drawing = (): MenuItem[] => section('Drawing', () => [
   'dw-section', 'dw-detail', 'dw-aux', 'dw-break', 'dw-crop', SEP,
   'dw-update', 'dw-update-all', 'dw-update-one', 'dw-delete', S('Projection Angle', 'dw-proj-third', 'dw-proj-first'), SEP,
   'dw-dim', 'dw-frame', 'dw-frame-edit', 'dw-datum', 'dw-finish', SEP,
-  'dw-balloon', 'dw-autoballoon', 'dw-bom', 'dw-bom-update', 'dw-centermarks', 'dw-hatch', SEP,
+  'dw-balloon', 'dw-autoballoon', 'dw-bom', 'dw-bom-update', E('Hole Table', 'holetable'), E('Update Hole Tables', 'holetableupdate'), 'dw-centermarks', 'dw-hatch', SEP,
+  E('Revision Table', 'revtable'), E('Add Revision...', 'revadd'), E('Remove Last Revision', 'revremove'), SEP,
   'dw-settings', 'dw-panel-views', 'dw-panel-props',
 ]);
 

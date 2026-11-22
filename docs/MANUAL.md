@@ -188,13 +188,15 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 12. Drawings
 
-**What it does.** Drawing views from 3D in first or third angle: base, projected, auxiliary, section, detail, broken and cropped views that update with the model; dimensions that follow the model; tolerance frames, datums, balloons, bills of materials, title blocks, center marks and section hatching.
+**What it does.** Drawing views from 3D in first or third angle: base, projected, auxiliary, section, detail, broken and cropped views that update with the model; dimensions that follow the model; tolerance frames, datums, balloons, bills of materials, hole tables, revision tables, title blocks, center marks and section hatching.
 
 **How to start.** On a layout, `viewbase`, then `viewprojected`.
 
-**Main commands.** `viewbase`, `viewprojected`, `viewaux`, `viewsection`, `viewdetail`, `viewbroken`, `viewcrop`, `viewupdate`, `viewedit`, `viewdelete`, `viewprojection`, `viewdim`, `modelitems`, `gdtframe`, `gdtedit`, `datumsym`, `balloon`, `autoballoon`, `bomtable`, `bomupdate`, `bomexport`, `titleblock`, `docprops`, `centermarks`, `sectionhatch`, `finishmark`.
+**Main commands.** `viewbase`, `viewprojected`, `viewaux`, `viewsection`, `viewdetail`, `viewbroken`, `viewcrop`, `viewupdate`, `viewedit`, `viewdelete`, `viewprojection`, `viewdim`, `modelitems`, `gdtframe`, `gdtedit`, `datumsym`, `balloon`, `autoballoon`, `bomtable`, `bomupdate`, `bomexport`, `holetable`, `holetableupdate`, `revtable`, `revadd`, `revedit`, `revremove`, `titleblock`, `docprops`, `centermarks`, `sectionhatch`, `finishmark`.
 
-**Limits.** Views come from hidden line removal, not a rendering of the model; very dense models take a while and show a progress bar. Standards frames are drawn from geometry rules you can inspect; no standard's text is reproduced.
+A hole table lists the holes seen end-on in one view: a tag per hole (one letter per size, numbered), its X and Y from the lower-left corner of the view's part (or from a view point you name) and its size, "⌀6.00 THRU", "⌀6.00 x 8.00 DEEP", a counterbore after it, or the thread ("M6x1 THRU") for a tapped hole of a Hole feature. The tags are placed beside the holes. When the part changes, the table and its tags follow with the view. A revision table lists the drawing's revisions; Add Revision takes the next letter (A to Z without I and O), today's date unless you give one, and updates every revision table and the REV field of the title blocks. A dimension placed on view geometry, by `viewdim` or by snapping to a view's corners and edges, stays on that geometry when the part changes.
+
+**Limits.** Views come from hidden line removal, not a rendering of the model; very dense models take a while and show a progress bar. Standards frames are drawn from geometry rules you can inspect; no standard's text is reproduced. A hole table finds cylindrical holes only: a countersink cone or a hole seen at an angle is not listed, and a hole in an assembly view or in a view of another file shows its diameter rather than its thread.
 
 ## 13. The graph
 
