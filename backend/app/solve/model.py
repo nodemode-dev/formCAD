@@ -7,18 +7,19 @@ from . import constraints as K
 from . import numeric as N
 from .errors import SolverFault
 
-PARAMS = {"point": 2, "line": 4, "circle": 3, "arc": 5, "ellipse": 5}
+PARAMS = {"point": 2, "line": 4, "circle": 3, "arc": 5, "ellipse": 5, "param": 1}
 ELLIPSE_ARC = 7
 
 
 class Ent:
-    __slots__ = ("id", "kind", "off", "n")
+    __slots__ = ("id", "kind", "off", "n", "meta")
 
-    def __init__(self, eid, kind, off, n):
+    def __init__(self, eid, kind, off, n, meta=None):
         self.id = eid
         self.kind = kind
         self.off = off
         self.n = n
+        self.meta = meta
 
 
 class Report:
@@ -50,16 +51,48 @@ class Sketch:
         self._count = {}
         self.weights = {}
         self.pweights = {}
+        self.aux = {}
+        self._reuse = []
+        self._taken = []
 
     def xarray(self):
         return np.array(self._x, dtype=float)
 
-    def _alloc(self, kind, vals):
+    def _alloc(self, kind, vals, meta=None):
         eid = self._eid
         self._eid += 1
-        self.ents[eid] = Ent(eid, kind, len(self._x), len(vals))
+        self.ents[eid] = Ent(eid, kind, len(self._x), len(vals), meta)
         self._x.extend(float(v) for v in vals)
         return eid
+
+    def add_spline(self, degree, knots, ctrl, weights=None, closed=False):
+        p = int(degree)
+        pts = [(float(q[0]), float(q[1])) for q in ctrl]
+        nc = len(pts)
+        if p < 1 or nc < p + 1 or len(knots) != nc + p + 1:
+            raise SolverFault("the spline has an invalid knot vector")
+        wrap = 0
+        if closed and nc > 2 * p:
+            tail = pts[nc - p:]
+            if all(abs(a[0] - b[0]) <= 1e-9 and abs(a[1] - b[1]) <= 1e-9 for a, b in zip(tail, pts[:p])):
+                wrap = p
+        uniq = nc - wrap
+        w = [float(v) for v in weights] if weights and len(weights) == nc and any(abs(float(v) - 1.0) > 1e-12 for v in weights) else None
+        meta = K.SplineMeta(p, [float(k) for k in knots], w, uniq, nc, bool(closed and wrap))
+        return self._alloc("spline", [c for q in pts[:uniq] for c in q], meta)
+
+    def aux_param(self, value):
+        if self._reuse:
+            eid = self._reuse.pop(0)
+            self._x[self.ents[eid].off] = float(value)
+        else:
+            eid = self._alloc("param", [value])
+        self._taken.append(eid)
+        return self.ents[eid]
+
+    def _drop_aux(self, cid):
+        for eid in self.aux.pop(cid, []):
+            self.ents.pop(eid, None)
 
     def add_point(self, x, y):
         return self._alloc("point", [x, y])
@@ -112,7 +145,21 @@ class Sketch:
         else:
             raise SolverFault("unknown constraint kind '%s'" % kind)
         refs = list(refs)
-        fn, vars_, rows, ents = K.build(self, kind, refs, value, ctx)
+        self._reuse = [e for e in self.aux.get(cid, []) if e in self.ents]
+        self._taken = []
+        ok = False
+        try:
+            fn, vars_, rows, ents = K.build(self, kind, refs, value, ctx)
+            ok = True
+        finally:
+            taken, spare = self._taken, self._reuse
+            self._reuse, self._taken = [], []
+            for eid in spare + ([] if ok and cid else taken):
+                self.ents.pop(eid, None)
+            if ok and cid and taken:
+                self.aux[cid] = taken
+            else:
+                self.aux.pop(cid, None)
         if group == "dimensional" and name is None:
             pre = K.PREFIX[kind]
             self._count[pre] = self._count.get(pre, 0) + 1
@@ -153,6 +200,7 @@ class Sketch:
             return rep
         self._x = before
         del self.cons[cid]
+        self._drop_aux(cid)
         if c.name and c.group == "dimensional":
             pre = K.PREFIX[kind]
             self._count[pre] -= 1
@@ -167,6 +215,7 @@ class Sketch:
         if cid not in self.cons:
             raise SolverFault("unknown constraint")
         del self.cons[cid]
+        self._drop_aux(cid)
 
     def set_value(self, cid, value):
         old = self.cons[cid]
@@ -226,17 +275,25 @@ class Sketch:
             cols.extend(range(e.off, e.off + e.n))
         cmap = {c: k for k, c in enumerate(cols)}
         n = len(cols)
-        if cons:
-            F, J = N.assemble(cons, x.copy(), cmap, n, central=True)
-        else:
-            J = np.zeros((0, n))
-        Jn, live = N.normalize_rows(J)
         owners = []
         for c in cons:
             owners.extend([c.id] * c.rows)
-        null = N.null_basis(Jn[live], n) if cons else np.eye(n)
+        null = None
+        deps = {}
+        if len(owners) > N.SPARSE_ROWS:
+            _, Js = N.assemble_sparse(cons, x.copy(), cmap, n, central=True)
+            _, null, dependent = N.echelon(Js)
+            if dependent:
+                deps = N.dependent_sparse(Js, dependent, owners)
+        if null is None:
+            if cons:
+                F, J = N.assemble(cons, x.copy(), cmap, n, central=True)
+            else:
+                J = np.zeros((0, n))
+            Jn, live = N.normalize_rows(J)
+            null = N.null_basis(Jn[live], n) if cons else np.eye(n)
+            deps = N.dependent_rows(Jn, live, owners) if cons else {}
         rep.dof += null.shape[1]
-        deps = N.dependent_rows(Jn, live, owners) if cons else {}
         by_id = {c.id: c for c in cons}
         touched = {}
         for cid, groups in deps.items():

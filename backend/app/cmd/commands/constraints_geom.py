@@ -3,8 +3,8 @@ from app.cmd.context import CommandError
 from app.cmd.registry import command, executes
 from app.param import store as S
 
-TYPES = ("Coincident", "Collinear", "Concentric", "Fix", "Parallel", "Perpendicular", "Horizontal", "Vertical", "Tangent", "Smooth", "Symmetric", "Equal")
-SHORT = {"coincident": "gccoincident", "collinear": "gccollinear", "concentric": "gcconcentric", "fix": "gcfix", "parallel": "gcparallel", "perpendicular": "gcperpendicular", "horizontal": "gchorizontal", "vertical": "gcvertical", "tangent": "gctangent", "smooth": "gcsmooth", "symmetric": "gcsymmetric", "equal": "gcequal"}
+TYPES = ("Coincident", "Collinear", "Concentric", "Fix", "Parallel", "Perpendicular", "Horizontal", "Vertical", "Tangent", "Smooth", "Symmetric", "Equal", "Midpoint")
+SHORT = {"coincident": "gccoincident", "collinear": "gccollinear", "concentric": "gcconcentric", "fix": "gcfix", "parallel": "gcparallel", "perpendicular": "gcperpendicular", "horizontal": "gchorizontal", "vertical": "gcvertical", "tangent": "gctangent", "smooth": "gcsmooth", "symmetric": "gcsymmetric", "equal": "gcequal", "midpoint": "gcmidpoint"}
 TWO_OBJECTS = ("collinear", "concentric", "parallel", "perpendicular", "tangent", "smooth", "equal")
 
 
@@ -23,6 +23,12 @@ def gather(ctx, kind):
         if a is None:
             return None
         _, b = yield from pick(ctx, "Select second point or object", "either")
+        return None if b is None else [a, b]
+    if kind == "midpoint":
+        _, a = yield from pick(ctx, "Select a point", "point")
+        if a is None:
+            return None
+        _, b = yield from pick(ctx, "Select a line or arc", "object")
         return None if b is None else [a, b]
     if kind in TWO_OBJECTS:
         _, a = yield from pick(ctx, "Select first object", "object")

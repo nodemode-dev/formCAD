@@ -1,12 +1,13 @@
 import math
 
+from app.doc import curvepath, nurbs
 from app.param import adapt, ops
 from app.param import store as S
 
 MAX_OBJECTS = 200
 MAX_CANDIDATES = 2000
-PRIORITY = ("coincident", "concentric", "tangent", "horizontal", "vertical", "collinear", "perpendicular", "parallel", "equal")
-INFERABLE = ("coincident", "horizontal", "vertical", "perpendicular", "tangent")
+PRIORITY = ("coincident", "midpoint", "concentric", "tangent", "horizontal", "vertical", "collinear", "perpendicular", "parallel", "equal")
+INFERABLE = ("coincident", "midpoint", "horizontal", "vertical", "perpendicular", "tangent")
 
 
 def end_points(ent) -> list:
@@ -18,10 +19,22 @@ def end_points(ent) -> list:
         return [("start", [c[0] + r * math.cos(ent.start_angle), c[1] + r * math.sin(ent.start_angle)]), ("end", [c[0] + r * math.cos(ent.end_angle), c[1] + r * math.sin(ent.end_angle)])]
     if k == "point":
         return [("whole", ent.position)]
+    if k == "spline" and not ent.closed:
+        c = curvepath.spline_curve(ent)
+        return [] if c is None else [("start", nurbs.point_at(c, c.domain()[0])), ("end", nurbs.point_at(c, c.domain()[1]))]
     if k == "lwpolyline":
         n = len(ent.vertices)
         return [("v%d" % i, v["p"]) for i, v in enumerate(ent.vertices)] if n <= 64 else []
     return []
+
+
+def mid_of(ent):
+    if ent.kind == "line":
+        return [(ent.start[0] + ent.end[0]) / 2.0, (ent.start[1] + ent.end[1]) / 2.0]
+    if ent.kind == "arc":
+        a = ent.start_angle + ((ent.end_angle - ent.start_angle) % math.tau) / 2.0
+        return [ent.center[0] + ent.radius * math.cos(a), ent.center[1] + ent.radius * math.sin(a)]
+    return None
 
 
 def centers(ent):
@@ -101,10 +114,12 @@ def candidates(d, ents, dist_tol, ang_tol, types):
                         push("coincident", [[a.handle, pa], [b.handle, pb]])
             for pa, p in end_points(a):
                 if b.kind in ("line", "circle", "arc") and curve_gap(b, p) <= dist_tol and not any(dist(p, q) <= dist_tol for _n, q in end_points(b)):
-                    push("coincident", [[a.handle, pa], [b.handle, "whole"]])
+                    m = mid_of(b)
+                    push("midpoint" if m is not None and "midpoint" in types and dist(p, m) <= dist_tol else "coincident", [[a.handle, pa], [b.handle, "whole"]])
             for pb, q in end_points(b):
                 if a.kind in ("line", "circle", "arc") and curve_gap(a, q) <= dist_tol and not any(dist(q, p) <= dist_tol for _n, p in end_points(a)):
-                    push("coincident", [[b.handle, pb], [a.handle, "whole"]])
+                    m = mid_of(a)
+                    push("midpoint" if m is not None and "midpoint" in types and dist(q, m) <= dist_tol else "coincident", [[b.handle, pb], [a.handle, "whole"]])
     for i, a in enumerate(ents):
         ca = centers(a)
         for b in ents[i + 1:]:

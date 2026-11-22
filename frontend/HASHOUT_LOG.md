@@ -2,6 +2,12 @@
 
 Living record of decisions and removed context for the interface, newest first. Read before editing.
 
+## SC1 v0.27.0 per-selection constraint state in the status chip, midpoint glyph (ui/param/status-chip.ts, canvas/cmarks.ts, canvas/renderer.ts, canvas/types.ts, ui/menu-spec.ts)
+
+The canvas already coloured each entity from its own constraint bar state (blue under, red over, normal ink fully); splines now get a state too. The status chip now answers for the selection: when the selection holds constrained entities it shows their worst state as the chip's dot and the sum of their freedoms, read from `CanvasApi.barFor`; with nothing selected it falls back to the whole sketch. It repaints only when its key changes, writes text, class and title in place, and keeps its fixed 176 px width. The midpoint relation has its own glyph and an entry under Parametric > Geometric Constraints.
+
+Checked by the worker in Chrome at 4x CPU throttle on a small sketch and on the 204-entity sketch: layout shift 0, no console errors.
+
 ## UP1 v0.26.0 underlay pictures on the canvas (canvas/pictures.ts, canvas/gl.ts, canvas/cpu.ts, canvas/painter.ts, canvas/renderer.ts, canvas/store.ts, canvas/types.ts, canvas/mount.ts, io/api.ts, ui/menu-spec.ts, ui/panels/props-kinds.ts)
 
 An underlay's picture arrives as an `img` prim (three corners, clip ring, fade, version stamp). The store keeps the items that carry one in `pics`; `Pictures` fetches each picture once per version through `api.underlay` (the session key goes in the header, so no URL carries it), turns it into an `ImageBitmap`, shrinks it to 4096 pixels on the long side when larger, and asks for one redraw when it is ready. While a new version loads, the previous bitmap of the same underlay keeps being drawn, so a changed file swaps in place instead of blinking. Bitmaps not drawn for 600 frames are closed and their textures deleted.

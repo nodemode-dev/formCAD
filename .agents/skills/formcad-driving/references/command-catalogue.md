@@ -54,7 +54,7 @@ pluginenable* plugins
 
 ## constraints
 
-autoconstrain constraintbar constraintinfer constraintsettings constraintstatus dcaligned dcangular dcdiameter dcdisplay dchorizontal dclinear dcradius dcvertical delconstraint dimconstraint gccoincident gccollinear gcconcentric gcequal gcfix gchorizontal gcparallel gcperpendicular gcsmooth gcsymmetric gctangent gcvertical geomconstraint parameters parametersclose sketch sketchstatus
+autoconstrain constraintbar constraintinfer constraintsettings constraintstatus dcaligned dcangular dcdiameter dcdisplay dchorizontal dclinear dcradius dcvertical delconstraint dimconstraint gccoincident gccollinear gcconcentric gcequal gcfix gchorizontal gcmidpoint gcparallel gcperpendicular gcsmooth gcsymmetric gctangent gcvertical geomconstraint parameters parametersclose sketch sketchstatus
 
 ## draw
 

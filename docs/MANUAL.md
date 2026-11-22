@@ -65,10 +65,10 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 - Leaders: `leader`, `mleader`, `mleaderedit`, `mleaderstyle`.
 - Layers and properties: `layer`, `laycur`, `layiso`, `layuniso`, `layerstate`, `properties`, `chprop`, `matchprop`, `linetype`, `lweight`, `color`.
 - Selection and inquiry: `select`, `qselect`, `find`, `list`, `dist`, `id`, `count`, `measuregeom`, `cal`.
-- Sketch constraints: `sketch`, `geomconstraint`, `dimconstraint`, `autoconstrain`, `parameters`, `constraintstatus`.
+- Sketch constraints: `sketch`, `geomconstraint`, `dimconstraint`, `autoconstrain`, `parameters`, `constraintstatus`. Geometric relations are coincident, collinear, concentric, fix, parallel, perpendicular, horizontal, vertical, tangent, smooth, symmetric, equal and midpoint (`gcmidpoint`: a point at the middle of a line or arc). Splines take part: their control points move, their ends can be coincident with other geometry, and a coincident between a point and a spline keeps the point on the curve. Each object is coloured by its own state (under, fully or over defined), and the status bar chip gives the state and remaining freedoms of the selection, or of the whole sketch when nothing is selected.
 - Settings: `setvar`, `getvar`, `units`, `zoom`.
 
-**Limits.** Grips work in five modes; dynamic blocks are covered in the next chapter. The constraint solver is FormCAD's own and refuses a dimension that would over-define a sketch, naming the conflict. Very large drawings are fine to a point; the performance fixture holds 100,000 lines and `formcad-engine perf` times your own.
+**Limits.** Grips work in five modes; dynamic blocks are covered in the next chapter. The constraint solver is FormCAD's own and refuses a dimension that would over-define a sketch, naming the conflict. A spline's knots and weights stay as they are while it solves, and its fit points are dropped once the solver moves it. A sketch of about 200 constrained objects solves in well under a second; refusing a conflict in a much larger sketch can take about a second. Very large drawings are fine to a point; the performance fixture holds 100,000 lines and `formcad-engine perf` times your own.
 
 ## 3. Blocks and layouts
 

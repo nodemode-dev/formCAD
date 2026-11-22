@@ -83,11 +83,11 @@ def check_label(d, label: str, ignore: str = "") -> None:
 def attempt(d, net, rec, value, force=False):
     sk = net.sk
     refs = net.refs(rec["refs"])
-    before = list(sk._x)
     try:
         sk.restore(rec["id"], rec["kind"], refs, value, rec.get("label") or None, dict(rec.get("ctx") or {}))
     except SolverFault as err:
         raise S.ParamError(str(err))
+    before = list(sk._x)
     net.recs[rec["id"]] = rec
     rep = sk.solve()
     ours = any(r["id"] == rec["id"] for r in rep.redundant)
