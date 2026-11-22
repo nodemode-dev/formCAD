@@ -1,3 +1,4 @@
+:root { --p11-gh: 26px; --p11-gw: 24px; --p11-lw: 120px; --p11-rows: 5; --p11-x: 0; }
 .p11-live { display: grid; gap: var(--space-2); }
 .p11-live[hidden] { display: none; }
 .p11-empty { min-height: 36px; }

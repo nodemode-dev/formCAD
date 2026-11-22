@@ -1,3 +1,4 @@
+:root { --gx-colour: initial; --gx-head: initial; --gx-pad: initial; --gx-row: initial; }
 .cv-stage > .gx-root {
   position: absolute;
   inset: 0 0 26px 0;

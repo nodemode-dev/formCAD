@@ -1,3 +1,4 @@
+:root { --xw-p: 0; --xw-rows: 6; }
 .xw-panel { gap: var(--space-2); }
 .xw-panel .u8-sec-title { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; user-select: none; }
 .xw-panel .u8-sec-title::before { content: ''; flex: none; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; }

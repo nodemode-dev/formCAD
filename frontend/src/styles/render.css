@@ -1,3 +1,4 @@
+:root { --rn-cube-bottom: 0px; --rn-cube-far: 0px; --rn-cube-near: 0px; --rn-cube-top: 0px; }
 .rn-canvas {
   position: absolute;
   inset: 0;

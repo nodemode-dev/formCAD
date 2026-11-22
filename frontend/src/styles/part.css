@@ -1,3 +1,4 @@
+:root { --dt-cols: 0; }
 .pt { display: grid; grid-template-rows: auto 220px auto auto; gap: var(--space-1); min-width: 0; position: relative; }
 .pt-tools { display: flex; gap: 2px; }
 .pt-tool { display: inline-grid; place-items: center; width: 26px; height: 24px; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); cursor: pointer; }

@@ -1,3 +1,4 @@
+:root { --p14-cols: 4; --p14-rows: 6; }
 .p14-list { height: 120px; min-height: 120px; max-height: 120px; }
 .p14-list-s { height: 78px; min-height: 78px; max-height: 78px; }
 .p14-empty { min-height: 18px; }

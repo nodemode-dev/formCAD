@@ -1,3 +1,4 @@
+:root { --c: initial; --depth: 0; --h: initial; --lm-pop-w: initial; }
 .lm { display: grid; gap: var(--space-2); min-width: 0; }
 .lm-tools { display: flex; align-items: center; gap: var(--space-2); min-width: 0; height: var(--ctl-lg); }
 .lm-tool:disabled { opacity: 0.4; cursor: default; }
