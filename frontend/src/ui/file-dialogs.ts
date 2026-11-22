@@ -5,6 +5,10 @@ export type { FileKind } from './output/path-dialog';
 const FCAD: FileKind = { name: 'FormCAD project', extensions: ['fcad'] };
 const DXF: FileKind = { name: 'DXF drawing', extensions: ['dxf'] };
 const DWG: FileKind = { name: 'DWG drawing (needs a converter)', extensions: ['dwg'] };
+
+export function setDwgRoute(route: 'none' | 'oda' | 'r2000'): void {
+  DWG.name = route === 'r2000' ? 'DWG drawing, 2000 format (the only DWG version LibreDWG writes)' : route === 'oda' ? 'DWG drawing' : 'DWG drawing (needs a converter)';
+}
 const DWT: FileKind = { name: 'Drawing template', extensions: ['dwt'] };
 const SVG: FileKind = { name: 'SVG image', extensions: ['svg', 'svgz'] };
 const PNG: FileKind = { name: 'PNG image', extensions: ['png'] };
