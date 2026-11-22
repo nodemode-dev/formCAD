@@ -26,6 +26,7 @@ interface Form {
 }
 
 const STATUS_WORDS: Record<string, string> = {
+  two_sources: 'Two published standards give the same value.',
   read_twice: 'Read twice from one public copy of the source; not a statement of any standard.',
   read_once: 'Read once only. Check it against your standard before use.',
   illegible_in_source: 'Not legible in the source. Type the pitch yourself.',
@@ -354,8 +355,9 @@ export class FeatureEditor {
     const sel = form.size;
     if (!sel || !form.sizeNote) return;
     const row: HoleRow | undefined = holeCache?.sections.thread_series.find((r) => r.id === sel.value);
-    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') : t('Clearance, counterbore, countersink and tap drill rows are empty on purpose. Type your own numbers.'));
-    setClass(form.sizeNote, 'is-warn', !!row && row.status !== 'read_twice');
+    const src = row ? holeCache?.sources?.[row.source]?.title : undefined;
+    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') + (src ? ` ${t('Source:')} ${src}` : '') : t('Counterbore and countersink sizes do not ship: no free published source for them was found. Type your own numbers.'));
+    setClass(form.sizeNote, 'is-warn', !!row && row.status !== 'read_twice' && row.status !== 'two_sources');
     if (!row || !fill) return;
     const nom = form.fields.get('thread_nominal');
     const pit = form.fields.get('thread_pitch');

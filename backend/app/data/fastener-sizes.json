@@ -1,0 +1,443 @@
+{
+ "format": 1,
+ "units": "mm",
+ "generated_by": "setup/hole_tables.py",
+ "notice": "Hex nut sizes follow ISO 4032:2023 and socket head cap screw head sizes ISO 4762:2004 (M14 and up only), each read from the published standard named in its source. Thickness and head sizes are the standards' maximum values. Sizes not listed are entered by hand.",
+ "sources": {
+  "BIS-IS-1364-3-2025": {
+   "title": "IS 1364 (Part 3): 2025, Hexagon head bolts, screws and nuts of product grades A and B, Part 3 Hexagon nuts, style 1 (sixth revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 4032:2023",
+   "url": "https://www.services.bis.gov.in/tmp/PGD32022813_14072025_2.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text layer of a typeset PDF, two separate reads; every value marked read_twice agreed in both. Annex A (sizes below M5 and above M39) is informative and warns against these nuts for new or critical uses."
+  },
+  "BIS-IS-2269-2006": {
+   "title": "IS 2269: 2006, Hexagon socket head cap screws (fifth revision)",
+   "publisher": "Bureau of Indian Standards",
+   "identical_to": "ISO 4762:2004",
+   "url": "https://law.resource.org/pub/in/bis/S01/is.2269.2006.pdf",
+   "retrieved": "2026-11-22",
+   "access": "Copy published by the Bureau of Indian Standards or by Public.Resource.Org; BIS reserves its copyright, so only the numbers are used, in FormCAD's own layout.",
+   "reading": "Text extraction, one read of Table 1. Only the columns from M14 up are in the text layer; smaller sizes could not be read."
+  }
+ },
+ "hex_nut": [
+  {
+   "id": "M1.6",
+   "nominal": 1.6,
+   "pitch": 0.35,
+   "across_flats": 3.2,
+   "thickness": 1.3,
+   "thickness_min": 1.05,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M2",
+   "nominal": 2.0,
+   "pitch": 0.4,
+   "across_flats": 4.0,
+   "thickness": 1.6,
+   "thickness_min": 1.35,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M2.5",
+   "nominal": 2.5,
+   "pitch": 0.45,
+   "across_flats": 5.0,
+   "thickness": 2.0,
+   "thickness_min": 1.75,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M3",
+   "nominal": 3.0,
+   "pitch": 0.5,
+   "across_flats": 5.5,
+   "thickness": 2.4,
+   "thickness_min": 2.15,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M3.5",
+   "nominal": 3.5,
+   "pitch": 0.6,
+   "across_flats": 6.0,
+   "thickness": 2.8,
+   "thickness_min": 2.55,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M4",
+   "nominal": 4.0,
+   "pitch": 0.7,
+   "across_flats": 7.0,
+   "thickness": 3.2,
+   "thickness_min": 2.9,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M5",
+   "nominal": 5.0,
+   "pitch": 0.8,
+   "across_flats": 8.0,
+   "thickness": 4.7,
+   "thickness_min": 4.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M6",
+   "nominal": 6.0,
+   "pitch": 1.0,
+   "across_flats": 10.0,
+   "thickness": 5.2,
+   "thickness_min": 4.9,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M7",
+   "nominal": 7.0,
+   "pitch": 1.0,
+   "across_flats": 11.0,
+   "thickness": 6.5,
+   "thickness_min": 6.14,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M8",
+   "nominal": 8.0,
+   "pitch": 1.25,
+   "across_flats": 13.0,
+   "thickness": 6.8,
+   "thickness_min": 6.44,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M10",
+   "nominal": 10.0,
+   "pitch": 1.5,
+   "across_flats": 16.0,
+   "thickness": 8.4,
+   "thickness_min": 8.04,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M12",
+   "nominal": 12.0,
+   "pitch": 1.75,
+   "across_flats": 18.0,
+   "thickness": 10.8,
+   "thickness_min": 10.37,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M14",
+   "nominal": 14.0,
+   "pitch": 2.0,
+   "across_flats": 21.0,
+   "thickness": 12.8,
+   "thickness_min": 12.1,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M16",
+   "nominal": 16.0,
+   "pitch": 2.0,
+   "across_flats": 24.0,
+   "thickness": 14.8,
+   "thickness_min": 14.1,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M18",
+   "nominal": 18.0,
+   "pitch": 2.5,
+   "across_flats": 27.0,
+   "thickness": 15.8,
+   "thickness_min": 15.1,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M20",
+   "nominal": 20.0,
+   "pitch": 2.5,
+   "across_flats": 30.0,
+   "thickness": 18.0,
+   "thickness_min": 16.9,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M22",
+   "nominal": 22.0,
+   "pitch": 2.5,
+   "across_flats": 34.0,
+   "thickness": 19.4,
+   "thickness_min": 18.1,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M24",
+   "nominal": 24.0,
+   "pitch": 3.0,
+   "across_flats": 36.0,
+   "thickness": 21.5,
+   "thickness_min": 20.2,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M27",
+   "nominal": 27.0,
+   "pitch": 3.0,
+   "across_flats": 41.0,
+   "thickness": 23.8,
+   "thickness_min": 22.5,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M30",
+   "nominal": 30.0,
+   "pitch": 3.5,
+   "across_flats": 46.0,
+   "thickness": 25.6,
+   "thickness_min": 24.3,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M33",
+   "nominal": 33.0,
+   "pitch": 3.5,
+   "across_flats": 50.0,
+   "thickness": 28.7,
+   "thickness_min": 27.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M36",
+   "nominal": 36.0,
+   "pitch": 4.0,
+   "across_flats": 55.0,
+   "thickness": 31.0,
+   "thickness_min": 29.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M39",
+   "nominal": 39.0,
+   "pitch": 4.0,
+   "across_flats": 60.0,
+   "thickness": 33.4,
+   "thickness_min": 31.8,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_twice"
+  },
+  {
+   "id": "M42",
+   "nominal": 42.0,
+   "pitch": 4.5,
+   "across_flats": 65.0,
+   "thickness": 34.0,
+   "thickness_min": 32.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M45",
+   "nominal": 45.0,
+   "pitch": 4.5,
+   "across_flats": 70.0,
+   "thickness": 36.0,
+   "thickness_min": 34.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M48",
+   "nominal": 48.0,
+   "pitch": 5.0,
+   "across_flats": 75.0,
+   "thickness": 38.0,
+   "thickness_min": 36.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M52",
+   "nominal": 52.0,
+   "pitch": 5.0,
+   "across_flats": 80.0,
+   "thickness": 42.0,
+   "thickness_min": 40.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M56",
+   "nominal": 56.0,
+   "pitch": 5.5,
+   "across_flats": 85.0,
+   "thickness": 45.0,
+   "thickness_min": 43.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M60",
+   "nominal": 60.0,
+   "pitch": 5.5,
+   "across_flats": 90.0,
+   "thickness": 48.0,
+   "thickness_min": 46.4,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  },
+  {
+   "id": "M64",
+   "nominal": 64.0,
+   "pitch": 6.0,
+   "across_flats": 95.0,
+   "thickness": 51.0,
+   "thickness_min": 49.1,
+   "source": "BIS-IS-1364-3-2025",
+   "status": "read_once",
+   "note": "Informative annex size: the standard advises against it for new or critical uses. Its thickness was read twice, its width across flats once."
+  }
+ ],
+ "socket_screw": [
+  {
+   "id": "M14",
+   "nominal": 14.0,
+   "pitch": 2.0,
+   "head_d": 21.0,
+   "head_h": 14.0,
+   "socket_s": 12.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M16",
+   "nominal": 16.0,
+   "pitch": 2.0,
+   "head_d": 24.0,
+   "head_h": 16.0,
+   "socket_s": 14.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M20",
+   "nominal": 20.0,
+   "pitch": 2.5,
+   "head_d": 30.0,
+   "head_h": 20.0,
+   "socket_s": 17.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M24",
+   "nominal": 24.0,
+   "pitch": 3.0,
+   "head_d": 36.0,
+   "head_h": 24.0,
+   "socket_s": 19.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M30",
+   "nominal": 30.0,
+   "pitch": 3.5,
+   "head_d": 45.0,
+   "head_h": 30.0,
+   "socket_s": 22.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M36",
+   "nominal": 36.0,
+   "pitch": 4.0,
+   "head_d": 54.0,
+   "head_h": 36.0,
+   "socket_s": 27.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M42",
+   "nominal": 42.0,
+   "pitch": 4.5,
+   "head_d": 63.0,
+   "head_h": 42.0,
+   "socket_s": 32.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M48",
+   "nominal": 48.0,
+   "pitch": 5.0,
+   "head_d": 72.0,
+   "head_h": 48.0,
+   "socket_s": 36.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M56",
+   "nominal": 56.0,
+   "pitch": 5.5,
+   "head_d": 84.0,
+   "head_h": 56.0,
+   "socket_s": 41.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  },
+  {
+   "id": "M64",
+   "nominal": 64.0,
+   "pitch": 6.0,
+   "head_d": 96.0,
+   "head_h": 64.0,
+   "socket_s": 46.0,
+   "source": "BIS-IS-2269-2006",
+   "status": "read_once"
+  }
+ ]
+}

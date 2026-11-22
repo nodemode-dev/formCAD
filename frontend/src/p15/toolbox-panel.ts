@@ -9,7 +9,8 @@ import {
   section, selectCtl, str, table, textCtl, type Json,
 } from './kit';
 
-interface KindSpec { kind: string; group: string; label: string; params: Array<{ name: string; label: string; min: number; max: number; derived: string | null; default: number | null }> }
+interface SizeRow { id: string; status: string; source: string; note: string; values: Record<string, number> }
+interface KindSpec { kind: string; group: string; label: string; params: Array<{ name: string; label: string; min: number; max: number; derived: string | null; default: number | null }>; sizes: SizeRow[] }
 interface Ref { comp: string; face: number }
 const POOL = 12;
 
@@ -25,10 +26,11 @@ export const toolboxSpec = (): ReturnType<typeof dockPanel> => dockPanel({
 
     const sGen = section('Generator');
     const kind = selectCtl('Kind', []);
+    const std = selectCtl('Standard size', []);
     const pc = Array.from({ length: POOL }, (_, i) => numberCtl(`Size ${i}`, 0));
     const check = reportBox(3);
     const noteLine = msgLine();
-    sGen.body.append(kind.el, ...pc.map((c) => c.el), check.el, noteLine.el, buttons(button('Check size', () => { void checkSize(); }, 'primary')));
+    sGen.body.append(kind.el, std.el, ...pc.map((c) => c.el), check.el, noteLine.el, buttons(button('Check size', () => { void checkSize(); }, 'primary')));
 
     const sIns = section('Insert');
     const srcSel = selectCtl('Source', []);
@@ -77,9 +79,23 @@ export const toolboxSpec = (): ReturnType<typeof dockPanel> => dockPanel({
         const input = c.input as HTMLInputElement;
         if (input.dataset.kind !== s?.kind) { input.dataset.kind = s?.kind ?? ''; c.set(p.default); }
       });
+      const sel = std.input as HTMLSelectElement;
+      if (sel.dataset.kind !== (s?.kind ?? '')) {
+        sel.dataset.kind = s?.kind ?? '';
+        fillSelect(sel, [['', t('Typed sizes')] as const, ...(s?.sizes ?? []).map((r) => [r.id, r.id] as const)]);
+        sel.value = '';
+      }
+      setHidden(std.el, !s?.sizes.length);
       noteLine.set(s ? `${t(s.group)}: ${s.label}` : '');
     };
     kind.input.addEventListener('change', paintFields);
+    std.input.addEventListener('change', () => {
+      const s = spec();
+      const row = s?.sizes.find((r) => r.id === std.get());
+      if (!s || !row) { noteLine.set(s ? `${t(s.group)}: ${s.label}` : ''); return; }
+      s.params.forEach((p, i) => { const v = row.values[p.name === 'd' ? 'nominal' : p.name]; if (typeof v === 'number') pc[i].set(v); });
+      noteLine.set(`${row.id} · ${t(row.status.replace(/_/g, ' '))} · ${t('Source:')} ${row.source}${row.note ? ` ${t(row.note)}` : ''}`);
+    });
 
     const sizes = (): Json => {
       const out: Json = {};
@@ -185,7 +201,7 @@ export const toolboxSpec = (): ReturnType<typeof dockPanel> => dockPanel({
     async function load(): Promise<void> {
       if (!kinds.length) {
         const k = await globalApi('GET', 'toolbox/kinds');
-        kinds = arr(k.kinds).map((x) => ({ kind: str(x.kind), group: str(x.group), label: str(x.label), params: arr(x.params).map((p) => ({ name: str(p.name), label: str(p.label), min: nn(p.min), max: nn(p.max), derived: typeof p.derived === 'string' ? p.derived : null, default: typeof p.default === 'number' ? p.default : null })) }));
+        kinds = arr(k.kinds).map((x) => ({ kind: str(x.kind), group: str(x.group), label: str(x.label), params: arr(x.params).map((p) => ({ name: str(p.name), label: str(p.label), min: nn(p.min), max: nn(p.max), derived: typeof p.derived === 'string' ? p.derived : null, default: typeof p.default === 'number' ? p.default : null })), sizes: arr(x.sizes).map((r) => ({ id: str(r.id), status: str(r.status), source: str(r.source), note: str(r.note), values: Object.fromEntries(Object.entries(obj(r.values)).filter(([, v]) => typeof v === 'number')) as Record<string, number> })) }));
         fillSelect(kind.input as HTMLSelectElement, kinds.map((x) => [x.kind, x.label] as const));
         paintFields();
       }

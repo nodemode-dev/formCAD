@@ -292,7 +292,9 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **Main commands.** `toolboxinsert`, `toolboximport`. Routes: `GET /api/toolbox/kinds`, `POST /api/toolbox/part`, `GET /api/toolbox/library`.
 
-**Limits.** No standard size table ships. You enter sizes or import your own CSV (2 MB and 5000 row caps; the path is checked against granted folders). A generated screw is a shape from your numbers, not a certified part.
+**Limits.** Hex nuts (ISO 4032, M1.6 to M64) and socket head cap screws (ISO 4762, M14 to M64 only) can take a Standard size; each row names the published standard it was read from and how well it could be read. Everything else is entered by you or imported from your own CSV (2 MB and 5000 row caps; the path is checked against granted folders). A generated screw is a shape from those numbers, not a certified part.
+
+**Hole sizes.** The hole feature offers coarse thread sizes M1 to M64 with their pitch and tap drill, and clearance holes from M42 to M64, each with its source and its reading status (two sources agree, read twice, read once). A value that could not be read is empty and must be typed. Counterbore and countersink sizes do not ship: no free published source for them was found. The tables are written by `setup/hole_tables.py` from the readings it lists; `python3 setup/hole_tables.py --check` says whether the shipped files match it. Your own `hole-sizes.json` in the data folder adds or replaces rows.
 
 ## 23. Inspection and costing
 
