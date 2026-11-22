@@ -4,6 +4,16 @@ Living record of decisions and removed context for the `formcad-kernel` worker, 
 
 Entries older than v0.21.0 are in `backend/HASHOUT_LOG.md`, which logged the engine and the kernel together; look there for anything this file does not hold. From v0.21.0 a change to a file in `kernel/` is logged here.
 
+## KW3 v0.28.0 modelled threads, thicken, delete face (kernel_features3.py, formcad_kernel.py)
+
+Handoff 8.6. `feat_thread`, `feat_thicken` and `feat_delete_face`, registered from their own module with a fallback message when it cannot load. They reach users with the next kernel bundle; until then the engine says the installed kernel is older than the feature.
+
+Threads: a sweep along one long helix edge gave volumes about 11 percent off, so the thread is built from ruled faces one turn at a time between four helical rails; the tool volume then matches the hand value (114.03 against 114.0 mm3). Basic ISO 60 degree profile, depth 5H/8, flats P/8 and P/4; a cut tool reaches 0.05 pitch beyond the face and an added thread starts half a profile in from the free end. Faces get roles `thread:root.k`, `thread:flank1.k`, `thread:flank2.k`, `thread:crest.k`, `thread:start` and `thread:end`, k the turn.
+
+Thicken uses the kernel's offset with thickening; both sides offsets the sheet by minus half the thickness first. A slab that changes the volume by less than 1e-6 of its own volume is refused with a message. Roles `thicken:front`, `thicken:back`, `thicken:side`.
+
+Delete and heal uses the kernel's defeaturing, which reports success even when it cannot heal and returns the shape unchanged, so a removed face still present in the result counts as a failure. Delete and patch fills each gap with a filling surface, tangent only on edges where the deleted face met its neighbour smoothly (within about 5 degrees; tangency everywhere put a patch 44.5 mm off), and fails when the patch misses the gap edges by more than 1 percent of the part size. Patch faces are matched to history by surface type, centroid and area or length, because sewing makes new faces; roles `patch.k`.
+
 ## KW2 v0.25.0 fillet check, two-rail sweep, identical bodies in STEP (kernel_features2.py, kernel_surf.py, kernel_xde.py)
 
 These reach users only with a new kernel release in `formai-binaries`; the published 8.0.1 bundle carries the old code. The engine works with either: the only new answer field, `untranslated`, is optional.

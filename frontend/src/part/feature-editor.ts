@@ -108,14 +108,15 @@ export class FeatureEditor {
       form.slots.set(r.name, view);
       refs.appendChild(view.row);
     }
-    if (schema.type === 'hole') {
+    const sized = schema.type === 'hole' || schema.type === 'thread';
+    if (sized) {
       const notice = el<HTMLElement>(`<p class="pp-note" data-hole-notice></p>`);
       setText(notice, t('Every size names its published source and how well it could be read. Check values against your own copy of the standard.'));
       props.appendChild(notice);
     }
     for (const p of schema.params) {
       if (schema.type === 'sketch') continue;
-      if (schema.type === 'hole' && p.name === 'size') {
+      if (sized && p.name === 'size') {
         const row = el<HTMLElement>('<label class="pp-row pp-enum"><span class="pp-lab"></span><select class="cv-input pp-in"></select></label>');
         setText(q(row, '.pp-lab'), t('Size'));
         const sel = q<HTMLSelectElement>(row, 'select');
@@ -330,7 +331,7 @@ export class FeatureEditor {
   }
 
   private async fillHole(form: Form): Promise<void> {
-    if (form.type !== 'hole' || !form.size) return;
+    if ((form.type !== 'hole' && form.type !== 'thread') || !form.size) return;
     if (!holeCache) {
       try { holeCache = await part.holes(); } catch { holeCache = null; }
     }
@@ -338,7 +339,7 @@ export class FeatureEditor {
     if (sel.options.length <= 1 && holeCache) {
       const none = document.createElement('option');
       none.value = '';
-      none.textContent = t('No size from the table');
+      none.textContent = t(form.type === 'thread' ? 'Match the face diameter' : 'No size from the table');
       sel.appendChild(none);
       for (const r of holeCache.sections.thread_series) {
         const o = document.createElement('option');
@@ -360,7 +361,8 @@ export class FeatureEditor {
     const keys = row ? (row.sources?.length ? row.sources : [row.source]) : [];
     const titles = keys.map((k) => holeCache?.sources?.[k]?.title).filter((s): s is string => !!s);
     const src = titles.length ? ` ${t(titles.length > 1 ? 'Sources:' : 'Source:')} ${titles.join('; ')}` : '';
-    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') + src : t('Counterbore and countersink sizes do not ship: no free published source for them was found. Type your own numbers.'));
+    const empty = form.type === 'thread' ? 'With no size, the size and pitch come from the table row whose diameter matches the face, or from the tapped hole that made it.' : 'Counterbore and countersink sizes do not ship: no free published source for them was found. Type your own numbers.';
+    setText(form.sizeNote, row ? t(STATUS_WORDS[row.status] ?? 'Unverified seed value.') + (row.note ? ` ${t(row.note)}` : '') + src : t(empty));
     setClass(form.sizeNote, 'is-warn', !!row && row.status !== 'read_twice' && row.status !== 'two_sources');
     if (!row || !fill) return;
     const nom = form.fields.get('thread_nominal');

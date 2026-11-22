@@ -92,6 +92,45 @@ def dialog_data() -> dict:
     }
 
 
+def thread_row(row: dict, nominal: float, pitch, size: str, note: str = "") -> dict:
+    if not note and row.get("status") not in ("read_twice", "two_sources"):
+        note = "The pitch of %s comes from a row marked %s; confirm it against your standard." % (size, row.get("status", "unverified"))
+    return {"id": size, "nominal": float(nominal), "pitch": None if pitch is None else float(pitch), "note": note}
+
+
+def thread_candidates(size: str, standard: str, diameter: float, cosmetic=(), table: dict | None = None) -> dict:
+    t = table if table is not None else load()
+    series = [r for r in t.get("thread_series") or [] if r.get("nominal") and (not standard or not r.get("standard") or r.get("standard") == standard)]
+    if size:
+        row = find(t, "thread_series", size, standard)
+        if row is None or row.get("nominal") is None:
+            raise PartError("The size %s is not in the hole table; leave the size empty and type the pitch." % size)
+        got = thread_row(row, row["nominal"], row.get("pitch"), size)
+        return {"major": got, "minor": got}
+    tol = max(0.01, 1e-3 * diameter)
+    out = {"major": None, "minor": None}
+    for row in series:
+        if abs(float(row["nominal"]) - diameter) <= tol:
+            out["major"] = thread_row(row, row["nominal"], row.get("pitch"), row["id"])
+            break
+    for c in cosmetic:
+        if abs(float(c.get("tap_drill") or 0.0) - diameter) <= tol:
+            out["minor"] = {"id": "", "nominal": float(c["nominal"]), "pitch": float(c["pitch"]), "depth": c.get("depth"), "start_point": c.get("position"), "note": "", "from_hole": True}
+            return out
+    by_id = {r["id"]: r for r in series}
+    for row in t.get("tap_drill") or []:
+        base = by_id.get(row["id"])
+        if base is not None and row.get("diameter") and abs(float(row["diameter"]) - diameter) <= tol:
+            out["minor"] = thread_row(base, base["nominal"], base.get("pitch"), base["id"])
+            return out
+    for row in series:
+        pitch = row.get("pitch")
+        if pitch and min(abs(float(row["nominal"]) - pitch - diameter), abs(float(row["nominal"]) - 1.0825317547305482 * pitch - diameter)) <= tol:
+            out["minor"] = thread_row(row, row["nominal"], pitch, row["id"], "The size %s was matched by the minor diameter rule, not a table value; confirm it against your standard." % row["id"])
+            return out
+    return out
+
+
 def resolve(values: dict, mm: float, table: dict | None = None) -> tuple:
     kind = str(values.get("kind") or "simple")
     if kind not in KINDS:
