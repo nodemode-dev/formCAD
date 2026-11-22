@@ -46,6 +46,7 @@ export class NodeView {
   private readonly dots = new Map<string, HTMLElement>();
   private readonly labels = new Map<string, HTMLElement>();
   private readonly mods = new Map<string, HTMLElement>();
+  private readonly rowEls: HTMLElement[] = [];
 
   constructor(rec: NodeRecord, entry: CatalogueEntry | undefined, private readonly host: WidgetHost) {
     this.rec = rec;
@@ -100,7 +101,7 @@ export class NodeView {
     if (key === this.widgetKind) return;
     this.widget?.dispose?.();
     this.widget = null;
-    this.body.replaceChildren();
+    if (this.body.firstChild) this.body.replaceChildren();
     this.widgetKind = key;
     if (!factory) {
       setHidden(this.body, true);
@@ -153,23 +154,38 @@ export class NodeView {
     const key = this.rec.inputs.map((p) => p.name).join('|') + '>' + this.rec.outputs.map((p) => p.name).join('|');
     if (key === this.portKey) { this.paintLabels(); return; }
     this.portKey = key;
-    this.dots.clear();
-    this.labels.clear();
-    this.mods.clear();
     const n = Math.max(this.rec.inputs.length, this.rec.outputs.length, 1);
-    const frag = document.createDocumentFragment();
+    while (this.rowEls.length > n) this.rowEls.pop()!.remove();
     for (let i = 0; i < n; i++) {
-      const row = el('<div class="gx-row"><div class="gx-pin"></div><div class="gx-pout"></div></div>');
-      const pin = this.rec.inputs[i];
-      const pout = this.rec.outputs[i];
-      if (pin) this.fillPort(q(row, '.gx-pin'), pin, 'in');
-      if (pout) this.fillPort(q(row, '.gx-pout'), pout, 'out');
-      frag.appendChild(row);
+      let row = this.rowEls[i];
+      if (!row) {
+        row = el('<div class="gx-row"><div class="gx-pin"></div><div class="gx-pout"></div></div>');
+        this.rowEls.push(row);
+        this.rows.appendChild(row);
+      }
+      this.setCell(q(row, '.gx-pin'), this.rec.inputs[i], 'in');
+      this.setCell(q(row, '.gx-pout'), this.rec.outputs[i], 'out');
     }
-    this.rows.replaceChildren(frag);
+    this.forget('in', this.rec.inputs);
+    this.forget('out', this.rec.outputs);
     this.paintLabels();
     this.box = nodeBox(this.rec, this.widget ? this.widget.size : null);
     this.applySize();
+  }
+
+  private setCell(cell: HTMLElement, p: PortRecord | undefined, side: 'in' | 'out'): void {
+    const name = p ? p.name : '';
+    if ((cell.dataset.port ?? '') === name) return;
+    cell.dataset.port = name;
+    cell.replaceChildren();
+    if (p) this.fillPort(cell, p, side);
+  }
+
+  private forget(side: 'in' | 'out', ports: readonly PortRecord[]): void {
+    const keep = new Set(ports.map((p) => `${side}:${p.name}`));
+    for (const k of [...this.dots.keys()]) if (k.startsWith(`${side}:`) && !keep.has(k)) this.dots.delete(k);
+    for (const k of [...this.labels.keys()]) if (k.startsWith(`${side}:`) && !keep.has(k)) this.labels.delete(k);
+    if (side === 'in') for (const k of [...this.mods.keys()]) if (!keep.has(`in:${k}`)) this.mods.delete(k);
   }
 
   private fillPort(cell: HTMLElement, p: PortRecord, side: 'in' | 'out'): void {
