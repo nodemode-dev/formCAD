@@ -78,7 +78,7 @@ def listing() -> dict:
             f = (e.get("files") or {}).get(res)
             if not f:
                 continue
-            files.append({"resolution": res, "size": f["size"], "md5": f["md5"], "url": f["url"], "shipped": bool(f.get("shipped")), "present": path_for(e["id"], res) is not None})
+            files.append({"resolution": res, "size": f["size"], "sha256": f["sha256"], "url": f["url"], "shipped": bool(f.get("shipped")), "present": path_for(e["id"], res) is not None})
         out.append({"id": e["id"], "name": e["name"], "author": e["author"], "page": e.get("page", ""), "category": e.get("category", ""), "files": files})
     return {"licence": cat.get("licence") or {}, "shipped_resolution": cat.get("shipped_resolution", "1k"), "download_hosts": cat.get("download_hosts") or [], "environments": out}
 
@@ -120,7 +120,7 @@ def download(eid: str, res: str) -> dict:
     target = downloaded_dir() / ("%s_%s.hdr" % (eid, res))
     with _lock:
         fd, tmp = tempfile.mkstemp(prefix="env-", suffix=".part", dir=str(target.parent))
-        digest = hashlib.md5()
+        digest = hashlib.sha256()
         total = 0
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "FormCAD environment download"})
@@ -137,7 +137,7 @@ def download(eid: str, res: str) -> dict:
                         raise EnvironmentError_("The download is larger than the catalogue says; stopped.")
                     digest.update(chunk)
                     fh.write(chunk)
-            if total != want or digest.hexdigest() != f["md5"]:
+            if total != want or digest.hexdigest() != f["sha256"]:
                 raise EnvironmentError_("The downloaded file does not match the catalogue size and checksum; it was discarded.")
             os.replace(tmp, target)
         except (urllib.error.URLError, OSError, TimeoutError) as err:

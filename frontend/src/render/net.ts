@@ -39,7 +39,7 @@ export interface Appearance {
 export interface SourceRef { title: string; url: string; licence: string; retrieved: string }
 export interface Library { sources: Record<string, SourceRef>; material_map: Record<string, { appearance: string; note: string }>; default: string; appearances: Appearance[] }
 
-export interface EnvFile { resolution: '1k' | '2k' | '4k'; size: number; md5: string; url: string; shipped: boolean; present: boolean }
+export interface EnvFile { resolution: '1k' | '2k' | '4k'; size: number; sha256: string; url: string; shipped: boolean; present: boolean }
 export interface EnvEntry { id: string; name: string; author: string; page: string; category: string; files: EnvFile[] }
 export interface EnvListing { licence: { id: string; url: string; note: string }; shipped_resolution: string; download_hosts: string[]; environments: EnvEntry[] }
 
