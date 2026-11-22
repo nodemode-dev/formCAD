@@ -43,8 +43,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - run: pip install -r requirements.txt
+          cache-dependency-path: backend/requirements.lock
+      - run: python -m pip install pip==26.3
+      - run: pip install --require-hashes -r requirements.lock
       - run: python -m compileall -q app formcad_engine.py
       - run: python formcad_engine.py --selfcheck
       - name: Boot the engine and probe it
@@ -89,12 +90,33 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
 
+  shell:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stand-in folders the shell's build script looks for
+        run: |
+          mkdir -p frontend/dist src-tauri/engine
+          printf '<!doctype html>\n' > frontend/dist/index.html
+          : > src-tauri/engine/.keep
+      - name: Type check the shell
+        working-directory: src-tauri
+        run: cargo check --locked
+
   engine-freeze:
     needs: [frontend, backend]
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-22.04]
+        os: [macos-latest, macos-15-intel, windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     defaults:
@@ -116,6 +138,8 @@ jobs:
           source setup/lib.sh
           fc_venv
           pip install pyinstaller==6.22.3
+      - name: Check the agent kit
+        run: ./formCAD agents check
       - name: Install the frontend
         run: setup/install_frontend
       - name: Freeze the engine and run its selfcheck
@@ -124,7 +148,7 @@ jobs:
         run: |
           source setup/lib.sh
           fc_venv
-          pip install pip-licenses
+          pip install pip-licenses==5.5.5
           python - <<'PY'
           import fnmatch, json, os, re, subprocess, sys
           banned_names = ['libx264*', 'libx265*', 'librubberband*', 'libvidstab*', 'libpostproc*', 'libfdk*', 'libTK*', 'libocct*', 'OCP*', 'libgpl*', 'libavcodec*', 'libavformat*', 'libswscale*']

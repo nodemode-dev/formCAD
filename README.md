@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img alt="version 0.20.0" src="https://img.shields.io/badge/version-0.20.0-eef0f4?style=flat-square">
+  <img alt="version 0.20.1" src="https://img.shields.io/badge/version-0.20.1-eef0f4?style=flat-square">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Vite-3178c6?style=flat-square&logo=typescript&logoColor=white">
   <img alt="Python" src="https://img.shields.io/badge/Python-FastAPI-3776AB?style=flat-square">
   <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-2f7bf5?style=flat-square">
@@ -125,7 +125,7 @@ All FormCAD builds are compiled and released from [FormCompiler](https://github.
 
 Prefer it in your browser, or want to contribute? Run the web UI straight from this repo.
 
-**Requires:** Node 20.19+ or 22.12+ and Python 3.12+; Rust only for the desktop shell.
+**Requires:** Node 22.12+ and Python 3.12+; Rust only for the desktop shell.
 
 ```sh
 git clone git@github.com:nodemode-dev/formCAD.git

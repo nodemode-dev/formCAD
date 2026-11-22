@@ -22,6 +22,12 @@ pub fn engine_folder() -> Option<PathBuf> {
     .find(|program| program.is_file())
 }
 
+#[cfg(not(debug_assertions))]
+pub fn dev_backend() -> Option<(PathBuf, PathBuf)> {
+    None
+}
+
+#[cfg(debug_assertions)]
 pub fn dev_backend() -> Option<(PathBuf, PathBuf)> {
     let exe = std::env::current_exe().ok()?;
     let mut dir = exe.parent()?.to_path_buf();

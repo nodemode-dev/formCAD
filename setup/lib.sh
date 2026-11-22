@@ -43,7 +43,7 @@ fc_mesher_venv() {
   source "$act"
 }
 fc_node_ok() {
-  command -v node >/dev/null 2>&1 && node -e 'process.exit(Number(process.versions.node.split(".")[0]) >= 22 ? 0 : 1)'
+  command -v node >/dev/null 2>&1 && node -e 'const [a, b] = process.versions.node.split(".").map(Number); process.exit(a > 22 || (a === 22 && b >= 12) ? 0 : 1)'
 }
 fc_native_path() {
   if [ "$(fc_os)" = windows ] && command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf '%s\n' "$1"; fi
@@ -62,8 +62,12 @@ fc_rust_env() {
   export PATH
   unset RUSTC RUSTC_WORKSPACE_WRAPPER RUSTFLAGS CARGO_ENCODED_RUSTFLAGS CARGO_BUILD_RUSTFLAGS CARGO_BUILD_TARGET CARGO_TARGET_DIR CARGO_BUILD_TARGET_DIR CARGO_BUILD_RUSTC
   export RUSTC_WRAPPER="" CARGO_BUILD_RUSTC_WRAPPER=""
-  if command -v rustup >/dev/null 2>&1 && rustup toolchain list 2>/dev/null | grep -q '^stable'; then
-    export RUSTUP_TOOLCHAIN="${FORMCAD_RUST_TOOLCHAIN:-stable}"
+  if [ -n "${FORMCAD_RUST_TOOLCHAIN:-}" ]; then
+    export RUSTUP_TOOLCHAIN="$FORMCAD_RUST_TOOLCHAIN"
+  elif [ -f "$FORMCAD_ROOT/rust-toolchain.toml" ]; then
+    unset RUSTUP_TOOLCHAIN
+  elif command -v rustup >/dev/null 2>&1 && rustup toolchain list 2>/dev/null | grep -q '^stable'; then
+    export RUSTUP_TOOLCHAIN=stable
   fi
 }
 fc_rust_fresh() {
