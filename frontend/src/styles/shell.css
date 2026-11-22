@@ -119,6 +119,7 @@ body.cv-home-open .cv-tab-strip:not(:has(.cv-tab)) ~ .cv-icon-btn { visibility: 
 .cv-rail-fly .cv-flyout-key:empty { visibility: hidden; }
 
 .cv-stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: var(--canvas-bg-model); }
+html[dir='rtl'] :is(.cv-stage, .cv-cmdline, .cv-cmd-pop, .ft-term) { direction: ltr; }
 .cv-canvas-host {
   position: absolute;
   inset: 0;
