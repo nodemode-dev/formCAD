@@ -1,7 +1,7 @@
 import { el, q, setClass, setHidden, setText } from '../dom';
 import { checkField, numField, selectField, setOptions, textField, type Field } from '../dialogs/fields';
 import { t } from '../i18n';
-import { radioRow } from '../panels/pref-rows';
+import { segRow } from '../panels/pref-rows';
 import type { PageSetupRecord, PaperSize, PlotDefaults, PlotDevice, StyleTableInfo } from './output-api';
 
 export interface FormState {
@@ -24,7 +24,7 @@ export class PageForm {
   private readonly paper = selectField('Paper size', []);
   private readonly cw = numField('Width (mm)', { min: 1, max: 5080 });
   private readonly ch = numField('Height (mm)', { min: 1, max: 5080 });
-  private readonly orient = radioRow('Orientation', [['portrait', t('Portrait')], ['landscape', t('Landscape')]], (v) => { this.landscape = v === 'landscape'; this.changed(); });
+  private readonly orient = segRow('Orientation', [['portrait', t('Portrait')], ['landscape', t('Landscape')]], (v) => { this.landscape = v === 'landscape'; this.changed(); });
   private readonly area = selectField('Plot area', AREAS);
   private readonly wx0 = numField('First corner X');
   private readonly wy0 = numField('First corner Y');

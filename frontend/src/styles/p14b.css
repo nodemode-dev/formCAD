@@ -1,3 +1,4 @@
+:root { --ec-ask-x: 0; --ec-ask-y: 0; }
 .cv-stage > .ec-root {
   position: absolute;
   inset: 0 0 26px 0;

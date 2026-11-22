@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
-  --accent-color: #f97316;
-  --accent-color-dim: #f9731633;
+  --accent-color: #9a7bd8;
+  --accent-color-dim: #9a7bd833;
   --accent-color-hover: color-mix(in srgb, var(--accent-color) 82%, #ffffff);
 
   --bg-primary: #111111;
@@ -103,7 +103,11 @@
   --danger-fill-hover: #b91c1c;
   --brand-orange: #f97316;
 
+  --z-under: -1;
   --z-base: 0;
+  --z-local-2: 2;
+  --z-local-4: 4;
+  --z-local-5: 5;
   --z-raised: 8;
   --z-selected: 9;
   --z-rail: 10;

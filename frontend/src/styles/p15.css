@@ -1,3 +1,4 @@
+:root { --p15-cols: initial; --p15-h: initial; }
 .p15-panel { gap: var(--space-2); }
 .p15-tab { display: grid; gap: var(--space-1); }
 .p15-th { display: grid; grid-template-columns: var(--p15-cols); gap: var(--space-1); padding: 0 var(--space-2); color: var(--text-muted); font-size: var(--fs-11); font-weight: 600; }

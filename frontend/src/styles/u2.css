@@ -1,3 +1,4 @@
+:root { --u2-mt-em: 16px; --u2-mt-w: 380px; --u2-mt-x: 0; --u2-mt-y: 0; --u2-ob: 0deg; --u2-sx: 1; --u2-sy: 1; --u2-unit: 16px; --u2-wf: 1; --x: 0; }
 .u2-sm { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: var(--space-4); min-height: 300px; }
 .u2-sm-left, .u2-sm-right { display: grid; align-content: start; gap: var(--space-2); min-width: 0; }
 .u2-sm-cur, .u2-sm-ph { color: var(--text-primary); font-size: var(--fs-12); font-weight: 600; min-height: 18px; }

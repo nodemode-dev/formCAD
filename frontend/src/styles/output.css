@@ -3,7 +3,7 @@
 .op-form .cv-field { grid-template-columns: 138px minmax(0, 1fr); }
 .op-form .cv-field.cv-check { grid-template-columns: minmax(0, 1fr) auto; }
 .op-form .u2-pair > .cv-field { grid-template-columns: 96px minmax(0, 1fr); }
-.op-form .cv-radio-row { grid-template-columns: 138px minmax(0, 1fr); }
+.op-form .cv-radio-row, .op-form .cv-seg-row { grid-template-columns: 138px minmax(0, 1fr); }
 .op-form .cv-radios { justify-content: flex-start; }
 .op-win { display: grid; gap: var(--space-2); padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
 .op-win .cv-btn { justify-self: start; }

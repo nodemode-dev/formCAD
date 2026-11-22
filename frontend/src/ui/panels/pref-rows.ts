@@ -1,4 +1,4 @@
-import { el, q, setText, setValue } from '../dom';
+import { el, q, setClass, setText, setValue } from '../dom';
 import type { Row } from './controls';
 
 const SWATCH_BASE: Record<number, string> = {
@@ -53,6 +53,49 @@ export function radioRow(label: string, options: ReadonlyArray<readonly [string,
     group.appendChild(item);
   }
   return { el: root, set(v) { for (const i of inputs) if (i.checked !== (i.value === v)) i.checked = i.value === v; } };
+}
+
+export function segRow(label: string, options: ReadonlyArray<readonly [string, string]>, onChange: (v: string) => void): Row<string> {
+  const root = el('<div class="cv-field cv-seg-row"><span></span><div class="cv-seg" role="radiogroup"></div></div>');
+  setText(q(root, 'span'), label);
+  const group = q(root, '.cv-seg');
+  group.setAttribute('aria-label', label);
+  const buttons: HTMLButtonElement[] = [];
+  let current = '';
+  const paint = (v: string): void => {
+    current = v;
+    for (const b of buttons) {
+      const on = b.dataset.value === v;
+      setClass(b, 'is-active', on);
+      if (b.getAttribute('aria-checked') !== String(on)) b.setAttribute('aria-checked', String(on));
+      const stop = on || (!buttons.some((x) => x.dataset.value === v) && b === buttons[0]) ? 0 : -1;
+      if (b.tabIndex !== stop) b.tabIndex = stop;
+    }
+  };
+  const choose = (v: string): void => {
+    if (current === v) return;
+    paint(v);
+    onChange(v);
+  };
+  for (const [value, text] of options) {
+    const b = el<HTMLButtonElement>('<button type="button" role="radio" aria-checked="false"></button>');
+    b.dataset.value = value;
+    setText(b, text);
+    b.addEventListener('click', () => choose(value));
+    buttons.push(b);
+    group.appendChild(b);
+  }
+  group.addEventListener('keydown', (e) => {
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const at = Math.max(0, buttons.findIndex((b) => b.dataset.value === current));
+    const next = buttons[(at + step + buttons.length) % buttons.length];
+    next.focus();
+    choose(next.dataset.value ?? '');
+  });
+  paint('');
+  return { el: root, set: paint };
 }
 
 export function textRow(label: string, onCommit: (v: string) => void, placeholder = ''): Row<string> {

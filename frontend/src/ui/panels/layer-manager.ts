@@ -67,7 +67,7 @@ export class LayerManager extends Dialog {
       '<div class="lm">' +
       '<div class="lm-tools"></div>' +
       '<div class="lm-main"><div class="lm-filters" role="tree"></div>' +
-      '<div class="lm-table"><div class="lm-head lm-grid" role="row"></div><div class="lm-rows" role="rowgroup"></div></div></div>' +
+      '<div class="lm-table"><div class="lm-head lm-grid" role="row"></div><div class="lm-rows" role="rowgroup" tabindex="-1"></div></div></div>' +
       '<div class="lm-info" aria-live="off"></div></div>'));
     const tools = q(this.body, '.lm-tools');
     const ib = (name: string, title: string, run: () => void): HTMLButtonElement => {
@@ -106,9 +106,17 @@ export class LayerManager extends Dialog {
     this.head = q(this.body, '.lm-head');
     this.rows = q(this.body, '.lm-rows');
     this.info = q(this.body, '.lm-info');
-    this.head.innerHTML = COLS.map(([k, label]) => `<div class="lm-h lm-c-${k}${SORTABLE.has(k) ? ' is-sort' : ''}" data-sort="${k}"><span>${t(label)}</span><i class="lm-arrow"></i></div>`).join('');
+    for (const [k, label] of COLS) {
+      const cell = el(`<div class="lm-h lm-c-${k}${SORTABLE.has(k) ? ' is-sort' : ''}" data-sort="${k}"><span></span><i class="lm-arrow"></i></div>`);
+      setText(q(cell, 'span'), t(label));
+      this.head.appendChild(cell);
+    }
     this.menu = new Popover('lm-pop-menu', 180);
-    this.menu.root.innerHTML = `<button type="button" data-m="current">${t('Set Current')}</button><button type="button" data-m="rename">${t('Rename Layer')}</button><button type="button" data-m="delete">${t('Delete Layer')}</button>`;
+    for (const [m, label] of [['current', 'Set Current'], ['rename', 'Rename Layer'], ['delete', 'Delete Layer']] as const) {
+      const item = el<HTMLButtonElement>(`<button type="button" data-m="${m}"></button>`);
+      setText(item, t(label));
+      this.menu.root.appendChild(item);
+    }
     this.menu.root.addEventListener('click', (e) => {
       const m = (e.target as HTMLElement).closest<HTMLElement>('[data-m]')?.dataset.m;
       this.menu.hide();
@@ -202,10 +210,11 @@ export class LayerManager extends Dialog {
     input.focus();
     input.select();
     let done = false;
-    const end = (ok: boolean): void => {
+    const end = (ok: boolean, byKey = false): void => {
       if (done) return;
       done = true;
       const v = input.value.trim();
+      if (byKey) this.rows.focus({ preventScroll: true });
       input.remove();
       span.hidden = false;
       this.editing = false;
@@ -213,7 +222,7 @@ export class LayerManager extends Dialog {
     };
     input.addEventListener('keydown', (e) => {
       e.stopPropagation();
-      if (e.key === 'Enter') { e.preventDefault(); end(true); } else if (e.key === 'Escape') { e.preventDefault(); end(false); }
+      if (e.key === 'Enter') { e.preventDefault(); end(true, true); } else if (e.key === 'Escape') { e.preventDefault(); end(false, true); }
     });
     input.addEventListener('blur', () => end(true));
   }
@@ -379,9 +388,15 @@ export class LayerManager extends Dialog {
     const key = names.join('\u0001');
     if (sel.dataset.key !== key) {
       sel.dataset.key = key;
-      const opts = [`<option value="">${t(names.length ? 'Unsaved Layer State' : 'No saved layer states')}</option>`, ...names.map((n) => `<option value="${n.replace(/"/g, '&quot;')}"></option>`)];
-      sel.innerHTML = opts.join('');
-      names.forEach((n, i) => { sel.options[i + 1].textContent = n; });
+      patchList(sel, ['', ...names], {
+        key: (n) => `s:${n}`,
+        create: (n) => {
+          const o = document.createElement('option');
+          o.value = n;
+          return o;
+        },
+        update: (o, n) => setText(o, n || t(names.length ? 'Unsaved Layer State' : 'No saved layer states')),
+      });
     }
     setValue(sel, names.includes(this.stateChosen) ? this.stateChosen : '');
     this.gateStates();

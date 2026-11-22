@@ -22,7 +22,7 @@ export class CommentLayer implements ViewLayer {
   private list: Comment[] = [];
   private shownOn = true;
   private focus = 0;
-  private ink = { open: '#f97316', resolved: '#22c55e' };
+  private ink = { open: '#9a7bd8', resolved: '#22c55e' };
   readonly overlay: MarkupOverlay;
 
   constructor(private readonly vp: Viewport3D) {
@@ -30,7 +30,7 @@ export class CommentLayer implements ViewLayer {
   }
 
   palette(_pal: Palette): void {
-    this.ink = { open: tokenCss('--accent-color', parseCss('#f97316'), this.vp.host), resolved: tokenCss('--ok', parseCss('#22c55e'), this.vp.host) };
+    this.ink = { open: tokenCss('--accent-color', parseCss('#9a7bd8'), this.vp.host), resolved: tokenCss('--ok', parseCss('#22c55e'), this.vp.host) };
     this.vp.invalidate();
   }
 
@@ -147,7 +147,7 @@ export class MarkupOverlay {
 
   svgText(): string {
     const r = this.root.getBoundingClientRect();
-    const stroke = tokenHexCss('--accent-color', parseCss('#f97316'), this.vp.host);
+    const stroke = tokenHexCss('--accent-color', parseCss('#9a7bd8'), this.vp.host);
     const paths = this.strokes.map((p) => `<path d="${p.getAttribute('d') ?? ''}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
     return `<svg xmlns="${NS}" viewBox="0 0 ${Math.round(r.width)} ${Math.round(r.height)}">${paths}</svg>`;
   }

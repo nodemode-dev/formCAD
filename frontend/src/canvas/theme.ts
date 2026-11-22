@@ -40,7 +40,7 @@ const NAMES: Array<[keyof Theme, string, Rgba]> = [
   ['text', '--text-primary', [230, 230, 230, 1]],
   ['panel', '--surface-1', [30, 30, 34, 0.96]],
   ['line', '--line-1', [255, 255, 255, 0.18]],
-  ['accent', '--accent-color', [249, 115, 22, 1]],
+  ['accent', '--accent-color', [154, 123, 216, 1]],
 ];
 
 export function readTheme(host: HTMLElement, probe: HTMLElement): Theme {

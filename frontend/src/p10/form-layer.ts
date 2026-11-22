@@ -156,7 +156,7 @@ export class FormLayer implements ViewLayer {
   palette(_pal: Palette): void {
     const host = this.vp.host;
     this.base = cssColor(host, '--text-secondary', '#a4a4a4');
-    this.hotc = cssColor(host, '--accent-color', '#f97316');
+    this.hotc = cssColor(host, '--accent-color', '#9a7bd8');
     this.softc = cssColor(host, '--warn', '#f59e0b');
     this.selEdgeMat.color.copy(this.hotc);
     this.selFaceMat.color.copy(this.hotc);

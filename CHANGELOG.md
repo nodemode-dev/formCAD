@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.22.0 · 2026-11-22
+
+- FormCAD has its own accent, a violet, in place of FormVis's orange. If you chose an accent yourself it is kept.
+- Panels in the side column can be arranged: drag a panel by the grip in its header to move it, and drag its lower edge to give it a height of its own. Reset Panels puts everything back.
+- Short two-way choices (Save new drawings as, Orientation) are a segmented bar. The Layers list and the feature tree show their rows as cards.
+- Nothing jumps when a drawing or a graph opens from Home, and a graph node or a layer that is renamed updates where it is. After a layer rename the keyboard stays in the Layer Properties Manager.
+- Not run for this version: the desktop window, macOS and Windows.
+
 ## 0.21.0 · 2026-11-22
 
 - The session key reaches one window. The desktop app hands it to its own window; the engine no longer writes it into the pages it serves. Run for a browser, the engine gives it to the first page only, and a later page says so in its status line.

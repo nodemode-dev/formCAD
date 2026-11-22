@@ -7,7 +7,7 @@ import { el, patchList, q, setClass, setHidden, setText, setValue, store, stored
 import { icon } from './icons';
 import { isLang, languages, onLanguage, setLanguage, t } from './i18n';
 import { checkRow, colorRow, numberRow, selectRow, sliderRow, toggleRow, type Row } from './panels/controls';
-import { aciRow, buttonRow, colorDefaultRow, enable, infoRow, pathRow, radioRow, textRow } from './panels/pref-rows';
+import { aciRow, buttonRow, colorDefaultRow, enable, infoRow, pathRow, radioRow, segRow, textRow } from './panels/pref-rows';
 import {
   ANGLE_UNITS, ANIMATION_MODES, DEFAULT_PREFS, DRAW_UNITS, SAVE_VERSIONS, loadPrefs, updatePrefs, type Prefs,
 } from './prefs';
@@ -288,7 +288,7 @@ export class SettingsDialog extends Dialog {
 
     add('Open and Save',
       grp('New drawings',
-        this.bindP(radioRow('Save new drawings as', [['dxf', 'DXF'], ['dwg', 'DWG']], (v) => this.change({ saveFormat: v === 'dwg' ? 'dwg' : 'dxf' })), (p) => p.saveFormat),
+        this.bindP(segRow('Save new drawings as', [['dxf', 'DXF'], ['dwg', 'DWG']], (v) => this.change({ saveFormat: v === 'dwg' ? 'dwg' : 'dxf' })), (p) => p.saveFormat),
         this.pSelect('Default save version', 'saveVersion', SAVE_VERSIONS),
         this.bindV(radioRow('Units of new drawings', [['0', 'Imperial (inches)'], ['1', 'Metric (millimetres)']], (v) => this.setVar('MEASUREINIT', Number(v))), () => String(this.num('MEASUREINIT'))),
         nt('New drawings and the first drawing at startup use these units unless a default template is set. A drawing opened from a file keeps that file’s format, and drawings with no file yet are saved in the default version.')),

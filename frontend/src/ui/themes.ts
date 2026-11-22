@@ -33,11 +33,11 @@ export const THEMES: Record<string, ThemeProfile> = {
 };
 
 export const DEFAULT_THEME = 'studio';
-export const DEFAULT_ACCENT = '#f97316';
-export const OLD_DEFAULT_ACCENT = '#aba0d3';
+export const DEFAULT_ACCENT = '#9a7bd8';
+export const OLD_DEFAULT_ACCENTS: readonly string[] = ['#aba0d3', '#f97316'];
 export const DEFAULT_INTENSITY = 1;
 export const STORAGE_KEY = 'nodemode_ui_settings';
-export const APPEARANCE = 3;
+export const APPEARANCE = 4;
 
 export interface ThemeChoice { theme: string; accentColor: string; intensity?: number }
 
@@ -54,7 +54,7 @@ export function readChoice(): ThemeChoice {
     if (raw) {
       const saved = JSON.parse(raw) as Partial<ThemeChoice> & { appearance?: number };
       if (saved.appearance === APPEARANCE) return { theme: saved.theme && THEMES[saved.theme] ? saved.theme : DEFAULT_THEME, accentColor: saved.accentColor || DEFAULT_ACCENT, intensity: clampIntensity(saved.intensity) };
-      if (saved.appearance === 2) return { theme: saved.theme && THEMES[saved.theme] ? saved.theme : DEFAULT_THEME, accentColor: !saved.accentColor || saved.accentColor === OLD_DEFAULT_ACCENT ? DEFAULT_ACCENT : saved.accentColor, intensity: DEFAULT_INTENSITY };
+      if (saved.appearance === 3 || saved.appearance === 2) return { theme: saved.theme && THEMES[saved.theme] ? saved.theme : DEFAULT_THEME, accentColor: !saved.accentColor || OLD_DEFAULT_ACCENTS.includes(saved.accentColor) ? DEFAULT_ACCENT : saved.accentColor, intensity: saved.appearance === 3 ? clampIntensity(saved.intensity) : DEFAULT_INTENSITY };
     }
   } catch (e) {
     console.error('[theme] read failed:', e);
@@ -76,7 +76,7 @@ function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
   const n = parseInt(full.slice(0, 6), 16);
-  if (Number.isNaN(n)) return `rgba(249,115,22,${alpha})`;
+  if (Number.isNaN(n)) return `rgba(154,123,216,${alpha})`;
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 

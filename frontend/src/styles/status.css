@@ -1,3 +1,4 @@
+:root { --p: 0%; }
 .cv-status { gap: var(--space-2); }
 .cv-st-tools { display: flex; flex: none; gap: 2px; }
 .cv-st-btn { width: var(--ctl-sm); height: var(--ctl-sm); }

@@ -138,7 +138,7 @@ export class JointLayer implements ViewLayer {
   private picked = '';
   private size = 10;
   private poses: Record<string, number[]> | null = null;
-  private ink: Record<Kind, string> = { free: '#f97316', limit: '#f59e0b', outside: '#ef4444', off: '#888888', hot: '#ffffff' };
+  private ink: Record<Kind, string> = { free: '#9a7bd8', limit: '#f59e0b', outside: '#ef4444', off: '#888888', hot: '#ffffff' };
 
   constructor(private readonly vp: Viewport3D) {
     for (const k of KINDS) this.mats.set(k, new THREE.LineBasicMaterial({ color: 0xffffff, depthTest: false, transparent: true }));
@@ -151,7 +151,7 @@ export class JointLayer implements ViewLayer {
   palette(_pal: Palette): void {
     const host = this.vp.host;
     const colours: Record<Kind, THREE.Color> = {
-      free: cssColor(host, '--accent-color', '#f97316'),
+      free: cssColor(host, '--accent-color', '#9a7bd8'),
       limit: cssColor(host, '--warn', '#f59e0b'),
       outside: cssColor(host, '--danger', '#ef4444'),
       off: cssColor(host, '--text-muted', '#888888'),

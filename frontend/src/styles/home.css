@@ -1,3 +1,4 @@
+:root { --cv-home-nav-w: 232px; }
 body.cv-home-open .cv-status { visibility: hidden; }
 .cv-home { position: fixed; top: var(--cv-titlebar-h); left: 0; right: 0; bottom: 0; z-index: calc(var(--z-menu) - 1); display: grid; grid-template-columns: var(--cv-home-nav-w, 232px) 6px minmax(0, 1fr); background: var(--group-head); color: var(--text-primary); user-select: none; -webkit-user-select: none; }
 .cv-home[hidden] { display: none; }

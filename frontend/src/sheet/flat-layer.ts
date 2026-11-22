@@ -111,7 +111,7 @@ export class FlatLayer implements ViewLayer {
     this.upMat.color.copy(cssColor(host, '--sm-bend-up', '#34d399'));
     this.downMat.color.copy(cssColor(host, '--sm-bend-down', '#f59e0b'));
     this.outlineMat.color.copy(cssColor(host, '--canvas-selection', '#ffffff'));
-    this.fillMat.color.copy(cssColor(host, '--accent-color', '#f97316'));
+    this.fillMat.color.copy(cssColor(host, '--accent-color', '#9a7bd8'));
     this.vp.invalidate();
   }
 
