@@ -283,7 +283,19 @@ fn main() {
             if launch_args.iter().any(|a| a == "--portable") {
                 engine = engine.env("FORMCAD_PORTABLE", "1");
             }
-            let (mut rx, child) = engine.spawn().expect("the FormCAD engine failed to spawn");
+            let (mut rx, child) = match engine.spawn() {
+                Ok(pair) => pair,
+                Err(_) => {
+                    close_splash(&handle);
+                    handle
+                        .dialog()
+                        .message("The FormCAD engine failed to start. Please relaunch the app.")
+                        .title("FormCAD")
+                        .blocking_show();
+                    handle.exit(1);
+                    return Ok(());
+                }
+            };
             #[cfg(windows)]
             win_job::hold(child.pid());
             *app.state::<Backend>().0.lock().unwrap() = Some(child);
