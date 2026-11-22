@@ -361,6 +361,8 @@ def bom_rows(ctx, source):
         prov = viewsrc.provider_for(view)
         if hasattr(prov, "bom_rows"):
             return bom.from_rows(prov.bom_rows(ctx.d, view))
+        if not (getattr(view, "source", None) or {}).get("doc"):
+            return bom.collect(ctx.doc)
         raise CommandError("That view has no model to take a BOM from.")
     raise CommandError("Give a BOM source: rows, path, self or view.")
 
@@ -651,7 +653,7 @@ def modelitems_exec(ctx, args):
     off = ops.num(args.get("offset", 10.0), "The offset", 1.0, 500.0)
     want = set(str(x) for x in args["items"]) if args.get("items") else None
     done = {str(e.marks.get("model_item")) for e in d.ents.values() if e.kind == "dimension" and e.marks.get("model_item")}
-    placed, skipped = [], []
+    placed, offered = [], {}
     stack = {}
     seen_items = {}
     for v in vs:
@@ -669,6 +671,7 @@ def modelitems_exec(ctx, args):
             key = "%s@%s" % (it["id"], it["sketch"])
             if (want is not None and it["id"] not in want) or key in done or key in seen_items:
                 continue
+            offered[key] = {"item": it["id"], "label": it["label"]}
             if it["kind"] == "linear":
                 dv = [it["b"][i] - it["a"][i] for i in range(3)]
                 L = math.sqrt(sum(c * c for c in dv))
@@ -682,6 +685,13 @@ def modelitems_exec(ctx, args):
                 lb = lb or {"point": [pb[0], pb[1]]}
                 mx, my = (pa[0] + pb[0]) / 2.0, (pa[1] + pb[1]) / 2.0
                 horiz = abs(pb[0] - pa[0]) >= abs(pb[1] - pa[1])
+                if it.get("along"):
+                    tip = prov.project(d, v, [it["a"][i] + it["along"][i] for i in range(3)])
+                    if tip is None or math.hypot(tip[0] - pa[0], tip[1] - pa[1]) < 1e-9:
+                        continue
+                    horiz = abs(tip[0] - pa[0]) >= abs(tip[1] - pa[1])
+                    if abs(pb[0] - pa[0] if horiz else pb[1] - pa[1]) < 1e-6:
+                        continue
                 k = stack.get((v.handle, horiz, my > cy if horiz else mx > cx), 0)
                 stack[(v.handle, horiz, my > cy if horiz else mx > cx)] = k + 1
                 if horiz:
@@ -713,4 +723,5 @@ def modelitems_exec(ctx, args):
                 r = viewdim_exec(ctx, {"view": v.handle, "kind": it["kind"], "edge": ed["id"], "location": loc, "model_item": key})
                 seen_items[key] = True
                 placed.append({"item": it["id"], "label": it["label"], "view": v.handle, "dimension": r["created"], "measurement": r["measurement"]})
+    skipped = [row for key, row in offered.items() if key not in seen_items]
     return {"placed": placed, "skipped": skipped}
