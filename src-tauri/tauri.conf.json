@@ -32,8 +32,8 @@
     "targets": "all",
     "category": "GraphicsAndDesign",
     "shortDescription": "Parametric CAD",
-    "longDescription": "FormCAD is a CAD application in the NodeMode design system: 2D drafting, parts, assemblies, surfaces and drawings, with its own .fcad project files and DXF import and export.",
-    "copyright": "Copyright 2026 nodemode-ai.",
+    "longDescription": "FormCAD is the CAD studio of the Form family: 2D drafting, parts, assemblies, surfaces and drawings, with its own .fcad project files and DXF import and export.",
+    "copyright": "Copyright 2026 NodeAgentc, Inc.",
     "resources": { "engine": "engine" },
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "macOS": {
