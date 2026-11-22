@@ -10,7 +10,7 @@ from pathlib import Path
 from app.core import config, guard
 from app.services import agent_lookup, terminal
 
-CONTRACT = "2.2.0"
+CONTRACT = "2.2.1"
 KINDS = ("claude", "codex", "cursor", "antigravity")
 OVERRIDES = {"claude": ("FORMCAD_CLAUDE_BIN",), "codex": ("FORMCAD_CODEX_BIN",), "cursor": ("FORMCAD_CURSOR_BIN",), "antigravity": ("FORMCAD_ANTIGRAVITY_BIN",)}
 SHELL_WAIT = 10.0
