@@ -88,7 +88,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 4. Plotting and interchange
 
-**What it does.** Plot to PDF (with layers and searchable text), PNG and SVG; read and write DXF from release 12 to 2018, read SVG, exchange STEP (AP203, AP214, AP242 with semantic product manufacturing information), IGES and 3DM through the kernel, and mesh formats STL, OBJ, PLY, 3MF and GLB. DWG goes through a converter you install yourself.
+**What it does.** Plot to PDF (with layers and searchable text), PNG and SVG; read and write DXF from release 12 to 2018, read SVG, exchange STEP (AP203, AP214, AP242 with semantic product manufacturing information), IGES and 3DM through the kernel, and mesh formats STL, OBJ, PLY, 3MF and GLB. DWG goes through a converter you install yourself, or through the DWG tools when they are offered in Preferences.
 
 **How to start.** `plot` opens the plot flow; `export` and `import` handle other formats; `open` and `saveas` choose the format by extension.
 
@@ -98,7 +98,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 - 3DM: curves and untrimmed surfaces are kept exactly. A trimmed face is written as a surface plus its trim curves, with a warning; STEP keeps trimmed faces better.
 - Mesh formats that carry no unit (STL, OBJ) produce a warning on every import and export.
-- DWG needs a converter at a path you configure (`GET /api/interchange/dwg`); without it DWG files are refused with a message.
+- DWG needs a converter. Either turn DWG on and point FormCAD at a converter you installed (the ODA File Converter reads and writes every DWG version from 2000 to 2018), or install the DWG tools from Preferences when they are offered there (GNU LibreDWG, a separate GPL program FormCAD downloads and checks file by file). With the DWG tools FormCAD opens DWG files of every version and saves DWG in the 2000 format only; objects LibreDWG skips are listed in the import notes, and a drawing LibreDWG cannot convert stops the save with its message, so save it as DXF instead. Without either, DWG files are refused with a message (`GET /api/interchange/dwg`).
 - A STEP file that carries something FormCAD cannot represent is read with a report of what was dropped.
 
 ## 5. Automation: LISP, scripts, macros, plugins, CLI, MCP

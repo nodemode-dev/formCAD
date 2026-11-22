@@ -2,6 +2,16 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## DW1 v0.26.0 DWG through the DWG tools (app/services/dwgtools.py, app/data/dwg-licence.json, app/interchange/dwg.py, app/interchange/files.py, app/interchange/hooks.py, app/routers/interchange.py, app/automation/ops.py)
+
+The DWG tools are GNU LibreDWG's `dwg2dxf` and `dxf2dwg`, a separate GPL program shipped from `formai-binaries` (`dwg/README.md`, `dwg/HASHOUT_LOG.md`). `services/dwgtools.py` installs them the way the mesher is installed: the record `data/dwg-licence.json` names the release, the URL pattern, the folder and every file's SHA-256 per triple; the archive is unpacked into a hidden folder, every file is checked with `kernel.verify_tree`, and only then moved to `<data>/dwg/<release>`. The record ships with no files, so until the owner publishes a build `published` is false, Preferences shows nothing about the tools, and DWG works exactly as before through a converter the user installs. `FORMCAD_DWG_RECORD` points at another record to try a build before it is committed. `POST /api/interchange/dwg/tools/install` and `DELETE /api/interchange/dwg/tools` start and undo the install.
+
+Which program runs. A converter the user turned on and named, or found on the computer while DWG is on, comes first (the ODA File Converter writes every version). Otherwise the installed DWG tools run, whether or not the DWG switch is on, because installing them is the user's choice and the files are checked. `status()` reports `converterKind` "dwgtools", `writeVersions` ["R2000"] and the tools' own state.
+
+Reading. `dwg2dxf` used to be called with `--as r2018`; on R13, R14 and R2000 files that gives a DXF with no entities (2000/Arc.dwg: 1 arc without the flag, none with it). It now writes the DWG's own DXF version, which the DXF reader takes from R12 to R2018. LibreDWG's warnings and errors are grouped by message (numbers and handles masked) and added to the import notes, at most 20 lines; DWG opened through the interchange hooks passes its report too, and `formcad_open_document` returns the notes for every foreign file.
+
+Saving. Through LibreDWG the DWG is always R2000, and the note says so, naming the version that was asked for when it differs. The intermediate DXF is written as R2000 for LibreDWG (`mid_version`). When `dxf2dwg` fails, the save stops with its message and nothing is written to the target.
+
 ## LW1 v0.25.0 fixes from the Linux proof walks (app/drawann/__init__.py, app/drawann/modelitems.py, app/cmd/commands/drawann.py, app/views/hook.py, app/assembly/parts.py, app/param/store.py, app/param/adapt.py, app/param/ops.py, app/param/sketch.py, app/cmd/constraint_flow.py, app/automation/ops.py, app/automation/mcp.py, app/cmd/runner.py, app/interchange/dxf_read.py, app/interchange/stepio.py)
 
 The five walks of the production handoff were run against an engine with the published kernel and mesher installed through the app's own routes. Each fix below was found by a walk step and that step passed on a second run.
