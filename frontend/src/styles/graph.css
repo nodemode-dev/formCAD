@@ -73,7 +73,7 @@
 }
 .gx-grid {
   position: absolute;
-  inset: 0;
+  inset: -50px;
   will-change: transform;
   pointer-events: none;
   background-image: radial-gradient(circle, color-mix(in srgb, var(--grid-color) 45%, transparent) 1px, transparent 1.4px);

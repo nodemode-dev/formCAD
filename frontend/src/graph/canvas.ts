@@ -179,7 +179,6 @@ export class GraphCanvas implements WidgetHost {
       if (g !== this.gridSize) {
         this.gridSize = g;
         this.grid.style.backgroundSize = `${g}px ${g}px`;
-        this.grid.style.inset = `${-g}px`;
       }
       this.grid.style.transform = `translate(${this.tx % g}px,${this.ty % g}px)`;
       setClass(this.root, 'is-far', this.z < FAR);

@@ -27,6 +27,7 @@
 .lm-h.is-on .lm-arrow { opacity: 1; border-bottom-color: currentColor; border-top-width: 0; }
 .lm-h.is-on.is-desc .lm-arrow { border-top-width: 4px; border-top-color: currentColor; border-bottom-width: 0; }
 .lm-rows { height: 330px; overflow-y: auto; overflow-x: hidden; }
+.lm-rows:focus { outline: 0; }
 .lm-row { height: var(--ctl-lg); border-bottom: 1px solid var(--line-0); color: var(--text-secondary); font-size: var(--fs-12); }
 .lm-row:nth-child(even) { background: var(--surface-1); }
 .lm-row.is-selected { background: var(--accent-color-dim); color: var(--text-primary); }

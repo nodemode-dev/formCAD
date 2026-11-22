@@ -67,7 +67,7 @@ export class LayerManager extends Dialog {
       '<div class="lm">' +
       '<div class="lm-tools"></div>' +
       '<div class="lm-main"><div class="lm-filters" role="tree"></div>' +
-      '<div class="lm-table"><div class="lm-head lm-grid" role="row"></div><div class="lm-rows" role="rowgroup"></div></div></div>' +
+      '<div class="lm-table"><div class="lm-head lm-grid" role="row"></div><div class="lm-rows" role="rowgroup" tabindex="-1"></div></div></div>' +
       '<div class="lm-info" aria-live="off"></div></div>'));
     const tools = q(this.body, '.lm-tools');
     const ib = (name: string, title: string, run: () => void): HTMLButtonElement => {
@@ -210,10 +210,11 @@ export class LayerManager extends Dialog {
     input.focus();
     input.select();
     let done = false;
-    const end = (ok: boolean): void => {
+    const end = (ok: boolean, byKey = false): void => {
       if (done) return;
       done = true;
       const v = input.value.trim();
+      if (byKey) this.rows.focus({ preventScroll: true });
       input.remove();
       span.hidden = false;
       this.editing = false;
@@ -221,7 +222,7 @@ export class LayerManager extends Dialog {
     };
     input.addEventListener('keydown', (e) => {
       e.stopPropagation();
-      if (e.key === 'Enter') { e.preventDefault(); end(true); } else if (e.key === 'Escape') { e.preventDefault(); end(false); }
+      if (e.key === 'Enter') { e.preventDefault(); end(true, true); } else if (e.key === 'Escape') { e.preventDefault(); end(false, true); }
     });
     input.addEventListener('blur', () => end(true));
   }
