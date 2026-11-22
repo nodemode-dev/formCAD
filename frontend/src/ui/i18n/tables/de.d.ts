@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Stutzen der Fläche aufheben",
   1730: "Gestutzte Fläche verkleinern",
   1731: "Flächenpunkte verschieben",
+  1732: "Auf Fläche projizieren",
+  1733: "Kurven entlang Ansicht projizieren",
+  1734: "Auf Fläche ziehen",
+  1735: "Kontur",
+  1736: "Isokurve extrahieren",
+  1737: "Verformen",
+  1738: "Biegen",
+  1739: "Entlang Kurve fließen",
+  1740: "Entlang Fläche fließen",
+  1741: "Käfig",
+  1742: "Käfig bearbeiten",
+  1743: "Käfig entfernen",
 };
 export default T;

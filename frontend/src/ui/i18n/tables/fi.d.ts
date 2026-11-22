@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Poista pinnan typistys",
   1730: "Kutista typistetty pinta",
   1731: "Siirrä pinnan pisteitä",
+  1732: "Projisoi pinnalle",
+  1733: "Projisoi käyrät näkymän suunnassa",
+  1734: "Vedä pinnalle",
+  1735: "Korkeuskäyrät",
+  1736: "Poimi isokäyrä",
+  1737: "Muodonmuutos",
+  1738: "Taivuta",
+  1739: "Virtaa käyrää pitkin",
+  1740: "Virtaa pintaa pitkin",
+  1741: "Häkki",
+  1742: "Muokkaa häkkiä",
+  1743: "Poista häkki",
 };
 export default T;

@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Felület nyesésének megszüntetése",
   1730: "Nyesett felület zsugorítása",
   1731: "Felületpontok áthelyezése",
+  1732: "Vetítés felületre",
+  1733: "Görbék vetítése nézetirányban",
+  1734: "Húzás felületre",
+  1735: "Szintvonalak",
+  1736: "Izogörbe kinyerése",
+  1737: "Deformálás",
+  1738: "Hajlítás",
+  1739: "Áramoltatás görbe mentén",
+  1740: "Áramoltatás felület mentén",
+  1741: "Ketrec",
+  1742: "Ketrec szerkesztése",
+  1743: "Ketrec eltávolítása",
 };
 export default T;

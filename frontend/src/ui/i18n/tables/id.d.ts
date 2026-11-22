@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Batalkan Trim Permukaan",
   1730: "Susutkan Permukaan yang Di-trim",
   1731: "Pindahkan Titik Permukaan",
+  1732: "Proyeksikan ke Permukaan",
+  1733: "Proyeksikan Kurva Searah Tampilan",
+  1734: "Tarik ke Permukaan",
+  1735: "Kontur",
+  1736: "Ekstrak Isokurva",
+  1737: "Deformasi",
+  1738: "Tekuk",
+  1739: "Alirkan Sepanjang Kurva",
+  1740: "Alirkan Sepanjang Permukaan",
+  1741: "Sangkar",
+  1742: "Edit Sangkar",
+  1743: "Hapus Sangkar",
 };
 export default T;

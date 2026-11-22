@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Anular recorte de superficie",
   1730: "Reducir superficie recortada",
   1731: "Mover puntos de superficie",
+  1732: "Proyectar sobre superficie",
+  1733: "Proyectar curvas según la vista",
+  1734: "Atraer a superficie",
+  1735: "Contorno",
+  1736: "Extraer isocurva",
+  1737: "Deformar",
+  1738: "Curvar",
+  1739: "Fluir a lo largo de curva",
+  1740: "Fluir a lo largo de superficie",
+  1741: "Jaula",
+  1742: "Editar jaula",
+  1743: "Quitar jaula",
 };
 export default T;

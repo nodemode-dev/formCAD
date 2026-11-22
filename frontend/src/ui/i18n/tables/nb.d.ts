@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Fjern beskjæring av overflate",
   1730: "Krymp beskåret overflate",
   1731: "Flytt overflatepunkter",
+  1732: "Projiser på overflate",
+  1733: "Projiser kurver langs visning",
+  1734: "Trekk til overflate",
+  1735: "Kontur",
+  1736: "Trekk ut isokurve",
+  1737: "Deformer",
+  1738: "Bøy",
+  1739: "Flyt langs kurve",
+  1740: "Flyt langs overflate",
+  1741: "Bur",
+  1742: "Rediger bur",
+  1743: "Fjern bur",
 };
 export default T;
