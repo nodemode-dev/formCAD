@@ -22,7 +22,7 @@ class AssemblyError(ValueError):
 def blank() -> dict:
     return {
         "schema": SCHEMA, "next": 1, "next_pattern": 1, "active_config": DEFAULT_CONFIG, "search_folders": [], "search_order": list(DEFAULT_ORDER),
-        "embed_cache": True, "finds": {}, "find_next": 1,
+        "embed_cache": True, "lightweight": True, "finds": {}, "find_next": 1,
     }
 
 

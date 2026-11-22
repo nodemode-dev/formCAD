@@ -3,7 +3,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.assembly import api, bom, cfg, model, parts, store
+from app.assembly import api, bom, cfg, light, model, parts, store
 from app.assembly import props as P
 from app.assembly.store import AssemblyError
 from app.doc.document import CommandFailed
@@ -105,6 +105,11 @@ class SettingsBody(BaseModel):
     search_folders: Optional[list[str]] = None
     search_order: Optional[list[str]] = None
     embed_cache: Optional[bool] = None
+    lightweight: Optional[bool] = None
+
+
+class ResolveBody(BaseModel):
+    components: Optional[list[str]] = None
 
 
 class PropsBody(BaseModel):
@@ -300,7 +305,17 @@ def activate_config(doc_id: str, name: str) -> dict:
 
 @router.put("/{doc_id}/assembly/settings")
 def settings(doc_id: str, body: SettingsBody) -> dict:
-    return _edit(doc_id, "ASMSEARCH", lambda doc: model.settings(doc, body.search_folders, body.search_order, body.embed_cache))
+    return _edit(doc_id, "ASMSEARCH", lambda doc: model.settings(doc, body.search_folders, body.search_order, body.embed_cache, body.lightweight))
+
+
+@router.post("/{doc_id}/assembly/resolve")
+def resolve(doc_id: str, body: ResolveBody = ResolveBody()) -> dict:
+    return _read(doc_id, lambda doc: light.resolve(doc, body.components))
+
+
+@router.post("/{doc_id}/assembly/lightweight")
+def lightweight(doc_id: str, body: ResolveBody = ResolveBody()) -> dict:
+    return _read(doc_id, lambda doc: light.lighten(doc, body.components))
 
 
 @router.get("/{doc_id}/assembly/bom")

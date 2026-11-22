@@ -60,7 +60,11 @@ export function treePanel(): DockPanel {
     id: 'asm-tree', label: 'Assembly', icon: 'add', order: 30,
     build(body) {
       const { live, paint } = shell(body, 'Open an assembly to see its components.');
-      const bar = buttons(button('Insert component', () => void insertComponent(), 'primary'), button('Refresh', () => void asm.refresh()));
+      const bar = buttons(
+        button('Insert component', () => void insertComponent(), 'primary'),
+        button('Refresh', () => void asm.refresh()),
+        button('Resolve all', () => { void guarded(() => req('POST', docUrl(id(), 'assembly/resolve'), {})).then(() => sceneSettled()); }),
+      );
       const list = el('<div class="u8-list" role="tree" aria-label="Components"></div>');
       const status = el('<p class="u8-note"></p>');
       live.append(bar, list, status);
@@ -87,9 +91,12 @@ export function treePanel(): DockPanel {
             const pad = `${n.depth * 12}px`;
             if (name.style.paddingLeft !== pad) name.style.paddingLeft = pad;
             const badge = q(row, '.u8-badge');
-            const st = n.status + (n.stale && n.status === 'loaded' ? ' (copy)' : '');
+            const st = n.lightweight ? t('lightweight') : n.status + (n.stale && n.status === 'loaded' ? ' (copy)' : '');
             setText(badge, st);
-            badge.dataset.s = n.status;
+            const s = n.lightweight ? 'lightweight' : n.status;
+            if (badge.dataset.s !== s) badge.dataset.s = s;
+            const tip = n.lightweight ? t('Drawn from the display copy kept in the assembly; its solid loads when a command needs it.') : '';
+            if (badge.title !== tip) badge.title = tip;
             setClass(row, 'is-suppressed', n.suppressed);
             setClass(row, 'is-hidden', !n.visible);
             setClass(row, 'is-selected', top && asm.selected === n.cid);
@@ -101,14 +108,27 @@ export function treePanel(): DockPanel {
                 act('F', t('Find the file'), () => { void guarded(() => req('POST', docUrl(id(), `assembly/components/${n.cid}/find`), { deep: true })).then(() => sceneSettled()); }),
                 act('R', t('Replace with another file'), () => { void (async () => { const p = await pickPath('open', 'Replace Component', '', FCAD, 'Replace'); if (p && await guarded(() => req('POST', docUrl(id(), `assembly/components/${n.cid}/replace`), { path: p }))) await sceneSettled(); })(); }),
                 act('@refresh', t('Reload from the file'), () => { void guarded(() => req('POST', docUrl(id(), `assembly/components/${n.cid}/reload`), {})).then(() => sceneSettled()); }),
+                act('@load', '', () => {
+                  const cur = asm.flat().find((x) => x.key === n.key);
+                  const route = cur?.lightweight ? 'assembly/resolve' : 'assembly/lightweight';
+                  void guarded(() => req('POST', docUrl(id(), route), { components: [n.cid] })).then(() => sceneSettled());
+                }),
               );
+              (acts.lastElementChild as HTMLElement).dataset.a = 'light';
+            }
+            const lb = acts.querySelector<HTMLButtonElement>('[data-a="light"]');
+            if (lb) {
+              const want = n.type !== 'part' ? '' : n.lightweight ? t('Resolve: load the full solid') : t('Make lightweight');
+              if (lb.title !== want) lb.title = want;
+              setHidden(lb, n.type !== 'part');
             }
             row.onclick = () => { if (top) asm.select([n.cid]); };
           },
         });
         const miss = asm.tree.length ? asm.flat().filter((n) => n.status === 'missing').length : 0;
         const old = asm.flat().filter((n) => n.status === 'outofdate').length;
-        setText(status, asm.tree.length ? `${asm.flat().length} ${t('instances')} · ${miss} ${t('missing')} · ${old} ${t('out of date')}` : '');
+        const lw = asm.flat().filter((n) => n.lightweight).length;
+        setText(status, asm.tree.length ? `${asm.flat().length} ${t('instances')} · ${miss} ${t('missing')} · ${old} ${t('out of date')} · ${lw} ${t('lightweight')}` : '');
       };
       asm.onChange(() => { paint(); if (isAssembly()) paintRows(); });
       void docStore;

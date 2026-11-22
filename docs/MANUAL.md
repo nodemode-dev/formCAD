@@ -172,9 +172,11 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **How to start.** `asminsert` to place a component, `mate` to constrain it.
 
-**Main commands.** `asminsert`, `asmremove`, `asmmove`, `asmflags`, `asmreload`, `asmreplace`, `asmfind`, `asmrebase`, `asmembed`, `asmpattern`, `asmconfig`, `asmbom`, `asmsearch`, `asmrefresh`, `mate`, `mateedit`, `matedelete`, `matesolve`, `matestatus`, `matedrag`, `explodeview`, `interfere`, `interferesweep`, `matesettings`. The file contract is in `docs/ASSEMBLY_SCHEMA.md`.
+**Main commands.** `asminsert`, `asmremove`, `asmmove`, `asmflags`, `asmreload`, `asmreplace`, `asmfind`, `asmrebase`, `asmembed`, `asmpattern`, `asmconfig`, `asmbom`, `asmsearch`, `asmrefresh`, `mate`, `mateedit`, `matedelete`, `matesolve`, `matestatus`, `matedrag`, `explodeview`, `interfere`, `interferesweep`, `matesettings`, `asmresolve`, `asmlightweight`. The file contract is in `docs/ASSEMBLY_SCHEMA.md`.
 
-**Limits.** Interference checks grow with the number of pairs and are capped; a large assembly is checked in sweeps. A component file outside the granted or document folders is refused.
+Lightweight components: when you open an assembly, each part is drawn from the display copy the assembly keeps instead of being loaded from its file, so a large assembly opens in a moment; such rows carry the badge "lightweight" in the Assembly panel. The solid loads by itself as soon as a command needs it (a mate on a face, an interference check, an export, a drawing view). Load it yourself with the load button on the row, Resolve all or `asmresolve`, and go back with `asmlightweight`. A part whose file changed after its copy was stored opens in full and its status says so. `asmsearch` with `lightweight` false turns lightweight opening off.
+
+**Limits.** Interference checks grow with the number of pairs and are capped; a large assembly is checked in sweeps. Lightweight opening needs the display copies, so an assembly saved with them turned off (`asmsearch` embed cache) opens in full; resolving every component of a large assembly takes as long as opening it in full did. A component file outside the granted or document folders is refused.
 
 ## 11. Joints and motion
 
