@@ -2,6 +2,10 @@
 
 Living record of decisions and removed context for the engine, newest first. Read before editing. From v0.21.0 the kernel and the mesher have their own logs, `kernel/HASHOUT_LOG.md` and `mesher/HASHOUT_LOG.md`.
 
+## SF3 v0.29.0 surface control points (app/cmd/commands/surfpoints.py, app/routers/curves.py)
+
+Handoff 9.2, the engine side of kernel KW6. `GET /api/docs/{id}/surfaces/{handle}/net` returns the control net of a single-face body in document units (degrees, counts, poles row by row, weights, flat knots, trimmed and reversed flags, a preview grid with an inside mask for trimmed faces, version and blob); 404 for no such body, 409 with the kernel's reason when it cannot be edited. `srfpoints` moves control points, `{handle, moves: [{i, j, to}]}` with absolute positions or `{handle, points, delta}`; the interactive form asks for a surface, row, column and position. It replaces the body in place with the kernel's face and edge history, so the face id and the selection survive; one undo step per call; locked layers and bodies of more than one face are refused.
+
 ## SF2 v0.29.0 untrim, shrink and the G3 seam verdict (app/cmd/commands/surftrim.py, surfaces.py, app/solid/surfwork.py)
 
 Handoff 9.4 and 9.5, the engine side of kernel KW5. `srfuntrim` (modes all and holes, keep curves) and `srfshrink` (margin 0 to 1) in their own module, found by command discovery. The face comes from `face`, `face_index`, the sub-selection, or the only face; a single-face body is edited in place, a face of a polysurface comes out as a new surface and the polysurface is left alone. Kept trim curves become NURBS curve entities named "Trim curve". `seamcheck` and the seam lines of blend and match print the curvature rate gap and a G3 verdict with its tolerance instead of "G3 is not measured".

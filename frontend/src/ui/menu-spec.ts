@@ -200,7 +200,7 @@ const surface = (): MenuItem[] => section('Surface', () => [
   S('Boolean', E('Boolean with Diagnostics', 'boolop'), E('Check Boolean', 'boolcheck'), 'u7-diag-open'), SEP,
   E('Seam Continuity', 'seamcheck'), 'u7-seams-sel', E('Naked Edges', 'nakededges'), E('Surface Report', 'surfreport'), 'u7-clear-analysis', SEP,
   E('Model Tolerance...', 'modeltol'), 'u7-tol-open', SEP,
-  'u8-analysis-open', 'u8-analysis-off', 'u8-snap3d',
+  'u7-points-cv', 'u9-zebra', 'u8-analysis-open', 'u8-analysis-off', 'u8-snap3d',
 ]);
 
 const formMenu = (): MenuItem[] => section('Form', () => [
