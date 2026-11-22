@@ -2,6 +2,14 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.28.0 · 2026-11-22
+
+- Drawings: a hole table lists the holes seen in a view, with a tag beside each hole, its position from the part's corner and its size ("⌀6.00 THRU", or "M6x1 THRU" for a tapped hole), and follows the part when it changes. A revision table lists the drawing's revisions; Add Revision takes the next letter and today's date and updates the title blocks. Dimensions placed on view geometry stay on it through part edits.
+- Parts: modelled threads (cut into a hole or added onto a shaft, sized from the hole table or the tapped hole that made the face), Thicken for faces and sheet bodies, and Delete Face that heals the gap or patches it. They need the 3D kernel released with this version; an older kernel says so instead of failing silently.
+- Assemblies open with lightweight components: parts are drawn from the copy the assembly keeps and load in full only when a command needs them. A 100-part assembly opens in under a second on the engine; the Assembly panel shows which parts are lightweight and resolves them.
+- The new labels are translated in every language.
+- Not run for this version: the desktop window, macOS and Windows, a real GPU for the large assembly, and the new kernel features with a published kernel.
+
 ## 0.27.0 · 2026-11-22
 
 - References survive edits to an early sketch. Move, add or remove vertices of a sketch outline and the fillets, chamfers and face sketches on its other sides stay where they were. A reference to a side or corner you removed fails with its name instead of jumping to a neighbour.
