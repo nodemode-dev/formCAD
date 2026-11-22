@@ -28,6 +28,7 @@ BREP_UUID = bytes.fromhex("c5dbb56060e6d311bfe40010830122f0")
 UNSET = -1.23432101234321e308
 SQRT_EPS = 1.490116119385000000e-8
 EPS = 2.2204460492503131e-16
+ZERO_TOL = 2.3283064365386962890625e-10
 TRIM_BOUNDARY, TRIM_MATED, TRIM_SEAM, TRIM_SINGULAR = 1, 2, 3, 4
 LOOP_OUTER, LOOP_INNER = 1, 2
 ISO_NONE, ISO_X, ISO_Y, ISO_W, ISO_S, ISO_E, ISO_N = 0, 1, 2, 3, 4, 5, 6
@@ -156,13 +157,14 @@ def new_trim_curve(rh, g):
 
 
 def side_band(lo, hi, t):
+    t = min(max(t, lo), hi)
     d = (hi - lo) * 8.0 * SQRT_EPS + (abs(lo) + abs(hi)) * EPS
     if d >= hi - lo:
         d = 0.5 * (hi - lo)
     return t - d, t + d
 
 
-def iso_of(g, bounds):
+def iso_of(g, bounds, cv=None):
     xs = [g.Pole(i + 1).X() for i in range(g.NbPoles())]
     ys = [g.Pole(i + 1).Y() for i in range(g.NbPoles())]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
@@ -173,22 +175,29 @@ def iso_of(g, bounds):
         return ISO_NONE
     if ds * (t1 - t0) <= dt * (s1 - s0):
         lo, hi, a, b, low, high, mid = x0, x1, s0, s1, ISO_W, ISO_E, ISO_X
-        tol = stol
+        tol, along = stol, dt
     else:
         lo, hi, a, b, low, high, mid = y0, y1, t0, t1, ISO_S, ISO_N, ISO_Y
-        tol = ttol
-    if lo <= a + tol:
+        tol, along = ttol, ds
+    iso = ISO_NONE
+    if hi <= a + tol:
         m, n = side_band(a, b, a)
         if m <= lo and hi <= n:
-            return low
-    elif hi >= b - tol:
+            iso = low
+    elif lo >= b - tol:
         m, n = side_band(a, b, b)
         if m <= lo and hi <= n:
-            return high
-    m, n = side_band(a, b, 0.5 * (lo + hi))
-    if m <= lo and hi <= n:
-        return mid
-    return ISO_NONE
+            iso = high
+    if iso == ISO_NONE:
+        m, n = side_band(a, b, 0.5 * (lo + hi))
+        if m <= lo and hi <= n:
+            iso = mid
+    if iso == ISO_NONE or cv is None:
+        return iso
+    across = hi - lo
+    if across < ZERO_TOL and ZERO_TOL * 1024.0 <= along:
+        across = ZERO_TOL
+    return iso if cv.IsLinear(across) else ISO_NONE
 
 
 def loop_area(curves):
@@ -367,7 +376,8 @@ def brep_of_faces(rh, faces, inv, tol, make_curve, make_surface):
             for x in row:
                 g = x["g"]
                 ti = len(trims)
-                iso = iso_of(g, bounds)
+                cv = new_trim_curve(rh, g)
+                iso = iso_of(g, bounds, cv)
                 if x["singular"]:
                     vi = vertex_index(TopExp.FirstVertex_s(TopoDS.Edge_s(x["edge"].Oriented(TopAbs_FORWARD)), True))
                     if iso not in (ISO_W, ISO_S, ISO_E, ISO_N):
@@ -388,7 +398,7 @@ def brep_of_faces(rh, faces, inv, tol, make_curve, make_surface):
                     edge["ti"].append(ti)
                     va, vb = edge["vi"]
                     trims.append({"c2": len(c2), "ei": ei, "vi": (vb, va) if x["rev"] else (va, vb), "rev": 1 if x["rev"] else 0, "type": TRIM_BOUNDARY, "iso": iso, "li": li, "dom": (g.FirstParameter(), g.LastParameter())})
-                c2.append(object_bytes(new_trim_curve(rh, g)))
+                c2.append(object_bytes(cv))
                 ids.append(ti)
             loops.append({"ti": ids, "type": LOOP_INNER if inner else LOOP_OUTER, "fi": fi})
             loop_ids.append(li)
