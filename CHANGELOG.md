@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.31.0 · 2026-11-23
+
+- FormCAD has tests. `./formCAD test` runs five layers: interface logic (vitest), the engine and the kernel and mesher workers (pytest against the real app), the app in a browser (Playwright) and the setup scripts. `./formCAD test engine` runs one layer. `docs/TESTING.md` says how to run them and what a test must do to be accepted.
+- 1,468 cases run the app and check what a user or a calling program would notice: geometry against closed forms, exported files read back by independent readers for DXF, G-code, Gerber, drill, mesh, PDF and SVG files, undo and save round trips, refusals, and what the window draws.
+- No app code changed. Where a test showed the app to be wrong, the test stays as a strict expected failure whose reason starts with `DEFECT:`. There are 12 such defects in 15 cases, among them 3D roughing and waterline toolpaths that cut into the part, the Properties panel hidden in the dock, and typed FEATEXTRUDE ending without a feature. `git grep -n "DEFECT:" backend/tests e2e` lists them.
+- CI runs the tests on every pull request. The worker tests install the kernel and the mesher from the published releases through the app's own install check.
+- Not run for this version: the tests on macOS and Windows (their CI legs do not block until they have passed once), the desktop window, and the 3D view in a browser. The desktop shell has no tests yet.
+- Law 10 in `CLAUDE.md` now says a change in behaviour updates its tests in the same pull request.
+
 ## 0.30.0 · 2026-11-22
 
 - 3DM export writes each body as one trimmed, joined polysurface, so a solid opens as a closed solid in the receiving program instead of loose untrimmed faces. A body that cannot be written this way falls back to separate faces and the export report says why.
