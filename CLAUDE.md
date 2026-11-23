@@ -13,7 +13,7 @@ formCAD is a Tauri 2 desktop CAD app: vanilla TypeScript and Vite interface in `
 7. Clean room: formCAD is written from functional specs only. Never open, fetch, quote or copy the source of any CAD product, and never name one in code, identifiers, comments or UI except file-format names and the README's "instead of" line.
 8. Licenses: permissive anywhere; MPL unedited; LGPL only as separate, replaceable, unpatched libraries; GPL and AGPL never in a distributed build. Every new dependency gets a `NOTICE.md` row first.
 9. No code from formcompiler or formportal (GPL-3.0-only); formCAD meets their data contracts only.
-10. No self-written tests until the owner asks; write `TEST_PLAN.md` instead.
+10. Tests are added when the owner asks; until then write `TEST_PLAN.md`. A change in behaviour updates its tests in the same pull request, and every test follows the five rules in `docs/TESTING.md`.
 11. Planning documents (DEV_PLAN, BUILD_NOTES, TEST_PLAN, root HASHOUT_LOG) live in the planning sidecar zip, not in this tree.
 
 ## Layout notes

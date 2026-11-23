@@ -111,6 +111,44 @@ jobs:
         working-directory: src-tauri
         run: cargo check --locked
 
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install the engine, the frontend, the development workers and the test tools
+        env:
+          FORMCAD_LOCKED: 1
+        run: |
+          setup/install_backend
+          setup/install_frontend
+          setup/install_kernel
+          setup/install_mesher
+          source setup/lib.sh
+          fc_venv
+          pip install -r backend/requirements-test.txt
+          python -m playwright install --with-deps chromium
+      - name: Interface logic
+        run: ./formCAD test unit
+      - name: Engine
+        run: ./formCAD test engine
+      - name: Kernel and mesher workers
+        env:
+          FORMCAD_TEST_WORKERS: required
+        run: ./formCAD test workers
+      - name: Setup scripts
+        run: ./formCAD test scripts
+      - name: The app in a browser
+        run: ./formCAD test browser --reruns 1
+
   engine-freeze:
     needs: [frontend, backend]
     strategy:

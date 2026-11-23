@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+source "$(dirname "$0")/lib.sh"
+which="${1:-all}"
+[ $# -gt 0 ] && shift
+case "$which" in
+  all|unit|engine|workers|browser|scripts) ;;
+  *) fc_say "unknown test layer: $which (use unit, engine, workers, browser, scripts or nothing for all)"; exit 2 ;;
+esac
+fail=0
+py="$FORMCAD_ROOT/backend/venv/bin/python"
+[ -x "$py" ] || py="$FORMCAD_ROOT/backend/venv/Scripts/python.exe"
+[ -x "$py" ] || fc_die "backend venv missing, run ./formCAD install"
+run() { fc_say "$1"; shift; "$@" || fail=1; }
+wants() { [ "$which" = all ] || [ "$which" = "$1" ]; }
+needs_pytest() { "$py" -c "import pytest" >/dev/null 2>&1 || "$py" -m pip install -q -r "$FORMCAD_ROOT/backend/requirements-test.txt"; }
+if wants unit; then
+  [ -d "$FORMCAD_ROOT/frontend/node_modules" ] || fc_die "frontend not installed, run ./formCAD install"
+  cd "$FORMCAD_ROOT/frontend"
+  run "interface logic (vitest)" npx vitest run "$@"
+fi
+if wants engine; then
+  needs_pytest
+  cd "$FORMCAD_ROOT/backend"
+  run "engine (pytest, no worker needed)" "$py" -m pytest tests -m "not kernel and not mesher" "$@"
+fi
+if wants workers; then
+  needs_pytest
+  cd "$FORMCAD_ROOT/backend"
+  run "kernel and mesher workers (pytest)" "$py" -m pytest tests -m "kernel or mesher" "$@"
+fi
+if wants scripts; then
+  needs_pytest
+  cd "$FORMCAD_ROOT"
+  run "dispatcher and setup scripts (pytest)" "$py" -m pytest setup/tests -q -p no:cacheprovider "$@"
+fi
+if wants browser; then
+  needs_pytest
+  cd "$FORMCAD_ROOT"
+  if "$py" -c "import playwright" >/dev/null 2>&1; then
+    run "the app in a browser (Playwright, dev build on 5290, engine on 8290)" "$py" -m pytest e2e "$@"
+  else
+    fc_say "browser tests need Playwright: $py -m pip install -r backend/requirements-test.txt && $py -m playwright install chromium"
+    [ "$which" = browser ] && fail=1
+  fi
+fi
+exit "$fail"

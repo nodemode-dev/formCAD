@@ -22,6 +22,7 @@ usage: ./formCAD [command] [options]
   freeze-mesher         freeze the mesher worker into mesher/dist (never bundled into the app)
   desktop dev|build     run or bundle the desktop app
   doctor                check the toolchain, installs and ports
+  test [layer] [args]   run the tests: unit, engine, workers, browser, scripts, or all of them; args go to the runner
   mcp                   the engine's MCP server over stdio
   agents sync|check|install [--dry-run]
                         mirror skills into .claude/skills and .agents/skills and write agents/manifest.json;
@@ -55,6 +56,7 @@ case "$cmd" in
       *) usage; exit 2 ;;
     esac ;;
   doctor) exec setup/doctor "$@" ;;
+  test) exec setup/test "$@" ;;
   mcp) exec setup/mcp "$@" ;;
   agents) exec setup/agents "$@" ;;
   clean) exec setup/clean "$@" ;;
