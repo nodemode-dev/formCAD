@@ -168,6 +168,7 @@ export class AnalysisColors implements ViewLayer {
   combInfo: { max: number; teeth: number; inflections: number } | null = null;
   onChange: (() => void) | null = null;
   stateSeq = 0;
+  applied = 0;
 
   constructor(private readonly vp: Viewport3D) {
     this.mat = new THREE.ShaderMaterial({
@@ -255,8 +256,51 @@ export class AnalysisColors implements ViewLayer {
     u.uPeriodic.value = p.meta.mode === 'zebra' && band > 0 ? 1 : 0;
     u.uBand.value = band > 0 ? band : 6;
     (u.uUndef.value as THREE.Color).set(p.meta.undefined || '#8a8a8a');
+    this.applied++;
     this.paint();
     this.paintLegend();
+  }
+
+  stripesFor(id: number, normals: Float32Array, reversed: boolean): { values: Float32Array; size: number; mat: THREE.ShaderMaterial } | null {
+    const m = this.meta;
+    if (!m || !this.data?.bodies.has(id) || (m.mode !== 'zebra' && m.mode !== 'isophote')) return null;
+    const vec = (raw: unknown, fallback: Vec3): Vec3 => {
+      const a = Array.isArray(raw) && raw.length === 3 ? raw.map(Number) : fallback;
+      const l = Math.hypot(a[0], a[1], a[2]) || 1;
+      return [a[0] / l, a[1] / l, a[2] / l];
+    };
+    const n = normals.length / 3;
+    const band = this.mat.uniforms.uBand.value as number;
+    if (m.mode === 'isophote') {
+      const d = vec(m.params.light, [0, -1, 1]);
+      const sign = reversed ? -1 : 1;
+      const out = new Float32Array(n);
+      for (let k = 0; k < n; k++) {
+        const c = sign * (normals[k * 3] * d[0] + normals[k * 3 + 1] * d[1] + normals[k * 3 + 2] * d[2]);
+        out[k] = (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI / band;
+      }
+      return { values: out, size: 1, mat: this.mat };
+    }
+    const v = vec(m.params.view, [0, -1, 0]);
+    const a = vec(m.params.axis, [0, 0, 1]);
+    const ref: Vec3 = Math.abs(a[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0];
+    const ra = ref[0] * a[0] + ref[1] * a[1] + ref[2] * a[2];
+    const e1 = vec([ref[0] - ra * a[0], ref[1] - ra * a[1], ref[2] - ra * a[2]], [1, 0, 0]);
+    const e2: Vec3 = [a[1] * e1[2] - a[2] * e1[1], a[2] * e1[0] - a[0] * e1[2], a[0] * e1[1] - a[1] * e1[0]];
+    const out = new Float32Array(n * 2);
+    for (let k = 0; k < n; k++) {
+      const nx = normals[k * 3], ny = normals[k * 3 + 1], nz = normals[k * 3 + 2];
+      const s = 2 * (nx * v[0] + ny * v[1] + nz * v[2]);
+      const rx = s * nx - v[0], ry = s * ny - v[1], rz = s * nz - v[2];
+      const along = rx * a[0] + ry * a[1] + rz * a[2];
+      const dx = rx - along * a[0], dy = ry - along * a[1], dz = rz - along * a[2];
+      const x = dx * e1[0] + dy * e1[1] + dz * e1[2], y = dx * e2[0] + dy * e2[1] + dz * e2[2];
+      const l = Math.hypot(x, y);
+      if (l < 1e-9) { out[k * 2] = SENTINEL; continue; }
+      out[k * 2] = x / l;
+      out[k * 2 + 1] = y / l;
+    }
+    return { values: out, size: 2, mat: this.mat };
   }
 
   paint(): void {
@@ -290,6 +334,7 @@ export class AnalysisColors implements ViewLayer {
     if (!this.data && !this.meta) return;
     this.data = null;
     this.meta = null;
+    this.applied++;
     this.paint();
     setHidden(this.legend, true);
     this.onChange?.();

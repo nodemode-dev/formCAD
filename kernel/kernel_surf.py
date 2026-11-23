@@ -3,9 +3,16 @@ import math
 from OCP.BRep import BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import BRepAlgoAPI_Splitter
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire, BRepBuilderAPI_NurbsConvert, BRepBuilderAPI_Sewing, BRepBuilderAPI_MakeSolid
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Copy, BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeFace, BRepBuilderAPI_MakeWire, BRepBuilderAPI_NurbsConvert, BRepBuilderAPI_Sewing, BRepBuilderAPI_MakeSolid
 from OCP.BRepClass import BRepClass_FaceClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
+from OCP.BRepFilletAPI import BRepFilletAPI_MakeChamfer, BRepFilletAPI_MakeFillet
+from OCP.GeomLProp import GeomLProp_SLProps
+from OCP.TopAbs import TopAbs_SOLID
+from OCP.TopExp import TopExp
+from OCP.collections import Array1_gp_Pnt2d
+from OCP.collections import IndexedDataMap_TopoDS_Shape_List_TopoDS_Shape_TopTools_ShapeMapHasher as AncestorMap
+from OCP.gp import gp_Pnt2d
 from OCP.BRepLib import BRepLib_FindSurface
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakeFilling, BRepOffsetAPI_MakeOffsetShape, BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeVertex
@@ -283,8 +290,12 @@ def finish(op, shape, tol, ang, report=None, history=None):
     return out
 
 
+def nurbs_convert(shape):
+    return BRepBuilderAPI_NurbsConvert(BRepBuilderAPI_Copy(shape, True, False).Shape(), True)
+
+
 def to_bspline_surface(face):
-    nc = BRepBuilderAPI_NurbsConvert(face, True)
+    nc = nurbs_convert(face)
     conv = nc.Shape()
     f2 = TopoDS.Face_s(kind_edges(conv, TopAbs_FACE)[0])
     surf = BRep_Tool.Surface_s(f2)
@@ -816,6 +827,21 @@ class SewHistory:
         return []
 
 
+def closed_solid(shape):
+    shells = kind_edges(shape, TopAbs_SHELL)
+    if len(shells) != 1:
+        return None
+    from OCP.ShapeFix import ShapeFix_Solid
+
+    mk = BRepBuilderAPI_MakeSolid(TopoDS.Shell_s(shells[0]))
+    fx = ShapeFix_Solid(mk.Solid())
+    fx.Perform()
+    cand = fx.Solid()
+    props = GProp_GProps()
+    BRepGProp.VolumeProperties_s(cand, props)
+    return cand if props.Mass() > 0 else None
+
+
 def join(p):
     tol, ang = tolerances(p)
     ids = [str(i) for i in (p.get("ids") or [])]
@@ -830,19 +856,10 @@ def join(p):
         raise RuntimeError("Nothing could be joined within the tolerance.")
     solid = False
     if p.get("solid", True) and sew.NbFreeEdges() == 0 and sew.NbMultipleEdges() == 0:
-        shells = kind_edges(out, TopAbs_SHELL)
-        if len(shells) == 1:
-            from OCP.ShapeFix import ShapeFix_Solid
-
-            mk = BRepBuilderAPI_MakeSolid(TopoDS.Shell_s(shells[0]))
-            fx = ShapeFix_Solid(mk.Solid())
-            fx.Perform()
-            cand = fx.Solid()
-            props = GProp_GProps()
-            BRepGProp.VolumeProperties_s(cand, props)
-            if props.Mass() > 0:
-                out = cand
-                solid = True
+        cand = closed_solid(out)
+        if cand is not None:
+            out = cand
+            solid = True
     from kernel_diag import free_edge_polylines
 
     inputs = []
@@ -853,4 +870,412 @@ def join(p):
     return finish("join", out, tol, ang, rep, {"inputs": inputs})
 
 
-METHODS = {"surf_loft": loft, "surf_sweep": sweep, "surf_network": network, "surf_patch": patch, "surf_extrude": extrude_curve, "surf_revolve": revolve_curve, "surf_planar": planar, "surf_edge": edge_surface, "surf_offset": offset, "surf_split": split, "surf_join": join}
+class ChainHistory:
+    def __init__(self, first, second):
+        self.first = first
+        self.second = second
+
+    def between(self, s):
+        if self.first.IsDeleted(s):
+            return []
+        return list(self.first.Modified(s)) or [s]
+
+    def IsDeleted(self, s):
+        return all(self.second.IsDeleted(x) for x in self.between(s))
+
+    def Modified(self, s):
+        return images(self.second, self.between(s))
+
+    def Generated(self, s):
+        out = []
+        for x in self.between(s):
+            out.extend(list(self.second.Generated(x)))
+        return out
+
+
+def images(hist, shapes):
+    out = []
+    for s in shapes:
+        if not hist.IsDeleted(s):
+            out.extend(list(hist.Modified(s)) or [s])
+    return out
+
+
+def face_list(shape):
+    return [TopoDS.Face_s(f) for f in kind_edges(shape, TopAbs_FACE)]
+
+
+def shape_set(shapes):
+    found = store.ShapeMap()
+    for s in shapes:
+        found.Add(s)
+    return found
+
+
+def common_edges(shape, side_a, side_b):
+    in_a, in_b = shape_set(side_a), shape_set(side_b)
+    anc = AncestorMap()
+    TopExp.MapShapesAndAncestors_s(shape, TopAbs_EDGE, TopAbs_FACE, anc)
+    out = []
+    for i in range(1, anc.Extent() + 1):
+        edge = TopoDS.Edge_s(anc.FindKey(i))
+        faces = [TopoDS.Face_s(f) for f in anc.FindFromIndex(i)]
+        if BRep_Tool.Degenerated_s(edge):
+            continue
+        if any(in_a.FindIndex(f) for f in faces) and any(in_b.FindIndex(f) for f in faces):
+            out.append((edge, faces))
+    return out
+
+
+def sew_pair(a, b, tol):
+    sew = BRepBuilderAPI_Sewing(tol)
+    sew.Add(a)
+    sew.Add(b)
+    sew.Perform()
+    return sew.SewedShape(), SewHistory(sew)
+
+
+def gap_between(a, b):
+    d = BRepExtrema_DistShapeShape(a, b)
+    return d.Value() if d.IsDone() else math.inf
+
+
+def area_of(shape):
+    props = GProp_GProps()
+    BRepGProp.SurfaceProperties_s(shape, props)
+    return abs(props.Mass())
+
+
+def length_of(edge):
+    props = GProp_GProps()
+    BRepGProp.LinearProperties_s(edge, props)
+    return abs(props.Mass())
+
+
+def pick_piece(pieces, point):
+    if len(pieces) == 1:
+        return pieces[0]
+    if point is not None:
+        v = BRepBuilderAPI_MakeVertex(pnt(point)).Vertex()
+        return min(pieces, key=lambda f: gap_between(v, f))
+    return max(pieces, key=area_of)
+
+
+def crossing_setup(p, fa, fb, tol):
+    sp = BRepAlgoAPI_Splitter()
+    both = ShapeList()
+    both.Append(fa)
+    both.Append(fb)
+    sp.SetArguments(both)
+    sp.SetTools(both)
+    sp.SetFuzzyValue(tol)
+    sp.Build()
+    if not sp.IsDone():
+        raise RuntimeError("The surfaces touch but could not be cut along their intersection.")
+    parts_a = [TopoDS.Face_s(f) for f in sp.Modified(fa)] or [fa]
+    parts_b = [TopoDS.Face_s(f) for f in sp.Modified(fb)] or [fb]
+    pa, pb = pick_piece(parts_a, p.get("keep_a")), pick_piece(parts_b, p.get("keep_b"))
+    work, sewn = sew_pair(pa, pb, tol)
+    side_a, side_b = images(sewn, [pa]), images(sewn, [pb])
+    shared = common_edges(work, side_a, side_b)
+    if not shared:
+        raise RuntimeError("The surfaces touch but do not meet along a curve, so there is no edge to fillet or chamfer.")
+    return {"work": work, "shared": shared, "a": side_a, "b": side_b, "hist": ChainHistory(sp, sewn), "prepared": "intersected", "pieces": [len(parts_a), len(parts_b)]}
+
+
+def fillet_setup(p, tol):
+    a, b = p.get("a") or {}, p.get("b") or {}
+    if a.get("id") is None or b.get("id") is None:
+        raise RuntimeError("Give the two surfaces as a and b, each with a shape id and a face index.")
+    ida, idb = str(a["id"]), str(b["id"])
+    fa, fb = face_of(a), face_of(b)
+    if fa.IsSame(fb):
+        raise RuntimeError("Pick two different surfaces.")
+    sa = store.shape_of(ida)
+    if ida == idb:
+        shared = common_edges(sa, [fa], [fb])
+        if not shared:
+            raise RuntimeError("Those two faces of the body do not share an edge (they are %.4g mm apart at the closest)." % gap_between(fa, fb))
+        return {"work": sa, "shared": shared, "a": [fa], "b": [fb], "hist": None, "prepared": "body"}
+    sb = store.shape_of(idb)
+    if store.count_of(sa, TopAbs_SOLID) or store.count_of(sb, TopAbs_SOLID):
+        raise RuntimeError("One of the picks is on a closed solid; pick two faces of the same solid, or two open surfaces.")
+    work, sewn = sew_pair(sa, sb, tol)
+    shared = common_edges(work, images(sewn, [fa]), images(sewn, [fb]))
+    if shared:
+        return {"work": work, "shared": shared, "a": images(sewn, face_list(sa)), "b": images(sewn, face_list(sb)), "hist": sewn, "prepared": "sewn"}
+    gap = gap_between(fa, fb)
+    if gap > tol:
+        raise RuntimeError("The surfaces do not meet: the closest they come is %.4g mm, above the tolerance of %.4g mm. Extend or move one so they touch along an edge or cross." % (gap, tol))
+    if store.count_of(sa, TopAbs_FACE) != 1 or store.count_of(sb, TopAbs_FACE) != 1:
+        raise RuntimeError("The surfaces touch but share no edge, and one of them is part of a polysurface; use single surfaces so they can be cut along their intersection.")
+    return crossing_setup(p, fa, fb, tol)
+
+
+def normal_at(face, q):
+    surf = BRep_Tool.Surface_s(face)
+    uv = ShapeAnalysis_Surface(surf).ValueOfUV(q, 1e-6)
+    props = GeomLProp_SLProps(surf, uv.X(), uv.Y(), 1, 1e-9)
+    return props.Normal() if props.IsNormalDefined() else None
+
+
+def normal_angle(fa, fb, q):
+    na, nb = normal_at(fa, q), normal_at(fb, q)
+    if na is None or nb is None:
+        return None
+    return math.acos(min(1.0, abs(na.Dot(nb))))
+
+
+def seam_angle(shape, blend, sides):
+    worst = 0.0
+    for edge, faces in common_edges(shape, blend, sides):
+        if len(faces) != 2:
+            continue
+        for q in curve_points(edge, 9):
+            angle = normal_angle(faces[0], faces[1], q)
+            if angle is not None:
+                worst = max(worst, angle)
+    return worst
+
+
+def circumradius(a, b, c):
+    la, lb, lc = b.Distance(c), a.Distance(c), a.Distance(b)
+    s = (la + lb + lc) / 2.0
+    heron = s * (s - la) * (s - lb) * (s - lc)
+    if heron <= 1e-24:
+        return math.inf
+    return la * lb * lc / (4.0 * math.sqrt(heron))
+
+
+def blend_sections(faces, stations=5):
+    out = []
+    for f in faces:
+        ad = BRepAdaptor_Surface(f)
+        u0, u1, v0, v1 = ad.FirstUParameter(), ad.LastUParameter(), ad.FirstVParameter(), ad.LastVParameter()
+        if not all(math.isfinite(x) for x in (u0, u1, v0, v1)):
+            continue
+
+        def arc(across_u, t):
+            if across_u:
+                return [ad.Value(u0 + (u1 - u0) * k / 2.0, v0 + (v1 - v0) * t) for k in range(3)]
+            return [ad.Value(u0 + (u1 - u0) * t, v0 + (v1 - v0) * k / 2.0) for k in range(3)]
+
+        across_u = circumradius(*arc(True, 0.5)) <= circumradius(*arc(False, 0.5))
+        for k in range(stations):
+            pts = arc(across_u, k / float(stations - 1))
+            r = circumradius(*pts)
+            if math.isfinite(r):
+                out.append({"at": [pts[1].X(), pts[1].Y(), pts[1].Z()], "radius": r})
+    return out
+
+
+def size_of(value, tol, what):
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        raise RuntimeError("The %s must be a number." % what)
+    if not math.isfinite(v) or v <= tol:
+        raise RuntimeError("The %s must be larger than the tolerance of %.3g mm." % (what, tol))
+    return v
+
+
+def law_pairs(radii, tol):
+    if not isinstance(radii, list) or len(radii) < 2:
+        raise RuntimeError("A variable fillet needs at least two [parameter, radius] pairs under radii.")
+    pairs = []
+    for row in radii:
+        try:
+            t = float(row[0])
+        except (TypeError, ValueError, IndexError):
+            raise RuntimeError("Each entry of radii is [parameter, radius].")
+        if not 0.0 <= t <= 1.0:
+            raise RuntimeError("Each parameter of radii runs from 0 at one end of the fillet to 1 at the other; %s is outside." % row[0])
+        pairs.append((t, size_of(row[1] if len(row) > 1 else None, tol, "radius")))
+    pairs.sort()
+    if any(b[0] - a[0] < 1e-6 for a, b in zip(pairs, pairs[1:])):
+        raise RuntimeError("Two radii share the same parameter; give each radius its own parameter.")
+    return pairs
+
+
+def law_value(pairs, t):
+    if t <= pairs[0][0]:
+        return pairs[0][1]
+    for a, b in zip(pairs, pairs[1:]):
+        if t <= b[0]:
+            return a[1] + (b[1] - a[1]) * (t - a[0]) / (b[0] - a[0])
+    return pairs[-1][1]
+
+
+def contours_of(mk, edges, origin):
+    out = []
+    for ic in sorted({mk.Contour(e) for e in edges} - {0}):
+        first, last = BRep_Tool.Pnt_s(mk.FirstVertex(ic)), BRep_Tool.Pnt_s(mk.LastVertex(ic))
+        flip = origin is not None and pnt(origin).Distance(last) < pnt(origin).Distance(first)
+        start, end = (last, first) if flip else (first, last)
+        out.append({"ic": ic, "flip": flip, "length": mk.Length(ic), "closed": bool(mk.Closed(ic)), "start": [start.X(), start.Y(), start.Z()], "end": [end.X(), end.Y(), end.Z()]})
+    return out
+
+
+def set_law(mk, contours, pairs):
+    for c in contours:
+        law = [(1.0 - t, r) for t, r in reversed(pairs)] if c["flip"] else pairs
+        if c["closed"] and abs(law[0][1] - law[-1][1]) > 1e-9:
+            raise RuntimeError("The fillet runs around a closed edge, so the first and last radius must be equal.")
+        count = mk.NbEdges(c["ic"])
+        lengths = [length_of(mk.Edge(c["ic"], j)) for j in range(1, count + 1)]
+        total = sum(lengths) or 1.0
+        s0 = 0.0
+        for j, ln in enumerate(lengths, 1):
+            s1 = s0 + ln / total
+            span = max(s1 - s0, 1e-12)
+            pts = [(0.0, law_value(law, s0))] + [((t - s0) / span, r) for t, r in law if s0 + 1e-9 < t < s1 - 1e-9] + [(1.0, law_value(law, s1))]
+            arr = Array1_gp_Pnt2d(1, len(pts))
+            for i, (u, r) in enumerate(pts):
+                arr.SetValue(i + 1, gp_Pnt2d(u, r))
+            mk.SetRadius(arr, c["ic"], j)
+            s0 = s1
+
+
+def blend_failure(mk, contours):
+    try:
+        mk.Build()
+        if mk.IsDone():
+            return None
+    except Exception as err:
+        return (str(err).strip().splitlines() or [type(err).__name__])[0]
+    names = set()
+    if hasattr(mk, "StripeStatus"):
+        for c in contours:
+            try:
+                names.add(mk.StripeStatus(c["ic"]).name.replace("ChFiDS_", ""))
+            except Exception:
+                pass
+    names.discard("Ok")
+    return ", ".join(sorted(names)) or "not done"
+
+
+def side_width(shared, side, length):
+    faces = shape_set(f for _e, fs in shared for f in fs if side.FindIndex(f))
+    return sum(area_of(faces.FindKey(i)) for i in range(1, faces.Extent() + 1)) / max(length, 1e-12)
+
+
+def gather(faces, tol):
+    if len(faces) == 1:
+        return faces[0]
+    sew = BRepBuilderAPI_Sewing(tol)
+    for f in faces:
+        sew.Add(f)
+    sew.Perform()
+    return sew.SewedShape()
+
+
+def unwrap(shape):
+    total = store.count_of(shape, TopAbs_FACE)
+    for kind in (TopAbs_SOLID, TopAbs_SHELL):
+        subs = kind_edges(shape, kind)
+        if len(subs) == 1 and store.count_of(subs[0], TopAbs_FACE) == total:
+            return subs[0]
+    return shape
+
+
+def fillet(p):
+    tol, ang = tolerances(p)
+    kind = str(p.get("kind", "fillet")).lower()
+    if kind not in ("fillet", "chamfer", "variable"):
+        raise RuntimeError("kind is fillet, chamfer or variable.")
+    trim, joined = bool(p.get("trim", True)), bool(p.get("join", True))
+    setup = fillet_setup(p, tol)
+    work, shared = setup["work"], setup["shared"]
+    if trim and not joined and setup["hist"] is None:
+        raise RuntimeError("Both faces belong to one body, so the result stays joined; pick faces of two bodies to keep the pieces apart.")
+    side_a, side_b = shape_set(setup["a"]), shape_set(setup["b"])
+    edges = [e for e, _f in shared]
+    mid = curve_points(edges[0], 3)[1]
+    corner = normal_angle(shared[0][1][0], shared[0][1][-1], mid)
+    if corner is not None and corner <= ang:
+        raise RuntimeError("The surfaces are already tangent along their shared edge (their normals differ by %.3g rad), so there is no corner to fillet or chamfer." % corner)
+    sizes = {}
+    if kind == "chamfer":
+        d1 = size_of(p.get("distance"), tol, "distance")
+        d2 = size_of(p.get("distance2") if p.get("distance2") is not None else d1, tol, "second distance")
+        mk = BRepFilletAPI_MakeChamfer(work)
+        for edge, faces in shared:
+            mk.Add(d1, d2, edge, next(f for f in faces if side_a.FindIndex(f)))
+        contours = contours_of(mk, edges, p.get("from"))
+        sizes = {"distance": d1, "distance2": d2}
+        label = "chamfer with distances %.6g and %.6g mm" % (d1, d2)
+    elif kind == "variable":
+        pairs = law_pairs(p.get("radii"), tol)
+        mk = BRepFilletAPI_MakeFillet(work)
+        for edge in edges:
+            mk.Add(edge)
+        contours = contours_of(mk, edges, p.get("from"))
+        set_law(mk, contours, pairs)
+        sizes = {"radii": [[t, r] for t, r in pairs]}
+        label = "variable fillet with radii from %.6g to %.6g mm" % (min(r for _t, r in pairs), max(r for _t, r in pairs))
+    else:
+        radius = size_of(p.get("radius"), tol, "radius")
+        mk = BRepFilletAPI_MakeFillet(work)
+        for edge in edges:
+            mk.Add(radius, edge)
+        contours = contours_of(mk, edges, p.get("from"))
+        sizes = {"radius": radius}
+        label = "fillet with radius %.6g mm" % radius
+    length = sum(length_of(e) for e in edges)
+    smallest = min([sizes[k] for k in ("radius", "distance", "distance2") if k in sizes] + [r for _t, r in sizes.get("radii", [])])
+    failure = blend_failure(mk, contours)
+    result = mk.Shape() if failure is None else None
+    if failure is None:
+        stored = tol_audit(result, tol)
+        worst = max(stored["vertex"], stored["edge"], stored["face"])
+        if worst > max(tol, 0.05 * smallest):
+            failure = "the pieces only close with a stored tolerance of %.3g mm" % worst
+    if failure is not None:
+        raise RuntimeError("The %s could not be built (kernel status: %s). The size is most likely too large for the surfaces: the shared edge is %.4g mm long and the surfaces reach about %.4g and %.4g mm away from it. Try a smaller size." % (label, failure, length, side_width(shared, side_a, length), side_width(shared, side_b, length)))
+    from kernel_diag import check_shape, free_edge_polylines
+
+    check = check_shape(result)
+    if not check["valid"]:
+        raise RuntimeError("The %s produced an invalid shape (%s); try a smaller size." % (label, ", ".join(sorted({s for item in check["invalid"] for s in item["statuses"]})) or "check failed"))
+    kept = shape_set(images(mk, face_list(work)))
+    blend = [f for f in face_list(result) if not kept.FindIndex(f)]
+    if not blend:
+        raise RuntimeError("The %s produced no new surface." % label)
+    rep = {"kind": kind, "prepared": setup["prepared"], "shared_edges": len(edges), "shared_length": length, "corner_angle": corner, "spine": [{k: v for k, v in c.items() if k not in ("ic", "flip")} for c in contours], "blend_faces": len(blend), "valid": True, "trimmed": trim, "joined": trim and joined}
+    rep.update(sizes)
+    if setup.get("pieces"):
+        rep["cut_pieces"] = setup["pieces"]
+    if kind != "chamfer":
+        sections = blend_sections(blend)
+        rep["sections"] = sections
+        if sections:
+            rep["radius_min"] = min(s["radius"] for s in sections)
+            rep["radius_max"] = max(s["radius"] for s in sections)
+        rep["max_tangent_angle"] = seam_angle(result, blend, images(mk, [f for _e, fs in shared for f in fs]))
+        rep["tangent"] = rep["max_tangent_angle"] <= ang
+    if not trim:
+        return finish("surf_fillet", gather(blend, tol), tol, ang, rep)
+    naked = free_edge_polylines(result, tol)
+    rep["free_edges"] = len(naked)
+    if not joined:
+        rows = []
+        for role, faces in (("a", images(mk, setup["a"])), ("b", images(mk, setup["b"])), ("blend", blend)):
+            piece = gather(faces, tol)
+            rows.append({"role": role, "id": store.put(piece), "summary": store.summarize(piece), "audit": tol_audit(piece, tol)})
+        return {"pieces": rows, "report": {**base_report("surf_fillet", tol, ang, result), **rep}}
+    out = unwrap(result)
+    if not naked and store.count_of(out, TopAbs_SOLID) == 0:
+        out = closed_solid(out) or out
+    rep["closed_solid"] = store.count_of(out, TopAbs_SOLID) > 0
+    rep["shells"] = store.count_of(out, TopAbs_SHELL)
+    out_maps = store.build_maps(out)
+    ida, idb = str(p["a"]["id"]), str(p["b"]["id"])
+    if setup["hist"] is None:
+        inputs = [{"id": ida, **input_history(mk, work, store.maps_of(ida), out_maps)}]
+    else:
+        chain = ChainHistory(setup["hist"], mk)
+        inputs = [{"id": i, **input_history(chain, store.shape_of(i), store.maps_of(i), out_maps)} for i in (ida, idb)]
+    return finish("surf_fillet", out, tol, ang, rep, {"inputs": inputs})
+
+
+METHODS = {"surf_fillet": fillet, "surf_loft": loft, "surf_sweep": sweep, "surf_network": network, "surf_patch": patch, "surf_extrude": extrude_curve, "surf_revolve": revolve_curve, "surf_planar": planar, "surf_edge": edge_surface, "surf_offset": offset, "surf_split": split, "surf_join": join}

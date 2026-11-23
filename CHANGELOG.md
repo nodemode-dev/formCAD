@@ -2,6 +2,17 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.29.0 · 2026-11-22
+
+- Surfaces: fillet, chamfer and variable-radius fillet between two surfaces that share an edge or cross, trimmed back and joined into a valid polysurface or solid (`srffillet`, `srfchamfer`, `srfvarfillet`).
+- Drag the control points of a surface in the 3D view: the surface follows live with zebra stripes, and each drag is one undo step. Show Zebra Stripes is one click.
+- Untrim gives a trimmed surface back its whole surface or removes only its holes; Shrink Trimmed cuts the underlying surface down to its trim.
+- The seam continuity check measures G3 and the seam badge in the 3D view shows it.
+- Surface match and extend work on surfaces shown in the 3D view; before, they failed there with "could not be converted to a B-spline surface".
+- These need the 3D kernel released with this version; an older kernel says so.
+- The new labels are translated in every language.
+- Not run for this version: the desktop window, macOS and Windows, and the new surface tools with a published kernel.
+
 ## 0.28.0 · 2026-11-22
 
 - Drawings: a hole table lists the holes seen in a view, with a tag beside each hole, its position from the part's corner and its size ("⌀6.00 THRU", or "M6x1 THRU" for a tapped hole), and follows the part when it changes. A revision table lists the drawing's revisions; Add Revision takes the next letter and today's date and updates the title blocks. Dimensions placed on view geometry stay on it through part edits.

@@ -24,12 +24,14 @@ export interface SeamReport {
   g0: boolean;
   g1: boolean;
   g2: boolean;
+  g3?: boolean | null;
   max_gap: number;
   max_gap_at?: Vec3;
   max_angle: number;
   max_angle_deg?: number;
   max_curvature_gap: number;
-  tolerance?: { length: number; angle: number; curvature: number; curvature_relative?: number };
+  max_curvature_rate_gap?: number;
+  tolerance?: { length: number; angle: number; curvature: number; curvature_relative?: number; curvature_rate?: number };
   hair?: Array<{ p: Vec3; gap: number; angle: number; curv?: number }>;
   bodies?: number[];
 }
@@ -83,7 +85,24 @@ export interface ModelTolerance {
 
 export const fetchCurves = (doc: string, perSpan = 16): Promise<{ curves: CurveRow[] }> => call('GET', `/api/docs/${enc(doc)}/curves?per_span=${perSpan}`);
 export const previewCurve = (doc: string, handle: number, grip: string, to: [number, number], perSpan = 16): Promise<{ handle: number; poles: Vec3[]; samples: Vec3[] }> => call('POST', `/api/docs/${enc(doc)}/curves/${handle}/preview`, { grip, to, per_span: perSpan });
-export const fetchLast = (doc: string): Promise<LastSurface> => call('GET', `/api/docs/${enc(doc)}/surface-last`);
+export interface SurfaceNet {
+  handle: number;
+  name: string;
+  version: number;
+  blob: string;
+  degree: [number, number];
+  count: [number, number];
+  poles: Vec3[];
+  weights: number[];
+  uknots: number[];
+  vknots: number[];
+  trimmed: boolean;
+  reversed: boolean;
+  grid: { u: number[]; v: number[]; mask: number[] };
+}
+
+export const fetchNet = (doc: string, handle: number): Promise<SurfaceNet> => call('GET', `/api/docs/${enc(doc)}/surfaces/${handle}/net`);
+export const fetchLast =(doc: string): Promise<LastSurface> => call('GET', `/api/docs/${enc(doc)}/surface-last`);
 export const fetchTolerance = (doc: string): Promise<ModelTolerance> => call('GET', `/api/docs/${enc(doc)}/model-tolerance`);
 
 export const polylinesOf = (n: { count: number; polylines: Vec3[][] } | Vec3[][] | undefined | null): Vec3[][] => (!n ? [] : Array.isArray(n) ? n : n.polylines);

@@ -438,10 +438,29 @@ export class Viewport3D {
     this.setSelection({ bodies: keep, faces: [], edges: [] }, false);
   }
 
+  dropHover(): void {
+    this.pointer = null;
+    this.clearHover();
+  }
+
+  private proxied: number | null = null;
+
+  get proxyBody(): number | null { return this.proxied; }
+
+  setProxyBody(id: number | null): void {
+    if (id === this.proxied) return;
+    this.proxied = id;
+    for (const [k, v] of this.views) v.group.visible = k !== id;
+    this.syncHighlights();
+    this.invalidate();
+  }
+
   private syncHighlights(): void {
     const faces = FACE_VISIBLE[this.mode], lines = EDGES_VISIBLE[this.mode];
-    this.selHL.show(this.sel, faces, lines);
-    this.hoverHL.show(this.hoverSel, faces, lines);
+    const skip = this.proxied;
+    const shown = (s: SelectionState): SelectionState => (skip === null ? s : { bodies: s.bodies.filter((b) => b !== skip), faces: s.faces.filter((f) => f.body !== skip), edges: s.edges.filter((e) => e.body !== skip) });
+    this.selHL.show(shown(this.sel), faces, lines);
+    this.hoverHL.show(shown(this.hoverSel), faces, lines);
   }
 
   startPlaneByThreePoints(): void {
@@ -530,6 +549,7 @@ export class Viewport3D {
     this.model = model;
     for (const b of model.bodies) {
       const v = new BodyView(b);
+      if (b.id === this.proxied) v.group.visible = false;
       this.views.set(b.id, v);
       this.group.add(v.group);
     }
@@ -703,6 +723,7 @@ export class Viewport3D {
   renderNow(force = false): void {
     if (!this.isActive && !force) return;
     const t0 = performance.now();
+    for (const l of this.layers) l.frame?.();
     const cam = this.rig.camera;
     cam.updateMatrixWorld();
     if (this.gridOn) this.grid.fit(this.rig.target, this.rig.visibleHeightAtTarget(), this.rig.radius);

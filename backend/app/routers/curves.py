@@ -99,6 +99,26 @@ def model_tolerance(doc_id: str) -> dict:
         return {"absolute_mm": t["tol"], "absolute_units": t["tol_units"], "angular": t["angtol"], "absolute_source": t["absolute_source"], "angular_source": t["angular_source"], "mm_per_unit": _mm(d)}
 
 
+@router.get("/{doc_id}/surfaces/{handle}/net")
+def surface_net(doc_id: str, handle: int) -> dict:
+    from app.cmd.commands.surfpoints import net_of
+    from app.solid.work import SolidError
+
+    try:
+        d = service.get(doc_id)
+    except DocumentFault as err:
+        raise HTTPException(err.status, err.message)
+    with d.lock:
+        e = d.drawing.get(handle)
+        if e is None or e.kind != "solidbody":
+            raise HTTPException(404, "No such surface.")
+        try:
+            net = net_of(d.drawing, e)
+        except SolidError as err:
+            raise HTTPException(409, str(err))
+        return {"handle": handle, "name": e.name, "version": int(e.version), "blob": e.blob, **net}
+
+
 def _mm(d) -> float:
     from app.solid import surfwork as sw
 

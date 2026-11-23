@@ -22,7 +22,7 @@ export function seamState(r: SeamReport): SeamState {
   return 'fail';
 }
 
-export const seamLevel = (r: SeamReport): string => (r.g2 ? 'G2' : r.g1 ? 'G1' : r.g0 ? 'G0' : 'None');
+export const seamLevel = (r: SeamReport): string => (r.g3 ? 'G3' : r.g2 ? 'G2' : r.g1 ? 'G1' : r.g0 ? 'G0' : 'None');
 
 const num = (v: number): string => (v === 0 ? '0' : Math.abs(v) < 1e-3 || Math.abs(v) >= 1e4 ? v.toExponential(1) : Number(v.toPrecision(3)).toString());
 
@@ -166,6 +166,7 @@ export class AnalysisLayer implements ViewLayer {
       const color = this.colors[s.state === 'pass' ? 'ok' : s.state === 'partial' ? 'warn' : 'danger'];
       const r = s.report;
       const lines = [`gap ${num(r.max_gap)} mm`, `angle ${num(r.max_angle)} rad`, `curv ${num(r.max_curvature_gap)}`];
+      if (typeof r.max_curvature_rate_gap === 'number') lines.push(`rate ${num(r.max_curvature_rate_gap)}`);
       g.font = '600 12px -apple-system, "Segoe UI", Inter, system-ui, sans-serif';
       const head = seamLevel(r);
       const hw = Math.ceil(g.measureText(head).width) + 14;

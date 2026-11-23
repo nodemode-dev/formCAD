@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.28.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.29.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -142,19 +142,27 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 8. Surfaces and forms
 
-**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, trim, join), analysis (zebra, curvature, draft, deviation, curvature comb), a gumball, and subdivision forms with creases converted to closed solids.
+**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, fillet, chamfer and variable fillet between surfaces, trim, untrim, shrink, split, join), analysis (zebra, curvature, draft, deviation, curvature comb, seam continuity measured to G3), a gumball, and subdivision forms with creases converted to closed solids.
 
 **How to start.** `crv` or `srfloft` for NURBS; `subdbox` for a form; `analysisramp` and `zebra` for analysis.
 
 **Main commands.**
 
 - Curves: `crv`, `crvinterp`, `crvfit`, `crvrebuild`, `crvdegree`, `crvblend`, `crvmatch`, `crvoffset`, `crvextend`, `crvcont`.
-- Surfaces: `srfloft`, `srfsweep`, `srfnetwork`, `srfpatch`, `srfextrude`, `srfrevolve`, `srfplanar`, `srfedge`, `srfblend`, `srfmatch`, `srfextend`, `srfoffset`, `srfsplit`, `srftrim`, `srfjoin`, `seamcheck`, `nakededges`, `surfreport`, `modeltol`.
+- Surfaces: `srfloft`, `srfsweep`, `srfnetwork`, `srfpatch`, `srfextrude`, `srfrevolve`, `srfplanar`, `srfedge`, `srfblend`, `srffillet`, `srfchamfer`, `srfvarfillet`, `srfmatch`, `srfextend`, `srfoffset`, `srfsplit`, `srftrim`, `srfuntrim`, `srfshrink`, `srfjoin`, `seamcheck`, `nakededges`, `surfreport`, `modeltol`.
 - Analysis: `zebra`, `curvatureanalysis`, `draftanalysis`, `deviation`, `curvaturecomb`, `analysisoff`, `analysisramp`.
 - Forms: `subdbox`, `subdcylinder`, `subdsphere`, `subdtorus`, `subdextrude`, `subdrevolve`, `subdinsertedge`, `subddivideface`, `subdcrease`, `subdbridge`, `subdfillhole`, `subdsymmetry`, `subddisplay`, `subdconvert`, `subdinfo`.
 - Gumball: `gumball`.
 
-**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured.
+Fillet, Chamfer and Variable Fillet between surfaces (`srffillet`, `srfchamfer`, `srfvarfillet`) work on two surfaces that share an edge or cross: select one face on each, give a radius, two distances, or radii at parameters from 0 to 1 along the fillet, and choose Join (trim both surfaces back and join everything), Trim (trim but keep three surfaces) or Surface (the fillet surface alone). The report lists the measured radius range, the tangency to both surfaces, the free edges and the stored tolerances; a joined result with no free edge becomes a closed solid.
+
+To reshape a surface by its control points, select it in the 3D view and choose Show Control Points; drag a point to move it in the plane of the view, or Shift-click several points and drag them together. The surface updates as you drag, each drag is one undo step (`srfpoints` does the same from the command line), and Escape hides the points. Turn on Show Zebra Stripes to watch the reflection stripes follow the surface while you drag. Control points work on single surfaces; a trimmed surface shows a rough edge while its points are shown.
+
+`srfuntrim` removes the trim of a surface face and gives back its whole underlying surface; choose Holes to remove only the inner loops, and keep the trim curves to leave the removed boundaries as curves. `srfshrink` cuts the underlying surface of a trimmed face down to just beyond its trim boundary; the face keeps its shape and area. On a polysurface, select the face first; the result is a new surface. A plane or an extrusion has no natural edge, so untrimming one gives the rectangle that bounds the face.
+
+`seamcheck` and the seam lines of a surface blend or match report a curvature rate gap: the largest difference along the seam in how fast the curvature changes as you cross it, in 1/mm2. A seam is G3 when it is G2 and that gap is within the tolerance shown. Surface blend builds to G2 at most, so its seams normally read G2 with a large rate gap; only the measurement goes to G3. Curve blend builds to G3.
+
+**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured. Surface fillets, and the other surface operations added from 0.29.0, need the 3D kernel released with them; an older kernel says so.
 
 ## 9. Meshes and plastic parts
 
