@@ -55,7 +55,7 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | scipy.spatial in the kernel worker (BSD-3-Clause) | already present as a dependency of build123d; `kernel/kernel_proxy.py` takes convex hulls with it, so the kernel freeze scripts name `--hidden-import scipy.spatial` | `setup/freeze_kernel`, `setup/freeze_kernel.bat` |
 | formcad-stroke single-stroke drafting font, drawn for FormCAD | Apache-2.0 (original work, no third-party glyph data) | `backend/app/data/fonts/formcad-stroke.json` |
 | PyInstaller 6.22.3 | GPL-2.0-or-later with bootloader exception | build tool only; the bootloader exception covers the frozen engine |
-| pytest 9.1.1, playwright 1.63.0, pytest-rerunfailures 16.7 | MIT, Apache-2.0, MPL-2.0 (used unedited) | test tools in `backend/requirements-test.txt` for `backend/tests`, `setup/tests` and `e2e`, not shipped and never frozen into the engine |
+| pytest 9.1.1, playwright 1.63.0, pytest-rerunfailures 16.7, pillow 12.3.0 | MIT, Apache-2.0, MPL-2.0 (used unedited), MIT-CMU | test tools in `backend/requirements-test.txt` for `backend/tests`, `setup/tests` and `e2e`, not shipped and never frozen into the engine |
 
 ### Desktop shell
 

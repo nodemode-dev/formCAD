@@ -75,6 +75,9 @@ class Doc:
     def put(self, tail: str, body=None):
         return self.engine.put(self.url(tail), body)
 
+    def patch(self, tail: str, body=None):
+        return self.engine.patch(self.url(tail), body)
+
     def delete(self, tail: str):
         return self.engine.delete(self.url(tail))
 
@@ -99,11 +102,11 @@ class Doc:
         self.last = self.post("/input", {"selection": selection})
         return self.last
 
-    def command(self, name: str, **args) -> dict:
+    def command(self, name: str, /, **args) -> dict:
         self.last = self.post("/command", {"command": name, "args": args or None})
         return self.last
 
-    def run(self, name: str, *inputs) -> dict:
+    def run(self, name: str, /, *inputs) -> dict:
         self.last = self.post("/command", {"command": name, "args": {"inputs": [str(i) for i in inputs]}})
         return self.last
 

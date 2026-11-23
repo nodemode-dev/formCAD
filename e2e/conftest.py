@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -65,6 +66,33 @@ def pytest_collection_modifyitems(config, items):
     items[:] = keep
 
 
+def _start(command: list, cwd: Path, env: dict):
+    if os.name == "nt":
+        return subprocess.Popen(command, cwd=cwd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+    return subprocess.Popen(command, cwd=cwd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def _stop(proc) -> None:
+    if proc.poll() is not None:
+        return
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+    try:
+        proc.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        if os.name != "nt":
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        proc.kill()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def servers():
     started = []
@@ -73,23 +101,21 @@ def servers():
     try:
         if not _answers(API + "/api/health"):
             port = API.rsplit(":", 1)[1]
-            started.append(subprocess.Popen([_engine_python(), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", port], cwd=BACKEND, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+            started.append(_start([_engine_python(), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", port], BACKEND, env))
             _wait(API + "/api/health", 90, "The engine")
         elif not GIVEN_DATA:
             pytest.exit("An engine is already running at %s. Stop it, or set FORMCAD_E2E_DATA to its data folder." % API, returncode=1)
+        if _answers(URL) and not GIVEN_DATA:
+            pytest.exit("A dev build is already running at %s with another engine's key. Stop it, or set FORMCAD_E2E_DATA to its data folder." % URL, returncode=1)
         if not _answers(URL):
-            npx = shutil.which("npx") or "npx"
-            started.append(subprocess.Popen([npx, "vite", "--host", "127.0.0.1", "--port", "5290", "--strictPort"], cwd=FRONTEND, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+            vite = FRONTEND / "node_modules" / "vite" / "bin" / "vite.js"
+            node = shutil.which("node") or "node"
+            started.append(_start([node, str(vite), "--host", "127.0.0.1", "--port", "5290", "--strictPort"], FRONTEND, env))
             _wait(URL, 90, "The dev build")
         yield
     finally:
         for proc in reversed(started):
-            proc.terminate()
-        for proc in started:
-            try:
-                proc.wait(timeout=15)
-            except subprocess.TimeoutExpired:
-                proc.kill()
+            _stop(proc)
 
 
 class Api:

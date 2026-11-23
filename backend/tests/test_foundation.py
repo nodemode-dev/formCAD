@@ -48,7 +48,7 @@ def test_the_kernel_builds_a_box_with_the_faces_edges_and_extents_of_a_box(kerne
         spans = sorted(round(flat[i + 3] - flat[i], 6) for i in range(3))
         assert spans == [10.0, 20.0, 30.0]
     finally:
-        kernel.call("shape_free", {"id": made["id"]})
+        kernel.call("shape_free", {"ids": [made["id"]]})
 
 
 def test_the_geometry_helpers_agree_with_closed_forms():
