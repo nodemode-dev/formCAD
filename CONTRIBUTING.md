@@ -53,6 +53,7 @@ Run the same checks CI runs:
 (cd backend && pip install --require-hashes -r requirements.lock \
   && python -m compileall -q app formcad_engine.py \
   && python formcad_engine.py --selfcheck)
+./formCAD test
 ```
 
 CI also boots the engine and probes it, runs `bash -n` over the shell scripts, fails
@@ -60,6 +61,8 @@ on a long dash in tracked Markdown or an emoji in tracked text, freezes the engi
 and scans the result for licences that may not ship.
 
 - Keep each pull request to one change.
+- A change in behaviour updates its tests in the same pull request. [docs/TESTING.md](docs/TESTING.md)
+  says how to run the tests and what a test must do to be accepted.
 - Write commit subjects the way the history does:
   `type(scope): lowercase sentence describing the effect (x.y.z)`, for example
   `feat(sketch): ...`, `fix(kernel): ...`, `docs(readme): ...`. Leave the version

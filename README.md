@@ -155,6 +155,8 @@ cd formCAD
 
 Set `FORMCAD_DATA_DIR`, `FORMCAD_PORT` or `FORMCAD_KERNEL` in the shell to move the data folder, the engine port or the kernel worker.
 
+**Tests:** `./formCAD test` runs them all; `./formCAD test engine` (or `unit`, `workers`, `browser`, `scripts`) runs one layer. [`docs/TESTING.md`](docs/TESTING.md) says what each layer covers and what a test must do to be accepted.
+
 **Demos:** open any of the three in a browser, with no install and no network. Each is the real window over a recording of the engine, so you can look, pan, zoom, pick and browse the panels, and anything that would change the document says the desktop app does it. [`demo/index.html`](demo/README.md) opens a dimensioned floor plan on an A3 sheet. [`demos/part/index.html`](demos/part/README.md) opens a parametric plate with its feature tree in the 3D view. [`demos/graph/index.html`](demos/graph/README.md) opens a node graph that drives a plate with a ring of bolt holes. The same three documents open from the home screen of the app.
 
 > [!IMPORTANT]

@@ -30,6 +30,7 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | mediabunny 1.65.0 | MPL-2.0 (package `LICENSE` file, "Mozilla Public License Version 2.0"; file-level copyleft, its files are used unedited from `node_modules` and bundled by Vite, any change to a Mediabunny file would have to be published under MPL-2.0); WebM or MP4 muxing for storyboard video, `frontend/src/an1/video.ts` | `frontend/package.json` |
 | @xterm/xterm 6.0.0, @xterm/addon-fit 0.11.0 | MIT (package `LICENSE`, Copyright (c) 2017-2019 The xterm.js authors and others); the terminal emulator of the agent dock, loaded only when a tab opens | `frontend/package.json`, used by `frontend/src/dock/terminal.ts` |
 | typescript 7.0.2, vite 8.3.5, @types/three 0.186.0 | Apache-2.0, MIT, MIT | build tools, not shipped |
+| vitest 5.0.5, happy-dom 21.0.4 | MIT, MIT | test tools for `frontend/tests/unit`, not shipped |
 
 ### Engine (backend)
 
@@ -54,6 +55,7 @@ Every dependency, binary, font or asset gets a row here before it lands, with it
 | scipy.spatial in the kernel worker (BSD-3-Clause) | already present as a dependency of build123d; `kernel/kernel_proxy.py` takes convex hulls with it, so the kernel freeze scripts name `--hidden-import scipy.spatial` | `setup/freeze_kernel`, `setup/freeze_kernel.bat` |
 | formcad-stroke single-stroke drafting font, drawn for FormCAD | Apache-2.0 (original work, no third-party glyph data) | `backend/app/data/fonts/formcad-stroke.json` |
 | PyInstaller 6.22.3 | GPL-2.0-or-later with bootloader exception | build tool only; the bootloader exception covers the frozen engine |
+| pytest 9.1.1, playwright 1.63.0, pytest-rerunfailures 16.7 | MIT, Apache-2.0, MPL-2.0 (used unedited) | test tools in `backend/requirements-test.txt` for `backend/tests`, `setup/tests` and `e2e`, not shipped and never frozen into the engine |
 
 ### Desktop shell
 

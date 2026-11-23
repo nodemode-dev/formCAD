@@ -13,7 +13,7 @@ Read `CLAUDE.md` and `AGENTS.md` at the repository root first. The laws bind eve
 7. **Clean room.** Specs only. Never open, quote or name another CAD, CAM, CAE or EDA product.
 8. **Licences.** Permissive anywhere; MPL unedited; LGPL only as separate, replaceable programs; GPL and AGPL never in a distributed build. A `NOTICE.md` row before any dependency.
 9. **No code from the GPL sibling projects.**
-10. **Tests** are not written until the owner asks; `TEST_PLAN.md` is written instead.
+10. **Tests** are added when the owner asks; until then `TEST_PLAN.md` is written. A change in behaviour updates its tests in the same pull request, and every test follows the five rules in `docs/TESTING.md`.
 11. **Planning documents** live in the planning sidecar, not in this tree.
 
 ## Also
