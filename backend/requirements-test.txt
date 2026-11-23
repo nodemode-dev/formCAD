@@ -1,0 +1,3 @@
+pytest==9.1.1   # test only, not shipped; MIT
+pytest-rerunfailures==16.7   # the browser shards retry a failed test once, reported as RERUN; test only, not shipped, unedited; MPL-2.0
+playwright==1.63.0  # browser tests in e2e/; test only, not shipped; Apache-2.0
