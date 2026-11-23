@@ -111,6 +111,103 @@ jobs:
         working-directory: src-tauri
         run: cargo check --locked
 
+  test-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Interface logic tests
+        run: npm test
+
+  test-engine:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os != 'ubuntu-22.04' }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        if: matrix.os == 'ubuntu-22.04'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install the engine and the test tools
+        run: |
+          setup/install_backend
+          source setup/lib.sh
+          fc_venv
+          pip install -r backend/requirements-test.txt
+          python -c "import os; print('FORMCAD_WORKER_DIR=' + os.path.abspath('.test-workers'))" >> "$GITHUB_ENV"
+      - name: Engine tests
+        run: ./formCAD test engine
+      - uses: actions/cache@v4
+        with:
+          path: .test-workers
+          key: workers-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('backend/app/data/kernel-licence.json', 'backend/app/data/mesher-licence.json') }}
+      - name: Install the kernel and the mesher the way the app does
+        run: |
+          source setup/lib.sh
+          fc_venv
+          FORMCAD_DATA_DIR="$FORMCAD_WORKER_DIR" python setup/tests/install_workers.py --env-file "$GITHUB_ENV"
+      - name: Worker tests
+        env:
+          FORMCAD_TEST_WORKERS: required
+        run: ./formCAD test workers
+      - name: Dispatcher and setup script tests
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          setup/install_frontend
+          ./formCAD test scripts
+
+  test-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install the engine, the frontend and the browser
+        run: |
+          setup/install_backend
+          setup/install_frontend
+          source setup/lib.sh
+          fc_venv
+          pip install -r backend/requirements-test.txt
+          python -m playwright install --with-deps chromium
+      - name: Browser tests
+        env:
+          FORMCAD_E2E_SHARD: ${{ matrix.shard }}/3
+        run: ./formCAD test browser --reruns 1
+
   engine-freeze:
     needs: [frontend, backend]
     strategy:
