@@ -2,6 +2,15 @@
 
 Versions follow `v*.*.*`. Dates are UTC.
 
+## 0.30.0 · 2026-11-22
+
+- 3DM export writes each body as one trimmed, joined polysurface, so a solid opens as a closed solid in the receiving program instead of loose untrimmed faces. A body that cannot be written this way falls back to separate faces and the export report says why.
+- Curves from surfaces: project curves onto surfaces along a direction or the view, pull them on along the surface normal, cut contours at even spacing, and extract isocurves (`crvproject`, `crvpull`, `srfcontour`, `srfisocurve`).
+- Deform solids and surfaces: Bend, Flow along Curve, Flow along Surface and Cage Edit under Modify > Deform (`bend`, `flow`, `flowsrf`, `cage`, `cageedit`, `cageoff`). A closed solid stays closed, each result reports its distance from the exact shape against the model tolerance, and resetting a cage returns the original.
+- These need the 3D kernel released with this version; an older kernel says so.
+- The new labels are translated in every language.
+- Not run for this version: the desktop window, macOS and Windows, the new tools with a published kernel, and a 3DM file opened in Rhino itself (the file was read back with the 3DM library and measured). The cage has no handles in the 3D view yet; its points are moved from the command line.
+
 ## 0.29.0 · 2026-11-22
 
 - Surfaces: fillet, chamfer and variable-radius fillet between two surfaces that share an edge or cross, trimmed back and joined into a valid polysurface or solid (`srffillet`, `srfchamfer`, `srfvarfillet`).

@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Yüzey budamasını kaldır",
   1730: "Budanmış yüzeyi küçült",
   1731: "Yüzey noktalarını taşı",
+  1732: "Yüzeye izdüşür",
+  1733: "Eğrileri görünüm yönünde izdüşür",
+  1734: "Yüzeye çek",
+  1735: "Kontur",
+  1736: "İzoeğri çıkar",
+  1737: "Deforme et",
+  1738: "Bük",
+  1739: "Eğri boyunca akıt",
+  1740: "Yüzey boyunca akıt",
+  1741: "Kafes",
+  1742: "Kafesi düzenle",
+  1743: "Kafesi kaldır",
 };
 export default T;

@@ -1,6 +1,6 @@
 # FormCAD user manual
 
-This manual covers every workspace of FormCAD v0.29.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
+This manual covers every workspace of FormCAD v0.30.0. Each chapter says what the workspace does, how to start, the main commands, and the limits, stated plainly. Command names are the ones you type at the command line of the window (case does not matter); each exists in the engine's command catalogue. `./formCAD` is the dispatcher script at the repository root; on Windows use the `.bat` files.
 
 Where a chapter says "a first version", it means the feature works end to end on the cases it was checked against, and nothing more is promised. Where a number is an estimate, the interface labels it so.
 
@@ -97,7 +97,7 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 **Limits.**
 
-- 3DM: curves and untrimmed surfaces are kept exactly. A trimmed face is written as a surface plus its trim curves, with a warning; STEP keeps trimmed faces better.
+- 3DM: curves are kept exactly. A solid or surface body is written as one polysurface with its faces trimmed and joined, so a closed solid stays closed; surfaces are written in NURBS form, and planes, cylinders, cones, spheres and tori are recognised again when a 3DM file is opened. A body made of several separate parts is written as one polysurface per part. If a body cannot be written joined, its faces are written as separate surfaces with their trim curves and a warning that says why; use STEP for that body. This needs the 3D kernel released with 0.30.0; an older kernel writes trimmed faces as surfaces plus trim curves, with a warning.
 - Mesh formats that carry no unit (STL, OBJ) produce a warning on every import and export.
 - Sheet sets: there is no sheet set manager. `publish` is the replacement: it plots layouts of the current drawing and, with `sheets` entries that name a `file`, layouts of other drawings (FormCAD, DXF or DWG files) into one PDF, in the order listed, each sheet with its own page setup or paper. Sheet numbering, sheet lists and title-block fields shared across drawings are not managed. An agent may name only files in its granted folders.
 - DWG needs a converter. Either turn DWG on and point FormCAD at a converter you installed (the ODA File Converter reads and writes every DWG version from 2000 to 2018), or install the DWG tools from Preferences when they are offered there (GNU LibreDWG, a separate GPL program FormCAD downloads and checks file by file). With the DWG tools FormCAD opens DWG files of every version and saves DWG in the 2000 format only; objects LibreDWG skips are listed in the import notes, and a drawing LibreDWG cannot convert stops the save with its message, so save it as DXF instead. Without either, DWG files are refused with a message (`GET /api/interchange/dwg`).
@@ -142,13 +142,14 @@ A FormCAD project is one `.fcad` file. It holds the drawing database, the part f
 
 ## 8. Surfaces and forms
 
-**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, fillet, chamfer and variable fillet between surfaces, trim, untrim, shrink, split, join), analysis (zebra, curvature, draft, deviation, curvature comb, seam continuity measured to G3), a gumball, and subdivision forms with creases converted to closed solids.
+**What it does.** NURBS curves (build, interpolate, fit, rebuild, blend to G3, match, offset, extend, project and pull onto surfaces, contours, isocurves), deformation of solids and surfaces (bend, flow along a curve or a surface, cage editing), surfaces (loft, sweep, network, patch, extrude, revolve, blend and match to G2, fillet, chamfer and variable fillet between surfaces, trim, untrim, shrink, split, join), analysis (zebra, curvature, draft, deviation, curvature comb, seam continuity measured to G3), a gumball, and subdivision forms with creases converted to closed solids.
 
 **How to start.** `crv` or `srfloft` for NURBS; `subdbox` for a form; `analysisramp` and `zebra` for analysis.
 
 **Main commands.**
 
-- Curves: `crv`, `crvinterp`, `crvfit`, `crvrebuild`, `crvdegree`, `crvblend`, `crvmatch`, `crvoffset`, `crvextend`, `crvcont`.
+- Curves: `crv`, `crvinterp`, `crvfit`, `crvrebuild`, `crvdegree`, `crvblend`, `crvmatch`, `crvoffset`, `crvextend`, `crvcont`, `crvproject`, `crvpull`, `srfcontour`, `srfisocurve`.
+- Deform: `bend`, `flow`, `flowsrf`, `cage`, `cageedit`, `cageoff`.
 - Surfaces: `srfloft`, `srfsweep`, `srfnetwork`, `srfpatch`, `srfextrude`, `srfrevolve`, `srfplanar`, `srfedge`, `srfblend`, `srffillet`, `srfchamfer`, `srfvarfillet`, `srfmatch`, `srfextend`, `srfoffset`, `srfsplit`, `srftrim`, `srfuntrim`, `srfshrink`, `srfjoin`, `seamcheck`, `nakededges`, `surfreport`, `modeltol`.
 - Analysis: `zebra`, `curvatureanalysis`, `draftanalysis`, `deviation`, `curvaturecomb`, `analysisoff`, `analysisramp`.
 - Forms: `subdbox`, `subdcylinder`, `subdsphere`, `subdtorus`, `subdextrude`, `subdrevolve`, `subdinsertedge`, `subddivideface`, `subdcrease`, `subdbridge`, `subdfillhole`, `subdsymmetry`, `subddisplay`, `subdconvert`, `subdinfo`.
@@ -162,7 +163,11 @@ To reshape a surface by its control points, select it in the 3D view and choose 
 
 `seamcheck` and the seam lines of a surface blend or match report a curvature rate gap: the largest difference along the seam in how fast the curvature changes as you cross it, in 1/mm2. A seam is G3 when it is G2 and that gap is within the tolerance shown. Surface blend builds to G2 at most, so its seams normally read G2 with a large rate gap; only the measurement goes to G3. Curve blend builds to G3.
 
-**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured. Surface fillets, and the other surface operations added from 0.29.0, need the 3D kernel released with them; an older kernel says so.
+**Curves from surfaces.** Project onto Surface (`crvproject`) projects curves onto surfaces or solids along a direction you give with two points; Project Curves along View does the same along the 3D view direction. Pull onto Surface (`crvpull`) moves each curve point to its closest point on the surface, along the surface normal. Contour (`srfcontour`) cuts surfaces or solids with parallel planes from a base point, set by a spacing or a number of planes. Extract Isocurve (`srfisocurve`) gives the constant U or V curve, or both, through a picked point, or every isocurve at the surface knots, kept inside the trimmed face. Every result is a NURBS curve, and the command line reports the largest distance from the surface at its sample points against the model tolerance, and names any curve or plane that missed the object.
+
+**Deforming solids and surfaces.** Bend, Flow along Curve, Flow along Surface and Cage Edit (Modify > Deform) reshape whole solids and surfaces. Bend (`bend`) takes a spine from a start to an end and either a point the bent spine passes through or an angle with a side; with Limit, only the part along the spine bends and the rest follows rigidly. Flow along Curve (`flow`) carries objects lying along a base curve onto a target curve, keeping lengths or stretching them to the target's length. Flow along Surface (`flowsrf`) carries objects from a base surface, or a plane given by three corners, onto a target surface and keeps their distance from it. Cage (`cage`) wraps one object in a box of control points, 2 to 16 in each direction; Cage Edit (`cageedit`) moves cage points to a position or by a displacement and the object follows, and resetting the cage returns the original shape; Remove Cage (`cageoff`) keeps the shape and drops the cage. Every result is rebuilt as NURBS surfaces with the same faces, edges and trims, so a closed solid stays closed. Each command reports the largest and mean distance from the exact mapping at its sample points against the model tolerance; if a surface reaches the control point limit first, the report says how far off it is and a larger `max_points` refines it. A cage is saved with the file. The cage has no handles in the 3D view yet; its points are moved from the command line.
+
+**Limits.** Conversion of a form to a solid reports continuity and fails with a reason if the cage cannot close. Blends reach their stated continuity only within the model tolerance (`modeltol`); the badge on a seam says what was measured. Surface fillets, and the other surface operations added from 0.29.0, need the 3D kernel released with them; an older kernel says so. A face trimmed across the seam of a periodic surface must be split at the seam before it can be deformed, and a deformation is not checked for self-intersection beyond the bend radius guard.
 
 ## 9. Meshes and plastic parts
 

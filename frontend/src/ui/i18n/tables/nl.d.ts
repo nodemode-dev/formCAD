@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Trimmen van oppervlak ongedaan maken",
   1730: "Getrimd oppervlak verkleinen",
   1731: "Oppervlakpunten verplaatsen",
+  1732: "Op oppervlak projecteren",
+  1733: "Curven langs weergave projecteren",
+  1734: "Naar oppervlak trekken",
+  1735: "Contour",
+  1736: "Isocurve extraheren",
+  1737: "Vervormen",
+  1738: "Buigen",
+  1739: "Langs curve vloeien",
+  1740: "Langs oppervlak vloeien",
+  1741: "Kooi",
+  1742: "Kooi bewerken",
+  1743: "Kooi verwijderen",
 };
 export default T;

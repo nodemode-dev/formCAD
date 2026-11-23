@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Remover aparo da superfície",
   1730: "Reduzir superfície aparada",
   1731: "Mover pontos da superfície",
+  1732: "Projetar na superfície",
+  1733: "Projetar curvas ao longo da vista",
+  1734: "Puxar para a superfície",
+  1735: "Contorno",
+  1736: "Extrair isocurva",
+  1737: "Deformar",
+  1738: "Curvar",
+  1739: "Fluir ao longo da curva",
+  1740: "Fluir ao longo da superfície",
+  1741: "Gaiola",
+  1742: "Editar gaiola",
+  1743: "Remover gaiola",
 };
 export default T;

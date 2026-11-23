@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Bỏ xén bề mặt",
   1730: "Thu gọn bề mặt đã xén",
   1731: "Di chuyển điểm bề mặt",
+  1732: "Chiếu lên bề mặt",
+  1733: "Chiếu đường cong theo hướng nhìn",
+  1734: "Kéo lên bề mặt",
+  1735: "Đường đồng mức",
+  1736: "Trích đường đẳng tham số",
+  1737: "Biến dạng",
+  1738: "Uốn",
+  1739: "Chảy dọc đường cong",
+  1740: "Chảy dọc bề mặt",
+  1741: "Lồng",
+  1742: "Chỉnh sửa lồng",
+  1743: "Gỡ bỏ lồng",
 };
 export default T;

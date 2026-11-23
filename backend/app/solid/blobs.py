@@ -48,10 +48,20 @@ def kept_copies(drawing) -> set:
     return {str(b.get("blob")) for r in tbl.values() for b in ((r.get("cache") or {}).get("bodies") or []) if b.get("blob")}
 
 
+def cage_bases(drawing) -> set:
+    out = set()
+    for e in drawing.ents.values():
+        if e.kind == "solidbody":
+            rec = (e.source or {}).get("cage")
+            if isinstance(rec, dict) and rec.get("blob"):
+                out.add(str(rec["blob"]))
+    return out
+
+
 def container_entries(drawing) -> list:
     if not drawing.blobs:
         return []
-    live = {e.blob for e in bodies(drawing)} | kept_copies(drawing)
+    live = {e.blob for e in bodies(drawing)} | kept_copies(drawing) | cage_bases(drawing)
     from app.sim import records as sim_records
 
     live |= sim_records.blobs_in_use(drawing)

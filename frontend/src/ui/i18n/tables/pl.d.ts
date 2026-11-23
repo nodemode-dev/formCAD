@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Cofnij przycięcie powierzchni",
   1730: "Zmniejsz przyciętą powierzchnię",
   1731: "Przesuń punkty powierzchni",
+  1732: "Rzutuj na powierzchnię",
+  1733: "Rzutuj krzywe wzdłuż widoku",
+  1734: "Przyciągnij do powierzchni",
+  1735: "Warstwice",
+  1736: "Wyodrębnij izokrzywą",
+  1737: "Deformacja",
+  1738: "Zegnij",
+  1739: "Przepływ wzdłuż krzywej",
+  1740: "Przepływ wzdłuż powierzchni",
+  1741: "Klatka",
+  1742: "Edytuj klatkę",
+  1743: "Usuń klatkę",
 };
 export default T;

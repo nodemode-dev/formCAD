@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Fjern trim på overflade",
   1730: "Krymp trimmet overflade",
   1731: "Flyt overfladepunkter",
+  1732: "Projicér på overflade",
+  1733: "Projicér kurver langs visning",
+  1734: "Træk til overflade",
+  1735: "Kontur",
+  1736: "Udtræk isokurve",
+  1737: "Deformér",
+  1738: "Bøj",
+  1739: "Flyd langs kurve",
+  1740: "Flyd langs overflade",
+  1741: "Bur",
+  1742: "Redigér bur",
+  1743: "Fjern bur",
 };
 export default T;

@@ -12,13 +12,14 @@ from OCP.BRepGProp import BRepGProp
 from OCP.BRepLib import BRepLib
 from OCP.BRepTools import BRepTools
 from OCP.GProp import GProp_GProps
-from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface
+from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_TrimmedCurve
 from OCP.GeomAPI import GeomAPI_ProjectPointOnSurf
 from OCP.ShapeFix import ShapeFix_Edge, ShapeFix_Face
 from OCP.TopAbs import TopAbs_EDGE, TopAbs_FACE, TopAbs_REVERSED, TopAbs_SHELL
-from OCP.TopoDS import TopoDS_Compound
+from OCP.TopoDS import TopoDS_Compound, TopoDS_Shell
 from OCP.gp import gp_Pnt
 
+import kernel_3dm_brep as joined
 import kernel_store as store
 from kernel_curves import from_geom, to_geom
 from kernel_surf import TopoDS, kind_edges
@@ -290,15 +291,17 @@ def uv_rectangle(surf, curves, tol, seams=()):
     wrap_u = wrap_v = False
     for curve in seams:
         cp = []
-        for k in range(5):
-            q = curve.Value(curve.FirstParameter() + (curve.LastParameter() - curve.FirstParameter()) * k / 4.0)
+        for k in range(1, 6):
+            q = curve.Value(curve.FirstParameter() + (curve.LastParameter() - curve.FirstParameter()) * k / 6.0)
             proj = GeomAPI_ProjectPointOnSurf(q, surf)
             if proj.NbPoints():
                 cp.append(proj.LowerDistanceParameters())
         if cp:
-            if max(p[0] for p in cp) - min(p[0] for p in cp) <= 1e-6 * (a1 - a0):
+            us = [a0 if surf.IsUClosed() and abs(p[0] - a1) <= 1e-6 * (a1 - a0) else p[0] for p in cp]
+            vs = [b0 if surf.IsVClosed() and abs(p[1] - b1) <= 1e-6 * (b1 - b0) else p[1] for p in cp]
+            if max(us) - min(us) <= 1e-6 * (a1 - a0):
                 wrap_u = True
-            elif max(p[1] for p in cp) - min(p[1] for p in cp) <= 1e-6 * (b1 - b0):
+            elif max(vs) - min(vs) <= 1e-6 * (b1 - b0):
                 wrap_v = True
     for curve in curves:
         a, b = curve.FirstParameter(), curve.LastParameter()
@@ -333,6 +336,42 @@ def vertex_shapes(brep, scale, tol):
     return out
 
 
+def analytic_curve(g, tol):
+    from OCP.ElCLib import ElCLib
+    from OCP.Geom import Geom_Circle, Geom_Line
+    from OCP.GeomConvert import GeomConvert_CurveToAnaCurve
+    from OCP.gp import gp_Dir, gp_Lin, gp_Vec
+
+    limit = max(tol * 1e-3, 1e-7)
+    a, b = g.FirstParameter(), g.LastParameter()
+    pts = [g.Value(a + (b - a) * k / 16.0) for k in range(17)]
+    chord = pts[0].Distance(pts[-1])
+    if chord > tol:
+        line = gp_Lin(pts[0], gp_Dir(gp_Vec(pts[0], pts[-1])))
+        along = [ElCLib.Parameter_s(line, q) for q in pts]
+        if all(line.Distance(q) <= limit for q in pts) and all(y > x for x, y in zip(along, along[1:])):
+            return Geom_Line(line), 0.0, chord
+    found = GeomConvert_CurveToAnaCurve.ComputeCircle_s(g, limit, a, b, 0.0, 0.0, 0.0)
+    if found is None or not isinstance(found, Geom_Circle):
+        return None
+    full = 2.0 * math.pi
+    for _ in range(2):
+        circ = found.Circ()
+        if any(circ.Distance(q) > limit for q in pts):
+            return None
+        turn = [ElCLib.Parameter_s(circ, q) for q in pts]
+        steps = [(y - x) % full for x, y in zip(turn, turn[1:])]
+        if all(0.0 < s < math.pi for s in steps):
+            sweep = sum(steps)
+            if chord <= limit:
+                sweep = full
+            if sweep > full + 1e-9:
+                return None
+            return found, turn[0], turn[0] + sweep
+        found.Reverse()
+    return None
+
+
 def build_edges(brep, scale, tol, notes):
     ends = edge_ends(brep)
     verts = vertex_shapes(brep, scale, tol)
@@ -352,7 +391,12 @@ def build_edges(brep, scale, tol, notes):
             builder.UpdateVertex(vb, max(BRep_Tool.Tolerance_s(vb), BRep_Tool.Pnt_s(vb).Distance(p1) * 1.01 + 1e-9))
             if sv == ev and not e.IsClosed and p0.Distance(p1) > tol:
                 raise RuntimeError("the edge starts and ends at one vertex but is not closed")
-            mk = BRepBuilderAPI_MakeEdge(g, va, vb, g.FirstParameter(), g.LastParameter())
+            exact = analytic_curve(g, tol)
+            mk = BRepBuilderAPI_MakeEdge(exact[0], va, vb, exact[1], exact[2]) if exact else None
+            if mk is not None and mk.IsDone():
+                g = Geom_TrimmedCurve(exact[0], exact[1], exact[2])
+            else:
+                mk = BRepBuilderAPI_MakeEdge(g, va, vb, g.FirstParameter(), g.LastParameter())
             if not mk.IsDone():
                 mk = BRepBuilderAPI_MakeEdge(g, g.FirstParameter(), g.LastParameter())
             if not mk.IsDone():
@@ -402,40 +446,98 @@ def rebuild_face(face, surf, edges, geoms, tol):
             built = mk.Face()
             how = "natural"
     if built is None:
-        wire = loop_wire(outers[0], edges)
-        mk = BRepBuilderAPI_MakeFace(surf, wire, True)
-        if not mk.IsDone():
-            raise RuntimeError("the outer loop does not fit the surface (%s)" % mk.Error().name)
-        for lp in inners:
-            mk.Add(loop_wire(lp, edges))
-        built = mk.Face()
-        fixer = ShapeFix_Edge()
-        from OCP.TopExp import TopExp_Explorer
-
-        ex = TopExp_Explorer(built, TopAbs_EDGE)
-        seen = set()
-        while ex.More():
-            e = TopoDS.Edge_s(ex.Current())
-            key = e.__hash__()
-            if key not in seen:
-                seen.add(key)
-                fixer.FixAddPCurve(e, built, False, tol)
-            ex.Next()
-        sf = ShapeFix_Face(built)
-        sf.SetPrecision(tol)
-        sf.Perform()
-        built = TopoDS.Face_s(sf.Face())
-        if not BRepCheck_Analyzer(built).IsValid():
-            from OCP.ShapeFix import ShapeFix_Shape
-
-            ss = ShapeFix_Shape(built)
-            ss.SetPrecision(tol)
-            ss.Perform()
-            built = TopoDS.Face_s(kind_edges(ss.Shape(), TopAbs_FACE)[0])
+        built = wire_face(surf, outers[0], inners, edges, tol, False)
+        if not (BRepCheck_Analyzer(built).IsValid() and area_of(built) > 0):
+            built = wire_face(surf, outers[0], inners, edges, tol, True)
         how = "trimmed"
     if face.OrientationIsReversed:
         built = TopoDS.Face_s(built.Reversed())
     return built, how
+
+
+def wire_face(surf, outer, inners, edges, tol, inside):
+    from OCP.TopExp import TopExp_Explorer
+
+    mk = BRepBuilderAPI_MakeFace(surf, loop_wire(outer, edges), inside)
+    if not mk.IsDone():
+        raise RuntimeError("the outer loop does not fit the surface (%s)" % mk.Error().name)
+    for lp in inners:
+        mk.Add(loop_wire(lp, edges))
+    built = mk.Face()
+    fixer = ShapeFix_Edge()
+    ex = TopExp_Explorer(built, TopAbs_EDGE)
+    seen = set()
+    while ex.More():
+        e = TopoDS.Edge_s(ex.Current())
+        key = e.__hash__()
+        if key not in seen:
+            seen.add(key)
+            fixer.FixAddPCurve(e, built, False, tol)
+        ex.Next()
+    sf = ShapeFix_Face(built)
+    sf.SetPrecision(tol)
+    sf.Perform()
+    built = TopoDS.Face_s(sf.Face())
+    if not BRepCheck_Analyzer(built).IsValid():
+        from OCP.ShapeFix import ShapeFix_Shape
+
+        ss = ShapeFix_Shape(built)
+        ss.SetPrecision(tol)
+        ss.Perform()
+        built = TopoDS.Face_s(kind_edges(ss.Shape(), TopAbs_FACE)[0])
+    return built
+
+
+def analytic_form(surf, tol):
+    from OCP.Geom import Geom_ElementarySurface, Geom_Plane
+    from OCP.GeomConvert import GeomConvert_SurfToAnaSurf
+
+    limit = max(tol * 1e-3, 1e-7)
+    conv = GeomConvert_SurfToAnaSurf(surf)
+    exact = conv.ConvertToAnalytical(limit)
+    if exact is None or not isinstance(exact, Geom_ElementarySurface) or conv.Gap() > limit:
+        return None
+    if isinstance(exact, Geom_Plane):
+        return exact
+    u0, u1, v0, v1 = surf.Bounds()
+    um, vm = 0.5 * (u0 + u1), 0.5 * (v0 + v1)
+    mid = surf.Value(um, vm)
+    turn = 0.0
+    if surf.Value(u0, vm).Distance(surf.Value(u1, vm)) <= limit and surf.Value(u0, vm).Distance(mid) > tol:
+        mark = surf.Value(u0, vm)
+    elif surf.Value(um, v0).Distance(surf.Value(um, v1)) <= limit and surf.Value(um, v0).Distance(mid) > tol:
+        mark = surf.Value(um, v0)
+    else:
+        mark, turn = mid, math.pi
+    proj = GeomAPI_ProjectPointOnSurf(mark, exact)
+    if proj.NbPoints() == 0:
+        return None
+    pos = exact.Position()
+    pos.Rotate(pos.Axis(), proj.LowerDistanceParameters()[0] - turn)
+    exact.SetPosition(pos)
+    return exact
+
+
+def true_area(shape) -> float:
+    props = GProp_GProps()
+    BRepGProp.SurfaceProperties_s(shape, props, 1e-6)
+    return props.Mass()
+
+
+def exact_face(face, surf, built, edges, geoms, tol):
+    exact = analytic_form(surf, tol)
+    if exact is None:
+        return None
+    try:
+        alt, how = rebuild_face(face, exact, edges, geoms, tol)
+        if not BRepCheck_Analyzer(alt).IsValid():
+            return None
+        a, b = true_area(built), true_area(alt)
+        if not (a > 0 and abs(a - b) <= 2e-5 * a):
+            return None
+    except Exception:
+        return None
+    return alt, how
 
 
 def shape_of_faces(faces, tol, as_solid):
@@ -444,7 +546,21 @@ def shape_of_faces(faces, tol, as_solid):
         sew.Add(faces[0])
         sew.Perform()
         shape = sew.SewedShape()
-        return shape if not shape.IsNull() else faces[0], 0
+        if shape.IsNull():
+            return faces[0], 0
+        if as_solid and sew.NbFreeEdges() == 0:
+            shells = kind_edges(shape, TopAbs_SHELL)
+            if not shells and shape.ShapeType() == TopAbs_FACE:
+                shell = TopoDS_Shell()
+                BRep_Builder().MakeShell(shell)
+                BRep_Builder().Add(shell, shape)
+                shells = [shell]
+            if shells:
+                solid = BRepBuilderAPI_MakeSolid(TopoDS.Shell_s(shells[0])).Solid()
+                BRepLib.OrientClosedSolid_s(solid)
+                if BRepCheck_Analyzer(solid).IsValid():
+                    return solid, 0
+        return shape, 0
     sew = BRepBuilderAPI_Sewing(tol)
     for f in faces:
         sew.Add(f)
@@ -477,6 +593,7 @@ def import_brep(brep, scale, tol, label):
             shape, how = rebuild_face(face, surf, edges, geoms, tol)
             if not BRepCheck_Analyzer(shape).IsValid():
                 raise RuntimeError("the rebuilt face is not valid")
+            shape, how = exact_face(face, surf, shape, edges, geoms, tol) or (shape, how)
             built.append(shape)
             rep["built"] += 1
             rep[how] += 1
@@ -728,7 +845,30 @@ def add_attrs(rh, f, item, layer_map):
 def write_shape(rh, f, item, inv, tol, layer_map, rep):
     shape = store.shape_of(item["id"])
     label = item.get("name") or "body"
-    faces = [TopoDS.Face_s(x) for x in kind_edges(shape, TopAbs_FACE)]
+    parts = joined.body_parts(shape)
+    written = 0
+    for k, faces in enumerate(parts):
+        sub = dict(item)
+        if len(parts) > 1:
+            sub["name"] = "%s part %d of %d" % (label, k + 1, len(parts))
+        try:
+            brep, info = joined.brep_of_faces(rh, faces, inv, tol, new_nurbs_curve, new_nurbs_surface)
+        except Exception as err:
+            reason = str(err).splitlines()[0] if str(err) else type(err).__name__
+            written += write_faces(rh, f, sub, faces, inv, layer_map, rep, reason)
+            continue
+        f.Objects.AddBrep(brep, add_attrs(rh, f, sub, layer_map))
+        written += 1
+        rep["joined"].append(dict(info, object=sub.get("name") or label, solid=bool(brep.IsSolid)))
+        if info["edge_gap"] > tol:
+            rep["lossy"].append({"object": sub.get("name") or label, "kind": "edge_gap", "count": 1, "message": "An edge of %s lies %.3g mm from a face it bounds, more than the file tolerance of %.3g mm; the receiving program may show it as an open edge." % (sub.get("name") or label, info["edge_gap"], tol)})
+    if len(parts) > 1 and written:
+        rep["lossy"].append({"object": label, "kind": "separate_parts", "count": len(parts), "message": "%s holds %d separate bodies; each is written as its own polysurface." % (label, len(parts))})
+    return written
+
+
+def write_faces(rh, f, item, faces, inv, layer_map, rep, reason):
+    label = item.get("name") or "body"
     trimmed = 0
     written = 0
     for k, face in enumerate(faces):
@@ -759,9 +899,9 @@ def write_shape(rh, f, item, inv, tol, layer_map, rep):
         except Exception as err:
             rep["failed"].append({"object": label, "face": k, "message": str(err).splitlines()[0] if str(err) else type(err).__name__})
     if trimmed:
-        rep["lossy"].append({"object": label, "kind": "trimmed_faces", "count": trimmed, "message": "%d trimmed face%s of %s written as an untrimmed surface plus separate trim curves; the 3DM library cannot write trimmed Breps. Use STEP to keep the trims." % (trimmed, "" if trimmed == 1 else "s", label)})
+        rep["lossy"].append({"object": label, "kind": "trimmed_faces", "count": trimmed, "message": "%d trimmed face%s of %s written as an untrimmed surface plus separate trim curves, because the joined polysurface could not be built (%s). Use STEP to keep the trims." % (trimmed, "" if trimmed == 1 else "s", label, reason)})
     if len(faces) > 1 and written:
-        rep["lossy"].append({"object": label, "kind": "unjoined_faces", "count": len(faces), "message": "%s has %d faces; they are written as separate surfaces and must be joined again in the receiving program." % (label, len(faces))})
+        rep["lossy"].append({"object": label, "kind": "unjoined_faces", "count": len(faces), "message": "%s has %d faces; they are written as separate surfaces, because the joined polysurface could not be built (%s), and must be joined again in the receiving program." % (label, len(faces), reason)})
     return written
 
 
@@ -791,7 +931,7 @@ def threedm_write(p):
         layer.Locked = bool(row.get("locked", False))
         idx = f.Layers.Add(layer)
         layer_map[row["name"]] = idx if isinstance(idx, int) and idx >= 0 else len(layer_map)
-    rep = {"written": 0, "failed": [], "lossy": [], "skipped": [], "warnings": []}
+    rep = {"written": 0, "failed": [], "lossy": [], "skipped": [], "warnings": [], "joined": []}
     for item in p.get("items") or []:
         kind = item.get("kind")
         try:

@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Poništi skraćivanje površi",
   1730: "Skupi skraćenu površ",
   1731: "Pomeri tačke površi",
+  1732: "Projektuj na površ",
+  1733: "Projektuj krive duž pogleda",
+  1734: "Privuci na površ",
+  1735: "Kontura",
+  1736: "Izdvoji izokrivu",
+  1737: "Deformacija",
+  1738: "Savij",
+  1739: "Tok duž krive",
+  1740: "Tok duž površi",
+  1741: "Kavez",
+  1742: "Uredi kavez",
+  1743: "Ukloni kavez",
 };
 export default T;

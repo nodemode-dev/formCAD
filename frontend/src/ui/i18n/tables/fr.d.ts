@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Annuler l'ajustement de la surface",
   1730: "Réduire la surface ajustée",
   1731: "Déplacer les points de la surface",
+  1732: "Projeter sur la surface",
+  1733: "Projeter les courbes selon la vue",
+  1734: "Tirer sur la surface",
+  1735: "Courbes de niveau",
+  1736: "Extraire une isocourbe",
+  1737: "Déformer",
+  1738: "Courber",
+  1739: "Glisser le long d'une courbe",
+  1740: "Glisser le long d'une surface",
+  1741: "Cage",
+  1742: "Modifier la cage",
+  1743: "Retirer la cage",
 };
 export default T;

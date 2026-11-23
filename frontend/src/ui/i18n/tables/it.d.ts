@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Annulla troncatura superficie",
   1730: "Riduci superficie troncata",
   1731: "Sposta punti della superficie",
+  1732: "Proietta su superficie",
+  1733: "Proietta curve lungo la vista",
+  1734: "Attrai su superficie",
+  1735: "Curve di livello",
+  1736: "Estrai isocurva",
+  1737: "Deforma",
+  1738: "Piega",
+  1739: "Scorri lungo curva",
+  1740: "Scorri lungo superficie",
+  1741: "Gabbia",
+  1742: "Modifica gabbia",
+  1743: "Rimuovi gabbia",
 };
 export default T;

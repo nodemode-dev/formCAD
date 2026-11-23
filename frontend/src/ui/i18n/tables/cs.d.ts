@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Zrušit oříznutí plochy",
   1730: "Zmenšit oříznutou plochu",
   1731: "Přesunout body plochy",
+  1732: "Promítnout na plochu",
+  1733: "Promítnout křivky ve směru pohledu",
+  1734: "Přitáhnout na plochu",
+  1735: "Vrstevnice",
+  1736: "Vyjmout izokřivku",
+  1737: "Deformace",
+  1738: "Ohnout",
+  1739: "Tok podél křivky",
+  1740: "Tok podél plochy",
+  1741: "Klec",
+  1742: "Upravit klec",
+  1743: "Odstranit klec",
 };
 export default T;

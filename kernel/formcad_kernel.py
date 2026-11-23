@@ -168,6 +168,18 @@ def load_operations() -> None:
         for name in ("surf_net", "surf_set_poles"):
             METHODS.setdefault(name, points_unavailable)
     try:
+        import kernel_deform
+
+        METHODS.update(kernel_deform.METHODS)
+    except Exception as err:
+        failure_deform = str(err)
+
+        def deform_unavailable(_params):
+            raise RuntimeError("The bend, flow and cage operations could not be loaded (%s)." % failure_deform)
+
+        for name in ("deform_bend", "deform_flow", "deform_flow_surface", "deform_cage", "deform_cage_rest"):
+            METHODS.setdefault(name, deform_unavailable)
+    try:
         import kernel_trim
 
         METHODS.update(kernel_trim.METHODS)
@@ -179,6 +191,18 @@ def load_operations() -> None:
 
         for name in ("surf_untrim", "surf_shrink"):
             METHODS.setdefault(name, trim_unavailable)
+    try:
+        import kernel_extract
+
+        METHODS.update(kernel_extract.METHODS)
+    except Exception as err:
+        failure_extract = str(err)
+
+        def extract_unavailable(_params):
+            raise RuntimeError("The curve extraction operations could not be loaded (%s)." % failure_extract)
+
+        for name in ("surf_project", "surf_pull", "surf_contour", "surf_isocurve"):
+            METHODS.setdefault(name, extract_unavailable)
     try:
         import kernel_views
 

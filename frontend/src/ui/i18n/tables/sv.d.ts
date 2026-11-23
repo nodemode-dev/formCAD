@@ -158,5 +158,17 @@ const T: Record<number, string> = {
   1729: "Ta bort beskärning av yta",
   1730: "Krymp beskuren yta",
   1731: "Flytta ytpunkter",
+  1732: "Projicera på yta",
+  1733: "Projicera kurvor längs vyn",
+  1734: "Dra till yta",
+  1735: "Kontur",
+  1736: "Extrahera isokurva",
+  1737: "Deformera",
+  1738: "Böj",
+  1739: "Flöda längs kurva",
+  1740: "Flöda längs yta",
+  1741: "Bur",
+  1742: "Redigera bur",
+  1743: "Ta bort bur",
 };
 export default T;

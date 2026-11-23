@@ -24,7 +24,10 @@ def handles_of(args, key="handles") -> list:
         value = [args["handle"]]
     if isinstance(value, (int, str)):
         value = [value]
-    return [int(h) for h in value or []]
+    try:
+        return [int(h) for h in value or []]
+    except (TypeError, ValueError):
+        raise CommandError("%s must be a list of object handles (whole numbers)." % key)
 
 
 def positive(value, what):
