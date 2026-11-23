@@ -73,4 +73,4 @@ A change in behaviour updates its tests in the same pull request. New test data 
 
 ## CI
 
-Every pull request runs `test-unit`, `test-engine` (engine, workers and scripts on Linux; engine and workers also on macOS and Windows) and `test-browser` (three shards on Linux). The worker tests in CI install the kernel and the mesher from the published releases through the app's own install check, so a worker that does not match its record fails the run.
+Every pull request runs one job, `test`, on Linux. It installs the engine, the frontend and the development kernel and mesher from their lock files, then runs the five layers one step each, so the step that fails names the layer. The worker tests run against the kernel and mesher code in this repository, not against the published workers, so a change to `kernel/` or `mesher/` is tested as it stands. The tests do not run on macOS or Windows in CI.

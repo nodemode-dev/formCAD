@@ -49,23 +49,6 @@ def _engine_python() -> str:
     return sys.executable
 
 
-def pytest_collection_modifyitems(config, items):
-    shard = os.environ.get("FORMCAD_E2E_SHARD")
-    if not shard:
-        return
-    index, total = (int(x) for x in shard.split("/"))
-    files: dict = {}
-    for item in items:
-        files.setdefault(item.nodeid.split("::")[0], []).append(item)
-    keep, drop = [], []
-    for n, name in enumerate(sorted(files)):
-        (keep if n % total == index - 1 else drop).extend(files[name])
-    order = {id(i): n for n, i in enumerate(items)}
-    keep.sort(key=lambda i: order[id(i)])
-    config.hook.pytest_deselected(items=drop)
-    items[:] = keep
-
-
 def _start(command: list, cwd: Path, env: dict):
     if os.name == "nt":
         return subprocess.Popen(command, cwd=cwd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
