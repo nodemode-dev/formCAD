@@ -22,6 +22,7 @@ if /i "%CMD%"=="desktop" (
   goto :done
 )
 if /i "%CMD%"=="doctor" ( call setup\doctor.bat & goto :done )
+if /i "%CMD%"=="test" ( call setup\test.bat %2 %3 %4 %5 %6 %7 %8 %9 & goto :done )
 if /i "%CMD%"=="mcp" ( call setup\mcp.bat & goto :done )
 if /i "%CMD%"=="agents" ( call setup\agents.bat %2 %3 %4 %5 %6 %7 %8 %9 & goto :done )
 if /i "%CMD%"=="clean" ( call setup\clean.bat %ARG% & goto :done )
@@ -39,5 +40,5 @@ exit /b 0
 :usage
 echo formCAD.bat [command]
 echo   boot ^| install [--lite] ^| install-desktop ^| install-kernel ^| install-mesher ^| backend ^| frontend
-echo   build ^| serve ^| freeze ^| freeze-kernel ^| freeze-mesher ^| desktop dev ^| desktop build ^| doctor ^| mcp ^| agents sync^|check^|install [--dry-run] ^| clean [--all] ^| version ^| help
+echo   build ^| serve ^| freeze ^| freeze-kernel ^| freeze-mesher ^| desktop dev ^| desktop build ^| doctor ^| test [layer] ^| mcp ^| agents sync^|check^|install [--dry-run] ^| clean [--all] ^| version ^| help
 exit /b 0
